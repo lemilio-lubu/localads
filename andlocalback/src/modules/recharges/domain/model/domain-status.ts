@@ -1,0 +1,43 @@
+export enum PautaStatus {
+  PENDING_ACTIVATION = "PENDING_ACTIVATION",
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  SUSPENDED = "SUSPENDED",
+}
+
+export enum ActivationRequestStatus {
+  PENDING = "PENDING",
+  IN_REVIEW = "IN_REVIEW",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+}
+
+export enum TransactionRechargeStatus {
+  REQUESTED = "REQUESTED",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  APPROVED = "APPROVED",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED",
+}
+
+export enum TransactionDetailStatus {
+  REQUESTED = "REQUESTED",
+  APPROVED = "APPROVED",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED",
+}
+
+export enum TransactionPaymentStatus {
+  PENDING = "PENDING",
+  IN_CREDIT = "IN_CREDIT",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  PAID = "PAID",
+  OVERDUE = "OVERDUE",
+  REJECTED = "REJECTED",
+}
+
+export enum InvoiceStatus {
+  ISSUED = "ISSUED",
+}

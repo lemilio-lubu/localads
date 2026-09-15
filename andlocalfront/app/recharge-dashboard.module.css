@@ -1,0 +1,55 @@
+.rechargePanel { width: 100%; border-radius: var(--radius-card); background: var(--color-surface); padding: 48px; }
+.prepaidPanel { background: #f5f5f5; }
+.heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+.heading h1 { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-title); line-height: 1.2; text-wrap: balance; }
+.summary { display: grid; gap: 4px; text-align: right; color: var(--color-text-muted); font-size: 12px; }
+.summary strong { color: var(--color-text); font-size: 15px; }
+.form { display: flex; flex-direction: column; align-items: center; }
+.fields { display: grid; width: 100%; gap: 10px; }
+.platformField, .activationButton { display: grid; min-height: 58px; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: #fff; padding: 8px 16px; color: var(--color-text); }
+.platformField img, .activationButton img { object-fit: contain; }
+.platformField { cursor: text; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out); }
+.platformField:focus-within { border-color: rgb(11 89 1 / 34%); box-shadow: var(--focus-ring); }
+.currency { color: var(--color-text-subtle); }
+.platformField input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
+.platformField input::placeholder { color: var(--color-text-subtle); opacity: 1; }
+.platformField input::-webkit-inner-spin-button, .platformField input::-webkit-outer-spin-button { appearance: none; }
+.meta { --activation-color: var(--color-meta); --activation-text: #fff; }
+.google { --activation-color: var(--color-google); --activation-text: var(--color-google-text); }
+.tiktok { --activation-color: var(--color-tiktok); --activation-text: #fff; }
+.activationButton { grid-template-columns: 44px 1fr; background: var(--activation-color); color: var(--activation-text); cursor: pointer; font: inherit; font-size: var(--font-size-body-sm); font-weight: 700; text-align: left; transition: transform 160ms var(--ease-out), opacity 160ms ease; }
+.activationButton:disabled { cursor: default; opacity: .6; }
+.activationButton:not(:disabled):active, .uploadArea:active { transform: scale(.97); }
+.activationButton:focus-visible, .uploadArea:focus-visible { outline: 3px solid var(--color-text-muted); outline-offset: 4px; }
+.uploadArea { display: flex; width: 100%; min-height: 96px; align-items: center; justify-content: center; gap: 12px; margin-top: 18px; border: 1px solid transparent; border-radius: var(--radius-card); background: #fff; color: var(--color-text-muted); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
+.uploadArea.hasReceipt { border-style: solid; border-color: rgb(11 89 1 / 30%); background: #fbfffb; color: var(--color-brand); }
+.uploadArea input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.uploadArea span { max-width: min(420px, 70vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.terms { display: flex; align-items: center; gap: 8px; margin-top: 26px; color: var(--color-text-muted); font-size: 14px; cursor: pointer; }
+.terms input { position: absolute; opacity: 0; }
+.checkbox { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; }
+.checkbox img { opacity: .4; transition: opacity 140ms var(--ease-out); }
+.terms input:checked + .checkbox img { opacity: 1; }
+.terms:has(input:focus-visible) .checkbox { box-shadow: var(--focus-ring); }
+.submitButton { margin-top: 24px; }
+.formStatus { min-height: 18px; margin: 10px 0 0; color: var(--color-brand); font-size: 12px; font-weight: 700; text-align: center; }
+.error { color: var(--color-danger); }
+.activationModal { width: min(100%, var(--layout-content)); padding: 40px 44px 28px; background: var(--color-surface-raised); box-shadow: 0 4px 20px rgb(0 0 0 / 25%); }
+.activationModal > button { color: var(--activation-color); }
+.activationPanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
+.activationHeading, .activationDescription, .activationActions, .activationError { grid-column: 1 / -1; }
+.activationHeading { display: flex; align-items: center; gap: 18px; padding-right: 12px; }
+.activationHeading img { flex: 0 0 37px; object-fit: contain; }
+.activationHeading h2 { margin: 0; border-radius: var(--radius-pill); background: var(--activation-color); padding: 8px 14px; color: var(--activation-text); font-size: var(--font-size-body); line-height: 1.3; text-wrap: balance; }
+.activationDescription { margin: 0; color: var(--activation-color); font-size: var(--font-size-caption); line-height: 1.5; text-align: center; }
+.google .activationDescription { color: var(--color-google-text); }
+.activationPanel label { display: grid; gap: 6px; color: var(--color-text); font-size: var(--font-size-caption); text-align: center; }
+.activationPanel input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding: 0 12px; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); }
+.activationPanel input:focus { border-color: var(--activation-color); outline: 2px solid var(--activation-color); outline-offset: 2px; }
+.activationPanel input:disabled { opacity: .6; }
+.activationActions { display: flex; justify-content: center; margin-top: 8px; }
+.activationSubmit, .activationSubmit:not(:disabled):hover, .activationSubmit:not(:disabled):active { background: var(--activation-color); color: var(--activation-text); box-shadow: none; }
+.activationError { margin: 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: center; }
+@media (hover: hover) and (pointer: fine) { .platformField:hover, .activationButton:not(:disabled):hover { border-color: rgb(11 89 1 / 18%); box-shadow: var(--shadow-card); } .uploadArea:hover { border-color: rgb(11 89 1 / 30%); } }
+@media (prefers-reduced-motion: reduce) { .platformField, .activationButton, .uploadArea, .checkbox img, .activationSubmit { transition: none; } .activationButton:not(:disabled):active, .uploadArea:active, .activationSubmit:not(:disabled):active { transform: none; } }
+@media (max-width: 680px) { .rechargePanel { border-radius: 20px; padding: 28px 20px; } .heading { align-items: flex-start; flex-direction: column; } .summary { text-align: left; } .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); } .activationPanel { grid-template-columns: 1fr; } .activationPanel label { grid-column: 1 / -1; } .activationModal { padding: 48px 20px 28px; } .activationHeading { gap: 12px; padding-right: 0; } .activationHeading h2 { font-size: var(--font-size-body-sm); } }

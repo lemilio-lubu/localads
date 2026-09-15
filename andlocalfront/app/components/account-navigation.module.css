@@ -1,0 +1,16 @@
+.navigation { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-5); padding-top: var(--space-5); }
+.navigation a { position: relative; padding: 0 0 var(--space-1); color: rgb(67 67 67 / 40%); font: inherit; font-size: var(--font-size-title); font-weight: var(--font-weight-bold); line-height: 1.2; text-align: left; text-decoration: none; }
+.navigation a { cursor: pointer; transition: color var(--duration-ui) ease; }
+.navigation .active { color: var(--color-text); }
+.navigation .active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; background: var(--color-text); content: ""; }
+.navigation a:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 4px; }
+.navigation a:active { color: var(--color-brand); }
+
+@media (hover: hover) and (pointer: fine) {
+  .navigation a:not(.active):hover { color: rgb(67 67 67 / 72%); }
+}
+
+@media (max-width: 880px) {
+  .navigation { flex-direction: row; justify-content: center; gap: clamp(var(--space-2), 6vw, var(--space-5)); overflow-x: auto; padding: 0 0 var(--space-3); }
+  .navigation a { flex: 0 0 auto; font-size: var(--font-size-body); }
+}

@@ -1,0 +1,13 @@
+.button { display: inline-grid; width: 176px; min-height: var(--button-height); place-items: center; border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding-inline: var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+.stretch { width: 100%; min-height: var(--control-height); }
+.button:disabled { opacity: .5; cursor: not-allowed; }
+.button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 4px; }
+.button:not(:disabled):active { transform: scale(.97); background: #084600; box-shadow: 0 2px 8px rgb(11 89 1 / 18%); }
+
+@media (hover: hover) and (pointer: fine) {
+  .button:not(:disabled):hover { background: #0d6802; box-shadow: 0 8px 18px rgb(11 89 1 / 16%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition-duration: 0ms; }
+}

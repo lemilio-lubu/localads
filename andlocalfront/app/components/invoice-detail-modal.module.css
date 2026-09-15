@@ -1,0 +1,85 @@
+.modal {
+  display: grid;
+  width: min(var(--layout-modal-max), 100%);
+  min-height: var(--layout-modal-min-height);
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "summary documents"
+    "summary platforms";
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-3);
+}
+
+.summary { grid-area: summary; display: flex; min-width: 0; flex-direction: column; }
+.summary h2 { margin: 0 0 var(--space-2); color: var(--color-text); font-size: var(--font-size-title); line-height: 1.2; }
+.accountLabel { display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
+.accountLabel img { width: var(--icon-size-sm); height: var(--icon-size-sm); }
+.accountLabel strong { color: var(--color-accent-teal); font-size: var(--font-size-body-sm); }
+.transactionData { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--font-size-body-sm); }
+.transactionData div { display: grid; grid-template-columns: var(--space-20) minmax(0, 1fr); align-items: center; gap: var(--space-1); }
+.transactionData dt, .notes strong { color: var(--color-text-muted); font-weight: var(--font-weight-bold); }
+.transactionData dd { min-width: 0; overflow: hidden; margin: 0; color: rgb(67 67 67 / 72%); text-overflow: ellipsis; white-space: nowrap; }
+.notes { margin: auto 0 var(--space-3); font-size: var(--font-size-body-sm); }
+.verificationSummary { display: grid; gap: var(--space-1); margin-top: var(--space-3); border: 1px solid #eadba9; border-radius: var(--radius-menu); background: #fffaf0; padding: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
+.verificationSummary > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); }
+.verificationSummary p { display: grid; gap: 3px; margin: 0; line-height: 1.4; }
+.verificationSummary p span, .verificationSummary small { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.traceability { display: grid; gap: var(--space-1); margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+.traceability ol { display: grid; max-height: 176px; gap: var(--space-1); overflow: auto; margin: 0; padding: 0 0 0 var(--space-3); }
+.traceability li { padding-left: var(--space-1); }
+.traceability li span, .traceability li time, .traceability li small { display: block; }
+.traceability li span { color: var(--color-text); font-weight: var(--font-weight-bold); }
+.traceability li time, .traceability li small { margin-top: 2px; font-size: var(--font-size-caption); }
+
+.documentActions { grid-area: documents; display: flex; justify-self: end; gap: var(--space-8); padding-right: var(--space-6); }
+.documentAction { display: flex; width: var(--document-action-size); flex-direction: column; align-items: center; gap: var(--space-1); border: 0; background: transparent; color: var(--color-text); font: inherit; text-align: center; text-decoration: none; cursor: pointer; }
+.documentAction:disabled { color: var(--color-text-subtle); cursor: not-allowed; }
+.documentAction small { min-height: var(--space-4); font-size: var(--font-size-caption); line-height: var(--space-2); }
+.documentCircle { position: relative; display: grid; width: var(--icon-size-lg); height: var(--icon-size-lg); place-items: center; border-radius: 50%; transition: box-shadow var(--duration-fast) var(--ease-out); }
+.documentCircle img { z-index: 0; }
+.documentCircle span { position: relative; z-index: 1; font-size: var(--font-size-caption); }
+.documentAction:focus-visible { border-radius: var(--radius-menu); outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+
+.platformGrid { grid-area: platforms; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-2); align-self: end; }
+.platformCard { min-height: var(--platform-detail-height); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3) var(--space-2); }
+.platformCard header { display: flex; align-items: center; gap: var(--space-1); }
+.platformIcon { position: relative; display: block; width: var(--icon-size-md); height: var(--icon-size-sm); }
+.platformIcon img { object-fit: contain; }
+.platformCard dl { display: grid; gap: var(--space-1); margin: var(--space-2) 0 0; font-size: var(--font-size-caption); }
+.platformCard dl div { display: flex; justify-content: space-between; gap: var(--space-1); }
+.platformCard dt { font-weight: var(--font-weight-regular); }
+.platformCard dd { margin: 0; font-weight: var(--font-weight-bold); }
+.platformCard .rechargeDate { align-items: end; margin-top: var(--space-3); }
+.meta { color: var(--color-meta); }
+.google { color: var(--color-google-text); }
+.tiktok { color: var(--color-tiktok); }
+
+@media (hover: hover) and (pointer: fine) {
+  .documentAction:not(:disabled):hover .documentCircle { box-shadow: var(--shadow-card); }
+}
+
+@media (max-width: 900px) {
+  .modal {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas: "documents" "summary" "platforms";
+    gap: var(--space-3);
+  }
+  .documentActions { justify-self: start; gap: var(--space-2); padding-right: 0; }
+  .notes { margin: var(--space-3) 0 0; }
+}
+
+@media (max-width: 680px) {
+  .modal { padding: var(--space-4) var(--space-2) var(--space-2); }
+  .platformGrid { grid-template-columns: 1fr; }
+  .platformCard { min-height: var(--platform-detail-height-mobile); }
+}
+
+@media (max-width: 420px) {
+  .transactionData div { grid-template-columns: 1fr; gap: var(--space-1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .documentCircle { transition-duration: 0ms; }
+}

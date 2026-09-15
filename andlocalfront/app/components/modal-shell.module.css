@@ -1,0 +1,19 @@
+.backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; overflow-y: auto; background: rgb(255 255 255 / 60%); padding: var(--space-3); backdrop-filter: blur(6px); }
+.panel { position: relative; border-radius: var(--radius-card); background: var(--color-surface-muted); box-shadow: var(--shadow-modal); }
+.closeButton { position: absolute; top: var(--space-1); right: var(--space-2); display: grid; width: var(--hit-target); height: var(--hit-target); place-items: center; border: 0; border-radius: 50%; background: transparent; padding: 0; color: var(--color-text-muted); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.closeButton svg { width: var(--icon-size-sm); height: var(--icon-size-sm); }
+.closeButton:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+.closeButton:active { background: var(--color-border); color: var(--color-text); }
+
+@media (hover: hover) and (pointer: fine) {
+  .closeButton:hover { background: var(--color-surface-raised); color: var(--color-text); }
+}
+
+@media (max-width: 680px) {
+  .backdrop { align-items: start; padding: var(--space-1); }
+  .panel { margin-block: var(--space-1); border-radius: var(--radius-control); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closeButton { transition-duration: 0ms; }
+}

@@ -1,0 +1,55 @@
+.invoiceModule { width: 100%; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.filters { display: flex; min-height: var(--space-12); align-items: center; justify-content: space-between; gap: var(--space-5); border-bottom: 2px solid #d9d9d9; }
+.filters fieldset { display: flex; min-width: 0; align-items: center; gap: var(--space-2); border: 0; margin: 0; padding: 0; }
+.filters legend { float: left; margin-right: var(--space-2); padding: 0; color: #000; font-size: var(--font-size-body); }
+.dateFilter label { display: flex; align-items: center; gap: var(--space-1); color: rgb(0 0 0 / 50%); font-size: var(--font-size-caption); }
+.dateFilter input { width: 128px; height: var(--space-4); border: 0; border-radius: var(--radius-small); outline: 0; background: transparent; color: rgb(0 0 0 / 50%); font-size: var(--font-size-caption); transition: color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.dateFilter input:focus-visible { box-shadow: var(--focus-ring); }
+.platformFilter { justify-content: flex-end; }
+.filterButton { display: inline-grid; min-width: var(--space-9); height: var(--space-3); place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; cursor: pointer; padding: 0; transition: box-shadow var(--duration-fast) var(--ease-out); }
+.filterButton[aria-pressed="true"] { box-shadow: 0 0 0 3px rgb(67 67 67 / 18%); }
+.filterButton:focus-visible, .detailsButton:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
+.invoiceList { display: grid; gap: var(--space-2); padding-top: var(--space-3); }
+.invoiceRow { display: grid; grid-template-columns: 112px minmax(176px, 1fr) 120px 80px 160px 80px; min-height: 112px; align-items: center; gap: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); box-shadow: var(--shadow-card); transition: border-color var(--duration-ui) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out); }
+.cell { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); color: rgb(67 67 67 / 70%); font-size: var(--font-size-body-sm); line-height: 1.25; }
+.cell strong { font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
+.cell span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.codeCell strong { display: flex; align-items: center; color: var(--color-brand); }
+.codeCell strong img { width: var(--icon-size-xs); height: var(--icon-size-xs); margin-right: var(--space-1); transform: rotate(180deg); }
+.codeCell span { color: rgb(67 67 67 / 50%); font-size: var(--font-size-body); text-transform: lowercase; }
+.cell .amount { color: var(--color-brand); font-size: var(--font-size-body); }
+.platforms { display: flex; gap: var(--space-1); }
+.statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }
+.detailsButton { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; justify-self: end; border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-2); color: #fff; cursor: pointer; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
+.detailsButton:disabled { opacity: .5; cursor: not-allowed; }
+.filterButton:active { box-shadow: 0 0 0 3px rgb(67 67 67 / 24%); }
+.detailsButton:not(:disabled):active { transform: scale(.97); background: #084600; }
+.emptyState { margin: var(--space-5) 0; color: var(--color-text-muted); text-align: center; }
+
+@media (hover: hover) and (pointer: fine) {
+  .dateFilter input:hover { color: var(--color-text); box-shadow: 0 0 0 2px rgb(67 67 67 / 8%); }
+  .filterButton:hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 12%); }
+  .invoiceRow:hover { border-color: rgb(11 89 1 / 14%); box-shadow: var(--shadow-panel); }
+  .detailsButton:not(:disabled):hover { background: #0d6802; box-shadow: 0 8px 18px rgb(11 89 1 / 16%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dateFilter input, .filterButton, .invoiceRow, .detailsButton { transition-duration: 0ms; }
+  .detailsButton:not(:disabled):active { transform: none; }
+}
+
+@media (max-width: 1100px) {
+  .filters { min-height: 0; align-items: stretch; flex-direction: column; padding-bottom: var(--space-3); }
+  .filters fieldset { flex-wrap: wrap; }
+  .platformFilter { justify-content: flex-start; }
+  .invoiceRow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  .platforms { align-self: end; }
+  .detailsButton { align-self: end; }
+}
+
+@media (max-width: 440px) {
+  .dateFilter label { width: calc(50% - var(--space-1)); flex-direction: column; align-items: flex-start; }
+  .dateFilter legend { width: 100%; }
+  .invoiceRow { border-radius: var(--radius-control); }
+}

@@ -1,0 +1,97 @@
+:root {
+  /* Color */
+  --color-canvas: #ffffff;
+  --color-surface: #f6f9ff;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f6f6f6;
+  --color-text: #434343;
+  --color-text-muted: #848484;
+  --color-text-subtle: #b4b4b4;
+  --color-border: rgb(67 67 67 / 9%);
+  --color-brand: #0b5901;
+  --color-meta: #0082fb;
+  --color-google: #ffc003;
+  --color-tiktok: #fe2858;
+  --color-dark: #434343;
+  --color-danger: #9d0003;
+  --color-success: #0b5901;
+  --color-accent-teal: #087f6d;
+  --color-google-text: #6b4e00;
+
+  /* 8-point spacing scale */
+  --space-1: 8px;
+  --space-half: 4px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-7: 56px;
+  --space-8: 64px;
+  --space-9: 72px;
+  --space-10: 80px;
+  --space-12: 96px;
+  --space-15: 120px;
+  --space-20: 160px;
+
+  /* Layout */
+  --layout-max: 1120px;
+  --layout-sidebar: 240px;
+  --layout-content: 720px;
+  --layout-gutter: 160px;
+  --layout-wide-sidebar: 192px;
+  --layout-wide-content: 880px;
+  --layout-wide-gutter: 48px;
+  --layout-header-height: 72px;
+  --layout-modal-max: 1176px;
+  --layout-modal-min-height: 384px;
+  --layout-page-top: 64px;
+  --layout-section-gap: 64px;
+  --layout-admin-sidebar: 248px;
+  --layout-admin-content: var(--layout-max);
+  --layout-client-detail-max: 1008px;
+  --layout-client-detail-min-height: 800px;
+
+  /* Components */
+  --control-height: 48px;
+  --control-height-compact: 32px;
+  --button-height: 40px;
+  --radius-control: 24px;
+  --radius-card: 32px;
+  --radius-menu: 16px;
+  --radius-small: 8px;
+  --radius-pill: 999px;
+  --icon-size-xs: 16px;
+  --icon-size-sm: 24px;
+  --icon-size-md: 32px;
+  --icon-size-lg: 64px;
+  --hit-target: 40px;
+  --document-action-size: 80px;
+  --platform-detail-height: 216px;
+  --platform-detail-height-mobile: 192px;
+
+  /* Typography */
+  --font-family-sans: Arial, Helvetica, sans-serif;
+  --font-family-mono: "Courier New", Courier, monospace;
+  --font-size-caption: 12px;
+  --font-size-micro: 10px;
+  --font-size-body-sm: 14px;
+  --font-size-body: 16px;
+  --font-size-card-title: 18px;
+  --font-size-nav: 20px;
+  --font-size-title: 24px;
+  --font-size-display: 40px;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Elevation and motion */
+  --shadow-panel: 0 24px 64px rgb(42 54 39 / 8%);
+  --shadow-card: 0 8px 24px rgb(42 54 39 / 6%);
+  --shadow-popover: 0 16px 40px rgb(0 0 0 / 10%);
+  --shadow-modal: 0 24px 64px rgb(42 54 39 / 16%);
+  --focus-ring: 0 0 0 4px rgb(11 89 1 / 10%);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-fast: 140ms;
+  --duration-ui: 180ms;
+}

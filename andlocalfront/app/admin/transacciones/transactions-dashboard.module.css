@@ -1,0 +1,94 @@
+.module { width: min(100%, var(--layout-admin-content)); margin-top: var(--space-3); }
+.toolbar { display: grid; grid-template-columns: minmax(320px, 1fr) auto; align-items: center; gap: var(--space-4); }
+.search { display: flex; height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); }
+.search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: var(--font-size-body-sm); }
+.search input::placeholder { color: var(--color-text); }
+.search:focus-within { box-shadow: var(--focus-ring); }
+.filters { display: flex; align-items: center; gap: var(--space-1); }
+.filters > span { margin-right: var(--space-1); color: #000; font-size: var(--font-size-body-sm); }
+.filters button { min-width: 104px; min-height: var(--button-height); padding-inline: var(--space-2); color: #fff; font-weight: var(--font-weight-bold); }
+.filters button:first-of-type { background: #8a5b00; color: #fff; }
+.filters button:last-child { background: var(--color-brand); color: #fff; }
+.filterLabel { display: inline-flex; align-items: center; }
+.filters button i { display: inline-block; margin-right: 6px; }
+.reviewDot { width: 7px; height: 7px; border-radius: 50%; background: #c58500; }
+.postpaidMark, .prepaidMark { width: 9px; height: 9px; border: 1.5px solid currentColor; border-radius: 2px; }
+.postpaidMark { background: currentColor; box-shadow: inset 0 0 0 2px #fff; }
+.overview { display: flex; align-items: center; border-block: 1px solid var(--color-border); margin: var(--space-3) 0 var(--space-4); padding-block: var(--space-2); }
+.overview > div { display: flex; min-width: 160px; flex-direction: column; padding-inline: var(--space-3); }
+.overview > div:first-child { padding-left: 0; }
+.overview > div + div { border-left: 1px solid var(--color-border); }
+.overview small, .metric small, .identity small, .sectionTitle small, .historyPanel > small, .modalHeader small { color: var(--color-text-muted); font-size: var(--font-size-micro); text-transform: lowercase; }
+.overview strong { margin-top: var(--space-half); font-size: var(--font-size-card-title); font-variant-numeric: tabular-nums; }
+.listMeta { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.listMeta span:last-child { color: var(--color-text-subtle); }
+.realtime { display: inline-flex; align-items: center; gap: 6px; }
+.realtime i { width: 7px; height: 7px; border-radius: 50%; background: var(--color-text-subtle); }
+.realtime[data-status="connected"] { color: var(--color-brand); }
+.realtime[data-status="connected"] i { background: var(--color-brand); box-shadow: 0 0 0 3px rgb(11 89 1 / 8%); }
+.realtime[data-status="disconnected"] { color: #8a5b00; }
+.realtime[data-status="disconnected"] i { background: #c58500; }
+.list { display: grid; gap: var(--space-1); }
+.rowHeader { display: grid; grid-template-columns: minmax(190px, 1.25fr) minmax(150px, .9fr) minmax(130px, .8fr) minmax(160px, 1fr) 24px; gap: var(--space-2); padding: 0 var(--space-3) var(--space-half); color: var(--color-text-subtle); font-size: var(--font-size-micro); }
+.row { position: relative; display: grid; min-height: 80px; grid-template-columns: minmax(190px, 1.25fr) minmax(150px, .9fr) minmax(130px, .8fr) minmax(160px, 1fr) 24px; align-items: center; gap: var(--space-2); border-radius: 20px; background: var(--color-surface-raised); padding: 12px var(--space-3); box-shadow: 0 0 0 1px var(--color-border); transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), background-color var(--duration-fast) ease; }
+.row[data-review="true"] { box-shadow: inset 3px 0 #c58500, 0 0 0 1px var(--color-border); }
+.open { position: absolute; z-index: 1; inset: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.open:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 2px; }
+.row:has(.open:active) { transform: scale(.995); }
+.row > *:not(.open) { pointer-events: none; }
+.identity, .metric { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: var(--space-half); }
+.identity strong, .metric strong { max-width: 100%; overflow: hidden; font-size: var(--font-size-body-sm); text-overflow: ellipsis; white-space: nowrap; }
+.identity > span:not([class]), .metric > span:not([class]) { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.platformLine { display: flex; flex-wrap: wrap; gap: 4px; }
+.chevron { justify-self: end; color: var(--color-text-subtle); }
+.skeleton { min-height: 80px; background: linear-gradient(90deg, #f6f6f6 25%, #fafafa 45%, #f6f6f6 65%); background-size: 250% 100%; animation: shimmer 1.1s infinite linear; }
+.message { border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-3); color: var(--color-text-muted); text-align: center; }
+.modal { width: min(100%, 1000px); max-height: min(90vh, 820px); overflow-y: auto; padding: var(--space-5); }
+.modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
+.modalHeader h2 { margin: var(--space-half) 0; font-size: 30px; }
+.modalHeader p { margin: 0; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-caption); }
+.auditFooter { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.detailGrid { display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--space-3); margin-top: var(--space-4); }
+.receiptPanel, .historyPanel { border-radius: var(--radius-control); background: var(--color-surface-raised); padding: var(--space-3); }
+.sectionTitle { display: flex; align-items: center; gap: var(--space-2); }
+.sectionTitle > div { display: flex; min-width: 0; flex-direction: column; gap: var(--space-half); }
+.sectionTitle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.receiptLink { display: flex; height: 80px; align-items: center; justify-content: center; gap: var(--space-1); border-radius: var(--radius-menu); margin: var(--space-3) 0; background: #eef6ed; color: var(--color-brand); font-weight: var(--font-weight-bold); text-decoration: none; transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) ease; }
+.receiptLink:active { transform: scale(.98); }
+.creditNotice { display: flex; min-height: 112px; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-half); border-radius: var(--radius-menu); margin: var(--space-3) 0; background: #eef6ed; color: var(--color-brand); text-align: center; }
+.creditNotice span { font-size: var(--font-size-caption); }
+.receiptPanel dl { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); margin: 0; }
+.receiptPanel dl div { border-radius: var(--radius-small); background: var(--color-surface-muted); padding: var(--space-2); }
+.receiptPanel dt { color: var(--color-text-muted); font-size: var(--font-size-micro); }
+.receiptPanel dd { margin: var(--space-half) 0 0; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
+.receiptPanel dd.mismatch { color: var(--color-danger); }
+.historyPanel ol { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.historyPanel li { position: relative; display: grid; grid-template-columns: 12px 1fr; gap: var(--space-1); }
+.historyPanel li:not(:last-child)::before { position: absolute; top: 14px; bottom: calc(var(--space-2) * -1); left: 5px; width: 1px; background: #d9e5d7; content: ""; }
+.timelineDot { z-index: 1; width: 11px; height: 11px; border: 2px solid #c8ddc5; border-radius: 50%; margin-top: 3px; background: var(--color-surface-raised); }
+.historyPanel strong { font-size: var(--font-size-body-sm); }
+.historyPanel p { margin: var(--space-half) 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.historyPanel time { color: var(--color-text-subtle); font-size: var(--font-size-micro); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-1); margin-top: var(--space-3); }
+.actions > button, .rejectForm button { display: flex; height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-small); padding: 0 var(--space-3); cursor: pointer; font-weight: var(--font-weight-bold); transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) ease, opacity var(--duration-fast) ease; }
+.actions button:active:not(:disabled), .rejectForm button:active:not(:disabled) { transform: scale(.97); }
+.rejectButton { background: #fbecec; color: var(--color-danger); }
+.approveButton { background: var(--color-brand); color: #fff; }
+.actions button:disabled { opacity: .45; cursor: not-allowed; }
+.actions > p { flex-basis: 100%; margin: var(--space-half) 0 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: right; }
+.rejectForm { display: grid; width: 100%; gap: var(--space-1); opacity: 1; transition: opacity var(--duration-fast) var(--ease-out); }
+@starting-style { .rejectForm { opacity: 0; } }
+.rejectForm label { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.rejectForm textarea { min-height: 88px; resize: vertical; border: 1px solid var(--color-border); border-radius: var(--radius-small); outline: 0; padding: var(--space-2); }
+.rejectForm textarea:focus { border-color: rgb(157 0 3 / 35%); box-shadow: 0 0 0 3px rgb(157 0 3 / 8%); }
+.rejectForm > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
+.rejectForm button { background: var(--color-surface-raised); color: var(--color-text); }
+.rejectForm .dangerButton { background: var(--color-danger); color: #fff; }
+.modalError { margin: var(--space-2) 0 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: right; }
+@keyframes shimmer { to { background-position: -150% 0; } }
+@media (hover: hover) and (pointer: fine) { .filters button:first-of-type:hover { background: #754d00; } .filters button:last-child:hover { background: #0d6802; } .row:hover { background: #fcfcfc; box-shadow: 0 6px 18px rgb(42 54 39 / 5%); } .row[data-review="true"]:hover { box-shadow: inset 3px 0 #c58500, 0 6px 18px rgb(42 54 39 / 5%); } .receiptLink:hover { background: #e3f1e1; } }
+@media (max-width: 1050px) { .toolbar { grid-template-columns: 1fr; } .filters { flex-wrap: wrap; } .rowHeader { display: none; } .row { grid-template-columns: 1.2fr 1fr 1fr; } .row .metric:last-of-type { grid-column: span 2; } .chevron { grid-column: 3; grid-row: 1 / span 2; } .identity small, .metric small { display: block; } }
+@media (min-width: 1051px) { .identity small, .metric small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+@media (max-width: 760px) { .overview { align-items: stretch; } .overview > div { min-width: 0; flex: 1; padding-inline: var(--space-2); } .row { grid-template-columns: 1fr 1fr; } .identity { grid-column: 1 / -1; } .chevron { grid-column: 2; grid-row: 1; } .detailGrid { grid-template-columns: 1fr; } .modal { padding: var(--space-3); } }
+@media (max-width: 520px) { .filters > span { flex-basis: 100%; } .row { grid-template-columns: 1fr; } .row .metric:last-of-type, .identity { grid-column: auto; } .chevron { position: absolute; top: var(--space-3); right: var(--space-3); } .receiptPanel dl { grid-template-columns: 1fr; } .actions > button { width: 100%; } .auditFooter { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .row, .receiptLink, .actions > button, .rejectForm, .rejectForm button { transition-duration: 0ms; } .row:has(.open:active), .receiptLink:active, .actions button:active:not(:disabled), .rejectForm button:active:not(:disabled) { transform: none; } .skeleton { animation: none; } }

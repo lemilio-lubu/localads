@@ -1,0 +1,443 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AuthUser {
+  id           String           @id @default(cuid())
+  username     String           @unique
+  passwordHash String
+  role         String
+  clientId     String?
+  accountId    String?
+  accountType  String?
+  status       String           @default("ACTIVE")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  sessions     RefreshSession[]
+
+  @@index([clientId])
+  @@index([role, status])
+}
+
+model RefreshSession {
+  id           String    @id @default(cuid())
+  userId       String
+  tokenHash    String    @unique
+  familyId     String
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+  user         AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([familyId])
+}
+
+model Client {
+  id                   String                      @id
+  platformsVersion     Int                         @default(0)
+  name                 String
+  email                String                      @unique
+  status               String
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  accounts             Account[]
+  pautas               Pauta[]
+  activationRequests   CampaignActivationRequest[]
+  rechargeTransactions RechargeTransaction[]
+}
+
+model Account {
+  id                   String                @id
+  clientId             String
+  status               String
+  type                 String
+  creditDays           Int                   @default(0)
+  creditLimit          Float                 @default(0)
+  creditUsed           Float                 @default(0)
+  client               Client                @relation(fields: [clientId], references: [id])
+  campaigns            Campaign[]
+  recharges            Recharge[]
+  rechargeTransactions RechargeTransaction[]
+}
+
+model Campaign {
+  id        String  @id
+  accountId String
+  platform  String
+  status    String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  @@unique([accountId, platform])
+}
+
+model Recharge {
+  id            String             @id
+  accountId     String
+  accountType   String
+  campaignId    String
+  platform      String
+  amount        Float
+  paymentStatus String
+  status        String
+  receiptStatus String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  account       Account            @relation(fields: [accountId], references: [id])
+  receipts      Receipt[]
+  verifications Verification[]
+  obligation    PaymentObligation?
+  history       TransactionEvent[]
+
+  @@index([accountId, createdAt])
+}
+
+model Receipt {
+  id           String   @id
+  rechargeId   String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  checksum     String
+  recharge     Recharge @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([rechargeId, createdAt])
+}
+
+model Verification {
+  id                   String    @id
+  rechargeId           String
+  receiptId            String
+  status               String
+  requestedAmount      Float
+  detectedAmount       Float?
+  confidence           Float?
+  amountMatches        Boolean?
+  issues               String
+  requiresManualReview Boolean
+  failureReason        String?
+  decidedBy            String?
+  decidedAt            DateTime?
+  rejectionReason      String?
+  createdAt            DateTime  @default(now())
+  recharge             Recharge  @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
+
+  @@unique([receiptId])
+  @@index([rechargeId, createdAt])
+}
+
+model PaymentObligation {
+  id         String   @id
+  rechargeId String   @unique
+  amount     Float
+  status     String
+  dueDate    DateTime
+  createdAt  DateTime @default(now())
+  recharge   Recharge @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
+}
+
+model TransactionEvent {
+  id         String   @id @default(cuid())
+  rechargeId String
+  scope      String
+  status     String
+  note       String?
+  createdAt  DateTime @default(now())
+  recharge   Recharge @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
+
+  @@index([rechargeId, createdAt])
+}
+
+// New persistence model for the multi-pauta recharge flow. Legacy Campaign,
+// Recharge, Receipt and Verification remain in place during the transition.
+model Pauta {
+  id                 String                     @id @default(cuid())
+  clientId           String
+  platform           String
+  externalAccountId  String?
+  status             String
+  currentBalance     Decimal                    @default(0)
+  activatedAt        DateTime?
+  version            Int                        @default(0)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  client             Client                     @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  activationRequests CampaignActivationRequest[]
+  transactionDetails TransactionDetail[]
+  balanceMovements   PautaBalanceMovement[]
+
+  @@unique([clientId, platform])
+  @@index([clientId, status])
+}
+
+model CampaignActivationRequest {
+  id                  String    @id @default(cuid())
+  clientId            String
+  activeRequestKey    String?   @unique
+  pautaId             String?
+  kind                String    @default("ACTIVATION")
+  platform            String
+  requesterName       String
+  externalAccountId   String?
+  phone               String
+  firstRechargeAmount Decimal
+  status              String    @default("PENDING")
+  reviewedBy          String?
+  reviewedAt          DateTime?
+  rejectionReason     String?
+  version             Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  client              Client    @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  pauta               Pauta?    @relation(fields: [pautaId], references: [id], onDelete: Restrict)
+
+  @@index([clientId, platform, status])
+  @@index([status, createdAt])
+}
+
+model RechargeTransaction {
+  id                    String                    @id @default(cuid())
+  code                  String                    @unique
+  idempotencyKey        String
+  clientId              String
+  accountId             String
+  accountTypeSnapshot   String
+  creditDaysSnapshot    Int?
+  rechargeStatus        String                    @default("REQUESTED")
+  isdRateSnapshot       Decimal                   @default(0.05)
+  agencyFeeRateSnapshot Decimal                   @default(0.10)
+  vatRateSnapshot       Decimal                   @default(0.15)
+  pautaAmount           Decimal                   @default(0)
+  isdAmount             Decimal                   @default(0)
+  agencyFeeAmount       Decimal                   @default(0)
+  vatBaseAmount         Decimal                   @default(0)
+  vatAmount             Decimal                   @default(0)
+  totalAmount           Decimal                   @default(0)
+  completedAt           DateTime?
+  version               Int                       @default(0)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  client                Client                    @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  account               Account                   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  details               TransactionDetail[]
+  payment               Payment?
+  verifications         TransactionVerification[]
+  invoice               Invoice?
+
+  @@unique([clientId, idempotencyKey])
+  @@index([clientId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([rechargeStatus, createdAt])
+}
+
+model TransactionDetail {
+  id                      String                @id @default(cuid())
+  transactionId           String
+  pautaId                 String
+  platformSnapshot        String
+  externalAccountSnapshot String?
+  requestedAmount         Decimal
+  isdAmount               Decimal
+  agencyFeeAmount         Decimal
+  vatBaseAmount           Decimal
+  vatAmount               Decimal
+  totalAmount             Decimal
+  effectiveRechargeAmount Decimal?
+  status                  String                @default("REQUESTED")
+  pausedAt                DateTime?
+  effectiveRechargeDate   DateTime?
+  completedAt             DateTime?
+  version                 Int                   @default(0)
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  transaction             RechargeTransaction   @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  pauta                   Pauta                 @relation(fields: [pautaId], references: [id], onDelete: Restrict)
+  balanceMovement         PautaBalanceMovement?
+
+  @@unique([transactionId, pautaId])
+  @@index([pautaId, status])
+  @@index([transactionId, status])
+}
+
+// Append-only application audit. IDs are retained even across legacy migrations.
+model PlatformLifecycleAudit {
+  id           String   @id @default(cuid())
+  clientId     String
+  pautaId      String
+  detailId     String?
+  action       String
+  actorId      String
+  createdAt    DateTime @default(now())
+
+  @@index([clientId, createdAt])
+}
+
+model Payment {
+  id                String                    @id @default(cuid())
+  transactionId     String                    @unique
+  status            String                    @default("PENDING")
+  expectedAmount    Decimal
+  confirmedAmount   Decimal?
+  dueDate           DateTime?
+  confirmedAt       DateTime?
+  version           Int                       @default(0)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  transaction       RechargeTransaction       @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  receipts          PaymentReceipt[]
+  verifications     TransactionVerification[]
+  confirmedEvidence ConfirmedPaymentEvidence?
+
+  @@index([status, dueDate])
+}
+
+model PaymentReceipt {
+  id                String                    @id @default(cuid())
+  paymentId         String
+  originalName      String
+  mimeType          String
+  size              Int
+  url               String
+  checksum          String
+  status            String                    @default("LOADED")
+  version           Int                       @default(0)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  payment           Payment                   @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  ocrResult         OcrResult?
+  verification      TransactionVerification?
+  confirmedEvidence ConfirmedPaymentEvidence?
+
+  @@index([paymentId, createdAt])
+  @@index([checksum])
+}
+
+model OcrResult {
+  id                      String                   @id @default(cuid())
+  receiptId               String                   @unique
+  bank                    String?
+  detectedAmount          Decimal?
+  detectedDate            DateTime?
+  detectedTransactionCode String?
+  originator              String?
+  confidence              Decimal?
+  rawText                 String?
+  failureReason           String?
+  version                 Int                      @default(0)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  receipt                 PaymentReceipt           @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  verification            TransactionVerification?
+
+  @@index([detectedTransactionCode])
+}
+
+model TransactionVerification {
+  id                   String                     @id @default(cuid())
+  transactionId        String
+  paymentId            String
+  receiptId            String                     @unique
+  ocrResultId          String?                    @unique
+  status               String                     @default("PENDING")
+  expectedAmount       Decimal
+  detectedAmount       Decimal?
+  amountMatches        Boolean?
+  issues               String                     @default("[]")
+  requiresManualReview Boolean                    @default(true)
+  decidedBy            String?
+  decidedAt            DateTime?
+  decisionNotes        String?
+  reviewReason         String?
+  rejectionReason      String?
+  version              Int                        @default(0)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  transaction          RechargeTransaction        @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  payment              Payment                    @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  receipt              PaymentReceipt             @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  ocrResult            OcrResult?                 @relation(fields: [ocrResultId], references: [id], onDelete: Restrict)
+  confirmedEvidence    ConfirmedPaymentEvidence?
+  decisionAudits       VerificationDecisionAudit[]
+
+  @@index([status, createdAt])
+  @@index([transactionId, createdAt])
+  @@index([paymentId, createdAt])
+}
+
+model ConfirmedPaymentEvidence {
+  id                      String                  @id @default(cuid())
+  paymentId               String                  @unique
+  receiptId               String                  @unique
+  verificationId          String                  @unique
+  receiptChecksum         String                  @unique
+  bankReferenceNormalized String?                 @unique
+  confirmedAt             DateTime
+  payment                 Payment                 @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  receipt                 PaymentReceipt          @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  verification            TransactionVerification @relation(fields: [verificationId], references: [id], onDelete: Restrict)
+
+  @@index([confirmedAt])
+}
+
+model VerificationDecisionAudit {
+  id                  String                  @id @default(cuid())
+  verificationId      String
+  previousStatus      String
+  resultingStatus     String
+  decision            String
+  administratorUserId String
+  notes               String?
+  reviewReason        String?
+  rejectionReason     String?
+  createdAt           DateTime                @default(now())
+  verification        TransactionVerification @relation(fields: [verificationId], references: [id], onDelete: Restrict)
+
+  @@index([administratorUserId, createdAt])
+  @@index([decision, createdAt])
+  @@index([verificationId, createdAt])
+}
+
+model Invoice {
+  id              String              @id @default(cuid())
+  transactionId   String              @unique
+  invoiceNumber   String              @unique
+  status          String              @default("ISSUED")
+  issuedAt        DateTime            @default(now())
+  pautaSubtotal   Decimal
+  isdAmount       Decimal
+  agencyFeeAmount Decimal
+  vatBaseAmount   Decimal
+  vatAmount       Decimal
+  totalAmount     Decimal
+  documentUrl     String?
+  version         Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  transaction     RechargeTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+
+  @@index([status, issuedAt])
+}
+
+model PautaBalanceMovement {
+  id                  String            @id @default(cuid())
+  pautaId             String
+  transactionDetailId String            @unique
+  type                String            @default("RECHARGE")
+  amount              Decimal
+  balanceBefore       Decimal
+  balanceAfter        Decimal
+  createdAt           DateTime          @default(now())
+  pauta               Pauta             @relation(fields: [pautaId], references: [id], onDelete: Restrict)
+  transactionDetail   TransactionDetail @relation(fields: [transactionDetailId], references: [id], onDelete: Restrict)
+
+  @@index([pautaId, createdAt])
+}

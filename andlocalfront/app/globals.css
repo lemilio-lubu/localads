@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "./design-system/tokens.css";
+
+:root {
+  --background: var(--color-canvas);
+  --foreground: var(--color-text);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-family-sans);
+}
+
+button,
+input { font: inherit; }
+
+* { box-sizing: border-box; }

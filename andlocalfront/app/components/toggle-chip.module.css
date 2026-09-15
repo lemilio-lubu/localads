@@ -1,0 +1,6 @@
+.chip { display: inline-grid; min-width: var(--space-5); min-height: var(--space-3); place-items: center; border: 0; border-radius: var(--radius-pill); outline: 0; background: transparent; padding: var(--space-half); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
+.chip[aria-pressed="true"] { box-shadow: 0 0 0 3px rgb(67 67 67 / 16%); }
+.chip:focus-visible { box-shadow: var(--focus-ring); }
+.chip:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) { .chip:hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 9%); } }
+@media (prefers-reduced-motion: reduce) { .chip { transition-duration: 0ms; } }

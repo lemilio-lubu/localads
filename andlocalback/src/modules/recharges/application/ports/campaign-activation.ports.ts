@@ -1,0 +1,97 @@
+import { ActivationRequestStatus, PautaStatus } from "../../domain/model/domain-status";
+import {
+  AccountStatus,
+  AccountType,
+  AdvertisingPlatform,
+  ClientStatus,
+} from "../../domain/recharge.types";
+
+export type CampaignActivationContext = Readonly<{
+  client: Readonly<{ id: string; status: ClientStatus }> | null;
+  account: Readonly<{
+    id: string;
+    clientId: string;
+    status: AccountStatus;
+    type: AccountType;
+  }> | null;
+  pauta: Readonly<{
+    id: string;
+    clientId: string;
+    platform: AdvertisingPlatform;
+    status: PautaStatus;
+  }> | null;
+  openRequest: CampaignActivationRequestView | null;
+}>;
+
+export type CampaignActivationAccountContext = Readonly<{
+  client: CampaignActivationContext["client"];
+  account: CampaignActivationContext["account"];
+}>;
+
+export type CampaignActivationRequestView = Readonly<{
+  kind?: "ACTIVATION" | "REACTIVATION";
+  id: string;
+  clientId: string;
+  platform: AdvertisingPlatform;
+  requesterName: string;
+  externalAccountId: string;
+  phone: string;
+  firstRechargeAmount: number;
+  status: ActivationRequestStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+  pautaId: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}>;
+
+export type CreatedCampaignActivationRequest = Readonly<{
+  id: string;
+  clientId: string;
+  platform: AdvertisingPlatform;
+  requesterName: string;
+  externalAccountId: string;
+  phone: string;
+  firstRechargeAmount: string;
+}>;
+
+export type CampaignActivationDecision = Readonly<{
+  requestId: string;
+  administratorId: string;
+  expectedVersion: number;
+  decidedAt: Date;
+}>;
+
+export type ApproveCampaignActivationDecision = CampaignActivationDecision & Readonly<{
+  pautaId: string;
+}>;
+
+export type RejectCampaignActivationDecision = CampaignActivationDecision & Readonly<{
+  reason: string;
+}>;
+
+export type CampaignActivationListFilters = Readonly<{
+  status?: ActivationRequestStatus;
+  clientId?: string;
+}>;
+
+/**
+ * Persistence boundary for first-pauta activation. Mutation methods must use
+ * expectedVersion as a compare-and-swap guard. create and approve are atomic:
+ * create enforces one open request per client/platform; approve creates exactly
+ * one ACTIVE pauta and links it to the approved request.
+ */
+export interface CampaignActivationPersistencePort {
+  loadAccountContext(accountId: string): Promise<CampaignActivationAccountContext>;
+  loadRequestContext(accountId: string, platform: AdvertisingPlatform): Promise<CampaignActivationContext>;
+  create(request: CreatedCampaignActivationRequest): Promise<CampaignActivationRequestView>;
+  findById(requestId: string): Promise<CampaignActivationRequestView | null>;
+  startReview(decision: CampaignActivationDecision): Promise<CampaignActivationRequestView>;
+  approve(decision: ApproveCampaignActivationDecision): Promise<CampaignActivationRequestView>;
+  reject(decision: RejectCampaignActivationDecision): Promise<CampaignActivationRequestView>;
+  list(filters: CampaignActivationListFilters): Promise<readonly CampaignActivationRequestView[]>;
+}
+
+export const CAMPAIGN_ACTIVATION_PERSISTENCE = Symbol("CAMPAIGN_ACTIVATION_PERSISTENCE");
