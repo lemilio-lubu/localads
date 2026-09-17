@@ -53,7 +53,7 @@ describe("persistencia POSTPAGO fase 4", () => {
     expect(result.details).toHaveLength(2);
     expect(result.payment).toMatchObject({ status: TransactionPaymentStatus.IN_CREDIT, expectedAmount: 1058 });
     expect(result.payment.dueDate).toBe("2026-10-10T12:00:00.000Z");
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(1058);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("1058.00");
     expect((await prisma.rechargeTransaction.findUnique({ where: { id: result.id } }))?.creditDaysSnapshot).toBe(30);
   });
 
@@ -61,7 +61,7 @@ describe("persistencia POSTPAGO fase 4", () => {
     const winner = await postpaid.savePostpaid(createPostpaidRecord("retry", "idem-first", 500, 300));
 
     expect(winner.id).toBe("transaction-first");
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(1058);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("1058.00");
     expect(await prisma.rechargeTransaction.count({ where: { clientId } })).toBe(1);
   });
 
@@ -71,7 +71,7 @@ describe("persistencia POSTPAGO fase 4", () => {
 
     expect(await prisma.rechargeTransaction.count({ where: { id: "transaction-insufficient" } })).toBe(0);
     expect(await prisma.payment.count({ where: { id: "payment-insufficient" } })).toBe(0);
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(1058);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("1058.00");
   });
 
   it("marca vencimientos sobre Payment sin modificar el estado operativo", async () => {
@@ -97,12 +97,12 @@ describe("persistencia POSTPAGO fase 4", () => {
     await verification.approveAtomically({ context, administratorId: "admin", notes: null, decidedAt: new Date("2026-09-10T00:00:00.000Z") });
 
     expect((await prisma.payment.findUnique({ where: { id: "payment-first" } }))?.status).toBe("PAID");
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(0);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("0.00");
     expect((await prisma.rechargeTransaction.findUnique({ where: { id: "transaction-first" } }))?.rechargeStatus).toBe("COMPLETED");
     expect((await prisma.transactionDetail.findFirst({ where: { transactionId: "transaction-first" } }))?.status).toBe("COMPLETED");
     await expect(verification.approveAtomically({ context, administratorId: "admin", notes: null, decidedAt: new Date() }))
       .rejects.toMatchObject({ code: "VERIFICATION_ALREADY_RESOLVED" });
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(0);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("0.00");
   });
 
   it("rechazar evidencia POSTPAGO conserva la obligacion y el estado operativo", async () => {
@@ -117,7 +117,7 @@ describe("persistencia POSTPAGO fase 4", () => {
 
     expect((await prisma.payment.findUnique({ where: { id: "payment-reject" } }))?.status).toBe("IN_CREDIT");
     expect((await prisma.rechargeTransaction.findUnique({ where: { id: "transaction-reject" } }))?.rechargeStatus).toBe("PROCESSING");
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(132.25);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("132.25");
   });
 
   it("dos reservas concurrentes comparan el credito vivo y solo una puede consumirlo", async () => {
@@ -131,7 +131,7 @@ describe("persistencia POSTPAGO fase 4", () => {
     const rejected = results.find((result): result is PromiseRejectedResult => result.status === "rejected")!;
     expect(rejected.reason).toBeInstanceOf(ApplicationError);
     expect(rejected.reason.code).toBe("CREDIT_INSUFFICIENT");
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(661.25);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("661.25");
     expect(await prisma.rechargeTransaction.count({ where: { id: { in: ["transaction-race-a", "transaction-race-b"] } } })).toBe(1);
   });
 
@@ -143,8 +143,26 @@ describe("persistencia POSTPAGO fase 4", () => {
     ]);
 
     expect(second.id).toBe(first.id);
-    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed).toBe(661.25);
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("661.25");
     expect(await prisma.rechargeTransaction.count({ where: { idempotencyKey: "idem-same-key" } })).toBe(1);
+  });
+
+  it("el limite de credito se compara en centavos exactos, sin margen de punto flotante", async () => {
+    // 100.00 de pauta factura exactamente 132.25 (ISD 5% + comision 10%, IVA 15%).
+    // Con el limite fijado en ese mismo valor, la reserva cae justo en el borde:
+    // debe aceptarse, porque el credito disponible es exactamente el requerido.
+    await prisma.account.update({ where: { id: accountId }, data: { creditLimit: 132.25, creditUsed: 0 } });
+
+    await postpaid.savePostpaid(createPostpaidRecord("edge-exact", "idem-edge-exact", 100));
+
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("132.25");
+
+    // Y un centavo por encima del limite debe rechazarse.
+    await prisma.account.update({ where: { id: accountId }, data: { creditUsed: 0 } });
+    await expect(
+      postpaid.savePostpaid(createPostpaidRecord("edge-over", "idem-edge-over", 100.01)),
+    ).rejects.toMatchObject({ code: "CREDIT_INSUFFICIENT" });
+    expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("0.00");
   });
 
   function createPostpaidRecord(suffix: string, idempotencyKey: string, meta: number, google?: number) {

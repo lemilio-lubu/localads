@@ -77,8 +77,8 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
         status: account.status as AccountStatus,
         type: account.type as AccountType,
         creditDays: account.creditDays,
-        creditLimit: MonetaryAmount.fromMajorUnits(account.creditLimit),
-        creditUsed: MonetaryAmount.fromMajorUnits(account.creditUsed),
+        creditLimit: decimalToMonetaryAmount(account.creditLimit),
+        creditUsed: decimalToMonetaryAmount(account.creditUsed),
       },
       pautas: pautas.map((record) => new Pauta({
         id: record.id,
@@ -106,7 +106,9 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
     const { transaction, payment } = record;
     const replay = await this.findPostpaidByIdempotencyKey(transaction.clientId, transaction.idempotencyKey);
     if (replay) return replay;
-    const total = transaction.totals.totalAmount.toSafeNumber();
+    // La reserva de crédito se decide en centavos enteros: comparar el límite
+    // en punto flotante haría que el borde exacto dependiera del ruido binario.
+    const totalCents = Number(transaction.totals.totalAmount.cents);
     try {
       const saved = await this.prisma.$transaction(async (database) => {
         // One conditional SQL write performs the availability check and the
@@ -114,11 +116,12 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
         // context snapshot previously read by the application.
         const reserved = await database.$executeRaw`
           UPDATE Account
-          SET creditUsed = ROUND(creditUsed + ${total}, 2)
+          SET creditUsed = (CAST(ROUND("creditUsed" * 100) AS INTEGER) + ${totalCents}) / 100.0
           WHERE id = ${transaction.accountId}
             AND status = 'ACTIVE'
             AND type = 'POSTPAGO'
-            AND ROUND(creditUsed + ${total}, 2) <= creditLimit
+            AND CAST(ROUND("creditUsed" * 100) AS INTEGER) + ${totalCents}
+                <= CAST(ROUND("creditLimit" * 100) AS INTEGER)
         `;
         if (reserved !== 1) {
           // A same-key request may have committed while this call waited for
