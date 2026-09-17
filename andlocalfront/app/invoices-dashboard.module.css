@@ -22,7 +22,9 @@
 .codeCell strong img { width: var(--icon-size-xs); height: var(--icon-size-xs); margin-right: var(--space-1); transform: rotate(180deg); }
 .codeCell span { color: var(--color-text-muted); font-size: var(--font-size-body); text-transform: lowercase; }
 .cell .amount { color: var(--color-brand); font-size: var(--font-size-body); }
-.platforms { display: flex; gap: var(--space-1); }
+/* Con tres plataformas los pills no caben en una linea: envuelven dentro de
+   la fila, que tiene alto de sobra. */
+.platforms { display: flex; flex-wrap: wrap; align-content: center; gap: var(--space-half); }
 .statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 .detailsButton { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; justify-self: end; border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-2); color: #fff; cursor: pointer; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
 .detailsButton:disabled { opacity: .5; cursor: not-allowed; }

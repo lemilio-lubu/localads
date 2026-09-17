@@ -85,13 +85,19 @@
   /* Typography */
   --font-family-sans: Arial, Helvetica, sans-serif;
   --font-family-mono: "Courier New", Courier, monospace;
-  --font-size-caption: 12px;
+  /* Escala modular sobre phi (1.618) con medio paso en raiz de phi:
+     10 - 13 - 16 - 20 - 26 - 33 - 42. Cinco de los tamanos ya caian en ella;
+     subhead y headline son los peldanos que faltaban y que obligaban a
+     escribir 28, 30 o 32 a mano. */
+  --font-size-caption: 13px;
   --font-size-micro: 10px;
   --font-size-body-sm: 14px;
   --font-size-body: 16px;
   --font-size-card-title: 18px;
   --font-size-nav: 20px;
   --font-size-title: 24px;
+  --font-size-subhead: 26px;
+  --font-size-headline: 33px;
   --font-size-display: 40px;
   --font-weight-regular: 400;
   --font-weight-semibold: 600;

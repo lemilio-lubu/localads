@@ -14,11 +14,11 @@
 .row:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
 .transferIcon { position: relative; display: grid; width: 54px; height: 54px; place-items: center; overflow: hidden; }
 .transferIcon img { width: 54px; height: 54px; }
-.transferIcon small { position: absolute; color: #45803e; font-size: 8px; font-weight: var(--font-weight-regular); }
+.transferIcon small { position: absolute; color: #45803e; font-size: var(--font-size-micro); font-weight: var(--font-weight-regular); }
 .cell { display: flex; min-width: 0; flex-direction: column; gap: 2px; font-style: normal; }
-.cell small { color: var(--color-text-muted); font-size: 11px; font-weight: var(--font-weight-bold); }
+.cell small { color: var(--color-text-muted); font-size: var(--font-size-micro); font-weight: var(--font-weight-bold); }
 .cell strong { overflow: hidden; color: var(--color-text-muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-regular); text-overflow: ellipsis; white-space: nowrap; }
-.cell em { overflow: hidden; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: 9px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.cell em { overflow: hidden; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-micro); font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
 .expected small, .expected strong { color: var(--color-brand); }
 .detected small, .detected strong { color: #08ad93; }
 .message { border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-3); color: var(--color-text-muted); text-align: center; }
@@ -26,7 +26,7 @@
 .modal { width: min(1120px, 100%); max-height: min(92vh, 860px); overflow-y: auto; padding: var(--space-5); }
 .modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
 .modalHeader small { color: var(--color-text-muted); }
-.modalHeader h2 { margin: 4px 0; font-size: 28px; }
+.modalHeader h2 { margin: 4px 0; font-size: var(--font-size-subhead); }
 .modalHeader p { margin: 0; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-caption); }
 .reviewGrid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: var(--space-3); margin-top: var(--space-4); }
 .previewPanel, .dataPanel { border-radius: 20px; background: var(--color-surface-raised); padding: var(--space-3); }
@@ -41,7 +41,7 @@
 .previewFailure { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); color: var(--color-danger); }
 .dataPanel h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-card-title); }
 .dataPanel dl { display: grid; gap: 0; margin: 0; }
-.dataPanel dl div { display: flex; justify-content: space-between; gap: var(--space-2); border-bottom: 1px solid var(--color-border); padding: 11px 0; font-size: 13px; }
+.dataPanel dl div { display: flex; justify-content: space-between; gap: var(--space-2); border-bottom: 1px solid var(--color-border); padding: 11px 0; font-size: var(--font-size-caption); }
 .dataPanel dt { color: var(--color-text-muted); }
 .dataPanel dd { margin: 0; font-weight: var(--font-weight-bold); text-align: right; }
 .dataPanel dd[data-match="false"] { color: var(--color-danger); }
@@ -52,7 +52,7 @@
 .issues { margin-top: var(--space-2); border-radius: 14px; background: #fff8e8; padding: 13px 16px; color: #795200; font-size: var(--font-size-caption); }
 .issues ul { margin: 6px 0 0; padding-left: 18px; }
 .actions { display: flex; justify-content: flex-end; gap: var(--space-1); margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-3); }
-.actions > button, .reviewForm button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: var(--radius-pill); padding: 0 18px; font: inherit; font-size: 13px; font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) ease, background-color var(--duration-fast) ease; }
+.actions > button, .reviewForm button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: var(--radius-pill); padding: 0 18px; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) ease, background-color var(--duration-fast) ease; }
 .actions > button:first-child { background: #7a5900; color: #fff; }
 .actions > button:last-child { background: var(--color-brand); color: #fff; }
 .actions button:active:not(:disabled) { transform: scale(.97); }
