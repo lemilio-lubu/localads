@@ -5,6 +5,7 @@ import { PrismaService } from "../../../../database/prisma.service";
 import { VerificationIssue, VerificationStatus } from "../../domain/recharge.types";
 import { AccountType } from "../../domain/recharge.types";
 import { TransactionPaymentStatus, TransactionRechargeStatus } from "../../domain/model/domain-status";
+import { MonetaryAmount } from "../../domain/value-objects/monetary-amount";
 import {
   DuplicatePaymentEvidence,
   ExtractedTransactionReceiptData,
@@ -243,9 +244,12 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
         // The credit is reserved when the POSTPAGO transaction is created and
         // released only after its payment is actually confirmed. Operational
         // recharge/detail states are intentionally untouched.
+        // La liberación también opera en centavos enteros, para que el crédito
+        // devuelto sea exactamente el reservado.
+        const releasedCents = Number(MonetaryAmount.fromMajorUnits(input.context.payment.expectedAmount).cents);
         await database.$executeRaw`
           UPDATE Account
-          SET creditUsed = MAX(0, ROUND(creditUsed - ${input.context.payment.expectedAmount}, 2))
+          SET creditUsed = MAX(0, CAST(ROUND("creditUsed" * 100) AS INTEGER) - ${releasedCents}) / 100.0
           WHERE id = ${input.context.transaction.accountId}
         `;
       }
