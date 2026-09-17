@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useRef, useState } from "react";
 import type { AccountType, AdvertisingPlatform } from "../design-system/types";
-import { resolveApiAssetUrl, type ClientTransactionDetail, type TransactionDetail } from "../lib/recharges-api";
+import { resolveApiAssetUrl, uploadPaymentReceipt, type ClientTransactionDetail, type TransactionDetail } from "../lib/recharges-api";
 import { paymentStatusLabel, rechargeStatusLabel, transactionDetailStatusLabel, verificationStatusLabel } from "../lib/status-labels";
 import ModalShell from "./modal-shell";
 import PlatformPill from "./platform-pill";
@@ -27,7 +28,30 @@ function DetailCard({ detail }: { detail: TransactionDetail }) {
   </article>;
 }
 
-export default function InvoiceDetailModal({ accountType, transaction, onClose }: { accountType: AccountType; transaction: ClientTransactionDetail | null; onClose: () => void }) {
+export default function InvoiceDetailModal({ accountType, transaction, onClose, onReceiptUploaded }: { accountType: AccountType; transaction: ClientTransactionDetail | null; onClose: () => void; onReceiptUploaded?: () => void }) {
+  const receiptInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  // El pago admite comprobante mientras no este confirmado. Un pago rechazado
+  // tambien lo admite: el cliente puede regularizar con una nueva evidencia.
+  const payment = transaction?.payment ?? null;
+  const acceptsReceipt = Boolean(payment) && ["IN_CREDIT", "OVERDUE", "REJECTED", "PENDING"].includes(payment!.status);
+
+  async function sendReceipt(file: File | null | undefined) {
+    if (!file || !payment) return;
+    setUploading(true); setUploadError("");
+    try {
+      await uploadPaymentReceipt(payment.id, file);
+      onReceiptUploaded?.();
+    } catch (reason: unknown) {
+      setUploadError(reason instanceof Error ? reason.message : "No fue posible cargar el comprobante");
+    } finally {
+      setUploading(false);
+      if (receiptInput.current) receiptInput.current.value = "";
+    }
+  }
+
   const receipt = transaction?.payment?.receipts.at(-1);
   return <ModalShell open={Boolean(transaction)} labelledBy="invoice-detail-title" className={styles.modal} onClose={onClose}>
     {transaction && <>
@@ -50,6 +74,12 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose }
       <div className={styles.documentActions} aria-label="Documentos de la transacción">
         {transaction.invoice?.documentUrl ? <button className={styles.documentAction} onClick={() => void openAuthenticatedFile(resolveApiAssetUrl(transaction.invoice!.documentUrl!))}><span className={styles.documentCircle}><Image src="/figma/document-invoice.svg" alt="" fill sizes="64px" /><span>factura</span></span><small>{transaction.invoice.invoiceNumber}</small></button> : <button className={styles.documentAction} disabled><span className={styles.documentCircle}><Image src="/figma/document-invoice.svg" alt="" fill sizes="64px" /><span>factura</span></span><small>Se emite al completar</small></button>}
         {receipt ? <button className={styles.documentAction} onClick={() => void openAuthenticatedFile(resolveApiAssetUrl(receipt.url))}><span className={styles.documentCircle}><Image src="/figma/document-transfer.svg" alt="" fill sizes="64px" /><span>transf.</span></span><small>{receipt.originalName}</small></button> : <button className={styles.documentAction} disabled><span className={styles.documentCircle}><Image src="/figma/document-transfer.svg" alt="" fill sizes="64px" /><span>transf.</span></span><small>Sin comprobante</small></button>}
+        {acceptsReceipt && <div className={styles.uploadReceipt}>
+          <input ref={receiptInput} type="file" accept="image/png,image/jpeg,application/pdf" hidden onChange={(event) => void sendReceipt(event.target.files?.[0])} />
+          <button type="button" disabled={uploading} onClick={() => receiptInput.current?.click()}>{uploading ? "Cargando…" : receipt ? "Reemplazar transferencia" : "Subir transferencia"}</button>
+          <small>JPG, PNG o PDF · hasta 5 MB</small>
+          {uploadError && <small role="alert" className={styles.uploadError}>{uploadError}</small>}
+        </div>}
       </div>
       <div className={styles.platformGrid}>{transaction.details.map((detail) => <DetailCard key={detail.id} detail={detail} />)}</div>
     </>}
