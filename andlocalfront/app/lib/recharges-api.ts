@@ -56,13 +56,3 @@ export function resolveApiAssetUrl(path: string) {
   if (path.startsWith("/uploads/receipts/")) return `${apiUrl}/files/receipts/${encodeURIComponent(path.split("/").at(-1) ?? "")}`;
   return new URL(path, new URL(apiUrl).origin).toString();
 }
-
-// Compatibilidad temporal para las pantallas administrativas; se migrarán en fase 9.
-type LegacyVerification = { id: string; receiptId?: string; status: string; requestedAmount?: number; detectedAmount: number | null; confidence: number | null; amountMatches: boolean | null; issues: string[]; requiresManualReview?: boolean; failureReason?: string | null; decidedBy?: string | null; decidedAt: string | null; rejectionReason: string | null; createdAt: string };
-export type RechargeResponse = { id: string; accountId: string; accountType: "PREPAGO" | "POSTPAGO"; campaignId: string; platform: RechargePlatform; amount: number; paymentStatus: string; status: string; canTransitionToProcessing: boolean; receiptStatus: string | null; verification: LegacyVerification | null; receipt: null | { id: string; originalName: string; url: string }; receipts: Array<{ id: string; originalName: string; url: string }>; verifications: LegacyVerification[]; obligation: null | { id?: string; amount: number; status?: string; dueDate: string; createdAt: string }; createdAt: string };
-export type TransactionResponse = RechargeResponse & { history: Array<{ id: string; scope: string; status: string; note: string | null; createdAt: string }>; client?: { id: string; name: string; email: string } };
-export const getAccountTransactions = (accountId: string) => api<TransactionResponse[]>(`/transactions?accountId=${encodeURIComponent(accountId)}`);
-export const getAdminTransactions = () => api<TransactionResponse[]>("/transactions");
-async function decideLegacyVerification(id: string, action: "approve" | "reject", reason?: string) { return api<RechargeResponse>(`/recharges/${encodeURIComponent(id)}/verification/${action}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(reason ? { reason } : {}) }); }
-export const approvePrepaidVerification = (id: string) => decideLegacyVerification(id, "approve");
-export const rejectPrepaidVerification = (id: string, reason: string) => decideLegacyVerification(id, "reject", reason);

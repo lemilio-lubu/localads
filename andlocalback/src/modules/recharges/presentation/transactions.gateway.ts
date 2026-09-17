@@ -1,6 +1,5 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { TransactionRealtimeEvent, TransactionRealtimePublisher } from "../application/ports/recharge.ports";
 import { AccessTokenService } from "../../auth/access-token.service";
 import { AuthPrincipal } from "../../auth/auth.types";
 import { VerificationRealtimeEvent, VerificationRealtimePublisher } from "../application/ports/transaction-verification.ports";
@@ -11,7 +10,7 @@ const accountRoom = (accountId: string) => `account:${accountId}`;
   namespace: "/transactions",
   cors: { origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000", credentials: true },
 })
-export class TransactionsGateway implements TransactionRealtimePublisher, VerificationRealtimePublisher, OnGatewayConnection {
+export class TransactionsGateway implements VerificationRealtimePublisher, OnGatewayConnection {
   constructor(private readonly accessTokens: AccessTokenService) {}
   @WebSocketServer()
   private server!: Server;
@@ -45,13 +44,6 @@ export class TransactionsGateway implements TransactionRealtimePublisher, Verifi
     if (user.role === "ADMIN") client.join("transactions:admin");
     if (user.role === "CLIENT" && user.accountId) client.join(accountRoom(user.accountId));
     return { event: "transactions:subscribed", data: { connected: true } };
-  }
-
-  publish(event: TransactionRealtimeEvent) {
-    this.server
-      .to("transactions:admin")
-      .to(accountRoom(event.transaction.accountId))
-      .emit("transaction:changed", event);
   }
 
   publishPlatforms(clientId: string) {

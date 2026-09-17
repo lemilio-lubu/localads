@@ -21,7 +21,6 @@ import {
   ClientStatus,
 } from "../../domain/recharge.types";
 import { MonetaryAmount } from "../../domain/value-objects/monetary-amount";
-import { syncLegacyPlatform } from "./platform-lifecycle";
 
 const OPEN_STATUSES = [ActivationRequestStatus.PENDING, ActivationRequestStatus.IN_REVIEW] as const;
 
@@ -205,7 +204,6 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
           },
         });
         if (updated.count !== 1) throw alreadyResolved();
-        await syncLegacyPlatform(database, request.clientId, request.platform, "ACTIVE");
         await database.client.update({ where: { id: request.clientId }, data: { platformsVersion: { increment: 1 } } });
         await database.platformLifecycleAudit.create({ data: { clientId: request.clientId, pautaId: pauta.id, action: existingPauta ? "REACTIVATE" : "ACTIVATE", actorId: decision.administratorId } });
         const saved = await database.campaignActivationRequest.findUniqueOrThrow({ where: { id: request.id } });

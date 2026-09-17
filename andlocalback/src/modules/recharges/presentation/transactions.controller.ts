@@ -2,10 +2,8 @@ import {
   Body,
   Controller,
   ForbiddenException,
-  Get,
   Headers,
   Post,
-  Query,
   UploadedFile,
   UseFilters,
   UseInterceptors,
@@ -17,7 +15,6 @@ import { ApplicationError } from "../../../common/errors/application.error";
 import { RequestPrepaidTransaction } from "../application/use-cases/request-prepaid-transaction";
 import { RequestPostpaidTransaction } from "../application/use-cases/request-postpaid-transaction";
 import { TransactionReceiptOcrDispatcher } from "../application/services/transaction-receipt-ocr-dispatcher";
-import { ListAccountTransactions } from "../application/use-cases/list-account-transactions";
 import { ApplicationErrorFilter } from "./application-error.filter";
 import { RequestPrepaidTransactionDto } from "./dto/request-prepaid-transaction.dto";
 import { RequestPostpaidTransactionDto } from "./dto/request-postpaid-transaction.dto";
@@ -28,17 +25,10 @@ const idempotencyKeyPattern = /^[A-Za-z0-9._:-]{8,128}$/;
 @UseFilters(ApplicationErrorFilter)
 export class TransactionsController {
   constructor(
-    private readonly listTransactions: ListAccountTransactions,
     private readonly requestPrepaidTransaction: RequestPrepaidTransaction,
     private readonly ocrDispatcher: TransactionReceiptOcrDispatcher,
     private readonly requestPostpaidTransaction: RequestPostpaidTransaction,
   ) {}
-
-  @Get()
-  @Roles("ADMIN")
-  list(@Query("accountId") accountId?: string) {
-    return this.listTransactions.execute(accountId);
-  }
 
   @Post("prepaid")
   @Roles("CLIENT")

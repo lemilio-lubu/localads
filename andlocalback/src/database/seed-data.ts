@@ -19,15 +19,10 @@ export async function seedBackendData(database: PrismaClient) {
       create: { id: account.id, clientId: account.clientId, status: "ACTIVE", type: account.type, creditDays: account.creditDays, creditLimit: account.creditLimit },
     });
     for (const platform of ["META", "GOOGLE"] as const) {
-      const pauta = await database.pauta.upsert({
+      await database.pauta.upsert({
         where: { clientId_platform: { clientId: account.clientId, platform } },
         update: {},
         create: { clientId: account.clientId, platform, status: "ACTIVE", activatedAt: new Date() },
-      });
-      await database.campaign.upsert({
-        where: { accountId_platform: { accountId: account.id, platform } },
-        update: { status: pauta.status === "ACTIVE" ? "ACTIVE" : "INACTIVE" },
-        create: { id: `${account.id}-${platform.toLowerCase()}`, accountId: account.id, platform, status: pauta.status === "ACTIVE" ? "ACTIVE" : "INACTIVE" },
       });
     }
   }
