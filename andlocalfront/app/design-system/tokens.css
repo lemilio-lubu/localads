@@ -68,10 +68,15 @@
   --control-height: 48px;
   --control-height-compact: 32px;
   --button-height: 40px;
-  --radius-control: 24px;
-  --radius-card: 32px;
-  --radius-menu: 16px;
+  /* Escala de radios sobre phi: 8 - 13 - 21 - 34. Los valores que se escribian
+     a mano (12, 14, 20) caian a uno o dos pixeles de un peldano, asi que
+     adoptarla acerca los radios en vez de alejarlos. */
+  --radius-marker: 2px;   /* fuera de escala a proposito: marcadores de 9px,
+                             donde cualquier radio mayor los vuelve circulos */
   --radius-small: 8px;
+  --radius-menu: 13px;
+  --radius-control: 21px;
+  --radius-card: 34px;
   --radius-pill: 999px;
   --icon-size-xs: 16px;
   --icon-size-sm: 24px;
