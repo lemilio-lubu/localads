@@ -42,6 +42,11 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const getMyPautas = (clientId?: string) => { void clientId; return api<PautaResponse[]>("/me/pautas"); };
 export const getRechargeContext = () => api<RechargeContext>("/me/recharge-context");
+export function uploadPaymentReceipt(paymentId: string, receipt: File) {
+  const body = new FormData();
+  body.append("receipt", receipt);
+  return api<{ id: string; originalName: string; status: string }>(`/payments/${encodeURIComponent(paymentId)}/receipts`, { method: "POST", body });
+}
 export const getMyWallet = (clientId?: string) => { void clientId; return api<WalletResponse>("/me/wallet"); };
 export const getMyTransactions = (_clientId?: string, page = 1, limit = 50) => api<PageResponse<TransactionListItem>>(`/me/transactions?page=${page}&limit=${limit}`);
 export const getMyTransactionDetail = (_clientId: string | undefined, transactionId: string) => api<ClientTransactionDetail>(`/me/transactions/${encodeURIComponent(transactionId)}`);

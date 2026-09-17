@@ -83,3 +83,11 @@
 @media (prefers-reduced-motion: reduce) {
   .documentCircle { transition-duration: 0ms; }
 }
+
+/* Fase 3: cerrar el ciclo del pago postpago desde el propio detalle. */
+.uploadReceipt { display: grid; justify-items: center; gap: var(--space-half); text-align: center; }
+.uploadReceipt button { border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: var(--space-1) var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
+.uploadReceipt button:disabled { opacity: .7; cursor: progress; }
+.uploadReceipt button:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.uploadReceipt small { color: var(--color-text-muted); font-size: var(--font-size-micro); }
+.uploadError { color: var(--color-danger); font-weight: var(--font-weight-bold); }
