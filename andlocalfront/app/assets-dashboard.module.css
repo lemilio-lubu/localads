@@ -104,7 +104,7 @@
 @media (max-width: 680px) {
   .lockedLabel { top: var(--space-3); right: var(--space-3); }
   .lockedLabel small { font-size: var(--font-size-caption); line-height: var(--space-2); }
-  .lockedLabel strong { font-size: 18px; line-height: var(--space-3); }
+  .lockedLabel strong { font-size: var(--font-size-card-title); line-height: var(--space-3); }
 }
 
 /* El credito cabe en la tarjeta de total: es informacion financiera del mismo
