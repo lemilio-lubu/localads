@@ -4,11 +4,14 @@
 .filters fieldset { display: flex; min-width: 0; align-items: center; gap: var(--space-2); border: 0; margin: 0; padding: 0; }
 .filters legend { float: left; margin-right: var(--space-2); padding: 0; color: #000; font-size: var(--font-size-body); }
 .dateFilter label { display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.dateFilter input { width: 128px; height: var(--space-4); border: 0; border-radius: var(--radius-small); outline: 0; background: transparent; color: var(--color-text-muted); font-size: var(--font-size-caption); transition: color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.dateFilter input { width: 148px; height: var(--control-height-compact); border: 1px solid var(--color-border); border-radius: var(--radius-pill); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); transition: color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
 .dateFilter input:focus-visible { box-shadow: var(--focus-ring); }
 .platformFilter { justify-content: flex-end; }
 .filterButton { display: inline-grid; min-width: var(--space-9); height: var(--space-3); place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; cursor: pointer; padding: 0; transition: box-shadow var(--duration-fast) var(--ease-out); }
-.filterButton[aria-pressed="true"] { box-shadow: 0 0 0 3px rgb(67 67 67 / 18%); }
+.filterButton[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-brand); }
+/* Sin seleccion, todas valen igual. Con una activa, el resto se atenua
+   para que el filtro aplicado se lea de un vistazo. */
+.platformFilter:has([aria-pressed="true"]) .filterButton[aria-pressed="false"] { opacity: .4; }
 .filterButton:focus-visible, .detailsButton:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
 .invoiceList { display: grid; gap: var(--space-2); padding-top: var(--space-3); }
 .invoiceRow { display: grid; grid-template-columns: 100px minmax(140px, 1fr) 148px 168px 104px 80px; min-height: 112px; align-items: center; gap: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); box-shadow: var(--shadow-card); transition: border-color var(--duration-ui) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out); }
@@ -25,11 +28,13 @@
 .detailsButton:disabled { opacity: .5; cursor: not-allowed; }
 .filterButton:active { box-shadow: 0 0 0 3px rgb(67 67 67 / 24%); }
 .detailsButton:not(:disabled):active { transform: scale(.97); background: #084600; }
-.emptyState { margin: var(--space-5) 0; color: var(--color-text-muted); text-align: center; }
+.emptyState { display: grid; justify-items: center; gap: var(--space-1); margin: var(--space-5) 0; color: var(--color-text-muted); text-align: center; }
+.emptyState p { margin: 0; max-width: 46ch; }
+.emptyState strong { color: var(--color-text); font-size: var(--font-size-card-title); }
 
 @media (hover: hover) and (pointer: fine) {
   .dateFilter input:hover { color: var(--color-text); box-shadow: 0 0 0 2px rgb(67 67 67 / 8%); }
-  .filterButton:hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 12%); }
+  .filterButton:hover { opacity: 1; box-shadow: 0 0 0 3px rgb(67 67 67 / 12%); }
   .invoiceRow:hover { border-color: rgb(11 89 1 / 14%); box-shadow: var(--shadow-panel); }
   .detailsButton:not(:disabled):hover { background: #0d6802; box-shadow: 0 8px 18px rgb(11 89 1 / 16%); }
 }
@@ -65,3 +70,6 @@
 .copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); text-transform: uppercase; letter-spacing: .06em; }
 .copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
 @media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } }
+
+.emptyAction { display: inline-grid; min-height: var(--button-height); align-content: center; margin-top: var(--space-1); border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: none; cursor: pointer; }
+.emptyAction:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
