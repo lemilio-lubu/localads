@@ -16,9 +16,9 @@
 .transferIcon img { width: 54px; height: 54px; }
 .transferIcon small { position: absolute; color: #45803e; font-size: 8px; font-weight: var(--font-weight-regular); }
 .cell { display: flex; min-width: 0; flex-direction: column; gap: 2px; font-style: normal; }
-.cell small { color: rgb(67 67 67 / 70%); font-size: 11px; font-weight: var(--font-weight-bold); }
+.cell small { color: var(--color-text-muted); font-size: 11px; font-weight: var(--font-weight-bold); }
 .cell strong { overflow: hidden; color: var(--color-text-muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-regular); text-overflow: ellipsis; white-space: nowrap; }
-.cell em { overflow: hidden; color: var(--color-text-subtle); font-family: var(--font-family-mono); font-size: 9px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.cell em { overflow: hidden; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: 9px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
 .expected small, .expected strong { color: var(--color-brand); }
 .detected small, .detected strong { color: #08ad93; }
 .message { border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-3); color: var(--color-text-muted); text-align: center; }

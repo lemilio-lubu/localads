@@ -2,11 +2,11 @@
 .sidebar { min-height: 100vh; border-radius: 0 var(--radius-control) var(--radius-control) 0; background: var(--color-surface-muted); padding: var(--space-9) var(--space-6); }
 .brand { display: flex; height: 40px; align-items: center; }
 .sidebar nav { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-7); }
-.sidebar nav a, .sidebar nav span { width: max-content; color: rgb(67 67 67 / 38%); font-size: var(--font-size-nav); font-weight: var(--font-weight-bold); text-decoration: none; }
+.sidebar nav a, .sidebar nav span { width: max-content; color: var(--color-text-muted); font-size: var(--font-size-nav); font-weight: var(--font-weight-bold); text-decoration: none; }
 .sidebar nav .active { border-bottom: 2px solid var(--color-text); color: var(--color-text); padding-bottom: var(--space-half); }
 .workspace { min-width: 0; padding: var(--space-7) var(--space-6) var(--space-8); }
 .workspace > header { display: flex; height: var(--space-8); align-items: center; justify-content: space-between; }
-.workspace h1 { margin: 0; color: #ededed; font-size: var(--font-size-display); line-height: 1; }
+.workspace h1 { margin: 0; color: var(--color-text-subtle); font-size: var(--font-size-display); line-height: 1; }
 
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }

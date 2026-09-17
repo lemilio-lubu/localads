@@ -3,8 +3,8 @@
 .filters { display: flex; min-height: var(--space-12); align-items: center; justify-content: space-between; gap: var(--space-5); border-bottom: 2px solid #d9d9d9; }
 .filters fieldset { display: flex; min-width: 0; align-items: center; gap: var(--space-2); border: 0; margin: 0; padding: 0; }
 .filters legend { float: left; margin-right: var(--space-2); padding: 0; color: #000; font-size: var(--font-size-body); }
-.dateFilter label { display: flex; align-items: center; gap: var(--space-1); color: rgb(0 0 0 / 50%); font-size: var(--font-size-caption); }
-.dateFilter input { width: 128px; height: var(--space-4); border: 0; border-radius: var(--radius-small); outline: 0; background: transparent; color: rgb(0 0 0 / 50%); font-size: var(--font-size-caption); transition: color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.dateFilter label { display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.dateFilter input { width: 128px; height: var(--space-4); border: 0; border-radius: var(--radius-small); outline: 0; background: transparent; color: var(--color-text-muted); font-size: var(--font-size-caption); transition: color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
 .dateFilter input:focus-visible { box-shadow: var(--focus-ring); }
 .platformFilter { justify-content: flex-end; }
 .filterButton { display: inline-grid; min-width: var(--space-9); height: var(--space-3); place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; cursor: pointer; padding: 0; transition: box-shadow var(--duration-fast) var(--ease-out); }
@@ -12,12 +12,12 @@
 .filterButton:focus-visible, .detailsButton:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
 .invoiceList { display: grid; gap: var(--space-2); padding-top: var(--space-3); }
 .invoiceRow { display: grid; grid-template-columns: 112px minmax(176px, 1fr) 120px 80px 160px 80px; min-height: 112px; align-items: center; gap: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); box-shadow: var(--shadow-card); transition: border-color var(--duration-ui) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out); }
-.cell { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); color: rgb(67 67 67 / 70%); font-size: var(--font-size-body-sm); line-height: 1.25; }
+.cell { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.25; }
 .cell strong { font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
 .cell span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .codeCell strong { display: flex; align-items: center; color: var(--color-brand); }
 .codeCell strong img { width: var(--icon-size-xs); height: var(--icon-size-xs); margin-right: var(--space-1); transform: rotate(180deg); }
-.codeCell span { color: rgb(67 67 67 / 50%); font-size: var(--font-size-body); text-transform: lowercase; }
+.codeCell span { color: var(--color-text-muted); font-size: var(--font-size-body); text-transform: lowercase; }
 .cell .amount { color: var(--color-brand); font-size: var(--font-size-body); }
 .platforms { display: flex; gap: var(--space-1); }
 .statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }

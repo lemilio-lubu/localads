@@ -1,6 +1,6 @@
 .pill { display: inline-grid; place-items: center; border-radius: var(--radius-pill); color: #fff; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); line-height: 1; white-space: nowrap; }
 .compact { min-width: var(--space-6); height: var(--space-3); padding-inline: var(--space-1); }
 .regular { min-width: var(--space-9); height: var(--space-3); padding-inline: var(--space-1); }
-.meta { background: #0069c7; color: #fff; }
-.google { background: #765700; color: #fff; }
-.tiktok { background: #c51640; color: #fff; }
+.meta { background: var(--color-meta-strong); color: #fff; }
+.google { background: var(--color-google-strong); color: #fff; }
+.tiktok { background: var(--color-tiktok-strong); color: #fff; }
