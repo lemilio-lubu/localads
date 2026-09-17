@@ -12,6 +12,7 @@ import {
   VerificationListItemView,
   Phase7QueryPort,
   PautaQueryView,
+  RechargeContextView,
   TransactionDetailQueryView,
   TransactionListItemView,
   TransactionPaymentQueryView,
@@ -25,6 +26,9 @@ import {
   TransactionRechargeStatus,
 } from "../../domain/model/domain-status";
 import { AccountType, AdvertisingPlatform, VerificationIssue, VerificationStatus } from "../../domain/recharge.types";
+import { AndPricingPolicy } from "../../domain/policies/and-pricing.policy";
+import { MonetaryAmount } from "../../domain/value-objects/monetary-amount";
+import { decimalToMonetaryAmount } from "./prisma-multi-recharge.repository";
 
 const transactionListSelect = {
   id: true,
@@ -89,6 +93,38 @@ type AdminDetailRecord = Prisma.RechargeTransactionGetPayload<{ select: typeof a
 @Injectable()
 export class PrismaPhase7QueryRepository implements Phase7QueryPort {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getRechargeContext(clientId: string): Promise<RechargeContextView | null> {
+    const account = await this.prisma.account.findFirst({
+      where: { clientId, status: "ACTIVE" },
+      select: { id: true, type: true, creditDays: true, creditLimit: true, creditUsed: true },
+      orderBy: { id: "asc" },
+    });
+    if (!account) return null;
+
+    const limit = decimalToMonetaryAmount(account.creditLimit);
+    const used = decimalToMonetaryAmount(account.creditUsed);
+    // El disponible nunca es negativo: si lo usado supera al limite por un
+    // ajuste manual, se informa cero en vez de una cifra sin sentido.
+    const available = limit.cents > used.cents ? limit.subtract(used) : MonetaryAmount.zero();
+
+    return {
+      account: {
+        id: account.id,
+        type: account.type as AccountType,
+        creditDays: account.creditDays,
+        creditLimit: limit.toSafeNumber(),
+        creditUsed: used.toSafeNumber(),
+        creditAvailable: available.toSafeNumber(),
+      },
+      rates: {
+        isd: AndPricingPolicy.ISD_RATE_BASIS_POINTS / 10_000,
+        agencyFee: AndPricingPolicy.AGENCY_COMMISSION_RATE_BASIS_POINTS / 10_000,
+        vat: AndPricingPolicy.VAT_RATE_BASIS_POINTS / 10_000,
+      },
+      pautas: await this.listPautasByClient(clientId),
+    };
+  }
 
   async listPautasByClient(clientId: string): Promise<readonly PautaQueryView[]> {
     const records = await this.prisma.pauta.findMany({

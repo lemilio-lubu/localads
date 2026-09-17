@@ -7,7 +7,7 @@ import ActionButton from "./components/action-button";
 import ModalShell from "./components/modal-shell";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
 import type { AccountType } from "./design-system/types";
-import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getMyPautas, type ActivationRequest, type PautaResponse, type RechargePlatform } from "./lib/recharges-api";
+import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getRechargeContext, getMyPautas, type ActivationRequest, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
 import styles from "./recharge-dashboard.module.css";
 
 const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = [
@@ -17,6 +17,7 @@ const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = 
 ];
 
 const money = new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+const percent = (rate: number) => `${(rate * 100).toFixed(rate * 100 % 1 === 0 ? 0 : 1)}%`;
 
 export default function RechargeDashboard({ accountType }: { accountType: AccountType }) {
   const revision = usePlatformUpdates();
@@ -25,6 +26,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
   const isPrepaid = mode === "prepago";
   const [pautas, setPautas] = useState<PautaResponse[]>([]);
   const [requests, setRequests] = useState<ActivationRequest[]>([]);
+  const [context, setContext] = useState<RechargeContext | null>(null);
   const [amounts, setAmounts] = useState<Record<RechargePlatform, string>>({ META: "", GOOGLE: "", TIKTOK: "" });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [receipt, setReceipt] = useState<File | null>(null);
@@ -43,8 +45,9 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
 
   useEffect(() => {
     let active = true;
-    Promise.all([getMyPautas(clientId), getActivationRequests(accountId)])
-      .then(([nextPautas, nextRequests]) => { if (active) {
+    Promise.all([getMyPautas(clientId), getActivationRequests(accountId), getRechargeContext().catch(() => null)])
+      .then(([nextPautas, nextRequests, nextContext]) => { if (active) {
+        setContext(nextContext);
         const removed = previousPautas.current.some((old) => old.status === "ACTIVE" && !nextPautas.some((pauta) => pauta.id === old.id && pauta.status === "ACTIVE"));
         if (removed) { setAcceptedTerms(false); setMessage("Una plataforma fue desactivada. Revisa los montos antes de continuar."); }
         setAmounts((current) => Object.fromEntries(platforms.map(({ id }) => [id, nextPautas.some((pauta) => pauta.platform === id && pauta.status === "ACTIVE") ? current[id] : ""])) as Record<RechargePlatform, string>);
@@ -64,8 +67,23 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
     return pauta && amount > 0 ? [{ pautaId: pauta.id, platform: id, amount }] : [];
   });
   const investment = lines.reduce((sum, item) => sum + item.amount, 0);
-  const estimatedTotal = investment * 1.3225;
-  const canSubmit = !loading && !submitting && acceptedTerms && lines.length > 0 && (!isPrepaid || receipt !== null);
+  // Las tasas llegan del backend para que la previsualizacion no se desvie de
+  // lo que realmente se facturara. Sin contexto no se muestra desglose.
+  const rates = context?.rates;
+  const round2 = (value: number) => Math.round(value * 100) / 100;
+  const breakdown = rates && investment > 0
+    ? (() => {
+        const isd = round2(investment * rates.isd);
+        const agencyFee = round2(investment * rates.agencyFee);
+        const vatBase = round2(investment + isd + agencyFee);
+        const vat = round2(vatBase * rates.vat);
+        return { isd, agencyFee, vat, total: round2(vatBase + vat) };
+      })()
+    : null;
+  const estimatedTotal = breakdown?.total ?? null;
+  const creditAvailable = context && context.account.type === "POSTPAGO" ? context.account.creditAvailable : null;
+  const exceedsCredit = creditAvailable !== null && estimatedTotal !== null && estimatedTotal > creditAvailable;
+  const canSubmit = !loading && !submitting && acceptedTerms && lines.length > 0 && !exceedsCredit && (!isPrepaid || receipt !== null);
 
   async function submitRecharge(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -103,7 +121,11 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
       <section className={`${styles.rechargePanel} ${isPrepaid ? styles.prepaidPanel : ""}`} aria-labelledby="recharge-title">
         <header className={styles.heading}>
           <h1 id="recharge-title">sistema de recargas</h1>
-          {investment > 0 && <div className={styles.summary}><span>Inversión {money.format(investment)}</span><strong>Total estimado {money.format(estimatedTotal)}</strong></div>}
+          {creditAvailable !== null && context && <p className={`${styles.creditInfo} ${exceedsCredit ? styles.creditExceeded : ""}`} role={exceedsCredit ? "alert" : undefined}>
+            {exceedsCredit
+              ? `El total supera tu crédito disponible de ${money.format(creditAvailable)}. Reduce los montos para continuar.`
+              : `Crédito disponible ${money.format(creditAvailable)} de ${money.format(context.account.creditLimit)} · ${context.account.creditDays} días de plazo`}
+          </p>}
         </header>
 
         <form onSubmit={submitRecharge} className={styles.form}>
@@ -122,18 +144,34 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
                 <label key={id} className={styles.platformField} htmlFor={`${id}-amount`}>
                   <Image src={id === "TIKTOK" ? "/figma/tiktok-modal.svg" : icon} alt="" width={30} height={30} /><span className={styles.currency}>$</span>
                   <input id={`${id}-amount`} type="number" inputMode="decimal" min="0" step="0.01" placeholder="500" value={amounts[id]} onChange={(event) => { setAmounts((current) => ({ ...current, [id]: event.target.value })); setMessage(""); setError(""); }} aria-label={`Monto para ${label}`} />
+                  <span className={styles.currentBalance}>{label}<b>saldo {money.format(pauta.currentBalance)}</b></span>
                 </label>
               );
             })}
           </div>
 
+          {investment > 0 && <div className={styles.summary}>
+            <span>Inversión en pautas <b>{money.format(investment)}</b></span>
+            {breakdown ? <>
+              <span>ISD ({percent(rates!.isd)}) <b>{money.format(breakdown.isd)}</b></span>
+              <span>Comisión AND ({percent(rates!.agencyFee)}) <b>{money.format(breakdown.agencyFee)}</b></span>
+              <span>IVA ({percent(rates!.vat)}) <b>{money.format(breakdown.vat)}</b></span>
+              <strong>Total a pagar {money.format(breakdown.total)}</strong>
+            </> : <strong>Calculando total…</strong>}
+          </div>}
           {isPrepaid && <button type="button" className={`${styles.uploadArea} ${receipt ? styles.hasReceipt : ""}`} onClick={() => fileInput.current?.click()}>
             <input ref={fileInput} type="file" accept="image/*,.pdf" onChange={selectReceipt} tabIndex={-1} />
-            <Image src="/figma/attachment.svg" alt="" width={36} height={36} /><span>{receipt?.name ?? "adjuntar comprobante"}</span>
+            <Image src="/figma/attachment.svg" alt="" width={36} height={36} /><span>{receipt?.name ?? "adjuntar comprobante"}</span><small className={styles.uploadHint}>JPG, PNG o PDF · hasta 5 MB</small>
           </button>}
 
           <label className={styles.terms}><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /><span className={styles.checkbox} aria-hidden="true"><Image src="/figma/check.svg" alt="" width={19} height={19} /></span><span>He leído términos y condiciones</span></label>
           <ActionButton className={styles.submitButton} type="submit" disabled={!canSubmit}>{submitting ? "Procesando…" : "recargar"}</ActionButton>
+          {!canSubmit && !submitting && !loading && <p className={styles.submitHint}>{
+            lines.length === 0 ? "Escribe un monto mayor que cero en al menos una plataforma."
+            : isPrepaid && !receipt ? "Adjunta el comprobante de tu transferencia."
+            : !acceptedTerms ? "Acepta los términos y condiciones para continuar."
+            : ""
+          }</p>}
           <p className={`${styles.formStatus} ${error ? styles.error : ""}`} role={error ? "alert" : "status"} aria-live="polite">{loading ? "Cargando pautas…" : error || message}</p>
         </form>
 

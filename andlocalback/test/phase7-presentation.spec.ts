@@ -82,10 +82,12 @@ describe("Fase 7 - endpoints de lectura", () => {
     const listAdminTransactions = { execute: vi.fn(async () => ({ items: [] })) };
     const getAdminTransactionDetail = { execute: vi.fn(async () => ({ id: "tx-1" })) };
     const listVerifications = { execute: vi.fn(async () => ({ items: [] })) };
+    const getRechargeContext = { execute: vi.fn(async () => ({ account: { id: "account-1" }, rates: {}, pautas: [] })) };
 
     return {
       client: new MyRechargeQueriesController(
         getPautas as never,
+        getRechargeContext as never,
         getWallet as never,
         getMyTransactions as never,
         getMyTransactionDetail as never,
