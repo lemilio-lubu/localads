@@ -4,6 +4,7 @@ import { AuthPrincipal } from "../../auth/auth.types";
 import { ApplicationError } from "../../../common/errors/application.error";
 import { GetAdminTransactionDetail } from "../application/use-cases/get-admin-transaction-detail";
 import { GetMyPautas } from "../application/use-cases/get-my-pautas";
+import { GetRechargeContext } from "../application/use-cases/get-recharge-context";
 import { GetMyTransactionDetail } from "../application/use-cases/get-my-transaction-detail";
 import { GetMyTransactions } from "../application/use-cases/get-my-transactions";
 import { GetWalletOverview } from "../application/use-cases/get-wallet-overview";
@@ -23,10 +24,16 @@ import {
 export class MyRechargeQueriesController {
   constructor(
     private readonly getPautas: GetMyPautas,
+    private readonly getContext: GetRechargeContext,
     private readonly getWallet: GetWalletOverview,
     private readonly getTransactions: GetMyTransactions,
     private readonly getTransactionDetail: GetMyTransactionDetail,
   ) {}
+
+  @Get("recharge-context")
+  rechargeContext(@CurrentUser() user: AuthPrincipal | string | undefined) {
+    return this.getContext.execute({ clientId: requireAuthenticatedClient(user) });
+  }
 
   @Get("pautas")
   pautas(@CurrentUser() user: AuthPrincipal | string | undefined) {

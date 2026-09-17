@@ -2,13 +2,13 @@
 .prepaidPanel { background: #f5f5f5; }
 .heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
 .heading h1 { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-title); line-height: 1.2; text-wrap: balance; }
-.summary { display: grid; gap: 4px; text-align: right; color: var(--color-text-muted); font-size: 12px; }
-.summary strong { color: var(--color-text); font-size: 15px; }
+.summary { display: grid; gap: var(--space-half); align-self: stretch; margin-top: var(--space-2); margin-left: auto; width: min(100%, 320px); color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.summary strong { display: flex; justify-content: space-between; gap: var(--space-2); color: var(--color-text); font-size: var(--font-size-body); }
 .form { display: flex; flex-direction: column; align-items: center; }
 .fields { display: grid; width: 100%; gap: 10px; }
 .platformField, .activationButton { display: grid; min-height: 58px; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: #fff; padding: 8px 16px; color: var(--color-text); }
 .platformField img, .activationButton img { object-fit: contain; }
-.platformField { cursor: text; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out); }
+.platformField { grid-template-columns: 44px 12px minmax(0, 1fr) auto; cursor: text; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out); }
 .platformField:focus-within { border-color: rgb(11 89 1 / 34%); box-shadow: var(--focus-ring); }
 .currency { color: var(--color-text-muted); }
 .platformField input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
@@ -53,3 +53,25 @@
 @media (hover: hover) and (pointer: fine) { .platformField:hover, .activationButton:not(:disabled):hover { border-color: rgb(11 89 1 / 18%); box-shadow: var(--shadow-card); } .uploadArea:hover { border-color: rgb(11 89 1 / 30%); } }
 @media (prefers-reduced-motion: reduce) { .platformField, .activationButton, .uploadArea, .checkbox img, .activationSubmit { transition: none; } .activationButton:not(:disabled):active, .uploadArea:active, .activationSubmit:not(:disabled):active { transform: none; } }
 @media (max-width: 680px) { .rechargePanel { border-radius: 20px; padding: 28px 20px; } .heading { align-items: flex-start; flex-direction: column; } .summary { text-align: left; } .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); } .activationPanel { grid-template-columns: 1fr; } .activationPanel label { grid-column: 1 / -1; } .activationModal { padding: 48px 20px 28px; } .activationHeading { gap: 12px; padding-right: 0; } .activationHeading h2 { font-size: var(--font-size-body-sm); } }
+
+/* Fase 2: el cliente decide con la informacion a la vista. */
+.currentBalance { display: grid; justify-items: end; gap: 2px; color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-align: right; text-transform: uppercase; letter-spacing: .04em; }
+.currentBalance b { color: var(--color-text); font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none; }
+
+.summary span { display: flex; justify-content: space-between; gap: var(--space-2); }
+.summary span b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+.summary strong { margin-top: var(--space-half); border-top: 1px solid var(--color-border); padding-top: var(--space-half); font-variant-numeric: tabular-nums; }
+
+.creditInfo { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.5; }
+.creditExceeded { color: var(--color-danger); font-weight: var(--font-weight-bold); }
+
+.uploadHint { display: block; margin-top: var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-micro); }
+
+.submitHint { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-caption); text-align: center; }
+
+@media (max-width: 680px) {
+  .summary { width: 100%; }
+  .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); }
+  .currentBalance { display: none; }
+  .summary span { justify-content: space-between; }
+}

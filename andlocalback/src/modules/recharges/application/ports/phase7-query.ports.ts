@@ -31,6 +31,29 @@ export type WalletOverviewView = Readonly<{
   pautas: readonly PautaQueryView[];
 }>;
 
+/**
+ * Todo lo que el formulario de recarga necesita para que el cliente decida con
+ * la informacion a la vista: saldo por pauta, condiciones de credito y las
+ * tasas vigentes. Las tasas viajan como dato, no se codifican en el navegador,
+ * para que el desglose que se previsualiza sea el mismo que se facturara.
+ */
+export type RechargeContextView = Readonly<{
+  account: Readonly<{
+    id: string;
+    type: AccountType;
+    creditDays: number;
+    creditLimit: number;
+    creditUsed: number;
+    creditAvailable: number;
+  }>;
+  rates: Readonly<{
+    isd: number;
+    agencyFee: number;
+    vat: number;
+  }>;
+  pautas: readonly PautaQueryView[];
+}>;
+
 export type TransactionListItemView = Readonly<{
   pausedDetails?: number;
   id: string;
@@ -229,6 +252,7 @@ export type VerificationFilters = PageRequest & Readonly<{
 
 /** Read-only boundary. Implementations must scope client detail by clientId in the database query. */
 export interface Phase7QueryPort {
+  getRechargeContext(clientId: string): Promise<RechargeContextView | null>;
   listPautasByClient(clientId: string): Promise<readonly PautaQueryView[]>;
   listTransactionsByClient(input: PageRequest & Readonly<{ clientId: string }>): Promise<PageResult<TransactionListItemView>>;
   findTransactionDetailByClient(input: Readonly<{ transactionId: string; clientId: string }>): Promise<ClientTransactionDetailView | null>;

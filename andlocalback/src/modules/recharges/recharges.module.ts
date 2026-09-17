@@ -31,6 +31,7 @@ import { RequestCampaignActivation } from "./application/use-cases/request-campa
 import { StartCampaignActivationReview } from "./application/use-cases/start-campaign-activation-review";
 import { GetAdminTransactionDetail } from "./application/use-cases/get-admin-transaction-detail";
 import { GetMyPautas } from "./application/use-cases/get-my-pautas";
+import { GetRechargeContext } from "./application/use-cases/get-recharge-context";
 import { GetMyTransactionDetail } from "./application/use-cases/get-my-transaction-detail";
 import { GetMyTransactions } from "./application/use-cases/get-my-transactions";
 import { GetWalletOverview } from "./application/use-cases/get-wallet-overview";
@@ -220,6 +221,7 @@ import { AuthModule } from "../auth/auth.module";
     },
     ...[
       GetMyPautas,
+      GetRechargeContext,
       GetWalletOverview,
       GetMyTransactions,
       GetMyTransactionDetail,

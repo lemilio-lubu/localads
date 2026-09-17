@@ -12,6 +12,11 @@ export type PageResponse<T> = { items: T[]; page: number; pageSize: number; tota
 export type CreatedTransaction = { id: string; code: string; clientId: string; accountId: string; accountTypeSnapshot: "PREPAGO" | "POSTPAGO"; status: string; createdAt: string; totals: { pautaAmount: number; isdAmount: number; agencyCommissionAmount: number; vatBaseAmount: number; vatAmount: number; totalAmount: number }; details: Array<{ id: string; pautaId: string; platform: RechargePlatform; requestedAmount: number; totalAmount: number; status: string }>; payment: { id: string; status: string; expectedAmount: number; dueDate: string | null }; receipt?: { id: string; originalName: string; status?: string } };
 export type ActivationRequest = { kind?: "ACTIVATION" | "REACTIVATION"; id: string; clientId: string; platform: RechargePlatform; requesterName: string; externalAccountId: string; phone: string; firstRechargeAmount: number; status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED"; rejectionReason: string | null; pautaId: string | null; createdAt: string; updatedAt: string };
 export type RechargeLineInput = { pautaId: string; platform: RechargePlatform; amount: number };
+export type RechargeContext = {
+  account: { id: string; type: "PREPAGO" | "POSTPAGO"; creditDays: number; creditLimit: number; creditUsed: number; creditAvailable: number };
+  rates: { isd: number; agencyFee: number; vat: number };
+  pautas: PautaResponse[];
+};
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 export const transactionsRealtimeUrl = process.env.NEXT_PUBLIC_WS_URL ?? `${new URL(apiUrl).origin}/transactions`;
@@ -36,6 +41,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const getMyPautas = (clientId?: string) => { void clientId; return api<PautaResponse[]>("/me/pautas"); };
+export const getRechargeContext = () => api<RechargeContext>("/me/recharge-context");
 export const getMyWallet = (clientId?: string) => { void clientId; return api<WalletResponse>("/me/wallet"); };
 export const getMyTransactions = (_clientId?: string, page = 1, limit = 50) => api<PageResponse<TransactionListItem>>(`/me/transactions?page=${page}&limit=${limit}`);
 export const getMyTransactionDetail = (_clientId: string | undefined, transactionId: string) => api<ClientTransactionDetail>(`/me/transactions/${encodeURIComponent(transactionId)}`);
