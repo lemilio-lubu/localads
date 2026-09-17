@@ -68,15 +68,19 @@
   --control-height: 48px;
   --control-height-compact: 32px;
   --button-height: 40px;
-  /* Escala de radios sobre phi: 8 - 13 - 21 - 34. Los valores que se escribian
-     a mano (12, 14, 20) caian a uno o dos pixeles de un peldano, asi que
-     adoptarla acerca los radios en vez de alejarlos. */
-  --radius-marker: 2px;   /* fuera de escala a proposito: marcadores de 9px,
-                             donde cualquier radio mayor los vuelve circulos */
-  --radius-small: 8px;
-  --radius-menu: 13px;
-  --radius-control: 21px;
-  --radius-card: 34px;
+  /* Misma logica para los radios: peldanos sobre phi y roles que apuntan. */
+  --radius-step-1: 8px;
+  --radius-step-2: 13px;
+  --radius-step-3: 21px;
+  --radius-step-4: 34px;
+
+  --radius-small: var(--radius-step-1);
+  --radius-menu: var(--radius-step-2);
+  --radius-control: var(--radius-step-3);
+  --radius-card: var(--radius-step-4);
+  /* Excepciones deliberadas: el marcador mide 9px y cualquier radio de la
+     escala lo volveria circulo; la pastilla es un semicirculo por definicion. */
+  --radius-marker: 2px;
   --radius-pill: 999px;
   --icon-size-xs: 16px;
   --icon-size-sm: 24px;
@@ -90,20 +94,28 @@
   /* Typography */
   --font-family-sans: Arial, Helvetica, sans-serif;
   --font-family-mono: "Courier New", Courier, monospace;
-  /* Escala modular sobre phi (1.618) con medio paso en raiz de phi:
-     10 - 13 - 16 - 20 - 26 - 33 - 42. Cinco de los tamanos ya caian en ella;
-     subhead y headline son los peldanos que faltaban y que obligaban a
-     escribir 28, 30 o 32 a mano. */
-  --font-size-caption: 13px;
-  --font-size-micro: 10px;
-  --font-size-body-sm: 14px;
-  --font-size-body: 16px;
-  --font-size-card-title: 18px;
-  --font-size-nav: 20px;
-  --font-size-title: 24px;
-  --font-size-subhead: 26px;
-  --font-size-headline: 33px;
-  --font-size-display: 40px;
+  /* Escala modular sobre phi (1.618), con raiz de phi como medio paso.
+     Los peldanos son la unica fuente de verdad del tamano; los nombres de
+     rol apuntan a un peldano y varios roles pueden compartirlo, que es lo
+     que ocurre cuando el diseno los trata igual. */
+  --font-step-1: 10px;
+  --font-step-2: 13px;
+  --font-step-3: 16px;
+  --font-step-4: 20px;
+  --font-step-5: 26px;
+  --font-step-6: 33px;
+  --font-step-7: 42px;
+
+  --font-size-micro: var(--font-step-1);
+  --font-size-caption: var(--font-step-2);
+  --font-size-body-sm: var(--font-step-2);
+  --font-size-body: var(--font-step-3);
+  --font-size-card-title: var(--font-step-4);
+  --font-size-nav: var(--font-step-4);
+  --font-size-title: var(--font-step-5);
+  --font-size-subhead: var(--font-step-5);
+  --font-size-headline: var(--font-step-6);
+  --font-size-display: var(--font-step-7);
   --font-weight-regular: 400;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
