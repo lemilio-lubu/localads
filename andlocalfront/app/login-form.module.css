@@ -4,7 +4,7 @@
 .logo > div { width: 152px; }
 .heading { margin-top: var(--space-4); text-align: center; }
 .heading p, .demoAccess > p { margin: 0; color: var(--color-brand); font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); letter-spacing: .08em; text-transform: uppercase; }
-.heading h1 { margin: var(--space-1) 0; color: var(--color-text); font-size: 32px; line-height: 1.25; letter-spacing: -.8px; }
+.heading h1 { margin: var(--space-1) 0; color: var(--color-text); font-size: var(--font-size-headline); line-height: 1.25; letter-spacing: -.8px; }
 .heading > span { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
 .form { display: flex; flex-direction: column; margin-top: var(--space-4); }
 .form label { display: flex; flex-direction: column; gap: var(--space-1); }
@@ -19,7 +19,7 @@
 .demoAccess > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); margin-top: var(--space-2); }
 .demoAccess button { display: flex; min-width: 0; flex-direction: column; gap: 4px; border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: rgb(255 255 255 / 72%); padding: 12px var(--space-2); color: var(--color-text); text-align: left; cursor: pointer; transition: border-color var(--duration-ui) ease, background-color var(--duration-ui) ease; }
 .demoAccess strong { font-size: var(--font-size-body-sm); }
-.demoAccess span { overflow: hidden; color: var(--color-text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.demoAccess span { overflow: hidden; color: var(--color-text-muted); font-size: var(--font-size-micro); text-overflow: ellipsis; white-space: nowrap; }
 .demoAccess button:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
 .demoAccess button:active { border-color: rgb(11 89 1 / 30%); background: #f3f8f2; }
 

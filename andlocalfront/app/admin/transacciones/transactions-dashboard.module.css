@@ -45,7 +45,7 @@
 .message { border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-3); color: var(--color-text-muted); text-align: center; }
 .modal { width: min(100%, 1000px); max-height: min(90vh, 820px); overflow-y: auto; padding: var(--space-5); }
 .modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
-.modalHeader h2 { margin: var(--space-half) 0; font-size: 30px; }
+.modalHeader h2 { margin: var(--space-half) 0; font-size: var(--font-size-subhead); }
 .modalHeader p { margin: 0; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-caption); }
 .auditFooter { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .detailGrid { display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--space-3); margin-top: var(--space-4); }
