@@ -4,9 +4,15 @@
   --color-surface: #f6f9ff;
   --color-surface-raised: #ffffff;
   --color-surface-muted: #f6f6f6;
+  /* Escalera de texto con contraste garantizado sobre fondos claros (WCAG 2.1 AA).
+     text        9.9:1  cualquier tamaño
+     text-muted  4.5:1  cualquier tamaño, tanto sobre canvas como sobre
+                        surface-muted — es el suelo seguro para texto pequeno
+     text-subtle 3.0:1  SOLO texto grande (>=24px, o >=18.66px en negrita),
+                        iconos, indicadores y estados deshabilitados. */
   --color-text: #434343;
-  --color-text-muted: #848484;
-  --color-text-subtle: #b4b4b4;
+  --color-text-muted: #717171;
+  --color-text-subtle: #949494;
   --color-border: rgb(67 67 67 / 9%);
   --color-brand: #0b5901;
   --color-meta: #0082fb;
@@ -17,6 +23,12 @@
   --color-success: #0b5901;
   --color-accent-teal: #087f6d;
   --color-google-text: #6b4e00;
+  /* Variantes de marca para superficies que llevan texto encima. El color de
+     marca puro no siempre alcanza 4.5:1; estas si. Los pills ya las usaban
+     hardcodeadas. El color de marca puro se reserva para superficies sin texto. */
+  --color-meta-strong: #0069c7;
+  --color-google-strong: #765700;
+  --color-tiktok-strong: #c51640;
 
   /* 8-point spacing scale */
   --space-1: 8px;

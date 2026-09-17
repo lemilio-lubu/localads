@@ -11,7 +11,7 @@
 .form label + label { margin-top: var(--space-2); }
 .form label > span { padding-left: var(--space-2); color: #6f6f6f; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
 .form input { width: 100%; height: var(--control-height); border: 1px solid transparent; border-radius: var(--radius-control); outline: 0; background: var(--color-surface-raised); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body); transition: border-color var(--duration-ui) ease, box-shadow var(--duration-ui) ease; }
-.form input::placeholder { color: rgb(67 67 67 / 35%); }
+.form input::placeholder { color: var(--color-text-muted); }
 .form input:focus { border-color: rgb(11 89 1 / 36%); box-shadow: var(--focus-ring); }
 .error { min-height: var(--space-3); margin: var(--space-1) var(--space-2); color: #b42318; font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
 .demoAccess { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
