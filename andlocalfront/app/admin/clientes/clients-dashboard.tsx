@@ -24,6 +24,8 @@ export default function ClientsDashboard() {
   const [editing, setEditing] = useState<AdminClient | null>(null);
   const [selectedClient, setSelectedClient] = useState<AdminClient | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const hasFilters = Boolean(query.trim() || platform || accountType);
+  function clearFilters() { setQuery(""); setPlatform(null); setAccountType(null); }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyClientId, setBusyClientId] = useState<string | null>(null);
@@ -74,6 +76,11 @@ export default function ClientsDashboard() {
 
       <button type="button" className={styles.createButton} onClick={openCreate}><PlusCircle size={17} aria-hidden="true" />crear nuevo cliente</button>
 
+      {!loading && !error && visibleClients.length > 0 && <div className={styles.listMeta}>
+        <span>{visibleClients.length} {visibleClients.length === 1 ? "cliente" : "clientes"}{hasFilters && clients.length !== visibleClients.length ? ` de ${clients.length}` : ""}</span>
+        {hasFilters && <button type="button" className={styles.clearFiltersInline} onClick={clearFilters}>limpiar filtros</button>}
+      </div>}
+
       <div className={styles.clientList} aria-live="polite" aria-busy={loading}>
         {visibleClients.map((client) => (
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
@@ -91,7 +98,15 @@ export default function ClientsDashboard() {
         ))}
         {loading && <><div className={`${styles.clientRow} ${styles.skeleton}`} aria-hidden="true" /><div className={`${styles.clientRow} ${styles.skeleton}`} aria-hidden="true" /></>}
         {!loading && error && <p className={styles.message} role="alert">{error}</p>}
-        {!loading && !error && !visibleClients.length && <p className={styles.message}>No hay clientes para los filtros seleccionados.</p>}
+        {!loading && !error && !visibleClients.length && (
+          clients.length === 0
+            ? <div className={styles.message}><p><strong>Todavía no hay clientes</strong></p><p>Crea el primero para empezar a registrar recargas.</p></div>
+            : <div className={styles.message}>
+                <p><strong>Ningún cliente coincide con estos filtros</strong></p>
+                <p>Hay {clients.length} {clients.length === 1 ? "cliente registrado" : "clientes registrados"}.</p>
+                <button type="button" className={styles.clearFilters} onClick={clearFilters}>limpiar filtros</button>
+              </div>
+        )}
       </div>
 
       {formOpen && <ClientFormModal client={editing} open onClose={() => setFormOpen(false)} onSaved={saveClient} />}

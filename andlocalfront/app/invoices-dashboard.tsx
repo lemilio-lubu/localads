@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import AccountShell from "./account-shell";
@@ -112,6 +113,13 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
     void connect();
     return () => { active = false; socket?.disconnect(); };
   }, [accountId, clientId]);
+  // Ofrecer solo lo que el cliente tiene: filtrar por una plataforma sin
+  // recargas solo produce un vacio sin explicacion.
+  const availablePlatforms = useMemo(() => {
+    const present = new Set(transactions.flatMap((item) => item.platforms.map((value) => value.toLowerCase())));
+    return (["meta", "google", "tiktok"] as const).filter((item) => present.has(item));
+  }, [transactions]);
+  function clearFilters() { setFromDate(""); setToDate(""); setPlatform(null); }
   const visible = useMemo(() => transactions.filter((item) => { const day = item.createdAt.slice(0, 10); return (!fromDate || day >= fromDate) && (!toDate || day <= toDate) && (!platform || item.platforms.includes(platform.toUpperCase() as TransactionListItem["platforms"][number])); }), [fromDate, platform, toDate, transactions]);
 
   async function openDetail(id: string) { setDetailLoading(true); setError(""); try { setDetail(await getMyTransactionDetail(clientId, id)); } catch (reason) { setError(reason instanceof Error ? reason.message : "No fue posible cargar el detalle"); } finally { setDetailLoading(false); } }
@@ -121,7 +129,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
       <h1 id="transactions-heading" className={styles.srOnly}>Mis transacciones</h1>
       <div className={styles.filters}>
         <fieldset className={styles.dateFilter}><legend>Filtrar fecha</legend><label><span>desde</span><input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label><label><span>hasta</span><input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label></fieldset>
-        <fieldset className={styles.platformFilter}><legend>Filtrar plataforma</legend>{(["meta", "google", "tiktok"] as const).map((item) => <button key={item} type="button" className={`${styles.filterButton} ${styles[item]}`} aria-pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} /></button>)}</fieldset>
+        {availablePlatforms.length > 0 && <fieldset className={styles.platformFilter}><legend>Filtrar plataforma</legend>{availablePlatforms.map((item) => <button key={item} type="button" className={`${styles.filterButton} ${styles[item]}`} aria-pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} /></button>)}</fieldset>}
       </div>
       <div className={styles.invoiceList} aria-live="polite" aria-busy={loading || detailLoading}>
         {visible.map((item) => <article key={item.id} className={styles.invoiceRow}>
@@ -141,7 +149,19 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
         </article>)}
         {loading && <p className={styles.emptyState}>Cargando transacciones…</p>}
         {!loading && error && <p className={styles.emptyState} role="alert">{error}</p>}
-        {!loading && !error && visible.length === 0 && <p className={styles.emptyState}>No hay transacciones para los filtros seleccionados.</p>}
+        {!loading && !error && visible.length === 0 && (
+          transactions.length === 0
+            ? <div className={styles.emptyState}>
+                <p><strong>Aún no tienes recargas</strong></p>
+                <p>Cuando hagas tu primera recarga aparecerá aquí, con su factura y su estado de pago.</p>
+                <Link className={styles.emptyAction} href={`/${accountType}`}>hacer una recarga</Link>
+              </div>
+            : <div className={styles.emptyState}>
+                <p><strong>Ninguna recarga coincide con estos filtros</strong></p>
+                <p>Tienes {transactions.length} {transactions.length === 1 ? "recarga registrada" : "recargas registradas"}.</p>
+                <button type="button" className={styles.emptyAction} onClick={clearFilters}>limpiar filtros</button>
+              </div>
+        )}
       </div>
     </section>
     <InvoiceDetailModal accountType={accountType} transaction={detail} onClose={() => setDetail(null)} onReceiptUploaded={() => { setDetail(null); setReloads((value) => value + 1); }} />
