@@ -6,15 +6,16 @@ import { PrismaService } from "../../../database/prisma.service";
 import { ClientAdminRepository, UpdateClientInput } from "../application/ports/client-admin.repository";
 import { ClientProfileInput } from "../domain/client-profile";
 import { AccountType, AdvertisingPlatform } from "../../recharges/domain/recharge.types";
-import { pausePlatformDetails, syncLegacyPlatform } from "../../recharges/infrastructure/persistence/platform-lifecycle";
+import { pausePlatformDetails } from "../../recharges/infrastructure/persistence/platform-lifecycle";
 
 const clientInclude = {
   pautas: true,
-  accounts: {
-    include: {
-      campaigns: true,
-      recharges: { select: { amount: true } },
-    },
+  accounts: true,
+  // "Recargado" = lo que efectivamente llegó a las pautas: monto de pauta de
+  // las transacciones completadas, sin comisiones ni impuestos.
+  rechargeTransactions: {
+    where: { rechargeStatus: "COMPLETED" },
+    select: { pautaAmount: true },
   },
 };
 
@@ -49,9 +50,6 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
               status: "ACTIVE",
               type: input.accountType,
               creditDays: input.accountType === "PREPAGO" ? 0 : input.creditDays,
-              campaigns: {
-                create: input.platforms.map((platform) => ({ id: randomUUID(), platform, status: "ACTIVE" })),
-              },
             },
           },
         },
@@ -108,7 +106,6 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
             if (pauta.status !== "ACTIVE" || input.platforms.includes(pauta.platform as AdvertisingPlatform)) continue;
             await database.pauta.update({ where: { id: pauta.id }, data: { status: "INACTIVE", version: { increment: 1 } } });
             await pausePlatformDetails(database, id, pauta.id, actorId);
-            await syncLegacyPlatform(database, id, pauta.platform, "INACTIVE");
             await database.platformLifecycleAudit.create({ data: { clientId: id, pautaId: pauta.id, action: "DEACTIVATE", actorId } });
           }
           for (const platform of input.platforms) {
@@ -121,7 +118,6 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
               create: { id: randomUUID(), clientId: id, platform, status: "ACTIVE", activatedAt: new Date(), externalAccountId: pending?.externalAccountId },
               update: { status: "ACTIVE", externalAccountId: existing?.externalAccountId ?? pending?.externalAccountId, activatedAt: existing?.activatedAt ?? new Date(), version: { increment: 1 } },
             });
-            await syncLegacyPlatform(database, id, platform, "ACTIVE");
             await database.campaignActivationRequest.updateMany({
               where: { clientId: id, platform, status: { in: ["PENDING", "IN_REVIEW"] } },
               data: { status: "APPROVED", pautaId: pauta.id, activeRequestKey: null, reviewedBy: actorId, reviewedAt: new Date(), version: { increment: 1 } },
@@ -163,7 +159,9 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
         creditDays: account.creditDays,
         platforms: record.pautas.filter((pauta) => pauta.status === "ACTIVE").map((pauta) => pauta.platform as AdvertisingPlatform),
       },
-      totalRecharged: account.recharges.reduce((total, recharge) => total + recharge.amount, 0),
+      totalRecharged: record.rechargeTransactions
+        .reduce((total, transaction) => total.add(transaction.pautaAmount), new Prisma.Decimal(0))
+        .toNumber(),
     };
   }
 

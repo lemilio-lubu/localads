@@ -32,8 +32,7 @@ export class SecureFilesController {
     if (!/^[A-Za-z0-9._-]+$/.test(filename)) throw new NotFoundException();
     const url = `/uploads/receipts/${filename}`;
     const receipt = await this.database.paymentReceipt.findFirst({ where: { url }, select: { payment: { select: { transaction: { select: { clientId: true } } } } } });
-    const legacy = receipt ? null : await this.database.receipt.findFirst({ where: { url }, select: { recharge: { select: { account: { select: { clientId: true } } } } } });
-    const ownerId = receipt?.payment.transaction.clientId ?? legacy?.recharge.account.clientId;
+    const ownerId = receipt?.payment.transaction.clientId;
     if (!ownerId) throw new NotFoundException("Comprobante no encontrado");
     if (user.role !== "ADMIN" && user.clientId !== ownerId) throw new ForbiddenException("No puedes consultar este comprobante");
     return this.sendReceipt(response, url, filename, undefined);

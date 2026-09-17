@@ -4,7 +4,6 @@ import { validate } from "class-validator";
 import { describe, expect, it, vi } from "vitest";
 import { ApplicationError } from "../src/common/errors/application.error";
 import { OverduePaymentsRunner } from "../src/modules/recharges/application/services/overdue-payments-runner";
-import { ListAccountTransactions } from "../src/modules/recharges/application/use-cases/list-account-transactions";
 import { MarkOverduePayments } from "../src/modules/recharges/application/use-cases/mark-overdue-payments";
 import { RequestPostpaidTransaction, RequestPostpaidTransactionCommand } from "../src/modules/recharges/application/use-cases/request-postpaid-transaction";
 import { RequestPrepaidTransaction } from "../src/modules/recharges/application/use-cases/request-prepaid-transaction";
@@ -51,7 +50,6 @@ describe("Fase 4 - endpoint postpago", () => {
       }),
     };
     const controller = new TransactionsController(
-      { execute: vi.fn() } as unknown as ListAccountTransactions,
       { execute: vi.fn() } as unknown as RequestPrepaidTransaction,
       { dispatch: vi.fn() } as unknown as TransactionReceiptOcrDispatcher,
       postpaid as unknown as RequestPostpaidTransaction,

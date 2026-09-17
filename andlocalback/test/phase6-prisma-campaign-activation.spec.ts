@@ -153,7 +153,6 @@ describe("persistencia de primera pauta fase 6", () => {
       platforms: [AdvertisingPlatform.META, AdvertisingPlatform.GOOGLE],
     });
 
-    expect(await prisma.campaign.count({ where: { accountId: created.account.id } })).toBe(2);
     const pautas = await prisma.pauta.findMany({ where: { clientId: created.id }, orderBy: { platform: "asc" } });
     expect(pautas.map(({ platform, status }) => ({ platform, status }))).toEqual([
       { platform: AdvertisingPlatform.GOOGLE, status: PautaStatus.ACTIVE },

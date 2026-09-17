@@ -2,17 +2,6 @@ import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { ApplicationError } from "../../../../common/errors/application.error";
 
-export async function syncLegacyPlatform(database: Prisma.TransactionClient, clientId: string, platform: string, status: string) {
-  const accounts = await database.account.findMany({ where: { clientId }, select: { id: true } });
-  for (const account of accounts) {
-    await database.campaign.upsert({
-      where: { accountId_platform: { accountId: account.id, platform } },
-      create: { id: randomUUID(), accountId: account.id, platform, status },
-      update: { status },
-    });
-  }
-}
-
 export async function pausePlatformDetails(database: Prisma.TransactionClient, clientId: string, pautaId: string, actorId: string) {
   const details = await database.transactionDetail.findMany({
     where: { pautaId, status: { in: ["REQUESTED", "APPROVED", "PROCESSING"] }, pausedAt: null },

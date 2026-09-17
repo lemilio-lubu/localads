@@ -18,10 +18,6 @@ async function seed() {
       create: { id: account.id, clientId: account.clientId, status: "ACTIVE", type: account.type, creditDays: account.creditDays, creditLimit: account.creditLimit },
     });
     for (const platform of ["META", "GOOGLE"]) {
-      await database.campaign.upsert({
-        where: { accountId_platform: { accountId: account.id, platform } }, update: { status: "ACTIVE" },
-        create: { id: `${account.id}-${platform.toLowerCase()}`, accountId: account.id, platform, status: "ACTIVE" },
-      });
       await database.pauta.upsert({
         where: { clientId_platform: { clientId: account.clientId, platform } },
         update: { status: "ACTIVE" },
@@ -44,7 +40,7 @@ async function seed() {
     const salt = Buffer.from(user.salt); const passwordHash = `scrypt$${salt.toString("base64url")}$${scryptSync("1234", salt, 64).toString("base64url")}`;
     await database.authUser.upsert({ where: { username: user.username }, update: { role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" }, create: { id: user.id, username: user.username, passwordHash, role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" } });
   }
-  console.info("Seed completado: cuentas con Campaign legacy y Pauta META/GOOGLE activas.");
+  console.info("Seed completado: cuentas con Pauta META/GOOGLE activas.");
 }
 
 seed().finally(() => database.$disconnect());
