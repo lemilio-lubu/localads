@@ -5,7 +5,7 @@
 .search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-caption); }
 .search input::placeholder { color: var(--color-text-muted); }
 .filters { display: flex; height: 28px; align-items: center; gap: 2px; border: 1px solid #d8d8d8; border-radius: var(--radius-pill); padding: 3px; }
-.filters button { height: 20px; border: 0; border-radius: var(--radius-pill); background: transparent; padding: 0 13px; color: var(--color-text-muted); font: inherit; font-size: 10px; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.filters button { height: 20px; border: 0; border-radius: var(--radius-pill); background: transparent; padding: 0 13px; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-micro); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .filters button[aria-pressed="true"] { background: var(--color-text); color: #fff; }
 .filters button:focus-visible { outline: 3px solid rgb(11 89 1 / 15%); outline-offset: 2px; }
 .list { display: grid; gap: var(--space-1); }
