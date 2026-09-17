@@ -3,7 +3,6 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { describe, expect, it, vi } from "vitest";
 import { ApplicationError } from "../src/common/errors/application.error";
-import { ListAccountTransactions } from "../src/modules/recharges/application/use-cases/list-account-transactions";
 import {
   RequestPrepaidTransaction,
   RequestPrepaidTransactionCommand,
@@ -64,10 +63,8 @@ describe("Fase 2 - TransactionsController", () => {
         return { id: "transaction-001", receipt: { id: "receipt-001" } };
       }),
     };
-    const listUseCase = { execute: vi.fn() };
     const dispatcher = { dispatch: vi.fn() };
     const controller = new TransactionsController(
-      listUseCase as unknown as ListAccountTransactions,
       requestUseCase as unknown as RequestPrepaidTransaction,
       dispatcher as unknown as TransactionReceiptOcrDispatcher,
       { execute: vi.fn() } as unknown as RequestPostpaidTransaction,

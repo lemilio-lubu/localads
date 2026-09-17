@@ -71,7 +71,6 @@ describe("ciclo de plataformas y recargas en stop", () => {
     expect(pauta.externalAccountId).toBe("original-meta-id");
     expect(await prisma.payment.findUnique({ where: { id: transaction.payment!.id } })).toEqual(transaction.payment);
     expect(await prisma.transactionDetail.count({ where: { transactionId: transaction.id, pausedAt: { not: null } } })).toBe(2);
-    expect(await prisma.campaign.count({ where: { accountId: client.account.id } })).toBe(2);
   });
 
   it("deja avanzar otra plataforma y exige reanudación manual tras reactivar", async () => {
@@ -171,7 +170,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
     await setPlatforms("client-001", []);
     await seedBackendData(prisma);
     expect((await clients.findById("client-001"))!.account.platforms).toEqual([]);
-    expect(await prisma.campaign.count({ where: { accountId: "account-prepaid-001", status: "ACTIVE" } })).toBe(0);
+    expect(await prisma.pauta.count({ where: { clientId: "client-001", status: "ACTIVE" } })).toBe(0);
   });
 
   it("dos administradores no reanudan dos veces ni reutilizan una versión anterior", async () => {
@@ -200,7 +199,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
     ]);
     expect(await prisma.pauta.count({ where: { clientId: client.id, platform: "TIKTOK" } })).toBeLessThanOrEqual(1);
     const pautas = await prisma.pauta.findMany({ where: { clientId: client.id, status: "ACTIVE" } });
-    const campaigns = await prisma.campaign.findMany({ where: { accountId: client.account.id, status: "ACTIVE" } });
-    expect(campaigns.map((c) => c.platform).sort()).toEqual(pautas.map((p) => p.platform).sort());
+    // Una plataforma activa no puede aparecer dos veces para el mismo cliente.
+    expect(new Set(pautas.map((p) => p.platform)).size).toBe(pautas.length);
   });
 });

@@ -1,20 +1,11 @@
 import { Module } from "@nestjs/common";
-import { ApprovePrepaidVerification } from "./application/use-cases/approve-prepaid-verification";
-import { CreatePrepaidRecharge } from "./application/use-cases/create-prepaid-recharge";
-import { CreatePostpaidRecharge } from "./application/use-cases/create-postpaid-recharge";
-import { MoveRechargeToProcessing } from "./application/use-cases/move-recharge-to-processing";
-import { RejectPrepaidVerification } from "./application/use-cases/reject-prepaid-verification";
-import { ReplacePrepaidReceipt } from "./application/use-cases/replace-prepaid-receipt";
 import {
   MULTI_RECHARGE_PERSISTENCE,
   MultiRechargePersistencePort,
 } from "./application/ports/multi-recharge.ports";
 import {
-  ACCOUNT_REPOSITORY, AccountRepository, ID_GENERATOR, IdGenerator, OCR_PROCESSOR, OcrProcessor,
-  RECEIPT_PROCESSOR, RECHARGE_REPOSITORY, ReceiptProcessor, RechargeRepository,
-  TRANSACTION_QUERY_REPOSITORY, TransactionQueryRepository, TRANSACTION_REALTIME_PUBLISHER, TransactionRealtimePublisher,
+  ID_GENERATOR, IdGenerator, OCR_PROCESSOR, OcrProcessor, RECEIPT_PROCESSOR, ReceiptProcessor,
 } from "./application/ports/recharge.ports";
-import { ListAccountTransactions } from "./application/use-cases/list-account-transactions";
 import { RequestPrepaidTransaction } from "./application/use-cases/request-prepaid-transaction";
 import { TransactionReceiptOcrDispatcher } from "./application/services/transaction-receipt-ocr-dispatcher";
 import { OverduePaymentsRunner } from "./application/services/overdue-payments-runner";
@@ -64,10 +55,8 @@ import {
   VERIFICATION_REALTIME_PUBLISHER,
   VerificationRealtimePublisher,
 } from "./application/ports/transaction-verification.ports";
-import { PrismaAccountRepository } from "./infrastructure/persistence/prisma-account.repository";
 import { PrismaMultiRechargeRepository } from "./infrastructure/persistence/prisma-multi-recharge.repository";
 import { PrismaPostpaidTransactionRepository } from "./infrastructure/persistence/prisma-postpaid-transaction.repository";
-import { PrismaRechargeRepository } from "./infrastructure/persistence/prisma-recharge.repository";
 import { PrismaTransactionVerificationRepository } from "./infrastructure/persistence/prisma-transaction-verification.repository";
 import { PrismaTransactionExecutionRepository } from "./infrastructure/persistence/prisma-transaction-execution.repository";
 import { PrismaCampaignActivationRepository } from "./infrastructure/persistence/prisma-campaign-activation.repository";
@@ -76,9 +65,6 @@ import { CryptoIdGenerator } from "./infrastructure/services/crypto-id-generator
 import { LocalReceiptProcessor } from "./infrastructure/services/local-receipt-processor";
 import { TesseractOcrProcessor } from "./infrastructure/services/tesseract-ocr-processor";
 import { LocalTransactionReceiptOcr } from "./infrastructure/services/local-transaction-receipt-ocr";
-import { PostpaidRechargesController } from "./presentation/postpaid-recharges.controller";
-import { PrepaidRechargesController } from "./presentation/recharges.controller";
-import { RechargeWorkflowController } from "./presentation/recharge-workflow.controller";
 import { TransactionsController } from "./presentation/transactions.controller";
 import { TransactionsGateway } from "./presentation/transactions.gateway";
 import { TransactionVerificationsController } from "./presentation/transaction-verifications.controller";
@@ -96,12 +82,10 @@ import { AuthModule } from "../auth/auth.module";
 @Module({
   imports: [AuthModule],
   exports: [TransactionsGateway],
-  controllers: [PrepaidRechargesController, PostpaidRechargesController, RechargeWorkflowController, TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
+  controllers: [TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
   providers: [
-    PrismaAccountRepository,
     PrismaMultiRechargeRepository,
     PrismaPostpaidTransactionRepository,
-    PrismaRechargeRepository,
     PrismaTransactionVerificationRepository,
     PrismaTransactionExecutionRepository,
     PrismaCampaignActivationRepository,
@@ -109,18 +93,14 @@ import { AuthModule } from "../auth/auth.module";
     TransactionsGateway,
     TransactionReceiptOcrDispatcher,
     OverduePaymentsRunner,
-    { provide: ACCOUNT_REPOSITORY, useExisting: PrismaAccountRepository },
     { provide: MULTI_RECHARGE_PERSISTENCE, useExisting: PrismaMultiRechargeRepository },
     { provide: POSTPAID_TRANSACTION_PERSISTENCE, useExisting: PrismaPostpaidTransactionRepository },
-    { provide: RECHARGE_REPOSITORY, useExisting: PrismaRechargeRepository },
     { provide: TRANSACTION_VERIFICATION_PERSISTENCE, useExisting: PrismaTransactionVerificationRepository },
     { provide: PAYMENT_RECEIPT_PERSISTENCE, useExisting: PrismaTransactionVerificationRepository },
     { provide: VERIFICATION_REALTIME_PUBLISHER, useExisting: TransactionsGateway },
     { provide: TRANSACTION_EXECUTION_PERSISTENCE, useExisting: PrismaTransactionExecutionRepository },
     { provide: CAMPAIGN_ACTIVATION_PERSISTENCE, useExisting: PrismaCampaignActivationRepository },
     { provide: PHASE7_QUERY_PORT, useExisting: PrismaPhase7QueryRepository },
-    { provide: TRANSACTION_QUERY_REPOSITORY, useExisting: PrismaRechargeRepository },
-    { provide: TRANSACTION_REALTIME_PUBLISHER, useExisting: TransactionsGateway },
     { provide: RECEIPT_PROCESSOR, useClass: LocalReceiptProcessor },
     { provide: OCR_PROCESSOR, useClass: TesseractOcrProcessor },
     {
@@ -251,43 +231,6 @@ import { AuthModule } from "../auth/auth.module";
       inject: [PHASE7_QUERY_PORT],
       useFactory: (queries: Phase7QueryPort) => new provide(queries),
     })),
-    {
-      provide: CreatePrepaidRecharge,
-      inject: [ACCOUNT_REPOSITORY, RECHARGE_REPOSITORY, RECEIPT_PROCESSOR, OCR_PROCESSOR, ID_GENERATOR, TRANSACTION_REALTIME_PUBLISHER],
-      useFactory: (accounts: AccountRepository, recharges: RechargeRepository, processor: ReceiptProcessor, ocr: OcrProcessor, ids: IdGenerator, realtime: TransactionRealtimePublisher) =>
-        new CreatePrepaidRecharge(accounts, recharges, processor, ocr, ids, realtime),
-    },
-    {
-      provide: CreatePostpaidRecharge,
-      inject: [ACCOUNT_REPOSITORY, RECHARGE_REPOSITORY, ID_GENERATOR, TRANSACTION_REALTIME_PUBLISHER],
-      useFactory: (accounts: AccountRepository, recharges: RechargeRepository, ids: IdGenerator, realtime: TransactionRealtimePublisher) =>
-        new CreatePostpaidRecharge(accounts, recharges, ids, realtime),
-    },
-    {
-      provide: MoveRechargeToProcessing,
-      inject: [RECHARGE_REPOSITORY, TRANSACTION_REALTIME_PUBLISHER],
-      useFactory: (recharges: RechargeRepository, realtime: TransactionRealtimePublisher) => new MoveRechargeToProcessing(recharges, realtime),
-    },
-    {
-      provide: ApprovePrepaidVerification,
-      inject: [RECHARGE_REPOSITORY, TRANSACTION_REALTIME_PUBLISHER],
-      useFactory: (recharges: RechargeRepository, realtime: TransactionRealtimePublisher) => new ApprovePrepaidVerification(recharges, realtime),
-    },
-    {
-      provide: RejectPrepaidVerification,
-      inject: [RECHARGE_REPOSITORY, TRANSACTION_REALTIME_PUBLISHER],
-      useFactory: (recharges: RechargeRepository, realtime: TransactionRealtimePublisher) => new RejectPrepaidVerification(recharges, realtime),
-    },
-    {
-      provide: ReplacePrepaidReceipt,
-      inject: [RECHARGE_REPOSITORY, RECEIPT_PROCESSOR, OCR_PROCESSOR, TRANSACTION_REALTIME_PUBLISHER],
-      useFactory: (recharges: RechargeRepository, processor: ReceiptProcessor, ocr: OcrProcessor, realtime: TransactionRealtimePublisher) => new ReplacePrepaidReceipt(recharges, processor, ocr, realtime),
-    },
-    {
-      provide: ListAccountTransactions,
-      inject: [ACCOUNT_REPOSITORY, TRANSACTION_QUERY_REPOSITORY],
-      useFactory: (accounts: AccountRepository, transactions: TransactionQueryRepository) => new ListAccountTransactions(accounts, transactions),
-    },
   ],
 })
 export class RechargesModule {}

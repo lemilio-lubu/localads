@@ -63,99 +63,14 @@ model Account {
   creditLimit          Float                 @default(0)
   creditUsed           Float                 @default(0)
   client               Client                @relation(fields: [clientId], references: [id])
-  campaigns            Campaign[]
-  recharges            Recharge[]
   rechargeTransactions RechargeTransaction[]
 }
 
-model Campaign {
-  id        String  @id
-  accountId String
-  platform  String
-  status    String
-  account   Account @relation(fields: [accountId], references: [id])
 
-  @@unique([accountId, platform])
-}
 
-model Recharge {
-  id            String             @id
-  accountId     String
-  accountType   String
-  campaignId    String
-  platform      String
-  amount        Float
-  paymentStatus String
-  status        String
-  receiptStatus String?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  account       Account            @relation(fields: [accountId], references: [id])
-  receipts      Receipt[]
-  verifications Verification[]
-  obligation    PaymentObligation?
-  history       TransactionEvent[]
 
-  @@index([accountId, createdAt])
-}
 
-model Receipt {
-  id           String   @id
-  rechargeId   String
-  originalName String
-  mimeType     String
-  size         Int
-  url          String
-  checksum     String
-  recharge     Recharge @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
 
-  @@index([rechargeId, createdAt])
-}
-
-model Verification {
-  id                   String    @id
-  rechargeId           String
-  receiptId            String
-  status               String
-  requestedAmount      Float
-  detectedAmount       Float?
-  confidence           Float?
-  amountMatches        Boolean?
-  issues               String
-  requiresManualReview Boolean
-  failureReason        String?
-  decidedBy            String?
-  decidedAt            DateTime?
-  rejectionReason      String?
-  createdAt            DateTime  @default(now())
-  recharge             Recharge  @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
-
-  @@unique([receiptId])
-  @@index([rechargeId, createdAt])
-}
-
-model PaymentObligation {
-  id         String   @id
-  rechargeId String   @unique
-  amount     Float
-  status     String
-  dueDate    DateTime
-  createdAt  DateTime @default(now())
-  recharge   Recharge @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
-}
-
-model TransactionEvent {
-  id         String   @id @default(cuid())
-  rechargeId String
-  scope      String
-  status     String
-  note       String?
-  createdAt  DateTime @default(now())
-  recharge   Recharge @relation(fields: [rechargeId], references: [id], onDelete: Cascade)
-
-  @@index([rechargeId, createdAt])
-}
 
 // New persistence model for the multi-pauta recharge flow. Legacy Campaign,
 // Recharge, Receipt and Verification remain in place during the transition.
