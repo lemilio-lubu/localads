@@ -16,7 +16,9 @@ export default function ClientFormModal({ client, open, onClose, onSaved }: Prop
   const [email, setEmail] = useState(client?.email ?? "");
   const [accountType, setAccountType] = useState<SaveAdminClient["accountType"]>(client?.account.type ?? "PREPAGO");
   const [platforms, setPlatforms] = useState<AdminPlatform[]>(client?.account.platforms ?? ["META"]);
-  const [creditDays, setCreditDays] = useState(client?.account.creditDays ?? 0);
+  // Una cuenta postpago necesita al menos un dia de credito (BR-029), asi que
+  // el valor inicial es valido y el campo no admite cero.
+  const [creditDays, setCreditDays] = useState(client?.account.creditDays || 30);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,7 +49,7 @@ export default function ClientFormModal({ client, open, onClose, onSaved }: Prop
             <option value="PREPAGO">prepago</option><option value="POSTPAGO">postpago</option>
           </select>
         </label>
-        {accountType === "POSTPAGO" && <label><span>días de crédito</span><input type="number" min="0" max="365" value={creditDays} onChange={(event) => setCreditDays(Number(event.target.value))} /></label>}
+        {accountType === "POSTPAGO" && <label><span>días de crédito</span><input type="number" min="1" max="365" required value={creditDays} onChange={(event) => setCreditDays(Number(event.target.value))} /></label>}
         <fieldset><legend>plataformas habilitadas</legend><div className={styles.platforms}>
           {allPlatforms.map((platform) => <ToggleChip key={platform} pressed={platforms.includes(platform)} onClick={() => togglePlatform(platform)}><PlatformPill platform={platform.toLowerCase() as "meta" | "google" | "tiktok"} /></ToggleChip>)}
         </div></fieldset>
