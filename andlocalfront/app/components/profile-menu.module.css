@@ -18,6 +18,9 @@
 .menu button:focus-visible { outline: 2px solid rgb(11 89 1 / 20%); }
 .menu button:active { background: #edf4ec; color: var(--color-text); }
 
+/* Al pie de la barra lateral el menú sube: abrir hacia abajo lo sacaría de la pantalla. */
+.dropUp .menu { top: auto; right: auto; left: 0; bottom: calc(100% + var(--space-1)); transform-origin: bottom left; }
+
 @media (hover: hover) and (pointer: fine) {
   .trigger:hover { color: var(--color-text); }
   .menu button:hover { background: var(--color-surface); }

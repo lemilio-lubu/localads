@@ -6,14 +6,16 @@ import { useState } from "react";
 import { popoverExitTransition, popoverTransition } from "../design-system/motion";
 import styles from "./profile-menu.module.css";
 
-type ProfileMenuProps = { onLogout: () => void; userName?: string; role?: string; compact?: boolean };
+/** `placement` decide hacia dónde abre el menú: al pie de una barra lateral
+ *  tiene que subir, o se saldría de la pantalla. */
+type ProfileMenuProps = { onLogout: () => void; userName?: string; role?: string; compact?: boolean; placement?: "down" | "up" };
 
-export default function ProfileMenu({ onLogout, userName = "user name", role, compact = false }: ProfileMenuProps) {
+export default function ProfileMenu({ onLogout, userName = "user name", role, compact = false, placement = "down" }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className={`${styles.profileArea} ${compact ? styles.compact : ""}`}>
+    <div className={`${styles.profileArea} ${compact ? styles.compact : ""} ${placement === "up" ? styles.dropUp : ""}`}>
       <button type="button" className={styles.trigger} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-haspopup="menu">
         <span className={styles.identity}><strong>{userName}</strong>{role && <small>{role}</small>}</span>
         <span className={styles.avatar}>
