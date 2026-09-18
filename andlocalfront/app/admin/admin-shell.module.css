@@ -4,7 +4,10 @@
 .sidebar nav { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-7); }
 .sidebar nav a, .sidebar nav span { width: max-content; color: var(--color-text-muted); font-size: var(--font-size-nav); font-weight: var(--font-weight-bold); text-decoration: none; }
 .sidebar nav .active { border-bottom: 2px solid var(--color-text); color: var(--color-text); padding-bottom: var(--space-half); }
-.workspace { min-width: 0; padding: var(--space-7) var(--space-6) var(--space-8); }
+/* El area de trabajo se topa y se centra. Antes crecia sin limite mientras el
+   contenido interior si estaba capado, asi que en pantallas anchas la cabecera
+   se estiraba y las filas quedaban pegadas al borde izquierdo. */
+.workspace { min-width: 0; width: min(100%, calc(var(--layout-admin-content) + var(--space-6) * 2)); margin-inline: auto; padding: var(--space-7) var(--space-6) var(--space-8); }
 .workspace > header { display: flex; height: var(--space-8); align-items: center; justify-content: space-between; }
 .workspace h1 { margin: 0; color: var(--color-text-subtle); font-size: var(--font-size-display); line-height: 1; }
 
