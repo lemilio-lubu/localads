@@ -2,7 +2,9 @@ import Image from "next/image";
 import styles from "./brand-logo.module.css";
 
 type BrandLogoProps = {
-  edition?: "pro" | "flex" | "admin";
+  /* La edición es lo que el usuario es, no el portal donde está: admin y
+     gestor comparten pantallas pero no son lo mismo. */
+  edition?: "pro" | "flex" | "admin" | "gestor";
   size?: "regular" | "compact";
 };
 

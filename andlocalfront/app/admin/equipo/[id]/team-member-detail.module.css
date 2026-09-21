@@ -1,0 +1,77 @@
+.module { display: grid; width: min(100%, var(--layout-admin-content)); gap: var(--space-3); margin-top: var(--space-3); }
+.back { display: inline-flex; width: fit-content; align-items: center; gap: var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-body-sm); text-decoration: none; }
+.back:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+
+.header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); }
+.header small { display: block; color: var(--color-text-muted); font-size: var(--font-size-micro); }
+.header h2 { margin: var(--space-half) 0; color: var(--color-text); font-size: var(--font-size-title); }
+.header > div > span { border-radius: var(--radius-pill); padding: 0 var(--space-1); font-size: var(--font-size-micro); }
+.header > div > span[data-role="ADMIN"] { background: #e2f1ef; color: #10504a; }
+.header > div > span[data-role="GESTOR"] { background: #e7f0e4; color: var(--color-brand); }
+/* Las dos cajas del mockup, más el estado. Números grandes porque es lo que se
+   viene a mirar de un vistazo. */
+.metrics { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+.metrics > div { display: grid; min-width: var(--space-12); gap: var(--space-half); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: var(--space-2) var(--space-3); }
+.metrics dt { color: var(--color-text-muted); font-size: var(--font-size-micro); }
+.metrics dd { margin: 0; color: var(--color-text); font-size: var(--font-size-subhead); font-variant-numeric: tabular-nums; }
+.status { font-size: var(--font-size-body) !important; }
+
+.panel { display: grid; gap: var(--space-2); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); }
+.panel h3 { margin: 0; color: var(--color-text); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); }
+.panel h3 b { color: var(--color-text-muted); font-weight: var(--font-weight-regular); }
+.panelHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+
+/* Dos columnas fijas y acotadas. Con `auto-fit` la rejilla creaba ocho
+   columnas en pantalla ancha y los campos quedaban flotando, estrechos y sin
+   relación con la nota, que sí ocupaba todo. */
+.fields { display: grid; max-width: calc(var(--space-20) * 4); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.fields label { display: grid; gap: var(--space-half); }
+.fields label > span { color: var(--color-text-muted); font-size: var(--font-size-micro); }
+.fields input, .fields select, .fields textarea { min-height: var(--control-height); border: 1px solid #dcdcdc; border-radius: var(--radius-control); background: #fff; padding: var(--space-1) var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); }
+.fields textarea { resize: vertical; }
+.noteField { grid-column: 1 / -1; }
+
+.panelActions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.panelActions button, .link { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-3); color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); cursor: pointer; }
+.primary { background: var(--color-brand) !important; color: #fff !important; font-weight: var(--font-weight-bold); }
+.danger { color: var(--color-danger) !important; }
+.panelActions button:disabled { opacity: .5; cursor: not-allowed; }
+
+.picker { display: flex; flex-wrap: wrap; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: var(--space-2); }
+.picker p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.picker button { min-height: var(--hit-target); border: 1px solid #dcdcdc; border-radius: var(--radius-pill); background: #fff; padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); cursor: pointer; }
+
+/* Rejilla de chips del mockup. Cada chip navega; el icono que lleva al lado es
+   la única acción destructiva y va separado para no confundirlos. */
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.chips li { display: inline-flex; align-items: center; gap: var(--space-half); border-radius: var(--radius-pill); background: var(--color-surface-muted); padding: 0 var(--space-half) 0 var(--space-2); }
+.chips li[data-inactive="true"] { opacity: .55; }
+.chips a { min-height: var(--hit-target); display: inline-flex; align-items: center; color: var(--color-text); font-size: var(--font-size-caption); text-decoration: none; }
+.chips button { display: grid; width: var(--space-3); height: var(--space-3); place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--color-text-muted); cursor: pointer; }
+.chips button:disabled { opacity: .4; cursor: not-allowed; }
+
+.sales { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-20) + var(--space-4)), 1fr)); gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.sales a { display: grid; gap: var(--space-half); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: var(--space-2); color: var(--color-text); text-decoration: none; }
+.sales strong { overflow: hidden; font-size: var(--font-size-caption); text-overflow: ellipsis; white-space: nowrap; }
+.sales span { color: var(--color-brand); font-size: var(--font-size-body-sm); font-variant-numeric: tabular-nums; }
+.sales small { color: var(--color-text-muted); font-size: var(--font-size-micro); }
+
+.empty { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
+/* Confirmación breve: se ajusta al texto en vez de cruzar el panel entero. */
+.notice { display: inline-flex; width: fit-content; border-radius: var(--radius-menu); margin: 0; background: #e7f0e4; padding: var(--space-1) var(--space-2); color: var(--color-brand); font-size: var(--font-size-caption); }
+.rowNotice { display: inline-flex; width: fit-content; border-radius: var(--radius-menu); margin: 0; background: #fdf1f1; padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); }
+.skeleton { height: var(--space-20); border-radius: var(--radius-card); background: linear-gradient(90deg, #f6f6f6 25%, #fafafa 45%, #f6f6f6 65%); background-size: 250% 100%; animation: shimmer 1.1s infinite linear; }
+@keyframes shimmer { to { background-position: -150% 0; } }
+.errorPanel { display: grid; justify-items: center; gap: var(--space-1); border-radius: var(--radius-card); background: #fdf1f1; padding: var(--space-5) var(--space-3); color: var(--color-danger); text-align: center; }
+.errorPanel p { margin: 0; max-width: 46ch; }
+.errorPanel strong { font-size: var(--font-size-card-title); }
+.errorPanel button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
+.panelActions button:focus-visible, .link:focus-visible, .picker button:focus-visible, .chips a:focus-visible, .chips button:focus-visible, .sales a:focus-visible, .fields input:focus-visible, .fields select:focus-visible, .fields textarea:focus-visible, .errorPanel button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .back:hover { color: var(--color-text); }
+  .panelActions button:hover:not(:disabled), .link:hover, .picker button:hover { box-shadow: var(--shadow-card); }
+  .chips li:hover { background: #ededed; }
+  .sales a:hover { background: #ededed; }
+}
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+@media (max-width: 650px) { .header { flex-direction: column; align-items: flex-start; } .metrics { width: 100%; } .metrics > div { flex: 1; } }

@@ -5,7 +5,9 @@
 .brandMark img:last-child { width: 77px; height: 37px; }
 .divider { width: 1px; height: 56px; margin-left: var(--space-2); background: #121318; }
 .logo strong { margin-left: var(--space-2); color: #000; font-size: var(--font-size-headline); line-height: 1; letter-spacing: -1.5px; }
-.compact { width: 152px; height: var(--button-height); }
+/* Ancho al contenido con el de «admin» como suelo: «gestor» tiene una letra
+   más y con el ancho fijo se salía de la caja. */
+.compact { width: max-content; min-width: 152px; height: var(--button-height); }
 .compact .brandMark { gap: 0; }
 .compact .brandMark img:first-child { width: var(--space-5); height: var(--space-3); }
 .compact .brandMark img:last-child { width: 44px; height: var(--space-3); }
