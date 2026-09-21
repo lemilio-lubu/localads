@@ -1,4 +1,7 @@
 .status { display: inline-grid; width: fit-content; min-width: var(--space-9); height: var(--space-3); place-items: center; border-radius: var(--radius-pill); background: var(--color-success); padding-inline: var(--space-1); color: #fff; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); line-height: 1; }
 .success { background: var(--color-success); }
+/* Naranja para lo que está en marcha pero sin terminar. El token es oscuro,
+   así que el texto blanco mantiene el contraste AA. */
+.warning { background: var(--color-status-warning); }
 .danger { background: var(--color-danger); }
 .neutral { background: #5f5f5f; color: #fff; }
