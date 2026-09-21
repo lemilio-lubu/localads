@@ -49,7 +49,7 @@
 .pagination button:disabled { opacity: .45; cursor: not-allowed; }
 .pagination button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
 .skeleton { min-height: 112px; border-radius: var(--radius-card); background: linear-gradient(90deg, #f7f7f7 25%, #fbfbfb 45%, #f7f7f7 65%); background-size: 250% 100%; animation: shimmer 1.1s infinite linear; }
-.modal { width: min(1120px, 100%); max-height: min(92vh, 860px); overflow-y: auto; padding: var(--space-5); }
+.modal { width: min(1120px, 100%); max-height: min(92vh, 860px); overflow-y: auto; }
 .modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
 .modalHeader small { color: var(--color-text-muted); }
 .modalHeader h2 { margin: 4px 0; font-size: var(--font-size-subhead); }
@@ -99,6 +99,6 @@
 @keyframes shimmer { to { background-position: -150% 0; } }
 @media (hover: hover) and (pointer: fine) { .row:hover { box-shadow: var(--shadow-card); } .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .pagination button:not(:disabled):hover { background: #ededed; } .reviewButton:not(:disabled):hover { color: var(--color-brand); }.actions > button:first-child:hover, .reviewForm button:last-child:hover { background: #624700; }.actions > button:last-child:hover { background: #084600; } }
 @media (max-width: 1180px) { .row { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); } .transferIcon { grid-row: span 2; } .reviewButton { align-self: end; }.reviewGrid { grid-template-columns: 1fr; }.preview { min-height: 420px; }.preview img, .preview iframe { height: 420px; } }
-@media (max-width: 780px) { .module { margin-top: var(--space-3); }.toolbar { grid-template-columns: 1fr; }.row { grid-template-columns: 56px repeat(2, minmax(0, 1fr)); padding: var(--space-2); }.modal { padding: var(--space-3); } }
+@media (max-width: 780px) { .module { margin-top: var(--space-3); }.toolbar { grid-template-columns: 1fr; }.row { grid-template-columns: 56px repeat(2, minmax(0, 1fr)); padding: var(--space-2); }.modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
 @media (max-width: 560px) { .search { min-width: 0; }.row { grid-template-columns: 46px 1fr; border-radius: var(--radius-control) }.reviewButton { grid-column: 1 / -1; justify-self: start; }.transferIcon, .transferIcon img { width: 44px; height: 44px; }.cell { grid-column: 2; }.preview { min-height: 320px; }.preview img, .preview iframe { height: 320px; }.actions { flex-direction: column; }.actions > button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .row, .pagination button, .reviewButton, .actions button, .reviewForm { transition-duration: 0ms; }.actions button:active:not(:disabled) { transform: none; }.skeleton { animation: none; } }

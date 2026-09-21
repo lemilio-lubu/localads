@@ -1,4 +1,4 @@
-.modal { width: min(calc(100vw - var(--space-6)), var(--layout-client-detail-max)); min-height: min(calc(100vh - var(--space-6)), var(--layout-client-detail-min-height)); max-height: calc(100vh - var(--space-6)); overflow-y: auto; scrollbar-gutter: stable; background: var(--color-surface-raised); padding: var(--space-5); }
+.modal { width: min(calc(100vw - var(--space-6)), var(--layout-client-detail-max)); min-height: min(calc(100vh - var(--space-6)), var(--layout-client-detail-min-height)); max-height: calc(100vh - var(--space-6)); overflow-y: auto; scrollbar-gutter: stable; background: var(--color-surface-raised); }
 .summary { display: grid; grid-template-columns: minmax(var(--space-20), 1fr) minmax(0, 2.2fr); align-items: center; gap: var(--space-4); }
 .identity { min-width: 0; }
 .accountBadge { display: inline-flex; align-items: center; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
@@ -49,7 +49,7 @@
 .error { color: var(--color-danger); }
 
 @media (max-width: 900px) {
-  .modal { overflow-y: auto; padding: var(--space-4); }
+  .modal { overflow-y: auto; padding-block: var(--space-4); padding-inline-start: var(--space-4); }
   .summary { grid-template-columns: 1fr; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .consumptionSummary { grid-template-columns: 1fr 1fr; }
@@ -59,7 +59,7 @@
 }
 
 @media (max-width: 560px) {
-  .modal { width: calc(100vw - var(--space-2)); min-height: calc(100vh - var(--space-2)); padding: var(--space-3); }
+  .modal { width: calc(100vw - var(--space-2)); min-height: calc(100vh - var(--space-2)); padding-block: var(--space-3); padding-inline-start: var(--space-3); }
   .metrics, .platformTotals { grid-template-columns: 1fr; }
   .consumptionSummary { grid-template-columns: 1fr; }
   .consumptionSummary > div:nth-child(2) { border-left: 0; padding-left: var(--space-1); }

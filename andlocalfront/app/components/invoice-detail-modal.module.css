@@ -71,7 +71,7 @@
 }
 
 @media (max-width: 680px) {
-  .modal { padding: var(--space-4) var(--space-2) var(--space-2); }
+  .modal { padding-block: var(--space-4) var(--space-2); padding-inline-start: var(--space-2); }
   .platformGrid { grid-template-columns: 1fr; }
   .platformCard { min-height: var(--platform-detail-height-mobile); }
 }
