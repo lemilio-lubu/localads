@@ -246,7 +246,9 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
 
   async list(filters: CampaignActivationListFilters): Promise<readonly CampaignActivationRequestView[]> {
     const records = await this.prisma.campaignActivationRequest.findMany({
-      where: { status: filters.status, clientId: filters.clientId },
+      // El recorte va por la relacion con el cliente: la solicitud es de un
+      // cliente, y el gestor solo ve las de su cartera.
+      where: { status: filters.status, clientId: filters.clientId, ...(filters.managerId ? { client: { is: { managerId: filters.managerId } } } : {}) },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     });
     return records.map(toView);

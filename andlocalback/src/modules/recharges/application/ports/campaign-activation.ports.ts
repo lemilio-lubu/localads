@@ -73,6 +73,8 @@ export type RejectCampaignActivationDecision = CampaignActivationDecision & Read
 }>;
 
 export type CampaignActivationListFilters = Readonly<{
+  /* Recorte del gestor, tomado del token. Ausente = admin, sin limite. */
+  managerId?: string;
   status?: ActivationRequestStatus;
   clientId?: string;
 }>;

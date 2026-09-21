@@ -7,6 +7,9 @@ export class CreateClientDto {
   @IsEnum(AccountType) accountType!: AccountType;
   @IsArray() @IsEnum(AdvertisingPlatform, { each: true }) platforms!: AdvertisingPlatform[];
   @IsOptional() @IsInt() @Min(0) @Max(365) creditDays = 0;
+  /* Solo lo aplica un admin. Un gestor se asigna a si mismo desde el token y
+     lo que venga aqui se ignora: el alcance no se amplia por el cuerpo. */
+  @IsOptional() @IsString() @MaxLength(60) managerId?: string;
 }
 
 export class UpdateClientDto {
@@ -17,4 +20,10 @@ export class UpdateClientDto {
   @ValidateIf((input: UpdateClientDto) => input.platforms !== undefined) @IsInt() @Min(0) expectedPlatformsVersion?: number;
   @IsOptional() @IsInt() @Min(0) @Max(365) creditDays?: number;
   @IsOptional() @IsEnum(ClientStatus) status?: ClientStatus;
+}
+
+export class AssignManagerDto {
+  /* Null es una asignacion valida: desvincular deja al cliente en la bandeja
+     de sin asignar que revisa el admin. */
+  @IsOptional() @IsString() @MaxLength(60) managerId?: string | null;
 }

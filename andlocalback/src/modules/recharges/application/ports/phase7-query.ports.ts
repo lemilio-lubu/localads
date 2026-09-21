@@ -140,6 +140,9 @@ export type ClientTransactionDetailView = Readonly<{
   vatBaseAmount: number;
   vatAmount: number;
   totalAmount: number;
+  isdRate: number;
+  agencyFeeRate: number;
+  vatRate: number;
   completedAt: string | null;
   createdAt: string;
   details: readonly TransactionDetailQueryView[];
@@ -204,7 +207,22 @@ export type AdminTransactionDetailView = ClientTransactionDetailView & Readonly<
   verifications: readonly VerificationAdminView[];
 }>;
 
+/* El cliente filtra su propio historial con los mismos criterios que el admin,
+   menos los que no son suyos (clientId va del token, no de la query). */
+export type ClientTransactionFilters = PageRequest & Readonly<{
+  clientId: string;
+  search?: string;
+  rechargeStatus?: TransactionRechargeStatus;
+  paymentStatus?: TransactionPaymentStatus;
+  dateFrom?: Date;
+  dateTo?: Date;
+}>;
+
 export type AdminTransactionFilters = PageRequest & Readonly<{
+  /* Recorte del gestor. Ausente = admin, sin limite. Nunca llega de la query:
+     el controller lo toma del token. */
+  managerId?: string;
+  search?: string;
   clientId?: string;
   accountType?: AccountType;
   rechargeStatus?: TransactionRechargeStatus;
@@ -212,6 +230,12 @@ export type AdminTransactionFilters = PageRequest & Readonly<{
   dateFrom?: Date;
   dateTo?: Date;
 }>;
+
+/* Los totales describen el conjunto filtrado entero, no la pagina devuelta:
+   un resumen que solo sumara la pagina contradiria al listado en cuanto
+   hubiera mas de una. */
+export type TransactionTotals = Readonly<{ pautaAmount: number; totalAmount: number }>;
+export type AdminTransactionPage = PageResult<TransactionListItemView> & Readonly<{ totals: TransactionTotals }>;
 
 export type VerificationScope = "ALL" | "REVIEW" | "APPROVED" | "REJECTED";
 
@@ -241,6 +265,7 @@ export type VerificationListItemView = Readonly<{
 }>;
 
 export type VerificationFilters = PageRequest & Readonly<{
+  managerId?: string;
   scope: VerificationScope;
   status?: VerificationStatus;
   search?: string;
@@ -254,10 +279,10 @@ export type VerificationFilters = PageRequest & Readonly<{
 export interface Phase7QueryPort {
   getRechargeContext(clientId: string): Promise<RechargeContextView | null>;
   listPautasByClient(clientId: string): Promise<readonly PautaQueryView[]>;
-  listTransactionsByClient(input: PageRequest & Readonly<{ clientId: string }>): Promise<PageResult<TransactionListItemView>>;
+  listTransactionsByClient(input: ClientTransactionFilters): Promise<PageResult<TransactionListItemView>>;
   findTransactionDetailByClient(input: Readonly<{ transactionId: string; clientId: string }>): Promise<ClientTransactionDetailView | null>;
-  listTransactions(input: AdminTransactionFilters): Promise<PageResult<TransactionListItemView>>;
-  findTransactionDetail(transactionId: string): Promise<AdminTransactionDetailView | null>;
+  listTransactions(input: AdminTransactionFilters): Promise<AdminTransactionPage>;
+  findTransactionDetail(transactionId: string, managerId?: string): Promise<AdminTransactionDetailView | null>;
   listVerifications(input: VerificationFilters): Promise<PageResult<VerificationListItemView>>;
 }
 

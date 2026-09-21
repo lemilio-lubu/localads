@@ -2,13 +2,19 @@ import "reflect-metadata";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { describe, expect, it, vi } from "vitest";
+import { AssertManagerScope } from "../src/modules/recharges/application/ports/manager-scope.ports";
 import { CompleteTransaction } from "../src/modules/recharges/application/use-cases/complete-transaction";
 import { CompleteTransactionDetail } from "../src/modules/recharges/application/use-cases/complete-transaction-detail";
 import { StartTransactionRecharge } from "../src/modules/recharges/application/use-cases/start-transaction-recharge";
 import { CompleteTransactionDetailDto } from "../src/modules/recharges/presentation/dto/complete-transaction-detail.dto";
 import { TransactionExecutionController } from "../src/modules/recharges/presentation/transaction-execution.controller";
 
+/* Doble que nunca recorta: equivale al alcance de un admin. */
+const sinRecorte = new AssertManagerScope({ ownsTransaction: async () => true, ownsVerification: async () => true, ownsActivationRequest: async () => true, ownsReceipt: async () => true });
+const administrador = { userId: "admin-1", username: "admin", role: "ADMIN" as const, clientId: null, accountId: null, accountType: null };
+
 describe("Fase 5 - DTO de ejecucion de recarga", () => {
+
   it("acepta dinero decimal como string y una fecha ISO opcional", async () => {
     const dto = plainToInstance(CompleteTransactionDetailDto, {
       effectiveAmount: "475.25",
@@ -55,13 +61,16 @@ describe("Fase 5 - endpoints de ejecucion", () => {
       start as unknown as StartTransactionRecharge,
       detail as unknown as CompleteTransactionDetail,
       complete as unknown as CompleteTransaction,
+      {} as never,
+      {} as never,
+      sinRecorte,
     );
     return { controller, start, detail, complete };
   }
 
   it("inicia una transaccion sin aceptar un estado desde HTTP", async () => {
     const { controller, start } = setup();
-    await controller.start("tx-001");
+    await controller.start("tx-001", administrador);
     expect(start.execute).toHaveBeenCalledWith({ transactionId: "tx-001" });
   });
 
@@ -70,7 +79,7 @@ describe("Fase 5 - endpoints de ejecucion", () => {
     await controller.completeDetail("tx-001", "detail-001", {
       effectiveAmount: "475.25",
       effectiveRechargeDate: "2026-09-10T15:30:00.000Z",
-    });
+    }, administrador);
 
     expect(detail.execute).toHaveBeenCalledWith({
       transactionId: "tx-001",
@@ -82,7 +91,7 @@ describe("Fase 5 - endpoints de ejecucion", () => {
 
   it("cierra la transaccion y devuelve el resultado con su factura", async () => {
     const { controller, complete } = setup();
-    const result = await controller.complete("tx-001");
+    const result = await controller.complete("tx-001", administrador);
     expect(complete.execute).toHaveBeenCalledWith({ transactionId: "tx-001" });
     expect(result).toMatchObject({
       transaction: { status: "COMPLETED" },

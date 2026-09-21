@@ -3,6 +3,7 @@ import { PageResult, Phase7QueryPort, VerificationListItemView, VerificationScop
 import { assertDateRange, optionalDate, optionalText, pagination } from "./phase7-query.validation";
 
 export type ListVerificationsQuery = Readonly<{
+  managerId?: string;
   page?: number;
   pageSize?: number;
   scope?: VerificationScope;
@@ -23,6 +24,7 @@ export class ListVerifications {
     assertDateRange(dateFrom, dateTo);
     return this.queries.listVerifications({
       ...pagination(query.page, query.pageSize),
+      managerId: optionalText(query.managerId),
       scope: query.scope ?? "REVIEW",
       status: query.status,
       search: optionalText(query.search),

@@ -40,7 +40,9 @@ describe("ciclo de plataformas y recargas en stop", () => {
   });
 
   async function fixture() {
-    const client = await clients.create({ name: "Lifecycle", email: `${randomUUID()}@example.test`, accountType: AccountType.POSTPAID, creditDays: 30, platforms: [AdvertisingPlatform.META, AdvertisingPlatform.GOOGLE] });
+    // Crear un cliente crea tambien su usuario: el repositorio exige las
+    // credenciales ya preparadas, hasheadas fuera de la persistencia.
+    const client = await clients.create({ name: "Lifecycle", email: `${randomUUID()}@example.test`, accountType: AccountType.POSTPAID, creditDays: 30, platforms: [AdvertisingPlatform.META, AdvertisingPlatform.GOOGLE] }, { username: `lifecycle-${randomUUID()}`, passwordHash: "scrypt$salt$hash" });
     const pautas = await prisma.pauta.findMany({ where: { clientId: client.id } });
     const meta = pautas.find((p) => p.platform === "META")!;
     const google = pautas.find((p) => p.platform === "GOOGLE")!;
@@ -55,7 +57,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
     return { client, meta, google, transaction, detail };
   }
   async function setPlatforms(clientId: string, platforms: AdvertisingPlatform[], version?: number) {
-    const current = await clients.findById(clientId);
+    const current = await clients.findById(clientId, {});
     return clients.update(clientId, { platforms, expectedPlatformsVersion: version ?? current!.platformsVersion, administratorId: "admin-test" });
   }
   async function request(client: Awaited<ReturnType<typeof fixture>>["client"]) {
@@ -65,7 +67,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
   it("da de baja sin borrar saldo, identidad, pago ni detalles; permite cero plataformas", async () => {
     const { client, meta, transaction } = await fixture();
     await setPlatforms(client.id, []);
-    expect((await clients.findById(client.id))!.account.platforms).toEqual([]);
+    expect((await clients.findById(client.id, {}))!.account.platforms).toEqual([]);
     const pauta = await prisma.pauta.findUniqueOrThrow({ where: { id: meta.id } });
     expect(pauta.status).toBe("INACTIVE"); expect(pauta.currentBalance.toNumber()).toBe(77);
     expect(pauta.externalAccountId).toBe("original-meta-id");
@@ -106,7 +108,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
     expect(await prisma.campaignActivationRequest.count({ where: { pautaId: meta.id, status: "APPROVED" } })).toBe(2);
     const pauta = await prisma.pauta.findUniqueOrThrow({ where: { id: meta.id } });
     expect(pauta.currentBalance.toNumber()).toBe(77); expect(pauta.externalAccountId).toBe("original-meta-id");
-    expect((await clients.findById(client.id))!.account.platforms).toContain("META");
+    expect((await clients.findById(client.id, {}))!.account.platforms).toContain("META");
   });
 
   it("el alta directa resuelve la solicitud pendiente y rechaza la aprobación antigua", async () => {
@@ -123,7 +125,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
     const pending = await activation.create({ id: randomUUID(), clientId: client.id, platform: AdvertisingPlatform.TIKTOK, requesterName: "Test", externalAccountId: "new-tiktok", phone: "0999999999", firstRechargeAmount: "100.00" });
     await activation.approve({ requestId: pending.id, expectedVersion: pending.version, pautaId: randomUUID(), administratorId: "admin-test", decidedAt: new Date() });
     await expect(setPlatforms(client.id, [AdvertisingPlatform.GOOGLE], client.platformsVersion)).rejects.toMatchObject({ code: "PLATFORMS_CHANGED" });
-    expect((await clients.findById(client.id))!.account.platforms).toHaveLength(3);
+    expect((await clients.findById(client.id, {}))!.account.platforms).toHaveLength(3);
   });
 
   it("rechaza nuevas recargas con contexto anterior a la baja y con pautas ajenas", async () => {
@@ -169,7 +171,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
     await seedBackendData(prisma);
     await setPlatforms("client-001", []);
     await seedBackendData(prisma);
-    expect((await clients.findById("client-001"))!.account.platforms).toEqual([]);
+    expect((await clients.findById("client-001", {}))!.account.platforms).toEqual([]);
     expect(await prisma.pauta.count({ where: { clientId: "client-001", status: "ACTIVE" } })).toBe(0);
   });
 

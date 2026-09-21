@@ -8,6 +8,8 @@ import { RejectTransactionVerification } from "../application/use-cases/reject-t
 import { MarkTransactionVerificationUnderReview } from "../application/use-cases/mark-transaction-verification-under-review";
 import { UploadPaymentReceipt } from "../application/use-cases/upload-payment-receipt";
 import { ApplicationErrorFilter } from "./application-error.filter";
+import { scopeFor } from "../../../common/access/manager-scope";
+import { AssertManagerScope } from "../application/ports/manager-scope.ports";
 import { CurrentUser, Roles } from "../../auth/auth.decorators";
 import { AuthPrincipal } from "../../auth/auth.types";
 import { PrismaService } from "../../../database/prisma.service";
@@ -28,45 +30,52 @@ export class TransactionVerificationsController {
     private readonly ocrDispatcher: TransactionReceiptOcrDispatcher,
     private readonly database: PrismaService,
     private readonly markVerificationUnderReview: MarkTransactionVerificationUnderReview,
+    private readonly scope: AssertManagerScope,
   ) {}
 
   @Post("transaction-receipts/:receiptId/ocr")
-  @Roles("ADMIN")
+  @Roles("ADMIN", "GESTOR")
   @HttpCode(HttpStatus.OK)
-  processOrRetryOcr(@Param("receiptId") receiptId: string) {
+  async processOrRetryOcr(@Param("receiptId") receiptId: string, @CurrentUser() user: AuthPrincipal) {
+    await this.scope.receipt(receiptId, scopeFor(user));
     return this.processReceiptOcr.execute({ receiptId });
   }
 
+  /* La pertenencia se comprueba antes de invocar el caso de uso: una
+     verificacion fuera de la cartera no llega a evaluarse siquiera. */
   @Patch("transaction-verifications/:verificationId/approve")
-  @Roles("ADMIN")
+  @Roles("ADMIN", "GESTOR")
   @HttpCode(HttpStatus.OK)
-  approve(
+  async approve(
     @Param("verificationId") verificationId: string,
     @Body() body: ApproveTransactionVerificationDto,
     @CurrentUser() user?: AuthPrincipal,
   ) {
+    if (user) await this.scope.verification(verificationId, scopeFor(user));
     return this.approveVerification.execute({ verificationId, notes: body.notes, administratorId: user?.userId ?? body.administratorId });
   }
 
   @Patch("transaction-verifications/:verificationId/reject")
-  @Roles("ADMIN")
+  @Roles("ADMIN", "GESTOR")
   @HttpCode(HttpStatus.OK)
-  reject(
+  async reject(
     @Param("verificationId") verificationId: string,
     @Body() body: RejectTransactionVerificationDto,
     @CurrentUser() user?: AuthPrincipal,
   ) {
+    if (user) await this.scope.verification(verificationId, scopeFor(user));
     return this.rejectVerification.execute({ verificationId, reason: body.reason, administratorId: user?.userId ?? body.administratorId });
   }
 
   @Patch("transaction-verifications/:verificationId/review")
-  @Roles("ADMIN")
+  @Roles("ADMIN", "GESTOR")
   @HttpCode(HttpStatus.OK)
-  review(
+  async review(
     @Param("verificationId") verificationId: string,
     @Body() body: ReviewTransactionVerificationDto,
     @CurrentUser() user?: AuthPrincipal,
   ) {
+    if (user) await this.scope.verification(verificationId, scopeFor(user));
     return this.markVerificationUnderReview.execute({
       verificationId,
       reason: body.reason,

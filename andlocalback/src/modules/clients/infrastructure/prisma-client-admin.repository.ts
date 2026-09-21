@@ -1,9 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
+import { ManagerScope } from "../../../common/access/manager-scope";
 import { ApplicationError } from "../../../common/errors/application.error";
 import { PrismaService } from "../../../database/prisma.service";
 import { ClientAdminRepository, UpdateClientInput } from "../application/ports/client-admin.repository";
+import { PreparedCredentials } from "../application/ports/client-credentials.port";
 import { ClientProfileInput } from "../domain/client-profile";
 import { AccountType, AdvertisingPlatform } from "../../recharges/domain/recharge.types";
 import { pausePlatformDetails } from "../../recharges/infrastructure/persistence/platform-lifecycle";
@@ -11,6 +13,9 @@ import { pausePlatformDetails } from "../../recharges/infrastructure/persistence
 const clientInclude = {
   pautas: true,
   accounts: true,
+  // El gestor responsable se muestra en la fila de Clientes; solo hace falta
+  // como quien lo lee, no el registro entero.
+  manager: { select: { id: true, username: true } },
   // "Recargado" = lo que efectivamente llegó a las pautas: monto de pauta de
   // las transacciones completadas, sin comisiones ni impuestos.
   rechargeTransactions: {
@@ -21,39 +26,68 @@ const clientInclude = {
 
 type ClientRecord = Prisma.ClientGetPayload<{ include: typeof clientInclude }>;
 
+/* Sin managerId el where queda vacio y la consulta no se recorta: ese es el
+   admin. Con managerId, la base solo devuelve la cartera de ese gestor. */
+const managerWhere = (scope: ManagerScope): Prisma.ClientWhereInput => (scope.managerId ? { managerId: scope.managerId } : {});
+
 @Injectable()
 export class PrismaClientAdminRepository implements ClientAdminRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(input: ClientProfileInput) {
+  async create(input: ClientProfileInput, credentials: Pick<PreparedCredentials, "username" | "passwordHash">, managerId: string | null = null) {
     try {
       const clientId = randomUUID();
       const accountId = randomUUID();
-      const record = await this.prisma.client.create({
-        data: {
-          id: clientId,
-          name: input.name.trim(),
-          email: input.email.trim().toLowerCase(),
-          status: "ACTIVE",
-          pautas: {
-            create: input.platforms.map((platform) => ({
-              id: randomUUID(),
-              platform,
-              status: "ACTIVE",
-              currentBalance: new Prisma.Decimal(0),
-              activatedAt: new Date(),
-            })),
-          },
-          accounts: {
-            create: {
-              id: accountId,
-              status: "ACTIVE",
-              type: input.accountType,
-              creditDays: input.accountType === "PREPAGO" ? 0 : input.creditDays,
+      /* Cliente, cuenta, pautas y usuario en una sola transaccion: si el
+         UNIQUE de username choca, no queda un cliente sin acceso a medias. */
+      const record = await this.prisma.$transaction(async (database) => {
+        /* El gestor se comprueba dentro de la transaccion: si entre la
+           validacion y el alta lo dieran de baja, el cliente no nace colgando
+           de una cartera inactiva. */
+        if (managerId) {
+          const manager = await database.authUser.findFirst({ where: { id: managerId, role: "GESTOR", status: "ACTIVE" }, select: { id: true } });
+          if (!manager) throw new ApplicationError("MANAGER_NOT_ACTIVE", "El gestor no existe o no esta activo", 409);
+        }
+        const created = await database.client.create({
+          data: {
+            id: clientId,
+            name: input.name.trim(),
+            email: input.email.trim().toLowerCase(),
+            status: "ACTIVE",
+            managerId,
+            pautas: {
+              create: input.platforms.map((platform) => ({
+                id: randomUUID(),
+                platform,
+                status: "ACTIVE",
+                currentBalance: new Prisma.Decimal(0),
+                activatedAt: new Date(),
+              })),
+            },
+            accounts: {
+              create: {
+                id: accountId,
+                status: "ACTIVE",
+                type: input.accountType,
+                creditDays: input.accountType === "PREPAGO" ? 0 : input.creditDays,
+              },
             },
           },
-        },
-        include: clientInclude,
+          include: clientInclude,
+        });
+        await database.authUser.create({
+          data: {
+            username: credentials.username,
+            passwordHash: credentials.passwordHash,
+            role: "CLIENT",
+            clientId,
+            accountId,
+            accountType: input.accountType,
+            status: "ACTIVE",
+            mustChangePassword: true,
+          },
+        });
+        return created;
       });
       return this.toView(record);
     } catch (error) {
@@ -61,13 +95,15 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
     }
   }
 
-  async list() {
-    const records = await this.prisma.client.findMany({ include: clientInclude, orderBy: { createdAt: "desc" } });
+  async list(scope: ManagerScope) {
+    const records = await this.prisma.client.findMany({ where: managerWhere(scope), include: clientInclude, orderBy: { createdAt: "desc" } });
     return records.map((record) => this.toView(record));
   }
 
-  async findById(id: string) {
-    const record = await this.prisma.client.findUnique({ where: { id }, include: clientInclude });
+  /* findFirst y no findUnique: con el recorte del gestor la busqueda deja de
+     ser por clave unica, y un cliente ajeno devuelve null, no el registro. */
+  async findById(id: string, scope: ManagerScope) {
+    const record = await this.prisma.client.findFirst({ where: { id, ...managerWhere(scope) }, include: clientInclude });
     return record ? this.toView(record) : null;
   }
 
@@ -126,10 +162,19 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
           }
         }
       });
-      return this.findById(id);
+      return this.findById(id, {});
     } catch (error) {
       this.handlePersistenceError(error);
     }
+  }
+
+  async assignManager(id: string, managerId: string | null) {
+    if (managerId) {
+      const manager = await this.prisma.authUser.findFirst({ where: { id: managerId, role: "GESTOR", status: "ACTIVE" }, select: { id: true } });
+      if (!manager) return undefined;
+    }
+    const updated = await this.prisma.client.updateMany({ where: { id }, data: { managerId } });
+    return updated.count === 1 ? this.findById(id, {}) : null;
   }
 
   async deactivate(id: string) {
@@ -139,7 +184,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
       this.prisma.client.update({ where: { id }, data: { status: "INACTIVE" } }),
       this.prisma.account.updateMany({ where: { clientId: id }, data: { status: "INACTIVE" } }),
     ]);
-    return this.findById(id);
+    return this.findById(id, {});
   }
 
   private toView(record: ClientRecord) {
@@ -149,6 +194,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
       id: record.id,
       name: record.name,
       email: record.email,
+      manager: record.manager ? { id: record.manager.id, username: record.manager.username } : null,
       status: record.status as "ACTIVE" | "INACTIVE",
       createdAt: record.createdAt.toISOString(),
       platformsVersion: record.platformsVersion,
@@ -167,6 +213,10 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
 
   private handlePersistenceError(error: unknown): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      /* El mismo codigo cubre dos UNIQUE distintos. Distinguirlos importa: el
+         correo lo corrige quien crea el cliente, el usuario no. */
+      const target = Array.isArray(error.meta?.target) ? (error.meta.target as string[]).join(",") : String(error.meta?.target ?? "");
+      if (target.includes("username")) throw new ApplicationError("USERNAME_TAKEN", "El usuario derivado del correo ya existe", 409);
       throw new ApplicationError("CLIENT_EMAIL_EXISTS", "Ya existe un cliente con este correo", 409);
     }
     throw error;

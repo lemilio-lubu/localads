@@ -1,25 +1,37 @@
+import { ManagerScope } from "../../../../common/access/manager-scope";
 import { ApplicationError } from "../../../../common/errors/application.error";
 import { ClientProfileInput, validateClientProfile } from "../../domain/client-profile";
 import { ClientAdminRepository, UpdateClientInput } from "../ports/client-admin.repository";
+import { ClientCredentialsIssuer } from "../ports/client-credentials.port";
 
 export class ManageClients {
-  constructor(private readonly clients: ClientAdminRepository) {}
+  constructor(private readonly clients: ClientAdminRepository, private readonly credentials: ClientCredentialsIssuer) {}
 
-  list() { return this.clients.list(); }
+  list(scope: ManagerScope) { return this.clients.list(scope); }
 
-  async get(id: string) {
-    const client = await this.clients.findById(id);
+  /* Un cliente fuera del alcance responde 404, igual que uno inexistente: un
+     403 confirmaria que existe y de quien es. */
+  async get(id: string, scope: ManagerScope) {
+    const client = await this.clients.findById(id, scope);
     if (!client) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
     return client;
   }
 
-  create(input: ClientProfileInput) {
+  /* La clave temporal se devuelve en claro una sola vez, aqui, y no vuelve a
+     salir por ningun GET. Si se pierde, el camino es restablecerla. */
+  /* Un gestor se asigna a si mismo el cliente que crea, tomando el id del
+     token; lo que pida el cuerpo se ignora. Un admin elige gestor o lo deja
+     sin asignar. */
+  async create(input: ClientProfileInput, scope: ManagerScope, requestedManagerId?: string | null) {
     validateClientProfile(input);
-    return this.clients.create(input);
+    const managerId = scope.managerId ?? requestedManagerId?.trim() ?? null;
+    const { username, temporaryPassword, passwordHash } = await this.credentials.prepare(input.email);
+    const client = await this.clients.create(input, { username, passwordHash }, managerId || null);
+    return { ...client, credentials: { username, temporaryPassword } };
   }
 
-  async update(id: string, input: UpdateClientInput) {
-    const current = await this.get(id);
+  async update(id: string, input: UpdateClientInput, scope: ManagerScope) {
+    const current = await this.get(id, scope);
     validateClientProfile({
       name: input.name ?? current.name,
       email: input.email ?? current.email,
@@ -32,7 +44,18 @@ export class ManageClients {
     return updated;
   }
 
-  async deactivate(id: string) {
+  /* Reasignar es cosa del admin: el alcance vacio no es un descuido, es que un
+     gestor no puede mover clientes, ni suyos ni ajenos. */
+  async assignManager(id: string, managerId: string | null) {
+    await this.get(id, {});
+    const updated = await this.clients.assignManager(id, managerId);
+    if (updated === undefined) throw new ApplicationError("MANAGER_NOT_ACTIVE", "El gestor no existe o no esta activo", 409);
+    if (!updated) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
+    return updated;
+  }
+
+  async deactivate(id: string, scope: ManagerScope) {
+    await this.get(id, scope);
     const client = await this.clients.deactivate(id);
     if (!client) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
     return client;

@@ -4,6 +4,8 @@ import { PrismaService } from "../../../../database/prisma.service";
 import {
   AdminTransactionDetailView,
   AdminTransactionFilters,
+  AdminTransactionPage,
+  ClientTransactionFilters,
   ClientTransactionDetailView,
   InvoiceQueryView,
   PageResult,
@@ -59,6 +61,9 @@ const clientDetailSelect = {
   vatBaseAmount: true,
   vatAmount: true,
   totalAmount: true,
+  isdRateSnapshot: true,
+  agencyFeeRateSnapshot: true,
+  vatRateSnapshot: true,
   completedAt: true,
   createdAt: true,
   details: { orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }], include: { pauta: { select: { status: true } } } },
@@ -158,9 +163,16 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
   }
 
   async listTransactionsByClient(
-    input: { clientId: string; page: number; pageSize: number },
+    input: ClientTransactionFilters,
   ): Promise<PageResult<TransactionListItemView>> {
-    return this.listTransactionPage({ clientId: input.clientId }, input.page, input.pageSize);
+    // El cliente sale del token: el filtro nunca puede ampliarse a otro.
+    return this.listTransactionPage({
+      ...transactionSearch(input.search),
+      clientId: input.clientId,
+      rechargeStatus: input.rechargeStatus,
+      payment: input.paymentStatus ? { is: { status: input.paymentStatus } } : undefined,
+      createdAt: dateRange(input.dateFrom, input.dateTo),
+    }, input.page, input.pageSize);
   }
 
   async findTransactionDetailByClient(
@@ -175,20 +187,37 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
     return record ? toClientDetail(record) : null;
   }
 
-  async listTransactions(input: AdminTransactionFilters): Promise<PageResult<TransactionListItemView>> {
+  async listTransactions(input: AdminTransactionFilters): Promise<AdminTransactionPage> {
     const where: Prisma.RechargeTransactionWhereInput = {
+      ...transactionSearch(input.search),
+      ...managedClient(input.managerId),
       clientId: input.clientId,
       rechargeStatus: input.rechargeStatus,
       accountTypeSnapshot: input.accountType,
       payment: input.paymentStatus ? { is: { status: input.paymentStatus } } : undefined,
       createdAt: dateRange(input.dateFrom, input.dateTo),
     };
-    return this.listTransactionPage(where, input.page, input.pageSize);
+    // Los totales se agregan sobre el mismo predicado que la pagina, de modo que
+    // el resumen describe el filtro completo y no solo las filas visibles.
+    const [result, totals] = await Promise.all([
+      this.listTransactionPage(where, input.page, input.pageSize),
+      this.prisma.rechargeTransaction.aggregate({ where, _sum: { pautaAmount: true, totalAmount: true } }),
+    ]);
+    return {
+      ...result,
+      totals: {
+        pautaAmount: money(totals._sum.pautaAmount ?? new Prisma.Decimal(0)),
+        totalAmount: money(totals._sum.totalAmount ?? new Prisma.Decimal(0)),
+      },
+    };
   }
 
-  async findTransactionDetail(transactionId: string): Promise<AdminTransactionDetailView | null> {
-    const record = await this.prisma.rechargeTransaction.findUnique({
-      where: { id: transactionId },
+  /* findFirst y no findUnique: con el recorte del gestor la busqueda deja de
+     ser por clave unica. Una transaccion ajena devuelve null, y el caso de uso
+     la convierte en 404. */
+  async findTransactionDetail(transactionId: string, managerId?: string): Promise<AdminTransactionDetailView | null> {
+    const record = await this.prisma.rechargeTransaction.findFirst({
+      where: { id: transactionId, ...managedClient(managerId) },
       select: adminDetailSelect,
     });
     return record ? toAdminDetail(record) : null;
@@ -205,10 +234,16 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
         { ocrResult: { is: { detectedTransactionCode: { contains: input.search } } } },
       ],
     } satisfies Prisma.TransactionVerificationWhereInput : {};
+    /* Cliente y gestor se combinan dentro del mismo filtro de relacion: dos
+       claves `transaction` separadas se pisarian y el recorte desapareceria. */
+    const transactionFilter: Prisma.RechargeTransactionWhereInput = {
+      ...(input.clientId ? { clientId: input.clientId } : {}),
+      ...managedClient(input.managerId),
+    };
     const where: Prisma.TransactionVerificationWhereInput = {
       ...search,
       status: input.status ?? verificationStatusFilter(input.scope),
-      transaction: input.clientId ? { is: { clientId: input.clientId } } : undefined,
+      transaction: Object.keys(transactionFilter).length ? { is: transactionFilter } : undefined,
       ocrResult: input.bank ? { is: { bank: { contains: input.bank } } } : undefined,
       createdAt: dateRange(input.dateFrom, input.dateTo),
     };
@@ -318,6 +353,9 @@ function toClientDetail(record: ClientDetailRecord): ClientTransactionDetailView
     vatBaseAmount: money(record.vatBaseAmount),
     vatAmount: money(record.vatAmount),
     totalAmount: money(record.totalAmount),
+    isdRate: rate(record.isdRateSnapshot),
+    agencyFeeRate: rate(record.agencyFeeRateSnapshot),
+    vatRate: rate(record.vatRateSnapshot),
     completedAt: iso(record.completedAt),
     createdAt: record.createdAt.toISOString(),
     details: record.details.map(toDetail),
@@ -469,7 +507,21 @@ function offset(pageNumber: number, pageSize: number): number { return (pageNumb
 function page<T>(items: readonly T[], pageNumber: number, pageSize: number, totalItems: number): PageResult<T> {
   return { items, page: pageNumber, pageSize, totalItems, totalPages: Math.ceil(totalItems / pageSize) };
 }
+/* Búsqueda por código o nombre de cliente, compartida por el listado del admin y
+   el del propio cliente para que una y otra encuentren lo mismo. */
+/* Recorte de cartera: sin gestor no hay clave y la consulta no se toca; con
+   gestor, la transaccion tiene que pertenecer a un cliente suyo. */
+function managedClient(managerId: string | undefined): Prisma.RechargeTransactionWhereInput {
+  return managerId ? { client: { is: { managerId } } } : {};
+}
+
+function transactionSearch(value: string | undefined): Prisma.RechargeTransactionWhereInput {
+  if (!value) return {};
+  return { OR: [{ code: { contains: value } }, { client: { is: { name: { contains: value } } } }] };
+}
 function money(value: Prisma.Decimal): number { return Number(value.toFixed(2)); }
+/* Las tarifas se guardan como fraccion (0.05), no como porcentaje. */
+function rate(value: Prisma.Decimal): number { return Number(value.toString()); }
 function nullableMoney(value: Prisma.Decimal | null | undefined): number | null { return value == null ? null : money(value); }
 function nullableNumber(value: Prisma.Decimal | null | undefined): number | null { return value == null ? null : Number(value.toString()); }
 function iso(value: Date | null | undefined): string | null { return value?.toISOString() ?? null; }

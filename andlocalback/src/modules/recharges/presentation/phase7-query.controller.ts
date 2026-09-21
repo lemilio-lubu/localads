@@ -2,6 +2,7 @@ import { Controller, ForbiddenException, Get, Param, Query, UseFilters } from "@
 import { CurrentUser, Roles } from "../../auth/auth.decorators";
 import { AuthPrincipal } from "../../auth/auth.types";
 import { ApplicationError } from "../../../common/errors/application.error";
+import { scopeFor } from "../../../common/access/manager-scope";
 import { GetAdminTransactionDetail } from "../application/use-cases/get-admin-transaction-detail";
 import { GetMyPautas } from "../application/use-cases/get-my-pautas";
 import { GetRechargeContext } from "../application/use-cases/get-recharge-context";
@@ -15,7 +16,7 @@ import { requireClientId } from "./client-identity";
 import {
   AdminTransactionsQueryDto,
   AdminVerificationsQueryDto,
-  PaginationQueryDto,
+  MyTransactionsQueryDto,
 } from "./dto/phase7-query.dto";
 
 @Controller("me")
@@ -48,12 +49,17 @@ export class MyRechargeQueriesController {
   @Get("transactions")
   transactions(
     @CurrentUser() user: AuthPrincipal | string | undefined,
-    @Query() query: PaginationQueryDto,
+    @Query() query: MyTransactionsQueryDto,
   ) {
     return this.getTransactions.execute({
       clientId: requireAuthenticatedClient(user),
       page: query.page,
       pageSize: query.limit,
+      search: query.search,
+      rechargeStatus: query.rechargeStatus,
+      paymentStatus: query.paymentStatus,
+      dateFrom: toDate(query.from),
+      dateTo: toDate(query.to),
     });
   }
 
@@ -69,9 +75,11 @@ export class MyRechargeQueriesController {
   }
 }
 
+/* Admin y gestor comparten estas tres pantallas; lo unico que cambia es el
+   alcance, que sale del token en cada metodo. */
 @Controller("admin")
 @UseFilters(ApplicationErrorFilter)
-@Roles("ADMIN")
+@Roles("ADMIN", "GESTOR")
 export class AdminRechargeQueriesController {
   constructor(
     private readonly listTransactions: ListAdminTransactions,
@@ -80,10 +88,12 @@ export class AdminRechargeQueriesController {
   ) {}
 
   @Get("transactions")
-  transactions(@Query() query: AdminTransactionsQueryDto) {
+  transactions(@Query() query: AdminTransactionsQueryDto, @CurrentUser() user: AuthPrincipal) {
     return this.listTransactions.execute({
+      managerId: scopeFor(user).managerId,
       page: query.page,
       pageSize: query.limit,
+      search: query.search,
       clientId: query.clientId,
       accountType: query.accountType,
       rechargeStatus: query.rechargeStatus,
@@ -94,15 +104,17 @@ export class AdminRechargeQueriesController {
   }
 
   @Get("transactions/:transactionId")
-  transactionDetail(@Param("transactionId") transactionId: string) {
+  transactionDetail(@Param("transactionId") transactionId: string, @CurrentUser() user: AuthPrincipal) {
     return this.getTransactionDetail.execute({
       transactionId: requirePathId(transactionId, "TRANSACTION_ID_REQUIRED"),
+      managerId: scopeFor(user).managerId,
     });
   }
 
   @Get("verifications")
-  verifications(@Query() query: AdminVerificationsQueryDto) {
+  verifications(@Query() query: AdminVerificationsQueryDto, @CurrentUser() user: AuthPrincipal) {
     return this.listVerifications.execute({
+      managerId: scopeFor(user).managerId,
       page: query.page,
       pageSize: query.limit,
       scope: query.scope,

@@ -110,6 +110,51 @@ describe("persistencia de consultas fase 7", () => {
     expect(result.items[0]).toMatchObject({ id: "phase7-tx-b1", clientName: "Cliente Dos" });
   });
 
+  it("el listado del cliente filtra por texto y fecha sin salirse de su propio historial", async () => {
+    const porCodigo = await repository.listTransactionsByClient({ clientId: clientA, page: 1, pageSize: 20, search: "F7-A2" });
+    expect(porCodigo.items.map((item) => item.code)).toEqual(["F7-A2"]);
+
+    const porFecha = await repository.listTransactionsByClient({
+      clientId: clientA, page: 1, pageSize: 20,
+      dateFrom: new Date("2026-09-10T00:00:00.000Z"), dateTo: new Date("2026-09-10T23:59:59.999Z"),
+    });
+    expect(porFecha.totalItems).toBe(2);
+
+    // El código existe, pero es de otro cliente: no puede alcanzarlo.
+    const ajena = await repository.listTransactionsByClient({ clientId: clientA, page: 1, pageSize: 20, search: "F7-B1" });
+    expect(ajena.items).toHaveLength(0);
+  });
+
+  it("busca por código de transacción y por nombre de cliente", async () => {
+    const byCode = await repository.listTransactions({ page: 1, pageSize: 20, search: "F7-A2" });
+    expect(byCode.items.map((item) => item.code)).toEqual(["F7-A2"]);
+
+    const byClient = await repository.listTransactions({ page: 1, pageSize: 20, search: "Cliente Dos" });
+    expect(byClient.items.map((item) => item.id)).toEqual(["phase7-tx-b1"]);
+
+    const noMatch = await repository.listTransactions({ page: 1, pageSize: 20, search: "no-existe" });
+    expect(noMatch.items).toHaveLength(0);
+    expect(noMatch.totals).toEqual({ pautaAmount: 0, totalAmount: 0 });
+  });
+
+  it("los totales describen el filtro completo, no la página devuelta", async () => {
+    // Cliente Uno tiene dos transacciones (500 y 200 de pauta); pidiendo una sola
+    // por página, el resumen debe seguir sumando las dos.
+    const firstPage = await repository.listTransactions({ page: 1, pageSize: 1, clientId: clientA });
+    expect(firstPage.items).toHaveLength(1);
+    expect(firstPage.totalItems).toBe(2);
+    expect(firstPage.totals).toEqual({ pautaAmount: 700, totalAmount: 925.75 });
+
+    // Y al estrechar el filtro, los totales bajan con él.
+    const narrowed = await repository.listTransactions({ page: 1, pageSize: 20, search: "F7-A2" });
+    expect(narrowed.totals).toEqual({ pautaAmount: 200, totalAmount: 264.5 });
+  });
+
+  it("el detalle expone las tarifas guardadas en la propia transacción", async () => {
+    const detail = await repository.findTransactionDetail("phase7-tx-a1");
+    expect(detail).toMatchObject({ isdRate: 0.05, agencyFeeRate: 0.1, vatRate: 0.15 });
+  });
+
   it("incluye OCR, evidencia y auditoria únicamente en el detalle admin", async () => {
     const detail = await repository.findTransactionDetail("phase7-tx-a1");
     expect(detail?.verifications[0]).toMatchObject({

@@ -151,7 +151,7 @@ describe("persistencia de primera pauta fase 6", () => {
       accountType: AccountType.PREPAID,
       creditDays: 0,
       platforms: [AdvertisingPlatform.META, AdvertisingPlatform.GOOGLE],
-    });
+    }, { username: "phase6-onboarding", passwordHash: "scrypt$salt$hash" });
 
     const pautas = await prisma.pauta.findMany({ where: { clientId: created.id }, orderBy: { platform: "asc" } });
     expect(pautas.map(({ platform, status }) => ({ platform, status }))).toEqual([

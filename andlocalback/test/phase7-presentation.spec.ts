@@ -133,6 +133,9 @@ describe("Fase 7 - endpoints de lectura", () => {
     expect(getMyTransactionDetail.execute).toHaveBeenCalledWith({ clientId: "client-1", transactionId: "tx-1" });
   });
 
+  const administrador = { userId: "admin-1", username: "admin", role: "ADMIN" as const, clientId: null, accountId: null, accountType: null };
+  const gestor = { ...administrador, userId: "gestor-1", username: "gestor", role: "GESTOR" as const };
+
   it("mapea filtros administrativos sin confiar identidad de cliente", async () => {
     const { admin, listAdminTransactions } = setup();
     await admin.transactions({
@@ -144,9 +147,10 @@ describe("Fase 7 - endpoints de lectura", () => {
       paymentStatus: TransactionPaymentStatus.PAID,
       from: "2026-09-01T00:00:00.000Z",
       to: "2026-09-10T00:00:00.000Z",
-    });
+    }, administrador);
 
     expect(listAdminTransactions.execute).toHaveBeenCalledWith({
+      managerId: undefined,
       page: 2,
       pageSize: 50,
       clientId: "client-2",
@@ -160,17 +164,18 @@ describe("Fase 7 - endpoints de lectura", () => {
 
   it("expone detalle administrativo y bandeja de verificaciones", async () => {
     const { admin, getAdminTransactionDetail, listVerifications } = setup();
-    await admin.transactionDetail("tx-1");
+    await admin.transactionDetail("tx-1", administrador);
     await admin.verifications({
       page: 1,
       limit: 20,
       status: VerificationStatus.UNDER_REVIEW,
       bank: "Pichincha",
       from: "2026-09-01T00:00:00.000Z",
-    });
+    }, administrador);
 
-    expect(getAdminTransactionDetail.execute).toHaveBeenCalledWith({ transactionId: "tx-1" });
+    expect(getAdminTransactionDetail.execute).toHaveBeenCalledWith({ transactionId: "tx-1", managerId: undefined });
     expect(listVerifications.execute).toHaveBeenCalledWith({
+      managerId: undefined,
       page: 1,
       pageSize: 20,
       status: VerificationStatus.UNDER_REVIEW,
@@ -179,5 +184,26 @@ describe("Fase 7 - endpoints de lectura", () => {
       dateFrom: new Date("2026-09-01T00:00:00.000Z"),
       dateTo: undefined,
     });
+  });
+
+  /* El recorte del gestor sale del token y no de la query: aunque el request
+     no traiga nada, las tres consultas salen limitadas a su cartera. */
+  it("un gestor consulta las tres pantallas recortado a su cartera", async () => {
+    const { admin, listAdminTransactions, getAdminTransactionDetail, listVerifications } = setup();
+    await admin.transactions({ page: 1, limit: 20 }, gestor);
+    await admin.transactionDetail("tx-1", gestor);
+    await admin.verifications({ page: 1, limit: 20 }, gestor);
+
+    expect(listAdminTransactions.execute).toHaveBeenCalledWith(expect.objectContaining({ managerId: "gestor-1" }));
+    expect(getAdminTransactionDetail.execute).toHaveBeenCalledWith({ transactionId: "tx-1", managerId: "gestor-1" });
+    expect(listVerifications.execute).toHaveBeenCalledWith(expect.objectContaining({ managerId: "gestor-1" }));
+  });
+
+  it("un gestor no puede ampliar su alcance desde la query", async () => {
+    const { admin, listAdminTransactions } = setup();
+    // managerId no existe en el DTO; el ValidationPipe lo descarta y el
+    // controller solo mira el token.
+    await admin.transactions({ page: 1, limit: 20, managerId: "otro-gestor" } as never, gestor);
+    expect(listAdminTransactions.execute).toHaveBeenCalledWith(expect.objectContaining({ managerId: "gestor-1" }));
   });
 });
