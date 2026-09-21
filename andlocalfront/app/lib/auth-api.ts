@@ -1,4 +1,8 @@
-export type AuthUser = { userId: string; username: string; role: "CLIENT" | "ADMIN"; clientId: string | null; accountId: string | null; accountType: "PREPAGO" | "POSTPAGO" | null };
+/* Tres roles. GESTOR comparte el portal administrativo con ADMIN; lo que los
+   separa es el alcance de los datos, que decide el backend.
+   `mustChangePassword` viene del login: con una clave temporal sin cambiar, el
+   backend responde PASSWORD_CHANGE_REQUIRED en todo lo demás. */
+export type AuthUser = { userId: string; username: string; role: "CLIENT" | "GESTOR" | "ADMIN"; clientId: string | null; accountId: string | null; accountType: "PREPAGO" | "POSTPAGO" | null; mustChangePassword?: boolean };
 type AuthResponse = { accessToken: string; expiresIn: number; user: AuthUser };
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
@@ -25,6 +29,26 @@ export function refreshSession(): Promise<AuthUser | null> {
 export async function logout() {
   await fetch(`${apiUrl}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => undefined);
   accessToken = null; currentUser = null;
+}
+
+/* Cambiar la contraseña revoca las sesiones abiertas: el backend deja el
+   refresh sin valor, así que después hay que volver a entrar. Por eso se
+   limpia el estado en memoria aquí mismo. */
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const response = await authenticatedFetch(`${apiUrl}/auth/password`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  await payload<{ success: boolean }>(response);
+  accessToken = null; currentUser = null;
+}
+
+/* La ruta de destino según el rol, en un solo sitio: la usaban el login y
+   ahora también el cambio de contraseña, y divergían. */
+export function homeFor(user: AuthUser) {
+  if (user.mustChangePassword) return "/cambiar-contrasena";
+  if (user.role === "ADMIN" || user.role === "GESTOR") return "/admin/clientes";
+  return user.accountType === "POSTPAGO" ? "/flex" : "/prepago";
 }
 
 export const getCurrentUser = () => currentUser;

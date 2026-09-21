@@ -9,6 +9,9 @@ export type AdminClient = {
   email: string;
   status: "ACTIVE" | "INACTIVE";
   createdAt: string;
+  /* Gestor responsable. `null` es la bandeja de sin asignar que reparte el
+     admin desde la pantalla de equipo. */
+  manager: { id: string; username: string } | null;
   platformsVersion: number;
   account: {
     id: string;
@@ -26,7 +29,14 @@ export type SaveAdminClient = {
   accountType: AdminAccountType;
   platforms: AdminPlatform[];
   creditDays: number;
+  /* Solo lo aplica un admin. Un gestor se asigna a sí mismo desde el token y
+     el backend ignora lo que venga aquí. */
+  managerId?: string | null;
 };
+
+/* Crear un cliente crea también su acceso: la clave temporal viaja una sola
+   vez, en esta respuesta, y no vuelve a salir por ningún GET. */
+export type AdminClientWithCredentials = AdminClient & { credentials: { username: string; temporaryPassword: string } };
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
@@ -44,7 +54,7 @@ export function getAdminClients() {
 }
 
 export function createAdminClient(input: SaveAdminClient) {
-  return request<AdminClient>("/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
+  return request<AdminClientWithCredentials>("/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
 }
 
 export function updateAdminClient(id: string, input: Partial<SaveAdminClient> & { status?: AdminClient["status"]; expectedPlatformsVersion?: number }) {
