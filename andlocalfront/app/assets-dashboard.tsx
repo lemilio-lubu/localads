@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { ChevronDown, RotateCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import AccountShell from "./account-shell";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
 import type { AccountType } from "./design-system/types";
 import { accountContext, getMyWallet, getRechargeContext, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
+import { formatAmount, formatDay } from "./lib/format";
 import styles from "./assets-dashboard.module.css";
 
 const config: Record<RechargePlatform, { label: string; icon: string; card: string; iconClass: string }> = {
@@ -15,16 +17,28 @@ const config: Record<RechargePlatform, { label: string; icon: string; card: stri
   META: { label: "Meta", icon: "/figma/meta.svg", card: styles.metaCard, iconClass: styles.metaIcon },
   GOOGLE: { label: "Google", icon: "/figma/google.svg", card: styles.googleCard, iconClass: styles.googleIcon },
 };
-const money = new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
-const date = new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "2-digit", year: "2-digit" });
+/* Alto de cada franja cuando hay una tarjeta abierta. */
+const STRIP = 40;
+/* La abierta no sube hasta el borde del mazo: la base arranca 24px más abajo y
+   dejarla en 0 la hacía sobresalir por encima del marco. Con 16 apenas asoma. */
+const SELECTED_TOP = 16;
+/* El mazo lo dimensiona el CSS —y lo encoge en las media queries—, así que sus
+   medidas se leen de ahí en vez de repetirlas aquí. Antes el 112 estaba escrito
+   en los dos sitios. */
+const readMetrics = (element: HTMLElement) => {
+  const computed = getComputedStyle(element);
+  const read = (name: string, fallback: number) => parseFloat(computed.getPropertyValue(name)) || fallback;
+  return { stride: read("--card-stride", 112), cardHeight: read("--card-height", 304) };
+};
 
 function AssetCard({ pauta, selected, position, layer, reduceMotion, onSelect }: { pauta: PautaResponse; selected: boolean; position: number; layer: number; reduceMotion: boolean | null; onSelect: () => void }) {
   const item = config[pauta.platform];
-  return <motion.button type="button" className={`${styles.assetCard} ${styles.platformCard} ${item.card}`} data-selected={selected} aria-pressed={selected} aria-label={`Ver saldo de ${item.label}`} style={{ zIndex: layer }} initial={false} animate={{ transform: `translate3d(0, ${position}px, 0)` }} transition={reduceMotion ? { duration: 0 } : { duration: .22, ease: [.23, 1, .32, 1] }} onClick={onSelect}>
+  return <motion.button type="button" className={`${styles.assetCard} ${styles.platformCard} ${item.card}`} data-selected={selected} aria-expanded={selected} aria-label={`Ver detalle de ${item.label}`} style={{ zIndex: layer }} initial={false} animate={{ transform: `translate3d(0, ${position}px, 0)` }} transition={reduceMotion ? { duration: 0 } : { duration: .22, ease: [.23, 1, .32, 1] }} onClick={onSelect}>
     <span className={styles.cardContent}>
       <span className={`${styles.assetIcon} ${item.iconClass}`}><Image src={item.icon} alt="" fill sizes="64px" /></span>
-      <span className={styles.lastRecharge}><small>última recarga</small><strong>{pauta.lastRechargeAt ? date.format(new Date(pauta.lastRechargeAt)) : "Sin recargas"}</strong></span>
-      <span className={styles.balance}><small>saldo disponible</small><strong>{money.format(pauta.currentBalance)}</strong></span>
+      <span className={styles.lastRecharge}><small>última recarga</small><strong>{pauta.lastRechargeAt ? formatDay(pauta.lastRechargeAt) : "Sin recargas"}</strong></span>
+      <span className={styles.balance}><small>saldo disponible</small><strong>{formatAmount(pauta.currentBalance)}</strong></span>
+      <ChevronDown className={styles.disclosure} size={20} aria-hidden="true" />
     </span>
   </motion.button>;
 }
@@ -39,23 +53,39 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [context, setContext] = useState<RechargeContext | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const deckRef = useRef<HTMLElement>(null);
+  const [metrics, setMetrics] = useState({ stride: 112, cardHeight: 304 });
+  // ResizeObserver dispara al observar, así que la primera medida llega sola.
+  useEffect(() => { const element = deckRef.current; if (!element) return; const observer = new ResizeObserver(() => setMetrics(readMetrics(element))); observer.observe(element); return () => observer.disconnect(); }, []);
+  function retry() { setLoading(true); setError(""); setReloadToken((token) => token + 1); }
 
-  useEffect(() => { let active = true; void getRechargeContext().then((value) => { if (active) setContext(value); }).catch(() => undefined); getMyWallet(clientId).then((wallet) => { if (active) { setPautas(wallet.pautas); setTotal(wallet.balanceTotal); setError(""); setSelected((current) => wallet.pautas.some((pauta) => pauta.id === current && pauta.status === "ACTIVE") ? current : null); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible cargar tus activos"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [clientId, revision]);
+  useEffect(() => { let active = true; void getRechargeContext().then((value) => { if (active) setContext(value); }).catch(() => undefined); getMyWallet(clientId).then((wallet) => { if (active) { setPautas(wallet.pautas); setTotal(wallet.balanceTotal); setError(""); setSelected((current) => wallet.pautas.some((pauta) => pauta.id === current && pauta.status === "ACTIVE") ? current : null); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible cargar tus activos"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [clientId, revision, reloadToken]);
   const visible = pautas.filter((pauta) => pauta.status === "ACTIVE");
   // Las plataformas que faltan se muestran como naipe bloqueado: desde aqui
   // tambien se llega a activarlas, no solo desde el formulario de recarga.
   const credit = context && context.account.type === "POSTPAGO" ? context.account : null;
-  const missing = (Object.keys(config) as RechargePlatform[])
+  /* Si la consulta falló no sabemos qué pautas tiene: pintar las tres como «sin
+     activar» convierte un fallo de carga en un estado de negocio, e invita a
+     activar una pauta que quizá ya existe. */
+  const missing = error ? [] : (Object.keys(config) as RechargePlatform[])
     .filter((platform) => !visible.some((pauta) => pauta.platform === platform))
     .sort((a, b) => a.localeCompare(b));
   const others = visible.filter((pauta) => pauta.id !== selected);
   // El paso coincide con --card-stride del CSS; si cambia uno, cambia el otro.
-  const stride = 112;
-  const positionFor = (pauta: PautaResponse, index: number) => !selected ? index * stride : pauta.id === selected ? 0 : 224 + (others.findIndex((item) => item.id === pauta.id) + 1) * 40;
+  /* Con una tarjeta abierta, las demás arrancan donde ella termina y se apilan
+     de 40 en 40. Antes empezaban en 224, es decir antes de que acabara, y el
+     saldo de la abierta quedaba justo debajo del corte. */
+  const stripTop = (order: number) => SELECTED_TOP + metrics.cardHeight + order * STRIP;
+  const positionFor = (pauta: PautaResponse, index: number) => !selected ? index * metrics.stride : pauta.id === selected ? SELECTED_TOP : stripTop(others.findIndex((item) => item.id === pauta.id));
+  /* La seleccionada va por DEBAJO a propósito: las demás la recortan por abajo y
+     quedan como franjas finas, que es la composición del mockup. */
   const layerFor = (pauta: PautaResponse, index: number) => !selected ? index + 1 : pauta.id === selected ? 1 : others.findIndex((item) => item.id === pauta.id) + 2;
+  // La del total baja con las franjas para no comerse la última.
+  const totalTop = selected ? stripTop(others.length + missing.length) : null;
 
-  return <AccountShell accountType={accountType} activePage="assets">
-    <section className={styles.assetDeck} style={{ "--card-count": Math.max(visible.length + missing.length, 1) } as CSSProperties} data-has-selection={selected !== null} aria-label="Balance de activos publicitarios" aria-busy={loading}>
+  return <AccountShell accountType={accountType} activePage="assets"><>
+    <section className={styles.assetDeck} ref={deckRef} style={{ "--card-count": Math.max(visible.length + missing.length, 1), ...(totalTop === null ? {} : { "--total-top": `${totalTop}px` }) } as CSSProperties} data-has-selection={selected !== null} aria-label="Balance de activos publicitarios" aria-busy={loading}>
       <div className={styles.deckBase} aria-hidden="true" />
       {visible.map((pauta, index) => <AssetCard key={pauta.id} pauta={pauta} selected={selected === pauta.id} position={positionFor(pauta, index)} layer={layerFor(pauta, index)} reduceMotion={reduceMotion} onSelect={() => setSelected((current) => current === pauta.id ? null : pauta.id)} />)}
       {missing.map((platform, index) => {
@@ -64,7 +94,7 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
           key={platform}
           href={`/${accountType}`}
           className={`${styles.assetCard} ${styles.platformCard} ${styles.lockedCard}`}
-          style={{ zIndex: visible.length + index + 1, transform: `translate3d(0, ${(visible.length + index) * stride}px, 0)` }}
+          style={{ zIndex: (selected ? others.length + 2 : visible.length + 1) + index, transform: `translate3d(0, ${selected ? stripTop(others.length + index) : (visible.length + index) * metrics.stride}px, 0)` }}
           aria-label={`Activar ${item.label}`}
         >
           <span className={styles.cardContent}>
@@ -73,10 +103,14 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
           </span>
         </Link>;
       })}
-      <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "balance total" : "sin pautas activas"}</span><strong>{error ? "—" : money.format(total)}</strong></span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
-        {credit && <span className={styles.creditLine}>crédito disponible <b>{money.format(credit.creditAvailable)}</b> de {money.format(credit.creditLimit)} · {credit.creditDays} días</span>}
+      <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "balance total" : "sin pautas activas"}</span><strong>{error ? "—" : formatAmount(total)}</strong></span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
+        {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de {formatAmount(credit.creditLimit)} · {credit.creditDays} días</span>}
       </span></article>
-      {error && <p className={styles.dataMessage} role="alert">{error}</p>}
     </section>
-  </AccountShell>;
+    {error && <div className={styles.errorPanel} role="alert">
+      <p><strong>No pudimos cargar tus activos</strong></p>
+      <p>{error}</p>
+      <button type="button" onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
+    </div>}
+  </></AccountShell>;
 }

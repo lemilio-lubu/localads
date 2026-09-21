@@ -1,6 +1,14 @@
 .pill { display: inline-grid; place-items: center; border-radius: var(--radius-pill); color: #fff; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); line-height: 1; white-space: nowrap; }
-.compact { min-width: var(--space-6); height: var(--space-3); padding-inline: var(--space-1); }
+/* La compacta también lleva logotipo: en el filtro se veía y en la fila no, con
+   lo que el mismo concepto se leía de dos formas. El disco baja a 16px para que
+   la pastilla siga midiendo 24 de alto. */
+.compact { display: inline-flex; min-width: var(--space-6); height: var(--space-3); align-items: center; gap: var(--space-half); padding-inline: var(--space-half) var(--space-1); }
+.compact .logo { width: var(--space-2); height: var(--space-2); }
 .regular { min-width: var(--space-9); height: var(--space-3); padding-inline: var(--space-1); }
+/* Variante de filtro: el logotipo va en un disco blanco para que la marca se
+   lea sobre el color saturado de la pastilla. */
+.filter { display: inline-flex; min-width: var(--space-9); height: var(--control-height-compact); align-items: center; gap: var(--space-half); padding-inline: var(--space-half) var(--space-2); }
+.logo { display: inline-grid; width: var(--space-3); height: var(--space-3); flex: none; place-items: center; border-radius: var(--radius-pill); background: #fff; }
 .meta { background: var(--color-meta-strong); color: #fff; }
 .google { background: var(--color-google-strong); color: #fff; }
 .tiktok { background: var(--color-tiktok-strong); color: #fff; }
