@@ -22,6 +22,12 @@
   --color-danger: #9d0003;
   --color-success: #0b5901;
   --color-accent-teal: #087f6d;
+  /* Ámbar de «pendiente / en revisión». Estaba suelto como #8a5b00. 5,9:1 sobre blanco. */
+  --color-accent-amber: #8a5b00;
+  /* Estado en marcha pero sin terminar. Naranja y no el ámbar de arriba: ese
+     es casi el mismo dorado que --color-google-strong (#765700), y en la fila
+     de transacciones «Aprobada» quedaba pegada a la pastilla de Google. */
+  --color-status-warning: #b04a00;
   --color-google-text: #6b4e00;
   /* Variantes de marca para superficies que llevan texto encima. El color de
      marca puro no siempre alcanza 4.5:1; estas si. Los pills ya las usaban
@@ -57,10 +63,16 @@
   --layout-header-height: 72px;
   --layout-modal-max: 1176px;
   --layout-modal-min-height: 384px;
-  --layout-page-top: 64px;
-  --layout-section-gap: 64px;
+  /* Cromo del portal de cliente. Entre los dos reservaban 128px antes de que
+     empezara nada; bajados, «tus activos» deja de necesitar scroll. */
+  --layout-page-top: 48px;
+  --layout-section-gap: 40px;
   --layout-admin-sidebar: 248px;
-  --layout-admin-content: var(--layout-max);
+  /* El admin no comparte tope con el portal de cliente: sus pantallas son
+     listados de seis columnas, no texto corrido, y a 1120 desperdiciaban medio
+     monitor. 1120 × √φ = 1424,6 — medio peldaño de la misma escala que usan la
+     tipografía y los radios, y cae en la rejilla de 8pt (1424 = 8 × 178). */
+  --layout-admin-content: 1424px;
   --layout-client-detail-max: 1008px;
   --layout-client-detail-min-height: 800px;
 
