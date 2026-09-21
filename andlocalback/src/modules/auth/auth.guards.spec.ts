@@ -1,6 +1,7 @@
 import { ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { JwtAuthGuard, RolesGuard } from "./auth.guards";
+import { AUTH_ROLES, isAuthRole } from "./auth.types";
 
 const principal = { userId: "user-1", role: "CLIENT" as const, clientId: "client-1", accountId: "account-1" };
 
@@ -43,5 +44,28 @@ describe("guards de autenticación WebSocket", () => {
     const reflector = { getAllAndOverride: vi.fn().mockReturnValue(["ADMIN"]) };
     const guard = new RolesGuard(reflector as never);
     expect(() => guard.canActivate(wsContext({ data: { user: principal } }))).toThrow(ForbiddenException);
+  });
+});
+
+describe("rol de gestor", () => {
+  const gestor = { ...principal, role: "GESTOR" as const, clientId: null, accountId: null };
+
+  it("reconoce los tres roles del sistema y ninguno más", () => {
+    expect(AUTH_ROLES).toEqual(["CLIENT", "GESTOR", "ADMIN"]);
+    expect(isAuthRole("GESTOR")).toBe(true);
+    expect(isAuthRole("VENDEDOR")).toBe(false);
+  });
+
+  it("un endpoint abierto a ADMIN y GESTOR admite al gestor", () => {
+    const reflector = { getAllAndOverride: vi.fn().mockReturnValue(["ADMIN", "GESTOR"]) };
+    expect(new RolesGuard(reflector as never).canActivate(wsContext({ data: { user: gestor } }))).toBe(true);
+  });
+
+  /* Hasta que el filtro por cartera exista, los endpoints administrativos
+     siguen siendo solo de ADMIN: abrirlos antes daría al gestor la plataforma
+     entera. */
+  it("un endpoint reservado a ADMIN sigue cerrado al gestor", () => {
+    const reflector = { getAllAndOverride: vi.fn().mockReturnValue(["ADMIN"]) };
+    expect(() => new RolesGuard(reflector as never).canActivate(wsContext({ data: { user: gestor } }))).toThrow(ForbiddenException);
   });
 });

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { AccessPayload, AuthPrincipal } from "./auth.types";
+import { AccessPayload, AuthPrincipal, isAuthRole } from "./auth.types";
 
 const issuer = "andlocal-api"; const audience = "andlocal-web"; const ttlSeconds = 15 * 60;
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -25,7 +25,7 @@ export class AccessTokenService {
     if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw new Error("INVALID_TOKEN");
     const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as AccessPayload;
     const now = Math.floor(Date.now() / 1000);
-    if (payload.type !== "access" || payload.iss !== issuer || payload.aud !== audience || !payload.exp || payload.exp <= now || !payload.userId || !["CLIENT", "ADMIN"].includes(payload.role)) throw new Error("INVALID_TOKEN");
+    if (payload.type !== "access" || payload.iss !== issuer || payload.aud !== audience || !payload.exp || payload.exp <= now || !payload.userId || !isAuthRole(payload.role)) throw new Error("INVALID_TOKEN");
     return payload;
   }
   private signature(value: string) { return createHmac("sha256", this.secret).update(value).digest("base64url"); }
