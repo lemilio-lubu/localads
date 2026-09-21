@@ -8,6 +8,7 @@ import { ListAdminTransactions } from "../src/modules/recharges/application/use-
 import { ListVerifications } from "../src/modules/recharges/application/use-cases/list-verifications";
 import {
   AdminTransactionDetailView,
+  AdminTransactionPage,
   ClientTransactionDetailView,
   PageResult,
   Phase7QueryPort,
@@ -39,6 +40,7 @@ const detail: ClientTransactionDetailView = {
   id: "tx1", code: "TX-1", clientId: "c1", accountId: "a1", accountTypeSnapshot: AccountType.PREPAID,
   creditDaysSnapshot: null, rechargeStatus: TransactionRechargeStatus.COMPLETED, pautaAmount: 100,
   isdAmount: 5, agencyFeeAmount: 10, vatBaseAmount: 115, vatAmount: 17.25, totalAmount: 132.25,
+  isdRate: 0.05, agencyFeeRate: 0.1, vatRate: 0.15,
   completedAt: "2026-09-10T01:00:00.000Z", createdAt: "2026-09-10T00:00:00.000Z",
   details: [{ id: "d1", pautaId: "p1", platform: AdvertisingPlatform.META, externalAccountId: "meta",
     requestedAmount: 100, isdAmount: 5, agencyFeeAmount: 10, vatBaseAmount: 115, vatAmount: 17.25,
@@ -55,6 +57,7 @@ const detail: ClientTransactionDetailView = {
 };
 
 const page: PageResult<TransactionListItemView> = { items: [listItem], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 };
+const adminPage: AdminTransactionPage = { ...page, totals: { pautaAmount: 100, totalAmount: 132.25 } };
 const adminDetail: AdminTransactionDetailView = { ...detail, clientName: "Cliente", verifications: [] };
 
 function port(overrides: Partial<Phase7QueryPort> = {}): Phase7QueryPort {
@@ -62,7 +65,7 @@ function port(overrides: Partial<Phase7QueryPort> = {}): Phase7QueryPort {
     listPautasByClient: vi.fn().mockResolvedValue(pautas),
     listTransactionsByClient: vi.fn().mockResolvedValue(page),
     findTransactionDetailByClient: vi.fn().mockResolvedValue(detail),
-    listTransactions: vi.fn().mockResolvedValue(page),
+    listTransactions: vi.fn().mockResolvedValue(adminPage),
     findTransactionDetail: vi.fn().mockResolvedValue(adminDetail),
     listVerifications: vi.fn().mockResolvedValue({ items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 0 }),
     ...overrides,
@@ -87,6 +90,23 @@ describe("Fase 7 - consultas de aplicacion", () => {
     const repository = port();
     await new GetMyTransactions(repository).execute({ clientId: "c1", page: 2, pageSize: 10 });
     expect(repository.listTransactionsByClient).toHaveBeenCalledWith({ clientId: "c1", page: 2, pageSize: 10 });
+  });
+
+  it("el cliente filtra su propio historial y el texto llega normalizado", async () => {
+    const repository = port();
+    await new GetMyTransactions(repository).execute({
+      clientId: " c1 ", search: "  TX-1  ", paymentStatus: TransactionPaymentStatus.PAID,
+      dateFrom: "2026-09-01", dateTo: "2026-09-30", pageSize: 10,
+    });
+    expect(repository.listTransactionsByClient).toHaveBeenCalledWith(expect.objectContaining({
+      clientId: "c1", search: "TX-1", paymentStatus: TransactionPaymentStatus.PAID, page: 1, pageSize: 10,
+    }));
+  });
+
+  it("el rango de fechas invertido se rechaza tambien para el cliente", () => {
+    // execute() valida antes de tocar el puerto, asi que lanza de forma sincrona.
+    expect(() => new GetMyTransactions(port()).execute({ clientId: "c1", dateFrom: "2026-09-30", dateTo: "2026-09-01" }))
+      .toThrowError(expect.objectContaining({ code: "INVALID_DATE_RANGE" }));
   });
 
   it("consulta detalle usando transactionId y clientId en una unica operacion scoped", async () => {
@@ -128,6 +148,19 @@ describe("Fase 7 - consultas de aplicacion", () => {
     expect(repository.listTransactions).toHaveBeenCalledWith(expect.objectContaining({
       clientId: "c1", accountType: AccountType.PREPAID, paymentStatus: TransactionPaymentStatus.PAID, page: 1, pageSize: 10,
     }));
+  });
+
+  it("admin busca por texto y recibe totales del filtro completo, no de la pagina", async () => {
+    const repository = port();
+    const result = await new ListAdminTransactions(repository).execute({ search: "  TX-1  ", pageSize: 1 });
+    expect(result.totals).toEqual({ pautaAmount: 100, totalAmount: 132.25 });
+    expect(repository.listTransactions).toHaveBeenCalledWith(expect.objectContaining({ search: "TX-1" }));
+  });
+
+  it("admin sin busqueda no envia el filtro de texto", async () => {
+    const repository = port();
+    await new ListAdminTransactions(repository).execute({ search: "   " });
+    expect(repository.listTransactions).toHaveBeenCalledWith(expect.objectContaining({ search: undefined }));
   });
 
   it("admin obtiene detalle ampliado", async () => {

@@ -44,7 +44,25 @@ export class TransactionFiltersQueryDto extends PaginationQueryDto {
   to?: string;
 }
 
+/* El cliente filtra su propio historial. No lleva clientId: la identidad sale
+   del token, nunca de la query. */
+export class MyTransactionsQueryDto extends TransactionFiltersQueryDto {
+  @IsOptional()
+  @Transform(trimmedOptionalString)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(128)
+  search?: string;
+}
+
 export class AdminTransactionsQueryDto extends TransactionFiltersQueryDto {
+  @IsOptional()
+  @Transform(trimmedOptionalString)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(128)
+  search?: string;
+
   @IsOptional()
   @Transform(trimmedOptionalString)
   @IsString()

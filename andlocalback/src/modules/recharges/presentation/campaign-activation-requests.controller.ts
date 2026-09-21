@@ -19,6 +19,8 @@ import { RejectCampaignActivation } from "../application/use-cases/reject-campai
 import { RequestCampaignActivation } from "../application/use-cases/request-campaign-activation";
 import { StartCampaignActivationReview } from "../application/use-cases/start-campaign-activation-review";
 import { ApplicationErrorFilter } from "./application-error.filter";
+import { scopeFor } from "../../../common/access/manager-scope";
+import { AssertManagerScope } from "../application/ports/manager-scope.ports";
 import {
   CampaignActivationRejectionDto,
   CampaignActivationReviewDecisionDto,
@@ -58,9 +60,11 @@ export class CampaignActivationRequestsController {
   }
 }
 
+/* Admin y gestor comparten pantalla y decisiones; lo que separa a uno de otro
+   es la cartera, comprobada antes de cada decision. */
 @Controller("admin/campaign-activation-requests")
 @UseFilters(ApplicationErrorFilter)
-@Roles("ADMIN")
+@Roles("ADMIN", "GESTOR")
 export class AdminCampaignActivationRequestsController {
   constructor(
     private readonly listPendingActivations: ListPendingCampaignActivations,
@@ -68,15 +72,17 @@ export class AdminCampaignActivationRequestsController {
     private readonly approveActivation: ApproveCampaignActivation,
     private readonly rejectActivation: RejectCampaignActivation,
     private readonly realtime: TransactionsGateway,
+    private readonly scope: AssertManagerScope,
   ) {}
 
   @Get()
-  list(@Query() query: ListAdminCampaignActivationRequestsQueryDto) {
-    return this.listPendingActivations.execute({ status: query.status });
+  list(@Query() query: ListAdminCampaignActivationRequestsQueryDto, @CurrentUser() user: AuthPrincipal) {
+    return this.listPendingActivations.execute({ status: query.status, managerId: scopeFor(user).managerId });
   }
 
   @Patch(":id/review")
   async review(@Param("id") requestId: string, @Body() body: CampaignActivationReviewDecisionDto, @CurrentUser() user?: AuthPrincipal) {
+    if (user) await this.scope.activationRequest(requestId, scopeFor(user));
     const result = await this.startReview.execute({ requestId, administratorId: user?.userId ?? body.administratorId });
     this.realtime?.publishPlatforms(result.clientId);
     return result;
@@ -84,6 +90,7 @@ export class AdminCampaignActivationRequestsController {
 
   @Patch(":id/approve")
   async approve(@Param("id") requestId: string, @Body() body: CampaignActivationReviewDecisionDto, @CurrentUser() user?: AuthPrincipal) {
+    if (user) await this.scope.activationRequest(requestId, scopeFor(user));
     const result = await this.approveActivation.execute({ requestId, administratorId: user?.userId ?? body.administratorId });
     this.realtime?.publishPlatforms(result.clientId);
     return result;
@@ -91,6 +98,7 @@ export class AdminCampaignActivationRequestsController {
 
   @Patch(":id/reject")
   async reject(@Param("id") requestId: string, @Body() body: CampaignActivationRejectionDto, @CurrentUser() user?: AuthPrincipal) {
+    if (user) await this.scope.activationRequest(requestId, scopeFor(user));
     const result = await this.rejectActivation.execute({
       requestId,
       administratorId: user?.userId ?? body.administratorId,

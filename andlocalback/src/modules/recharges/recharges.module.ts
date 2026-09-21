@@ -62,6 +62,8 @@ import { PrismaTransactionVerificationRepository } from "./infrastructure/persis
 import { PrismaTransactionExecutionRepository } from "./infrastructure/persistence/prisma-transaction-execution.repository";
 import { PrismaCampaignActivationRepository } from "./infrastructure/persistence/prisma-campaign-activation.repository";
 import { PrismaPhase7QueryRepository } from "./infrastructure/persistence/prisma-phase7-query.repository";
+import { PrismaManagerScopeRepository } from "./infrastructure/persistence/prisma-manager-scope.repository";
+import { AssertManagerScope, MANAGER_SCOPE_QUERY, ManagerScopeQueryPort } from "./application/ports/manager-scope.ports";
 import { CryptoIdGenerator } from "./infrastructure/services/crypto-id-generator";
 import { LocalReceiptProcessor } from "./infrastructure/services/local-receipt-processor";
 import { TesseractOcrProcessor } from "./infrastructure/services/tesseract-ocr-processor";
@@ -91,6 +93,7 @@ import { AuthModule } from "../auth/auth.module";
     PrismaTransactionExecutionRepository,
     PrismaCampaignActivationRepository,
     PrismaPhase7QueryRepository,
+    PrismaManagerScopeRepository,
     TransactionsGateway,
     TransactionReceiptOcrDispatcher,
     OverduePaymentsRunner,
@@ -102,6 +105,12 @@ import { AuthModule } from "../auth/auth.module";
     { provide: TRANSACTION_EXECUTION_PERSISTENCE, useExisting: PrismaTransactionExecutionRepository },
     { provide: CAMPAIGN_ACTIVATION_PERSISTENCE, useExisting: PrismaCampaignActivationRepository },
     { provide: PHASE7_QUERY_PORT, useExisting: PrismaPhase7QueryRepository },
+    { provide: MANAGER_SCOPE_QUERY, useExisting: PrismaManagerScopeRepository },
+    {
+      provide: AssertManagerScope,
+      inject: [MANAGER_SCOPE_QUERY],
+      useFactory: (queries: ManagerScopeQueryPort) => new AssertManagerScope(queries),
+    },
     { provide: RECEIPT_PROCESSOR, useClass: LocalReceiptProcessor },
     { provide: OCR_PROCESSOR, useClass: TesseractOcrProcessor },
     {

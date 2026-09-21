@@ -137,8 +137,16 @@ describe("Fase 6 - endpoints de activacion", () => {
 
   it("lista administrativamente con estado opcional", async () => {
     const { adminController, listAdmin } = setup();
-    await adminController.list({ status: ActivationRequestStatus.IN_REVIEW });
-    expect(listAdmin.execute).toHaveBeenCalledWith({ status: ActivationRequestStatus.IN_REVIEW });
+    const administrador = { userId: "admin-1", username: "admin", role: "ADMIN" as const, clientId: null, accountId: null, accountType: null };
+    await adminController.list({ status: ActivationRequestStatus.IN_REVIEW }, administrador);
+    expect(listAdmin.execute).toHaveBeenCalledWith({ status: ActivationRequestStatus.IN_REVIEW, managerId: undefined });
+  });
+
+  it("un gestor solo lista las solicitudes de su cartera", async () => {
+    const { adminController, listAdmin } = setup();
+    const gestor = { userId: "gestor-1", username: "gestor", role: "GESTOR" as const, clientId: null, accountId: null, accountType: null };
+    await adminController.list({ status: ActivationRequestStatus.PENDING }, gestor);
+    expect(listAdmin.execute).toHaveBeenCalledWith({ status: ActivationRequestStatus.PENDING, managerId: "gestor-1" });
   });
 
   it("mapea revision, aprobacion y rechazo sin aceptar pautaId ni status", async () => {
