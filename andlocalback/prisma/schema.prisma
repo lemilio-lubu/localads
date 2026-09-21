@@ -16,9 +16,19 @@ model AuthUser {
   accountId    String?
   accountType  String?
   status       String           @default("ACTIVE")
+  // Una clave temporal obliga a cambiarla antes de operar: la bandera vive en
+  // el usuario, no en la sesion, para que sobreviva al refresh del token.
+  mustChangePassword Boolean      @default(false)
+  // Quien creo la cuenta. Un gestor solo puede crear clientes, y esto deja
+  // rastro de quien lo hizo sin necesidad de una tabla de auditoria.
+  createdById  String?
+  // Nota interna que escribe quien crea la cuenta: para que sirve, de quien
+  // es. Aparece en el modal de alta del mockup y no la ve el usuario final.
+  note         String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   sessions     RefreshSession[]
+  managedClients Client[]       @relation("ClientManager")
 
   @@index([clientId])
   @@index([role, status])
@@ -48,10 +58,16 @@ model Client {
   status               String
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt
+  // Gestor responsable. Nulo = sin asignar, que es el estado que el admin
+  // reasigna; dar de baja un gestor deja a sus clientes aqui en nulo.
+  managerId            String?
+  manager              AuthUser?                   @relation("ClientManager", fields: [managerId], references: [id])
   accounts             Account[]
   pautas               Pauta[]
   activationRequests   CampaignActivationRequest[]
   rechargeTransactions RechargeTransaction[]
+
+  @@index([managerId, status])
 }
 
 model Account {

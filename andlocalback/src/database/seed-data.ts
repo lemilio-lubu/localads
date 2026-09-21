@@ -30,9 +30,14 @@ export async function seedBackendData(database: PrismaClient) {
     { id: "auth-prepago", username: "prepago", role: "CLIENT", clientId: "client-001", accountId: "account-prepaid-001", accountType: "PREPAGO", salt: "andlocal-prepago" },
     { id: "auth-flex", username: "flex", role: "CLIENT", clientId: "client-002", accountId: "account-postpaid-001", accountType: "POSTPAGO", salt: "andlocal-flex" },
     { id: "auth-admin", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null, salt: "andlocal-admin" },
+    { id: "auth-gestor", username: "gestor", role: "GESTOR", clientId: null, accountId: null, accountType: null, salt: "andlocal-gestor" },
   ] as const;
   for (const user of demoUsers) {
     const salt = Buffer.from(user.salt); const passwordHash = `scrypt$${salt.toString("base64url")}$${scryptSync("1234", salt, 64).toString("base64url")}`;
     await database.authUser.upsert({ where: { username: user.username }, update: { role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" }, create: { id: user.id, username: user.username, passwordHash, role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" } });
   }
+  /* Un cliente con gestor y otro sin el: asi la demo muestra a la vez lo que
+     ve un gestor y la bandeja de clientes sin asignar del admin. El FK exige
+     que el usuario gestor ya exista, por eso va despues del bucle. */
+  await database.client.update({ where: { id: "client-001" }, data: { managerId: "auth-gestor" } });
 }

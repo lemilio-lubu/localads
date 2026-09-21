@@ -9,6 +9,16 @@ describe("Fase 10 - autenticación", () => {
     const service = new AccessTokenService(); const signed = service.sign(principal); const decoded = service.verify(signed.token);
     expect(signed.token.split(".")).toHaveLength(3); expect(decoded).toMatchObject(principal); expect(decoded.type).toBe("access"); expect(decoded.exp - decoded.iat).toBe(900);
   });
+  /* El verificador llevaba la lista de roles escrita a mano: un token de gestor,
+     firmado por el propio servicio, se rechazaba con 401. Ahora la lista es
+     AUTH_ROLES, la misma que conoce el resto del sistema. */
+  it("acepta el rol de gestor y rechaza uno inventado", () => {
+    const service = new AccessTokenService();
+    const gestor = { ...principal, role: "GESTOR" as const, clientId: null, accountId: null, accountType: null };
+    expect(service.verify(service.sign(gestor).token).role).toBe("GESTOR");
+    const forged = service.sign({ ...principal, role: "VENDEDOR" as never });
+    expect(() => service.verify(forged.token)).toThrow("INVALID_TOKEN");
+  });
   it("rechaza un JWT alterado", () => {
     const service = new AccessTokenService(); const signed = service.sign(principal); const parts = signed.token.split(".");
     expect(() => service.verify(`${parts[0]}.${parts[1]}.${parts[2].slice(0, -2)}aa`)).toThrow("INVALID_TOKEN");

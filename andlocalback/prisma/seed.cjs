@@ -36,11 +36,15 @@ async function seed() {
     { id: "auth-prepago", username: "prepago", role: "CLIENT", clientId: "client-001", accountId: "account-prepaid-001", accountType: "PREPAGO", salt: "andlocal-prepago" },
     { id: "auth-flex", username: "flex", role: "CLIENT", clientId: "client-002", accountId: "account-postpaid-001", accountType: "POSTPAGO", salt: "andlocal-flex" },
     { id: "auth-admin", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null, salt: "andlocal-admin" },
+    { id: "auth-gestor", username: "gestor", role: "GESTOR", clientId: null, accountId: null, accountType: null, salt: "andlocal-gestor" },
   ]) {
     const salt = Buffer.from(user.salt); const passwordHash = `scrypt$${salt.toString("base64url")}$${scryptSync("1234", salt, 64).toString("base64url")}`;
     await database.authUser.upsert({ where: { username: user.username }, update: { role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" }, create: { id: user.id, username: user.username, passwordHash, role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" } });
   }
-  console.info("Seed completado: cuentas con Pauta META/GOOGLE activas.");
+  // Un cliente con gestor y otro sin el: la demo muestra a la vez el alcance
+  // del gestor y la bandeja de clientes sin asignar del admin.
+  await database.client.update({ where: { id: "client-001" }, data: { managerId: "auth-gestor" } });
+  console.info("Seed completado: cuentas con Pauta META/GOOGLE activas, client-001 asignado al gestor.");
 }
 
 seed().finally(() => database.$disconnect());

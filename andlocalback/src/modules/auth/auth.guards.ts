@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, ForbiddenException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { AccessTokenService } from "./access-token.service";
-import { IS_PUBLIC_KEY, ROLES_KEY } from "./auth.decorators";
+import { ALLOWS_TEMPORARY_PASSWORD_KEY, IS_PUBLIC_KEY, ROLES_KEY } from "./auth.decorators";
 import { AuthPrincipal, AuthRole } from "./auth.types";
 
 @Injectable()
@@ -42,5 +42,22 @@ export class RolesGuard implements CanActivate {
       ? context.switchToWs().getClient<{ data?: { user?: AuthPrincipal } }>().data?.user
       : context.switchToHttp().getRequest<{ user?: AuthPrincipal }>().user;
     if (!user || !roles.includes(user.role)) throw new ForbiddenException("No tienes permisos para esta operación"); return true;
+  }
+}
+
+/* Una clave temporal sirve para entrar y para nada mas. El token es valido
+   -por eso esto no es un 401- pero la cuenta no puede operar hasta cambiarla.
+   El frontend decide sobre el codigo, nunca sobre el texto del mensaje. */
+@Injectable()
+export class TemporaryPasswordGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+  canActivate(context: ExecutionContext): boolean {
+    if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [context.getHandler(), context.getClass()])) return true;
+    if (this.reflector.getAllAndOverride<boolean>(ALLOWS_TEMPORARY_PASSWORD_KEY, [context.getHandler(), context.getClass()])) return true;
+    const user = context.getType() === "ws"
+      ? context.switchToWs().getClient<{ data?: { user?: AuthPrincipal } }>().data?.user
+      : context.switchToHttp().getRequest<{ user?: AuthPrincipal }>().user;
+    if (user?.mustChangePassword) throw new ForbiddenException({ code: "PASSWORD_CHANGE_REQUIRED", message: "Debes cambiar tu contraseña temporal antes de continuar" });
+    return true;
   }
 }
