@@ -1,11 +1,11 @@
-.rechargePanel { width: 100%; border-radius: var(--radius-card); background: var(--color-surface); padding: 48px; }
+.rechargePanel { width: 100%; border-radius: var(--radius-card); background: var(--color-surface); padding: var(--space-3) var(--space-6); }
 .prepaidPanel { background: #f5f5f5; }
-.heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+.heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .heading h1 { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-title); line-height: 1.2; text-wrap: balance; }
 .summary { display: grid; gap: var(--space-half); align-self: stretch; margin-top: var(--space-2); margin-left: auto; width: min(100%, 320px); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .summary strong { display: flex; justify-content: space-between; gap: var(--space-2); color: var(--color-text); font-size: var(--font-size-body); }
 .form { display: flex; flex-direction: column; align-items: center; }
-.fields { display: grid; width: 100%; gap: 10px; }
+.fields { display: grid; width: 100%; gap: var(--space-1); }
 .platformField, .activationButton { display: grid; min-height: 58px; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: #fff; padding: 8px 16px; color: var(--color-text); }
 .platformField img, .activationButton img { object-fit: contain; }
 .platformField { grid-template-columns: 44px 12px minmax(0, 1fr) auto; cursor: text; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out); }
@@ -21,18 +21,25 @@
 .activationButton:disabled { cursor: default; opacity: .6; }
 .activationButton:not(:disabled):active, .uploadArea:active { transform: scale(.97); }
 .activationButton:focus-visible, .uploadArea:focus-visible { outline: 3px solid var(--color-text-muted); outline-offset: 4px; }
-.uploadArea { display: flex; width: 100%; min-height: 96px; align-items: center; justify-content: center; gap: 12px; margin-top: 18px; border: 1px solid transparent; border-radius: var(--radius-card); background: #fff; color: var(--color-text-muted); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
+.uploadArea { display: flex; width: 100%; min-height: 96px; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-card); background: #fff; color: var(--color-text-muted); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
 .uploadArea.hasReceipt { border-style: solid; border-color: rgb(11 89 1 / 30%); background: #fbfffb; color: var(--color-brand); }
 .uploadArea input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .uploadArea span { max-width: min(420px, 70vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.terms { display: flex; align-items: center; gap: 8px; margin-top: 26px; color: var(--color-text-muted); font-size: var(--font-size-body-sm); cursor: pointer; }
+.terms { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); cursor: pointer; }
 .terms input { position: absolute; opacity: 0; }
 .checkbox { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; }
 .checkbox img { opacity: .4; transition: opacity 140ms var(--ease-out); }
 .terms input:checked + .checkbox img { opacity: 1; }
 .terms:has(input:focus-visible) .checkbox { box-shadow: var(--focus-ring); }
-.submitButton { margin-top: 24px; }
-.formStatus { min-height: 18px; margin: 10px 0 0; color: var(--color-brand); font-size: var(--font-size-caption); font-weight: 700; text-align: center; }
+.submitButton { margin-top: var(--space-3); }
+.formStatus { margin: var(--space-1) 0 0; color: var(--color-brand); font-size: var(--font-size-caption); font-weight: 700; text-align: center; }
+/* El aviso de tasas vive donde luego aparece el desglose, para que el cliente
+   sepa qué se le va a sumar antes de escribir el primer monto. */
+.ratesHint { align-self: stretch; margin: var(--space-2) 0 0; margin-left: auto; width: min(100%, 320px); color: var(--color-text-muted); font-size: var(--font-size-caption); text-wrap: balance; }
+.ratesError { color: var(--color-danger); font-weight: var(--font-weight-regular); }
+.ratesError button, .formStatus button { border: 0; background: transparent; padding: 0; color: inherit; font: inherit; font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
+.ratesError button:focus-visible, .formStatus button:focus-visible { outline: 2px solid currentcolor; outline-offset: 2px; }
+.formStatus:empty { margin-top: 0; }
 .error { color: var(--color-danger); }
 .activationModal { width: min(100%, var(--layout-content)); padding: 40px 44px 28px; background: var(--color-surface-raised); box-shadow: 0 4px 20px rgb(0 0 0 / 25%); }
 .activationModal > button { color: var(--activation-ink); }

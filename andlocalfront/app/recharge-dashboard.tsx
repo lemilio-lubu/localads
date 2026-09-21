@@ -8,6 +8,7 @@ import ModalShell from "./components/modal-shell";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
 import type { AccountType } from "./design-system/types";
 import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getRechargeContext, getMyPautas, type ActivationRequest, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
+import { formatAmount, formatPercent } from "./lib/format";
 import styles from "./recharge-dashboard.module.css";
 
 const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = [
@@ -16,8 +17,7 @@ const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = 
   { id: "TIKTOK", label: "TikTok", icon: "/figma/tiktok.svg" },
 ];
 
-const money = new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
-const percent = (rate: number) => `${(rate * 100).toFixed(rate * 100 % 1 === 0 ? 0 : 1)}%`;
+
 
 export default function RechargeDashboard({ accountType }: { accountType: AccountType }) {
   const revision = usePlatformUpdates();
@@ -34,6 +34,11 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  /* Las tasas se piden aparte y pueden fallar solas: sin este aviso el total se
+     quedaba en «Calculando total…» para siempre, sin decir nada. */
+  const [ratesFailed, setRatesFailed] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
+  function retry() { setLoading(true); setError(""); setRatesFailed(false); setReloadToken((value) => value + 1); }
   const [activationPlatform, setActivationPlatform] = useState<RechargePlatform | null>(null);
   const [activationError, setActivationError] = useState("");
   const [activation, setActivation] = useState({ requesterName: "", externalAccountId: "", phone: "", firstRechargeAmount: "" });
@@ -45,9 +50,11 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
 
   useEffect(() => {
     let active = true;
-    Promise.all([getMyPautas(clientId), getActivationRequests(accountId), getRechargeContext().catch(() => null)])
+    Promise.all([getMyPautas(clientId), getActivationRequests(accountId), getRechargeContext().catch(() => { if (active) setRatesFailed(true); return null; })])
       .then(([nextPautas, nextRequests, nextContext]) => { if (active) {
+        setError("");
         setContext(nextContext);
+        if (nextContext) setRatesFailed(false);
         const removed = previousPautas.current.some((old) => old.status === "ACTIVE" && !nextPautas.some((pauta) => pauta.id === old.id && pauta.status === "ACTIVE"));
         if (removed) { setAcceptedTerms(false); setMessage("Una plataforma fue desactivada. Revisa los montos antes de continuar."); }
         setAmounts((current) => Object.fromEntries(platforms.map(({ id }) => [id, nextPautas.some((pauta) => pauta.platform === id && pauta.status === "ACTIVE") ? current[id] : ""])) as Record<RechargePlatform, string>);
@@ -58,7 +65,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible cargar tus pautas"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [accountId, clientId, revision]);
+  }, [accountId, clientId, revision, reloadToken]);
 
   const activePautas = useMemo(() => new Map(pautas.filter((pauta) => pauta.status === "ACTIVE").map((pauta) => [pauta.platform, pauta])), [pautas]);
   const lines = platforms.flatMap(({ id }) => {
@@ -123,8 +130,8 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
           <h1 id="recharge-title">sistema de recargas</h1>
           {creditAvailable !== null && context && <p className={`${styles.creditInfo} ${exceedsCredit ? styles.creditExceeded : ""}`} role={exceedsCredit ? "alert" : undefined}>
             {exceedsCredit
-              ? `El total supera tu crédito disponible de ${money.format(creditAvailable)}. Reduce los montos para continuar.`
-              : `Crédito disponible ${money.format(creditAvailable)} de ${money.format(context.account.creditLimit)} · ${context.account.creditDays} días de plazo`}
+              ? `El total supera tu crédito disponible de ${formatAmount(creditAvailable)}. Reduce los montos para continuar.`
+              : `Crédito disponible ${formatAmount(creditAvailable)} de ${formatAmount(context.account.creditLimit)} · ${context.account.creditDays} días de plazo`}
           </p>}
         </header>
 
@@ -144,20 +151,21 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
                 <label key={id} className={styles.platformField} htmlFor={`${id}-amount`}>
                   <Image src={id === "TIKTOK" ? "/figma/tiktok-modal.svg" : icon} alt="" width={30} height={30} /><span className={styles.currency}>$</span>
                   <input id={`${id}-amount`} type="number" inputMode="decimal" min="0" step="0.01" placeholder="500" value={amounts[id]} onChange={(event) => { setAmounts((current) => ({ ...current, [id]: event.target.value })); setMessage(""); setError(""); }} aria-label={`Monto para ${label}`} />
-                  <span className={styles.currentBalance}>{label}<b>saldo {money.format(pauta.currentBalance)}</b></span>
+                  <span className={styles.currentBalance}>{label}<b>saldo {formatAmount(pauta.currentBalance)}</b></span>
                 </label>
               );
             })}
           </div>
 
+          {rates && investment === 0 && <p className={styles.ratesHint}>Sobre tu inversión se aplican ISD {formatPercent(rates.isd)}, comisión AND {formatPercent(rates.agencyFee)} e IVA {formatPercent(rates.vat)}.</p>}
           {investment > 0 && <div className={styles.summary}>
-            <span>Inversión en pautas <b>{money.format(investment)}</b></span>
+            <span>Inversión en pautas <b>{formatAmount(investment)}</b></span>
             {breakdown ? <>
-              <span>ISD ({percent(rates!.isd)}) <b>{money.format(breakdown.isd)}</b></span>
-              <span>Comisión AND ({percent(rates!.agencyFee)}) <b>{money.format(breakdown.agencyFee)}</b></span>
-              <span>IVA ({percent(rates!.vat)}) <b>{money.format(breakdown.vat)}</b></span>
-              <strong>Total a pagar {money.format(breakdown.total)}</strong>
-            </> : <strong>Calculando total…</strong>}
+              <span>ISD ({formatPercent(rates!.isd)}) <b>{formatAmount(breakdown.isd)}</b></span>
+              <span>Comisión AND ({formatPercent(rates!.agencyFee)}) <b>{formatAmount(breakdown.agencyFee)}</b></span>
+              <span>IVA ({formatPercent(rates!.vat)}) <b>{formatAmount(breakdown.vat)}</b></span>
+              <strong>Total a pagar {formatAmount(breakdown.total)}</strong>
+            </> : ratesFailed ? <span className={styles.ratesError}>No pudimos calcular el total. <button type="button" onClick={retry}>reintentar</button></span> : <strong>Calculando total…</strong>}
           </div>}
           {isPrepaid && <button type="button" className={`${styles.uploadArea} ${receipt ? styles.hasReceipt : ""}`} onClick={() => fileInput.current?.click()}>
             <input ref={fileInput} type="file" accept="image/*,.pdf" onChange={selectReceipt} tabIndex={-1} />
@@ -172,7 +180,8 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
             : !acceptedTerms ? "Acepta los términos y condiciones para continuar."
             : ""
           }</p>}
-          <p className={`${styles.formStatus} ${error ? styles.error : ""}`} role={error ? "alert" : "status"} aria-live="polite">{loading ? "Cargando pautas…" : error || message}</p>
+          <p className={styles.formStatus} role="status" aria-live="polite">{loading ? "Cargando pautas…" : message}</p>
+          {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <button type="button" onClick={retry}>reintentar</button></p>}
         </form>
 
         <ModalShell open={Boolean(activationPlatform)} labelledBy="activation-title" className={`${styles.activationModal} ${activationPlatform ? styles[activationPlatform.toLowerCase()] : ""}`} onClose={closeActivation}>

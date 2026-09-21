@@ -42,6 +42,15 @@ const verificationLabels: Labels = {
 
 const invoiceLabels: Labels = { ISSUED: "Emitida", EMITIDA: "Emitida" };
 
+/* El panel de activaciones mostraba el enum crudo en inglés («pending», «in
+   review»). Los estados se traducen aquí, como todos los demás. */
+const activationLabels: Labels = {
+  PENDING: "Pendiente",
+  IN_REVIEW: "En revisión",
+  APPROVED: "Aprobada",
+  REJECTED: "Rechazada",
+};
+
 const verificationIssueLabels: Labels = {
   MONTO_NO_COINCIDE: "El monto detectado no coincide",
   MONTO_NO_DETECTADO: "No se detectó el monto",
@@ -59,4 +68,5 @@ export const transactionDetailStatusLabel = rechargeStatusLabel;
 export const paymentStatusLabel = (value: string | null | undefined) => translate(value, paymentLabels, "Sin pago");
 export const verificationStatusLabel = (value: string | null | undefined) => translate(value, verificationLabels, "Sin verificación");
 export const invoiceStatusLabel = (value: string | null | undefined) => translate(value, invoiceLabels, "Sin factura");
+export const activationStatusLabel = (value: string | null | undefined) => translate(value, activationLabels, "Sin estado");
 export const verificationIssueLabel = (value: string) => verificationIssueLabels[value] ?? "Requiere revisión manual";
