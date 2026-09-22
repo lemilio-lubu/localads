@@ -1,0 +1,86 @@
+/* La fila canonica de los listados — `patrones-lista.md`.
+   El documento la define con precision desde hace tiempo; el CSS la
+   reimplementaba cinco veces y tres habian derivado:
+
+     facturas          align-items: center   (desalinea las etiquetas)
+     clientes, equipo  padding 16, gap 8, celdas con fondo propio
+
+   Se consume con `composes`, asi que cada pantalla conserva su propia `.row`
+   y solo declara lo que de verdad le es propio: sus columnas.
+
+       .row  { composes: row  from "<ruta>/components/list-row.module.css";
+               grid-template-columns: ...; }
+       .cell { composes: cell from "<ruta>/components/list-row.module.css"; }
+
+   Lo unico que separa una fila de la siguiente es el hueco de 32 que pone
+   `.list`: sin borde y sin sombra en reposo, la fila es una superficie
+   invisible a proposito. La sombra queda para el hover, como respuesta al
+   puntero y no como decoracion. */
+.list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.row {
+  position: relative;
+  display: grid;
+  min-height: var(--row-min-height);
+  /* Las celdas no miden lo mismo; centrarlas desalinea las etiquetas, que es
+     lo que hace legible la rejilla. Las piezas sin etiqueta —pastillas,
+     botones— se centran ellas con `align-self`. */
+  align-items: start;
+  gap: var(--space-2);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  /* 24 sobre un hueco de 16 es 1,5: el par que manda `proporcion-aurea.md`. */
+  padding: var(--space-3);
+  transition: box-shadow var(--duration-ui) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover { box-shadow: var(--shadow-card); }
+}
+
+/* Etiqueta siempre visible sobre el valor. No se oculta en escritorio: si hay
+   que recordar que significa una columna, la lista fallo.
+
+   El peso lo lleva el dato, no la etiqueta. Iban al reves —etiqueta en negrita
+   oscura, valor en gris fino, ambos a 13— y eso hacia que al recorrer la lista
+   lo primero que se leyera fuera `estado`, `correo`, `gestor` repetidos fila
+   tras fila en vez de lo que cambia de una a otra. La etiqueta se dice una vez
+   y se recuerda; el dato es lo que se viene a mirar.
+
+   Los dos peldanos son contiguos en la escala (13 → 16), asi que la jerarquia
+   la da el color y el peso mas que el tamano, y la fila no crece de golpe. */
+.cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-half);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  line-height: 1.35;
+}
+
+.cell strong {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body-sm);
+  /* Sigue siendo <strong> por lo que significa, no por como se ve. */
+  font-weight: var(--font-weight-regular);
+  /* Etiquetas a √φ, como fija proporcion-aurea.md. */
+  line-height: 1.272;
+}
+
+.cell > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Segunda linea de una celda: presente, pero por debajo del dato principal.
+   Va a --color-text-muted y no a --color-text-subtle porque este ultimo es
+   3,0:1 y los tokens lo reservan a texto de 24px para arriba; aqui son 13. */
+.subtle { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+
+/* Lo que no lleva etiqueta se centra contra el bloque que si la lleva. */
+.centered { align-self: center; }

@@ -3,11 +3,11 @@
 import { CirclePlus, KeyRound, Layers, Power, RotateCw, Search, Shield, UserCog } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import MetricCard from "../../components/metric-card";
 import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
 import CredentialsModal from "../../components/credentials-modal";
 import { getTeam, resetTeamMemberPassword, updateTeamMember, type IssuedCredentials, type TeamMember, type TeamRole } from "../../lib/team-api";
 import TeamFormModal from "./team-form-modal";
+import MetricCard from "../../components/metric-card";
 import styles from "./team-dashboard.module.css";
 
 /* Mismos iconos de lucide que el resto de filtros: pintan con `currentColor`,

@@ -6,13 +6,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import AccountShell from "./account-shell";
+import DateCell from "./components/date-cell";
 import InvoiceDetailModal from "./components/invoice-detail-modal";
 import PlatformPill from "./components/platform-pill";
 import StatusPill from "./components/status-pill";
 import type { AccountType, AdvertisingPlatform } from "./design-system/types";
 import { getAccessToken, refreshSession } from "./lib/auth-api";
 import { accountContext, getMyTransactionDetail, getMyTransactions, transactionsRealtimeUrl, type ClientTransactionDetail, type TransactionListItem } from "./lib/recharges-api";
-import { dueLabel, formatAmount, formatDateTime } from "./lib/format";
+import { dueLabel, formatAmount, formatClock, formatDateTime } from "./lib/format";
 import { paymentStatusLabel, rechargeStatusLabel } from "./lib/status-labels";
 import type { VerificationRealtimeEvent } from "./lib/transaction-realtime";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
@@ -28,7 +29,6 @@ function describeError(reason: unknown) {
   }
   return raw;
 }
-const clock = new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" });
 const PAGE_SIZE = 20;
 
 export default function InvoicesDashboard({ accountType }: { accountType: AccountType }) {
@@ -147,16 +147,16 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
             <span className={styles.rangeDash} aria-hidden="true">–</span>
             <input type="date" aria-label="Hasta" value={toDate} onChange={(event) => changeTo(event.target.value)} />
           </fieldset>
-          {availablePlatforms.length > 0 && <fieldset className={styles.filterGroup}><legend>plataforma</legend>{availablePlatforms.map((item) => <button key={item} type="button" className={styles.platformFilter} aria-pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} size="filter" /></button>)}</fieldset>}
+          {availablePlatforms.length > 0 && <fieldset className={styles.filterGroup}><legend>plataforma</legend>{availablePlatforms.map((item) => <button key={item} type="button" className={styles.platformFilter} aria-pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} size="filter" active={platform === item} /></button>)}</fieldset>}
         </div>
       </div>
       <div className={styles.listMeta}>
         <span className={styles.metaRange}>{rangeLabel}{hasFilters && <button type="button" className={styles.clearFilters} onClick={clearFilters}>limpiar filtros</button>}</span>
-        <span>{updatedAt ? `actualizado a las ${clock.format(updatedAt)}` : "consultando…"}</span>
+        <span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span>
       </div>
       <div className={styles.invoiceList} aria-live="polite" aria-busy={loading || detailLoading}>
         {visible.map((item) => <article key={item.id} className={styles.invoiceRow}>
-          <div className={styles.cell}><strong>fecha</strong><span>{formatDate(item.createdAt)}</span></div>
+          <DateCell value={item.createdAt} />
           <div className={`${styles.cell} ${styles.codeCell}`}><strong><Image src="/figma/money.svg" alt="" width={16} height={16} /> código</strong>
             <button type="button" className={styles.copyCode} title={item.code} onClick={() => void copyCode(item.code)}>
               <span>{item.code}</span><small>{copiedCode === item.code ? "copiado" : "copiar"}</small>

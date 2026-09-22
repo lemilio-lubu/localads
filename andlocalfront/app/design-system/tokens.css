@@ -32,6 +32,32 @@
   /* Variantes de marca para superficies que llevan texto encima. El color de
      marca puro no siempre alcanza 4.5:1; estas si. Los pills ya las usaban
      hardcodeadas. El color de marca puro se reserva para superficies sin texto. */
+  /* Superficies con rol. Estaban sueltas como hexadecimales repetidos: el
+     mismo gris de hover aparecia en 10 sitios y el mismo rosa de error en 12,
+     sin que nada dijera que eran el mismo concepto. */
+  --color-surface-hover: #ededed;
+  --color-danger-surface: #fdf1f1;
+  /* Un solo verde suave. Habia dos, #eef6ed y #e7f0e4, a un paso uno del otro
+     y con el mismo papel: fondo tenue de marca bajo texto o pastilla. */
+  --color-brand-surface: #eef6ed;
+  /* Sombras de marca para los estados del puntero. No son colores nuevos:
+     son --color-brand un peldano mas claro y uno mas oscuro. */
+  /* El par teal del rol «administrador», suelto igual que lo estaban los verdes. */
+  --color-teal-surface: #e2f1ef;
+  --color-teal-text: #10504a;
+  --color-brand-hover: #0d6802;
+  --color-brand-active: #084600;
+  /* Blanco sobre relleno de marca o de peligro. #fff aparecia 39 veces sin
+     decir por que. */
+  --color-text-on-fill: #ffffff;
+  /* Borde solido para controles que necesitan un trazo visible; --color-border
+     es translucido al 9% y sobre gris se desvanece. */
+  --color-border-strong: #dcdcdc;
+  /* Los dos tonos del skeleton. El gradiente estaba escrito identico en cinco
+     archivos. */
+  --color-skeleton-base: var(--color-surface-muted);
+  --color-skeleton-sheen: #fafafa;
+
   --color-meta-strong: #0069c7;
   --color-google-strong: #765700;
   --color-tiktok-strong: #c51640;
@@ -77,6 +103,10 @@
   --layout-client-detail-min-height: 800px;
 
   /* Components */
+  /* La fila canonica de los listados (patrones-lista.md). Estaba escrita como
+     112px a mano en cuatro pantallas y como --space-15 en una quinta, que es
+     justo el tipo de deriva que el documento describe. */
+  --row-min-height: 112px;
   --control-height: 48px;
   --control-height-compact: 32px;
   --button-height: 40px;
