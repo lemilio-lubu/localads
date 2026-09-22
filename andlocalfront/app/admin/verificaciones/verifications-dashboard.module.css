@@ -7,6 +7,9 @@
 /* Etiqueta y control forman un grupo y wrappean juntos: sueltos, el «tipo de
    cuenta» se quedaba en una línea y su segmentado caía a la siguiente.
    8 de hueco + 8 de margen = 16 entre el texto y su control. */
+/* El filtro de «sin asignar», con la misma medida que en Clientes: es el mismo
+   control y el mismo concepto en las cuatro pantallas. */
+.managerFilter { display: inline-flex; min-height: var(--hit-target); align-items: center; gap: var(--space-half); padding-inline: var(--space-2); font-size: var(--font-size-body-sm); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .filterGroup { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .filterGroup > span:first-child { margin-right: var(--space-1); color: var(--color-text); font-size: var(--font-size-body-sm); }

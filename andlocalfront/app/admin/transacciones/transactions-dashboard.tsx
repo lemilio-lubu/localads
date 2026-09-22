@@ -1,10 +1,12 @@
 "use client";
 
-import { CalendarClock, ChevronLeft, ChevronRight, FileText, Layers, Search, Wallet } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, FileText, Layers, Search, Wallet, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import ToggleChip from "../../components/toggle-chip";
 import DateCell from "../../components/date-cell";
 import ModalShell from "../../components/modal-shell";
 import ActionButton from "../../components/action-button";
+import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import PlatformPill from "../../components/platform-pill";
 import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
@@ -52,9 +54,15 @@ export default function TransactionsDashboard() {
   /* Cualquier cambio de filtro devuelve a la primera página: quedarse en la 3 de
      un resultado que ahora tiene una sola muestra una lista vacía. */
   function changeQuery(value: string) { setQuery(value); setPageNumber(1); }
+  /* El cubo de los que no tienen gestor. Solo se le ofrece al admin: un
+     gestor que lo pidiera no obtendria huerfanos ajenos sino nada, porque
+     su recorte y este filtro condicionan el mismo campo. */
+  const isAdmin = getCurrentUser()?.role === "ADMIN";
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
+
   function changeType(value: "PREPAGO" | "POSTPAGO" | null) { setType(value); setPageNumber(1); }
 
-  useEffect(() => { let active = true; getAdminTransactionsPage({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, accountType: type ?? undefined }).then((page) => { if (active) { setError(""); setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages, totals: page.totals }); setUpdatedAt(new Date()); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar las transacciones"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [pageNumber, search, type, revision]);
+  useEffect(() => { let active = true; getAdminTransactionsPage({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, accountType: type ?? undefined, owner: unassignedOnly ? "unassigned" : undefined }).then((page) => { if (active) { setError(""); setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages, totals: page.totals }); setUpdatedAt(new Date()); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar las transacciones"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [pageNumber, search, type, revision, unassignedOnly]);
 
   const selectedId = selected?.id;
   useEffect(() => { if (!selectedId) return; let active = true; getAdminTransactionDetail(selectedId).then((next) => { if (active) setSelected(next); }).catch(() => undefined); return () => { active = false; }; }, [selectedId, revision]);
@@ -68,7 +76,7 @@ export default function TransactionsDashboard() {
       await action();
       const next = await getAdminTransactionDetail(transactionId);
       setSelected((current) => current?.id === transactionId ? next : current);
-      const page = await getAdminTransactionsPage({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, accountType: type ?? undefined });
+      const page = await getAdminTransactionsPage({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, accountType: type ?? undefined, owner: unassignedOnly ? "unassigned" : undefined });
       setTransactions(page.items);
       setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages, totals: page.totals });
     } catch (reason) { setResumeError(reason instanceof Error ? reason.message : "No fue posible completar la operación"); }
@@ -114,7 +122,7 @@ export default function TransactionsDashboard() {
   async function open(id: string) { setDetailLoading(true); setError(""); setResumeError(""); try { setSelected(await getAdminTransactionDetail(id)); } catch (reason) { setError(reason instanceof Error ? reason.message : "No fue posible cargar el detalle"); } finally { setDetailLoading(false); } }
 
   return <div className={styles.module}>
-    <div className={styles.toolbar}><label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente o código" /></label><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div></div></div>
+    <div className={styles.toolbar}><label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente o código" /></label><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div></div>
     <div className={styles.overview}><div><small>transacciones</small><strong>{pageInfo.totalItems}</strong></div><div><small>inversión en pauta</small><strong>{formatAmount(pageInfo.totals.pautaAmount)}</strong></div><div><small>total facturable</small><strong>{formatAmount(pageInfo.totals.totalAmount)}</strong></div></div>
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>

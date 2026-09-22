@@ -4,6 +4,8 @@ import { assertDateRange, optionalDate, optionalText, pagination } from "./phase
 
 export type ListVerificationsQuery = Readonly<{
   managerId?: string;
+  /* Filtro del admin: registros de clientes sin gestor. */
+  unassigned?: boolean;
   page?: number;
   pageSize?: number;
   scope?: VerificationScope;
@@ -25,6 +27,7 @@ export class ListVerifications {
     return this.queries.listVerifications({
       ...pagination(query.page, query.pageSize),
       managerId: optionalText(query.managerId),
+      unassigned: query.unassigned,
       scope: query.scope ?? "REVIEW",
       status: query.status,
       search: optionalText(query.search),

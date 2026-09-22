@@ -40,6 +40,8 @@ export default function ClientsDashboard() {
      sesión está resuelta. Es presentación, no control de acceso: quien decide
      qué puede hacer cada rol es el backend. */
   const isAdmin = getCurrentUser()?.role === "ADMIN";
+  /* «sin asignar» se resuelve en el servidor: filtrar el array ya cargado
+     contaba lo traido, no lo que hay. */
   const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [issued, setIssued] = useState<{ credentials: { username: string; temporaryPassword: string }; title: string } | null>(null);
   const hasFilters = Boolean(query.trim() || platform || accountType || unassignedOnly);
@@ -54,11 +56,11 @@ export default function ClientsDashboard() {
 
   useEffect(() => {
     let active = true;
-    getAdminClients().then((data) => { if (active) { setError(""); setClients(data); setSelectedClient((current) => current ? data.find((client) => client.id === current.id) ?? null : null); } })
+    getAdminClients(unassignedOnly ? "unassigned" : undefined).then((data) => { if (active) { setError(""); setClients(data); setSelectedClient((current) => current ? data.find((client) => client.id === current.id) ?? null : null); } })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar los clientes"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [revision, reloadToken]);
+  }, [revision, reloadToken, unassignedOnly]);
 
   function retry() { setLoading(true); setError(""); setReloadToken((token) => token + 1); }
 
@@ -67,8 +69,8 @@ export default function ClientsDashboard() {
     return clients.filter((client) => (!normalized || `${client.name} ${client.email} ${client.manager?.username ?? ""}`.toLowerCase().includes(normalized))
       && (!platform || client.account.platforms.includes(platform))
       && (!accountType || client.account.type === accountType)
-      && (!unassignedOnly || !client.manager));
-  }, [accountType, clients, platform, query, unassignedOnly]);
+     );
+  }, [accountType, clients, platform, query]);
 
   function openCreate() { setEditing(null); setFormOpen(true); }
   function saveClient(client: AdminClient) {

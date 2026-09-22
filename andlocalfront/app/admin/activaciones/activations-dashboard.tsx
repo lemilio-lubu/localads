@@ -1,9 +1,11 @@
 "use client";
 
-import { Check, RotateCw, Search, X } from "lucide-react";
+import { Check, RotateCw, Search, X, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import ToggleChip from "../../components/toggle-chip";
 import PlatformPill from "../../components/platform-pill";
 import StatusPill from "../../components/status-pill";
+import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import type { AdvertisingPlatform } from "../../design-system/types";
 import { approveActivationRequest, getAdminActivationRequests, rejectActivationRequest, reviewActivationRequest } from "../../lib/admin-recharges-api";
@@ -25,15 +27,21 @@ export default function ActivationsDashboard() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  /* El cubo de los que no tienen gestor. Solo se le ofrece al admin: un
+     gestor que lo pidiera no obtendria huerfanos ajenos sino nada, porque
+     su recorte y este filtro condicionan el mismo campo. */
+  const isAdmin = getCurrentUser()?.role === "ADMIN";
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
+
 
   useEffect(() => {
     let active = true;
-    getAdminActivationRequests()
+    getAdminActivationRequests(undefined, unassignedOnly ? "unassigned" : undefined)
       .then((next) => { if (active) { setError(""); setItems(next); setUpdatedAt(new Date()); } })
       .catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "No fue posible consultar las solicitudes"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [revision, reloadToken]);
+  }, [revision, reloadToken, unassignedOnly]);
 
   function retry() { setLoading(true); setError(""); setReloadToken((token) => token + 1); }
 
@@ -59,6 +67,7 @@ export default function ActivationsDashboard() {
   return <div className={styles.module}>
     <header className={styles.toolbar}>
       <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por solicitante, plataforma o ID externo" /></label>
+      <div className={styles.filters}>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
     </header>
 
     <div className={styles.listMeta}>

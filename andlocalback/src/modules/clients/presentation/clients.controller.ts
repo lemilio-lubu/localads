@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UseFilters } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseFilters } from "@nestjs/common";
 import { ApplicationErrorFilter } from "../../recharges/presentation/application-error.filter";
 import { ManageClients } from "../application/use-cases/manage-clients";
-import { AssignManagerDto, CreateClientDto, UpdateClientDto } from "./dto/client.dto";
+import { AssignManagerDto, CreateClientDto, ListClientsQueryDto, UpdateClientDto } from "./dto/client.dto";
 import { CurrentUser, Roles } from "../../auth/auth.decorators";
 import { AuthPrincipal } from "../../auth/auth.types";
-import { scopeFor } from "../../../common/access/manager-scope";
+import { scopeFor, withUnassigned } from "../../../common/access/manager-scope";
 import { TransactionsGateway } from "../../recharges/presentation/transactions.gateway";
 
 /* El gestor comparte la pantalla con el admin; lo que cambia es el alcance,
@@ -15,7 +15,9 @@ import { TransactionsGateway } from "../../recharges/presentation/transactions.g
 export class ClientsController {
   constructor(private readonly clients: ManageClients, private readonly realtime: TransactionsGateway) {}
 
-  @Get() list(@CurrentUser() user: AuthPrincipal) { return this.clients.list(scopeFor(user)); }
+  @Get() list(@Query() query: ListClientsQueryDto, @CurrentUser() user: AuthPrincipal) {
+    return this.clients.list(withUnassigned(scopeFor(user), query.owner === "unassigned"));
+  }
   @Get(":id") get(@Param("id") id: string, @CurrentUser() user: AuthPrincipal) { return this.clients.get(id, scopeFor(user)); }
   @Post() create(@Body() body: CreateClientDto, @CurrentUser() user: AuthPrincipal) { return this.clients.create(body, scopeFor(user), body.managerId); }
   @Patch(":id") async update(@Param("id") id: string, @Body() body: UpdateClientDto, @CurrentUser() user: AuthPrincipal) {

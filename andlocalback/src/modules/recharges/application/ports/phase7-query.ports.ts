@@ -222,6 +222,7 @@ export type AdminTransactionFilters = PageRequest & Readonly<{
   /* Recorte del gestor. Ausente = admin, sin limite. Nunca llega de la query:
      el controller lo toma del token. */
   managerId?: string;
+  unassigned?: boolean;
   search?: string;
   clientId?: string;
   accountType?: AccountType;
@@ -266,6 +267,7 @@ export type VerificationListItemView = Readonly<{
 
 export type VerificationFilters = PageRequest & Readonly<{
   managerId?: string;
+  unassigned?: boolean;
   scope: VerificationScope;
   status?: VerificationStatus;
   search?: string;

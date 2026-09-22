@@ -1,4 +1,4 @@
-import { IsArray, IsEmail, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, ValidateIf } from "class-validator";
+import { IsArray, IsEmail, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, ValidateIf } from "class-validator";
 import { AccountType, AdvertisingPlatform, ClientStatus } from "../../../recharges/domain/recharge.types";
 
 export class CreateClientDto {
@@ -26,4 +26,10 @@ export class AssignManagerDto {
   /* Null es una asignacion valida: desvincular deja al cliente en la bandeja
      de sin asignar que revisa el admin. */
   @IsOptional() @IsString() @MaxLength(60) managerId?: string | null;
+}
+
+/* `owner=unassigned` es el cubo de clientes sin gestor. Vive en la query y no
+   en el token porque es un filtro que elige quien mira, no su autoridad. */
+export class ListClientsQueryDto {
+  @IsOptional() @IsIn(["unassigned"]) owner?: "unassigned";
 }
