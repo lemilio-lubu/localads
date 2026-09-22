@@ -93,6 +93,8 @@
 .reviewNotice { display: grid; gap: 4px; margin-top: var(--space-2); border-radius: var(--radius-menu); background: #fff8e8; padding: 13px 16px; color: #654900; font-size: var(--font-size-caption); }
 .reviewNotice small, .reviewNotice span { color: #725f2c; }
 .reviewNotice p { margin: 0; color: var(--color-text); }
+/* Por que falta un boton, dicho donde se esperaba encontrarlo. */
+.handoffNote { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
 .error { margin: var(--space-2) 0 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: right; }
 @media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .pagination button:not(:disabled):hover { background: var(--color-surface-hover); } .reviewButton:not(:disabled):hover { color: var(--color-brand); }.actions > button:first-child:hover, .reviewForm button:last-child:hover { background: #624700; }.actions > button:last-child:hover { background: var(--color-brand-active); } }
 @media (max-width: 1180px) { .row { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); } .transferIcon { grid-row: span 2; } .reviewButton { align-self: end; }.reviewGrid { grid-template-columns: 1fr; }.preview { min-height: 420px; }.preview img, .preview iframe { height: 420px; } }
