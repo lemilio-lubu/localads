@@ -10,7 +10,7 @@
 .filterGroup { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .filterGroup > span:first-child { margin-right: var(--space-1); color: var(--color-text); font-size: var(--font-size-body-sm); }
 
-.createButton { display: flex; min-width: calc(var(--space-20) + var(--space-6)); height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin: var(--space-3) 0 var(--space-5); background: var(--color-surface-muted); padding: 0 var(--space-2); color: #6f6f6f; cursor: pointer; font-size: var(--font-size-body-sm); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.createButton { display: flex; min-width: calc(var(--space-20) + var(--space-6)); height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin: var(--space-3) 0 var(--space-5); background: var(--color-surface-muted); padding: 0 var(--space-2); color: var(--color-text-muted); cursor: pointer; font-size: var(--font-size-body-sm); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .createButton:active { transform: scale(.97); }
 
 .list { display: grid; gap: var(--space-4); }
@@ -29,8 +29,8 @@
 .identity > strong { max-width: 100%; overflow: hidden; color: var(--color-text); font-size: var(--font-size-nav); text-overflow: ellipsis; white-space: nowrap; }
 /* El rol se lee de un vistazo y hay solo dos: color en vez de otra columna. */
 .identity > span { border-radius: var(--radius-pill); margin-top: var(--space-half); padding: 0 var(--space-1); font-size: var(--font-size-micro); }
-.identity > span[data-role="ADMIN"] { background: #e2f1ef; color: #10504a; }
-.identity > span[data-role="GESTOR"] { background: #e7f0e4; color: var(--color-brand); }
+.identity > span[data-role="ADMIN"] { background: var(--color-teal-surface); color: var(--color-teal-text); }
+.identity > span[data-role="GESTOR"] { background: var(--color-brand-surface); color: var(--color-brand); }
 .note { display: -webkit-box; max-width: 100%; overflow: hidden; margin: var(--space-half) 0 0; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--color-text-muted); font-size: var(--font-size-micro); }
 
 .rowActions { position: relative; z-index: 2; display: grid; align-content: stretch; gap: var(--space-1); }
@@ -41,18 +41,17 @@
 
 .listMeta { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); padding: 0 var(--space-3) var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .clearFiltersInline { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
-.rowNotice { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-1); border-radius: var(--radius-menu); margin: var(--space-1) 0 0; background: #fdf1f1; padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); }
-.skeleton { background: linear-gradient(90deg, #f6f6f6 25%, #fafafa 45%, #f6f6f6 65%); background-size: 250% 100%; animation: shimmer 1.1s infinite linear; }
-@keyframes shimmer { to { background-position: -150% 0; } }
+.rowNotice { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-1); border-radius: var(--radius-menu); margin: var(--space-1) 0 0; background: var(--color-danger-surface); padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); }
+.skeleton { composes: base from "../../design-system/skeleton.module.css"; }
 .message { display: grid; justify-items: center; gap: var(--space-1); margin: var(--space-4); color: var(--color-text-muted); text-align: center; }
 .message p { margin: 0; max-width: 46ch; }
 .message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
-.errorMessage { border-radius: var(--radius-card); margin: 0; background: #fdf1f1; padding: var(--space-5) var(--space-3); color: var(--color-danger); }
+.errorMessage { border-radius: var(--radius-card); margin: 0; background: var(--color-danger-surface); padding: var(--space-5) var(--space-3); color: var(--color-danger); }
 .errorMessage strong { color: var(--color-danger); }
 .retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
 .clearFilters { display: inline-grid; min-height: var(--button-height); align-content: center; margin-top: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
 .search:focus-within, .createButton:focus-visible, .rowActions button:focus-visible, .clearFilters:focus-visible, .clearFiltersInline:focus-visible, .retry:focus-visible { outline: 3px solid rgb(11 89 1 / 14%); outline-offset: 2px; }
-@media (hover: hover) and (pointer: fine) { .row:hover { box-shadow: var(--shadow-card); } .createButton:hover { box-shadow: var(--shadow-card); color: var(--color-text); } .rowActions button:hover { background: #ededed; color: var(--color-text); } }
+@media (hover: hover) and (pointer: fine) { .createButton:hover { box-shadow: var(--shadow-card); color: var(--color-text); } .rowActions button:hover { background: var(--color-surface-hover); color: var(--color-text); } .row:hover { box-shadow: var(--shadow-card); } }
 @media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .identity { grid-row: span 2; } .rowActions { grid-column: span 2; grid-template-columns: 1fr 1fr; min-height: 40px; } }
 @media (max-width: 650px) { .row { grid-template-columns: 1fr 1fr; } .identity, .rowActions { grid-column: 1 / -1; grid-row: auto; } }
 @media (prefers-reduced-motion: reduce) { .createButton, .row, .rowActions button { transition-duration: 0ms; } .skeleton { animation: none; } .row:has(.openDetail:active) { transform: none; } }

@@ -8,13 +8,11 @@
 
 /* Patrón de lista: fila plana, la agrupa la separación de 32. Antes eran
    tarjetas con borde propio y una rejilla de tres datos. */
-.list { display: grid; gap: var(--space-4); }
-.row { position: relative; display: grid; grid-template-columns: minmax(160px, 1.2fr) minmax(130px, .8fr) minmax(170px, 1fr) minmax(180px, 1.1fr) minmax(150px, .9fr); min-height: 112px; align-items: start; gap: var(--space-2) var(--space-2); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); transition: box-shadow var(--duration-ui) var(--ease-out); }
-.cell { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.25; }
-.cell strong { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
-.cell > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list { composes: list from "../../components/list-row.module.css"; }
+.row { composes: row from "../../components/list-row.module.css"; grid-template-columns: minmax(160px, 1.2fr) minmax(130px, .8fr) minmax(170px, 1fr) minmax(180px, 1.1fr) minmax(150px, .9fr); }
+.cell { composes: cell from "../../components/list-row.module.css"; }
 .requester { color: var(--color-text); font-size: var(--font-size-body); }
-.amount { color: var(--color-brand); font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
+.amount { color: var(--color-brand); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; }
 .platformLine { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 
 /* Tres acciones no caben en una columna: viven en una segunda línea de la
@@ -36,23 +34,21 @@
 .reject > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
 
 /* El fallo al resolver pertenece a la solicitud que se tocó, no al listado. */
-.rowNotice { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-1); border-radius: var(--radius-menu); margin: 0; background: #fdf1f1; padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); }
+.rowNotice { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-1); border-radius: var(--radius-menu); margin: 0; background: var(--color-danger-surface); padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); }
 
-.skeleton { min-height: 112px; border-radius: var(--radius-card); background: linear-gradient(90deg, #f6f6f6 25%, #fafafa 45%, #f6f6f6 65%); background-size: 250% 100%; animation: shimmer 1.1s infinite linear; }
-@keyframes shimmer { to { background-position: -150% 0; } }
+.skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 112px; }
 .message { display: grid; justify-items: center; gap: var(--space-1); border-radius: var(--radius-control); margin: 0; background: var(--color-surface-muted); padding: var(--space-5) var(--space-3); color: var(--color-text-muted); text-align: center; }
 .message p { margin: 0; max-width: 46ch; }
 .message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
-.errorMessage { background: #fdf1f1; color: var(--color-danger); }
+.errorMessage { background: var(--color-danger-surface); color: var(--color-danger); }
 .errorMessage strong { color: var(--color-danger); }
 .retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
 .retry:focus-visible { outline: 3px solid rgb(157 0 3 / 22%); outline-offset: 3px; }
 
 @media (hover: hover) and (pointer: fine) {
-  .row:hover { box-shadow: var(--shadow-card); }
-  .actions button:not(:disabled):hover, .reject button:not(:disabled):hover { background: #ededed; }
+  .actions button:not(:disabled):hover, .reject button:not(:disabled):hover { background: var(--color-surface-hover); }
   .rejectButton:hover { background: #f7dede !important; }
-  .approveButton:hover { background: #0d6802 !important; }
+  .approveButton:hover { background: var(--color-brand-hover) !important; }
   .dangerButton:hover { background: #7d0002 !important; }
 }
 @media (max-width: 1180px) { .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

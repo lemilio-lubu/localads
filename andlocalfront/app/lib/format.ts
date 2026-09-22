@@ -9,10 +9,14 @@ const moneyFormat = new Intl.NumberFormat("es-CO", { style: "currency", currency
 const dateTimeFormat = new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const percentFormat = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
 const dayFormat = new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "2-digit", year: "numeric" });
+const clockFormat = new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" });
 
 export const formatAmount = (value: number) => moneyFormat.format(value);
 export const formatDateTime = (value: string) => dateTimeFormat.format(new Date(value));
 export const formatDay = (value: string) => dayFormat.format(new Date(value));
+/** Hora de la ultima carga, para la meta de lista. Estaba declarada identica
+    en cuatro pantallas: facturas, transacciones, verificaciones y activaciones. */
+export const formatClock = (value: Date) => clockFormat.format(value);
 /** Tasas en fraccion (0.05) a porcentaje legible. Estaba escrito dos veces, con
     dos redondeos distintos, en recargar y en el detalle de transacciones. */
 export const formatPercent = (rate: number) => `${percentFormat.format(rate * 100)}%`;
@@ -33,3 +37,9 @@ export function dueLabel(dueDate: string) {
   const overdue = Math.abs(days);
   return `venció hace ${overdue} ${overdue === 1 ? "día" : "días"} · ${formatDay(dueDate)}`;
 }
+
+/** El guion de «sin dato». Los dos modales de detalle lo escribian a mano junto
+    a su propio formateador, que era el motivo de que existieran esas copias. */
+export const NO_DATA = "—";
+export const formatAmountOr = (value: number | null | undefined) => (value == null ? NO_DATA : formatAmount(value));
+export const formatDateTimeOr = (value: string | null | undefined) => (value ? formatDateTime(value) : NO_DATA);

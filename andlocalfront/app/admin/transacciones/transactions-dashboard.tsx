@@ -2,6 +2,7 @@
 
 import { CalendarClock, ChevronLeft, ChevronRight, FileText, Layers, Search, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import DateCell from "../../components/date-cell";
 import ModalShell from "../../components/modal-shell";
 import ActionButton from "../../components/action-button";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
@@ -11,12 +12,11 @@ import StatusPill from "../../components/status-pill";
 import type { AdvertisingPlatform } from "../../design-system/types";
 import { completeTransaction, completeTransactionDetail, getAdminTransactionDetail, getAdminTransactionsPage, resumeTransactionDetail, startTransactionRecharge, type AdminTransactionDetail } from "../../lib/admin-recharges-api";
 import type { TransactionListItem } from "../../lib/recharges-api";
-import { dueLabel, formatAmount, formatDateTime, formatPercent } from "../../lib/format";
+import { dueLabel, formatAmount, formatClock, formatDateTime, formatPercent } from "../../lib/format";
 import { invoiceStatusLabel, paymentStatusLabel, rechargeStatusLabel, transactionDetailStatusLabel } from "../../lib/status-labels";
 import styles from "./transactions-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "../../lib/status-tone";
 
-const clock = new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" });
 const PAGE_SIZE = 20;
 
 /* Mismo control segmentado que Clientes: el tipo de cuenta es excluyente y
@@ -116,11 +116,11 @@ export default function TransactionsDashboard() {
   return <div className={styles.module}>
     <div className={styles.toolbar}><label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente o código" /></label><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div></div></div>
     <div className={styles.overview}><div><small>transacciones</small><strong>{pageInfo.totalItems}</strong></div><div><small>inversión en pauta</small><strong>{formatAmount(pageInfo.totals.pautaAmount)}</strong></div><div><small>total facturable</small><strong>{formatAmount(pageInfo.totals.totalAmount)}</strong></div></div>
-    <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${clock.format(updatedAt)}` : "consultando…"}</span></div>
+    <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>
       {transactions.map((item) => <article key={item.id} className={styles.row}>
         <div className={styles.cell}><strong>cliente</strong><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></div>
-        <div className={styles.cell}><strong>fecha</strong><span>{formatDateTime(item.createdAt)}</span></div>
+        <DateCell value={item.createdAt} />
         <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {item.accountTypeSnapshot.toLowerCase()}</strong>
           <button type="button" className={styles.copyCode} data-state={copied?.code === item.code ? (copied.ok ? "done" : "failed") : undefined} title={item.code} onClick={(event) => void copyCode(item.code, event.currentTarget.querySelector("span"))}>
             <span>{item.code}</span><small>{copyLabel(item.code)}</small>

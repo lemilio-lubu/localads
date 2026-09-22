@@ -20,7 +20,8 @@
 .filterGroup input[type="date"] { width: 124px; height: var(--button-height); border: 0; border-radius: var(--radius-pill); outline: 0; background: var(--color-surface-muted); padding: 0 var(--space-1); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); }
 .filterGroup input[type="date"]:focus-visible { box-shadow: var(--focus-ring); }
 .platformFilter { display: inline-grid; min-width: var(--hit-target); min-height: var(--hit-target); place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; padding-inline: var(--space-half); cursor: pointer; transition: box-shadow var(--duration-fast) var(--ease-out); }
-.platformFilter[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--color-brand); }
+/* El estado lo dice el relleno de la pastilla; el anillo lo repetia. */
+.platformFilter[aria-pressed="true"] { box-shadow: none; }
 .listMeta { display: flex; align-items: center; justify-content: space-between; margin: var(--space-3) 0 var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 /* La salida está siempre que haya filtro, no solo cuando no devuelve nada:
    con resultados había que recordar qué se activó para deshacerlo. */
@@ -31,40 +32,37 @@
 .pagination button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
 .pagination button:disabled { opacity: .45; cursor: not-allowed; }
 .pagination button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
-.errorState { background: #fdf1f1; color: var(--color-danger); }
+.errorState { background: var(--color-danger-surface); color: var(--color-danger); }
 .errorState strong { color: var(--color-danger); }
 .retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
 .retry:focus-visible { outline: 3px solid rgb(157 0 3 / 22%); outline-offset: 3px; }
 /* Sin seleccion, todas valen igual. Con una activa, el resto se atenua
    para que el filtro aplicado se lea de un vistazo. */
-.filterGroup:has([aria-pressed="true"]) .platformFilter[aria-pressed="false"] { opacity: .4; }
 .platformFilter:focus-visible, .detailsLink:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
-.invoiceList { display: grid; gap: var(--space-4); padding-top: var(--space-3); }
-.invoiceRow { display: grid; grid-template-columns: 100px minmax(140px, 1fr) 148px 168px 104px 80px; min-height: 112px; align-items: center; gap: var(--space-2); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); transition: box-shadow var(--duration-ui) var(--ease-out); }
-.cell { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.25; }
-.cell strong { font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
+.invoiceList { composes: list from "./components/list-row.module.css"; padding-top: var(--space-3); }
+.invoiceRow { composes: row from "./components/list-row.module.css"; grid-template-columns: 100px minmax(140px, 1fr) 148px 168px 104px 80px; }
+.cell { composes: cell from "./components/list-row.module.css"; }
 .cell span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .codeCell strong { display: flex; align-items: center; color: var(--color-brand); }
 .codeCell strong img { width: var(--icon-size-xs); height: var(--icon-size-xs); margin-right: var(--space-1); transform: rotate(180deg); }
-.codeCell span { color: var(--color-text-muted); font-size: var(--font-size-body); text-transform: lowercase; }
-.cell .amount { color: var(--color-brand); font-size: var(--font-size-body); }
+.codeCell span { color: var(--color-text); font-size: var(--font-size-body-sm); text-transform: lowercase; }
+.cell .amount { color: var(--color-brand); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); }
 /* Con tres plataformas los pills no caben en una linea: envuelven dentro de
    la fila, que tiene alto de sobra. */
 .platforms { display: flex; flex-wrap: wrap; align-content: center; gap: var(--space-half); }
 .statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 .detailsLink { display: inline-flex; min-height: var(--button-height); align-items: center; align-self: center; justify-content: center; justify-self: end; border: 0; background: transparent; padding: 0; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) var(--ease-out); }
 .detailsLink:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
-.platformFilter:active { box-shadow: inset 0 0 0 3px rgb(67 67 67 / 24%); }
+.platformFilter:active { transform: scale(.97); }
 .emptyState { display: grid; justify-items: center; gap: var(--space-1); margin: var(--space-5) 0; color: var(--color-text-muted); text-align: center; }
 .emptyState p { margin: 0; max-width: 46ch; }
 .emptyState strong { color: var(--color-text); font-size: var(--font-size-card-title); }
 
 @media (hover: hover) and (pointer: fine) {
   .filterGroup input[type="date"]:hover { box-shadow: 0 0 0 2px rgb(67 67 67 / 8%); }
-  .pagination button:not(:disabled):hover { background: #ededed; }
+  .pagination button:not(:disabled):hover { background: var(--color-surface-hover); }
   .detailsLink:hover { color: var(--color-brand); }
-  .platformFilter:hover { opacity: 1; box-shadow: inset 0 0 0 2px rgb(67 67 67 / 20%); }
-  .invoiceRow:hover { box-shadow: var(--shadow-card); }
+  .platformFilter:hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 9%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -89,7 +87,7 @@
 }
 
 /* Fase 3: el listado muestra lo que el cliente viene a buscar. */
-.totalDue { color: var(--color-text); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.totalDue { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .dueDate { color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-wrap: balance; }
 .dueOverdue { color: var(--color-danger); font-weight: var(--font-weight-bold); }

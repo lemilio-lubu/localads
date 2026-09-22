@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Check, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Layers, RotateCw, Search, ShieldAlert } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import DateCell from "../../components/date-cell";
 import ModalShell from "../../components/modal-shell";
 import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
 import StatusPill from "../../components/status-pill";
@@ -17,7 +18,7 @@ import {
   type PendingVerification,
   type VerificationStatus,
 } from "../../lib/admin-recharges-api";
-import { formatAmount, formatDateTime } from "../../lib/format";
+import { formatAmount, formatClock, formatDateTime } from "../../lib/format";
 import { resolveApiAssetUrl, transactionsRealtimeUrl } from "../../lib/recharges-api";
 import { verificationIssueLabel, verificationStatusLabel } from "../../lib/status-labels";
 import type { VerificationRealtimeEvent } from "../../lib/transaction-realtime";
@@ -27,7 +28,6 @@ import { verificationStatusTone } from "../../lib/status-tone";
 type VerificationFilter = "ALL" | "APPROVED" | "REVIEW";
 
 const reviewStatuses: VerificationStatus[] = ["EN_REVISION", "VERIFICADA_AUTOMATICAMENTE"];
-const clock = new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" });
 const PAGE_SIZE = 20;
 
 /* El ámbito es excluyente: mismo control segmentado que Clientes y
@@ -215,12 +215,12 @@ export default function VerificationsDashboard() {
       </div></div>
     </header>
 
-    <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${clock.format(updatedAt)}` : "consultando…"}</span></div>
+    <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
 
     <div className={styles.list} aria-live="polite" aria-busy={loading || busy}>
       {!loading && !error && items.map((item) => <article key={item.id} className={styles.row}>
         <span className={styles.transferIcon}><Image src="/figma/admin-transfer.svg" alt="" width={54} height={54} /><small>transf.</small></span>
-        <div className={styles.cell}><strong>fecha</strong><span>{formatDateTime(item.createdAt)}</span></div>
+        <DateCell value={item.createdAt} />
         <div className={`${styles.cell} ${styles.codeCell}`}><strong>cliente</strong><span className={styles.clientName}>{item.clientName}</span>
           <button type="button" className={styles.copyCode} data-state={copied?.code === item.transactionCode ? (copied.ok ? "done" : "failed") : undefined} title={item.transactionCode} onClick={(event) => void copyCode(item.transactionCode, event.currentTarget.querySelector("span"))}>
             <span>{item.transactionCode}</span><small>{copyLabel(item.transactionCode)}</small>

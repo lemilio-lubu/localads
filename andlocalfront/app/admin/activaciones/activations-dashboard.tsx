@@ -7,13 +7,12 @@ import StatusPill from "../../components/status-pill";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import type { AdvertisingPlatform } from "../../design-system/types";
 import { approveActivationRequest, getAdminActivationRequests, rejectActivationRequest, reviewActivationRequest } from "../../lib/admin-recharges-api";
-import { formatAmount, formatDateTime } from "../../lib/format";
+import { formatAmount, formatClock, formatDateTime } from "../../lib/format";
 import { activationStatusLabel } from "../../lib/status-labels";
 import type { ActivationRequest } from "../../lib/recharges-api";
 import styles from "./activations-dashboard.module.css";
 import { activationStatusTone } from "../../lib/status-tone";
 
-const clock = new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" });
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
   const [items, setItems] = useState<ActivationRequest[]>([]);
@@ -64,7 +63,7 @@ export default function ActivationsDashboard() {
 
     <div className={styles.listMeta}>
       <span>{loading ? "consultando…" : `${visible.length} ${visible.length === 1 ? "solicitud" : "solicitudes"}${query.trim() && items.length !== visible.length ? ` de ${items.length}` : ""}`}</span>
-      <span>{updatedAt ? `actualizado a las ${clock.format(updatedAt)}` : "consultando…"}</span>
+      <span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span>
     </div>
 
     <div className={styles.list} aria-live="polite" aria-busy={loading}>

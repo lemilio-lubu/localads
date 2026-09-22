@@ -58,8 +58,8 @@
 .totalBalance strong { font-size: var(--font-size-display); line-height: var(--space-6); letter-spacing: -1px; }
 .totalCard a { position: absolute; top: var(--space-5); right: var(--space-8); display: grid; width: 168px; height: var(--button-height); place-items: center; border-radius: var(--radius-pill); background: #fff; color: var(--color-dark); font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: none; transition: color var(--duration-ui) ease, background-color var(--duration-ui) ease; }
 .totalCard a:focus-visible { outline: 3px solid rgb(255 255 255 / 55%); outline-offset: 4px; }
-.totalCard a:active { background: #dcdcdc; color: var(--color-dark); }
-.errorPanel { display: grid; justify-items: center; gap: var(--space-1); border-radius: var(--radius-control); margin-top: var(--space-3); background: #fdf1f1; padding: var(--space-4) var(--space-3); color: var(--color-danger); text-align: center; }
+.totalCard a:active { background: var(--color-border-strong); color: var(--color-dark); }
+.errorPanel { display: grid; justify-items: center; gap: var(--space-1); border-radius: var(--radius-control); margin-top: var(--space-3); background: var(--color-danger-surface); padding: var(--space-4) var(--space-3); color: var(--color-danger); text-align: center; }
 .errorPanel p { margin: 0; max-width: 46ch; }
 .errorPanel strong { font-size: var(--font-size-card-title); }
 .errorPanel button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
@@ -67,7 +67,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .platformCard:hover { box-shadow: 0 -8px 16px rgb(0 0 0 / 22%), inset 0 0 0 2px rgb(255 255 255 / 30%); }
-  .totalCard a:hover { background: #ededed; color: var(--color-dark); }
+  .totalCard a:hover { background: var(--color-surface-hover); color: var(--color-dark); }
 }
 
 @media (prefers-reduced-motion: reduce) {

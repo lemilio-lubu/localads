@@ -20,7 +20,7 @@
 .listMeta span:last-child { color: var(--color-text-muted); }
 /* Lista plana, como Clientes: la fila no se dibuja en reposo y lo que agrupa
    es la separación, no un borde. La sombra aparece solo al pasar por encima. */
-.list { display: grid; gap: var(--space-4); }
+.list { composes: list from "../../components/list-row.module.css"; }
 /* Patrón de lista del producto, el mismo que «tus facturas» del portal de
    cliente: tarjeta de 112px con borde y sombra, y cada celda con su etiqueta
    siempre a la vista. Aquí se antepone la columna «cliente», que en el portal
@@ -28,10 +28,8 @@
 /* Alineadas arriba, no centradas: las celdas no miden lo mismo (la de cliente
    lleva una línea más) y centrarlas desalineaba las etiquetas, que es lo que
    hace legible una rejilla. Las piezas sin etiqueta sí se centran. */
-.row { position: relative; display: grid; min-height: 112px; grid-template-columns: minmax(150px, 1.1fr) 150px minmax(160px, 1fr) 164px minmax(180px, 1fr) 104px 116px; align-items: start; gap: var(--space-2); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-3); transition: box-shadow var(--duration-ui) var(--ease-out); }
-.cell { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.25; }
-.cell strong { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
-.cell > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row { composes: row from "../../components/list-row.module.css"; grid-template-columns: minmax(150px, 1.1fr) 150px minmax(160px, 1fr) 164px minmax(180px, 1fr) 104px 116px; }
+.cell { composes: cell from "../../components/list-row.module.css"; }
 .clientName { color: var(--color-text); font-size: var(--font-size-body); }
 /* La etiqueta carga el tipo de cuenta con su icono y su color: ahorra la línea
    que lo repetía bajo el nombre y ata el código a la cuenta que lo generó.
@@ -39,15 +37,15 @@
 .codeCell strong { display: inline-flex; align-items: center; gap: var(--space-half); }
 .codeCell[data-account="POSTPAGO"] strong { color: var(--color-accent-teal); }
 .codeCell[data-account="PREPAGO"] strong { color: var(--color-brand); }
-.copyCode { display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin-left: -4px; background: transparent; padding: 2px 4px; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-align: left; cursor: pointer; }
+.copyCode { display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin-left: -4px; background: transparent; padding: 2px 4px; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); text-align: left; cursor: pointer; }
 .copyCode span { overflow: hidden; font-family: var(--font-family-mono); text-overflow: ellipsis; white-space: nowrap; }
 .copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); letter-spacing: .06em; text-transform: uppercase; }
 /* Copiar puede negarse (permiso, contexto inseguro, foco perdido): el fallo se
    dice y el código queda seleccionado para copiarlo a mano. */
 .copyCode[data-state="failed"] small { color: var(--color-danger); }
 .copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
-.amount { color: var(--color-brand); font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
-.totalDue { color: var(--color-text); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.amount { color: var(--color-brand); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; }
+.totalDue { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 .dueDate { color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-wrap: balance; }
 .dueOverdue { color: var(--color-danger); font-weight: var(--font-weight-bold); }
@@ -58,9 +56,9 @@
 .detailsButton { display: inline-flex; min-height: var(--button-height); align-items: center; align-self: center; justify-content: center; justify-self: end; border: 0; background: transparent; padding: 0; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) var(--ease-out); }
 .detailsButton:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
 .detailsButton:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
-.skeleton { min-height: 112px; border-radius: var(--radius-card); background: linear-gradient(90deg, #f6f6f6 25%, #fafafa 45%, #f6f6f6 65%); background-size: 250% 100%; animation: shimmer 1.1s infinite linear; }
+.skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 112px; }
 .message { border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-3); color: var(--color-text-muted); text-align: center; }
-.errorMessage { background: #fdf1f1; color: var(--color-danger); }
+.errorMessage { background: var(--color-danger-surface); color: var(--color-danger); }
 /* «N páginas» era un dato sin salida: ahora hay por dónde avanzar. */
 .pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .pagination button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out); }
@@ -72,7 +70,7 @@
 .modalHeader p { margin: 0; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-caption); }
 /* Barra de ejecución: dice en qué punto está la recarga y ofrece el paso que
    toca. Solo aparece cuando el backend aceptaría esa transición. */
-.executeBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); border-radius: var(--radius-control); margin-top: var(--space-3); background: #eef6ed; padding: var(--space-2) var(--space-3); }
+.executeBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); border-radius: var(--radius-control); margin-top: var(--space-3); background: var(--color-brand-surface); padding: var(--space-2) var(--space-3); }
 .executeBar p { margin: 0; color: var(--color-brand); font-size: var(--font-size-caption); }
 .executeDetail { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
 .executeDetail label { color: var(--color-text-muted); font-size: var(--font-size-micro); }
@@ -93,7 +91,7 @@
 /* La tarifa aplicada se dice al lado del importe: antes el ISD aparecía cobrado
    sin que nada explicara de dónde salía. */
 .receiptPanel dt em { border-radius: var(--radius-pill); background: var(--color-canvas); padding: 0 var(--space-half); color: var(--color-text-subtle); font-size: var(--font-size-micro); font-style: normal; font-weight: var(--font-weight-bold); }
-.totalRow { grid-column: 1 / -1; background: #eef6ed !important; }
+.totalRow { grid-column: 1 / -1; background: var(--color-brand-surface) !important; }
 .totalRow dt { color: var(--color-brand); }
 .totalRow dd { color: var(--color-brand); font-size: var(--font-size-card-title) !important; }
 .paymentRow { grid-column: 1 / -1; }
@@ -106,8 +104,7 @@
 .historyPanel strong { font-size: var(--font-size-body-sm); }
 .historyPanel p { margin: var(--space-half) 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .historyPanel time { color: var(--color-text-muted); font-size: var(--font-size-micro); }
-@keyframes shimmer { to { background-position: -150% 0; } }
-@media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .pagination button:not(:disabled):hover { background: #ededed; } .row:hover { box-shadow: var(--shadow-card); } .detailsButton:not(:disabled):hover { color: var(--color-brand); } }
+@media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .pagination button:not(:disabled):hover { background: var(--color-surface-hover); } .detailsButton:not(:disabled):hover { color: var(--color-brand); } }
 @media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } .filters { flex-wrap: wrap; } .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .platforms, .detailsButton { align-self: end; } }
 @media (max-width: 760px) { .overview { align-items: stretch; } .overview > div { min-width: 0; flex: 1; padding-inline: var(--space-2); } .row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control); } .detailGrid { grid-template-columns: 1fr; } .modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
 @media (max-width: 520px) { .filters > span { flex-basis: 100%; } .row { grid-template-columns: 1fr; } .detailsButton { justify-self: start; } .receiptPanel dl { grid-template-columns: 1fr; } .auditFooter { flex-direction: column; } }
