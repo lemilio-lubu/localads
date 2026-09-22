@@ -57,7 +57,12 @@ export function createTeamMember(input: { username: string; role: TeamRole; note
   return request<TeamMemberWithCredentials>("/admin/team", { method: "POST", ...json(input) });
 }
 
-export function updateTeamMember(id: string, input: { username?: string; role?: TeamRole; note?: string | null; status?: "ACTIVE" | "INACTIVE" }) {
+/* Al dar de baja a un gestor con cartera hay que decir a donde va: `reassignTo`
+   con el gestor destino, o `leaveUnassigned` para soltarla a proposito. Sin
+   ninguno de los dos el backend responde PORTFOLIO_DESTINATION_REQUIRED. */
+export type PortfolioHandover = { reassignTo?: string; leaveUnassigned?: boolean };
+
+export function updateTeamMember(id: string, input: { username?: string; role?: TeamRole; note?: string | null; status?: "ACTIVE" | "INACTIVE" } & PortfolioHandover) {
   return request<TeamMember & { releasedClients?: number }>(`/admin/team/${id}`, { method: "PATCH", ...json(input) });
 }
 

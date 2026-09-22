@@ -3,6 +3,7 @@ import { ApplicationErrorFilter } from "../../recharges/presentation/application
 import { CurrentUser, Roles } from "../../auth/auth.decorators";
 import { AuthPrincipal } from "../../auth/auth.types";
 import { ManageTeam } from "../application/use-cases/manage-team";
+import { PortfolioDestination } from "../application/ports/team.repository";
 import { CreateTeamMemberDto, ListTeamQueryDto, UpdateTeamMemberDto } from "./dto/team.dto";
 
 /* Equipo = usuarios internos. Solo lo ve el admin: un gestor no administra a
@@ -21,10 +22,20 @@ export class TeamController {
   }
 
   @Patch(":id") update(@Param("id") id: string, @Body() body: UpdateTeamMemberDto) {
-    return this.team.update(id, body);
+    const { reassignTo, leaveUnassigned, ...rest } = body;
+    return this.team.update(id, { ...rest, ...(portfolioOf(reassignTo, leaveUnassigned) ?? {}) });
   }
 
   @Post(":id/password-reset")
   @HttpCode(HttpStatus.OK)
   resetPassword(@Param("id") id: string) { return this.team.resetPassword(id); }
+}
+
+/* Sin ninguno de los dos campos devuelve undefined, y esa ausencia es la que
+   hace saltar la regla mas abajo. Reasignar gana a soltar si llegan los dos:
+   quien escribe un destino concreto esta diciendo algo mas preciso. */
+function portfolioOf(reassignTo?: string, leaveUnassigned?: boolean): Readonly<{ portfolio: PortfolioDestination }> | undefined {
+  if (reassignTo?.trim()) return { portfolio: { kind: "reassign", managerId: reassignTo.trim() } };
+  if (leaveUnassigned) return { portfolio: { kind: "release" } };
+  return undefined;
 }

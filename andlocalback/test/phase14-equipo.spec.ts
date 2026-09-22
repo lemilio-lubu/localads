@@ -14,12 +14,17 @@ import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domai
 
 const member = { id: "t1", username: "gestor", role: "GESTOR", status: "ACTIVE", note: null, mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
 const issuer = () => ({ issue: vi.fn().mockResolvedValue({ username: "gestor", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
+/* El stub base no tiene cartera; los casos de baja necesitan uno que si. */
+const conCartera = { ...member, metrics: { clients: 2, sales: 0 } } as TeamMemberDetailView;
+const repositoryConCartera = (overrides: Partial<TeamRepository> = {}) =>
+  repository({ findById: vi.fn().mockResolvedValue(conCartera), ...overrides });
+
 const repository = (overrides: Partial<TeamRepository> = {}): TeamRepository => ({
   list: vi.fn().mockResolvedValue([member]),
   findById: vi.fn().mockResolvedValue(member),
   create: vi.fn().mockResolvedValue(member),
   update: vi.fn().mockResolvedValue(member),
-  deactivate: vi.fn().mockResolvedValue({ member, releasedClients: 2 }),
+  deactivate: vi.fn().mockResolvedValue({ member, movedClients: 2 }),
   resetPassword: vi.fn().mockResolvedValue(member),
   ...overrides,
 });
@@ -57,12 +62,39 @@ describe("Fase 14 - reglas del equipo", () => {
 
   /* Un PATCH con status INACTIVE dejaria clientes apuntando a un gestor de
      baja: se desvia al camino que ademas libera la cartera. */
-  it("desactivar desde update pasa por la baja completa", async () => {
-    const team = repository();
-    const result = await new ManageTeam(team, issuer()).update("t1", { status: "INACTIVE" });
-    expect(team.deactivate).toHaveBeenCalledWith("t1");
+  /* La cartera no se suelta sola. Un gestor con clientes no se da de baja
+     hasta que alguien dice a donde van: soltarla sigue siendo valido, pero
+     hay que escribirlo. */
+  it("desactivar a un gestor con cartera exige decir a donde va", async () => {
+    const team = repositoryConCartera();
+    await expect(new ManageTeam(team, issuer()).update("t1", { status: "INACTIVE" }))
+      .rejects.toMatchObject({ code: "PORTFOLIO_DESTINATION_REQUIRED", status: 409 });
+    expect(team.deactivate).not.toHaveBeenCalled();
     expect(team.update).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ releasedClients: 2 });
+  });
+
+  it("el error dice cuantos clientes hay en juego", async () => {
+    await expect(new ManageTeam(repositoryConCartera(), issuer()).deactivate("t1"))
+      .rejects.toMatchObject({ message: expect.stringContaining("2 clientes asignados") });
+  });
+
+  it.each([
+    ["reasignar", { kind: "reassign", managerId: "t2" } as const],
+    ["soltar", { kind: "release" } as const],
+  ])("con destino explicito (%s) la baja sigue adelante", async (_label, portfolio) => {
+    const team = repositoryConCartera();
+    const result = await new ManageTeam(team, issuer()).update("t1", { status: "INACTIVE", portfolio });
+    expect(team.deactivate).toHaveBeenCalledWith("t1", portfolio);
+    expect(team.update).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ movedClients: 2, portfolioDestination: portfolio.kind });
+  });
+
+  /* Sin cartera no hay nada que decidir, y pedirlo seria friccion sin motivo:
+     es el caso de cualquier admin y el de un gestor que nunca recibio nada. */
+  it("sin cartera la baja no pide destino", async () => {
+    const team = repository();
+    await expect(new ManageTeam(team, issuer()).deactivate("t1")).resolves.toBeDefined();
+    expect(team.deactivate).toHaveBeenCalledWith("t1", { kind: "release" });
   });
 
   it("restablecer la clave devuelve una nueva y vuelve a exigir el cambio", async () => {
@@ -142,11 +174,12 @@ describe("Fase 14 - equipo contra la base", () => {
     await expect(team.findById(cliente.id)).resolves.toBeNull();
   });
 
-  /* Dar de baja a un gestor libera su cartera; los clientes siguen activos y
-     aparecen en la bandeja de sin asignar del admin. */
-  it("la baja del gestor libera los clientes sin darlos de baja", async () => {
-    const result = await team.deactivate(gestor);
-    expect(result?.releasedClients).toBe(2);
+  /* Soltar la cartera sigue siendo posible, pero ahora es una eleccion escrita
+     y no lo que ocurre por omision. Los clientes siguen activos y quedan en la
+     bandeja de sin asignar del admin. */
+  it("la baja del gestor suelta los clientes sin darlos de baja", async () => {
+    const result = await team.deactivate(gestor, { kind: "release" });
+    expect(result?.movedClients).toBe(2);
     expect(result?.member.status).toBe("INACTIVE");
     const orphans = await prisma.client.findMany({ where: { managerId: null, status: "ACTIVE" } });
     expect(orphans.length).toBeGreaterThanOrEqual(2);
@@ -178,5 +211,56 @@ describe("Fase 14 - equipo contra la base", () => {
     await team.create({ username, role: "GESTOR" }, { username, passwordHash: "scrypt$s$h" }, "auth-admin");
     await expect(team.create({ username, role: "ADMIN" }, { username, passwordHash: "scrypt$s$h" }, "auth-admin"))
       .rejects.toMatchObject({ code: "USERNAME_TAKEN", status: 409 });
+  });
+
+  /* El camino nuevo: en vez de soltar la cartera, pasarla entera a otro gestor
+     en la misma transaccion que la baja. */
+  it("la baja puede traspasar la cartera entera a otro gestor", async () => {
+    const saliente = await team.create({ username: `sale-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `sale-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const entrante = await team.create({ username: `entra-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `entra-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const client = await clients.create(
+      { name: "Traspasado", email: `${randomUUID()}@example.test`, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
+      { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
+      saliente.id,
+    );
+
+    const result = await team.deactivate(saliente.id, { kind: "reassign", managerId: entrante.id });
+
+    expect(result?.movedClients).toBe(1);
+    expect(result?.member.status).toBe("INACTIVE");
+    await expect(prisma.client.findUniqueOrThrow({ where: { id: client.id } }))
+      .resolves.toMatchObject({ managerId: entrante.id, status: "ACTIVE" });
+  });
+
+  /* Reasignar a alguien de baja, a un admin o al propio saliente dejaria la
+     cartera peor que soltandola, asi que no se toca nada. */
+  it.each([
+    ["un gestor inactivo", "inactivo"],
+    ["un administrador", "admin"],
+    ["el mismo que se da de baja", "self"],
+    ["alguien que no existe", "fantasma"],
+  ])("rechaza traspasar a %s sin tocar la cartera", async (_label, kind) => {
+    const saliente = await team.create({ username: `s-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `s-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const client = await clients.create(
+      { name: "Intacto", email: `${randomUUID()}@example.test`, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
+      { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
+      saliente.id,
+    );
+
+    let target = "no-existe";
+    if (kind === "self") target = saliente.id;
+    if (kind === "admin") target = (await team.create({ username: `a-${randomUUID().slice(0, 8)}`, role: "ADMIN" }, { username: `a-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin")).id;
+    if (kind === "inactivo") {
+      const otro = await team.create({ username: `i-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `i-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+      await team.deactivate(otro.id, { kind: "release" });
+      target = otro.id;
+    }
+
+    await expect(team.deactivate(saliente.id, { kind: "reassign", managerId: target }))
+      .rejects.toMatchObject({ code: "INVALID_PORTFOLIO_DESTINATION" });
+    await expect(prisma.client.findUniqueOrThrow({ where: { id: client.id } }))
+      .resolves.toMatchObject({ managerId: saliente.id });
+    await expect(prisma.authUser.findUniqueOrThrow({ where: { id: saliente.id } }))
+      .resolves.toMatchObject({ status: "ACTIVE" });
   });
 });
