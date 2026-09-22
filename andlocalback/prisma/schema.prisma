@@ -366,6 +366,10 @@ model PautaBalanceMovement {
   amount              Decimal
   balanceBefore       Decimal
   balanceAfter        Decimal
+  /* Quien acredito el saldo. Es el unico punto donde el dinero se convierte en
+     credito y no guardaba autor: las verificaciones si anotan decidedBy, esto
+     no anotaba nada. Nullable porque el historico anterior no lo tiene. */
+  executedBy          String?
   createdAt           DateTime          @default(now())
   pauta               Pauta             @relation(fields: [pautaId], references: [id], onDelete: Restrict)
   transactionDetail   TransactionDetail @relation(fields: [transactionDetailId], references: [id], onDelete: Restrict)

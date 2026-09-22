@@ -55,6 +55,10 @@ export class TransactionExecutionController {
     return this.completeTransactionDetail.execute({
       transactionId,
       detailId,
+      executedBy: user.userId,
+      /* El gestor ejecuta la recarga de su cartera, pero acreditar un importe
+         distinto al solicitado es de administrador. */
+      mayDeviate: user.role === "ADMIN",
       effectiveAmount: Number(body.effectiveAmount),
       effectiveRechargeDate: body.effectiveRechargeDate
         ? new Date(body.effectiveRechargeDate)

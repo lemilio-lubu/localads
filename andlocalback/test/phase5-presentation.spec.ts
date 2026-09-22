@@ -81,9 +81,14 @@ describe("Fase 5 - endpoints de ejecucion", () => {
       effectiveRechargeDate: "2026-09-10T15:30:00.000Z",
     }, administrador);
 
+    /* El controller aporta dos cosas que el cuerpo no trae: quien ejecuta
+       -queda en el movimiento de saldo- y si puede desviarse del importe
+       solicitado, que sale del rol y nunca del request. */
     expect(detail.execute).toHaveBeenCalledWith({
       transactionId: "tx-001",
       detailId: "detail-001",
+      executedBy: administrador.userId,
+      mayDeviate: true,
       effectiveAmount: 475.25,
       effectiveRechargeDate: new Date("2026-09-10T15:30:00.000Z"),
     });
