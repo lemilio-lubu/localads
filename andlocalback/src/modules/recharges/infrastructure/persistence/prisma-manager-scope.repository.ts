@@ -24,4 +24,14 @@ export class PrismaManagerScopeRepository implements ManagerScopeQueryPort {
   async ownsReceipt(receiptId: string, managerId: string) {
     return Boolean(await this.prisma.paymentReceipt.findFirst({ where: { id: receiptId, payment: { is: { transaction: { is: { client: { is: { managerId } } } } } } }, select: { id: true } }));
   }
+
+  async managerOfClient(clientId: string) {
+    const client = await this.prisma.client.findUnique({ where: { id: clientId }, select: { managerId: true } });
+    return client?.managerId ?? null;
+  }
+
+  async managerOfAccount(accountId: string) {
+    const account = await this.prisma.account.findUnique({ where: { id: accountId }, select: { client: { select: { managerId: true } } } });
+    return account?.client.managerId ?? null;
+  }
 }

@@ -12,6 +12,11 @@ export interface ManagerScopeQueryPort {
   ownsVerification(verificationId: string, managerId: string): Promise<boolean>;
   ownsActivationRequest(requestId: string, managerId: string): Promise<boolean>;
   ownsReceipt(receiptId: string, managerId: string): Promise<boolean>;
+  /* El reparto de eventos en tiempo real necesita la pregunta inversa: no
+     «¿es suyo?», sino «¿de quien es?». Devuelve null cuando el cliente no
+     tiene gestor asignado, que es un estado valido. */
+  managerOfClient(clientId: string): Promise<string | null>;
+  managerOfAccount(accountId: string): Promise<string | null>;
 }
 
 export const MANAGER_SCOPE_QUERY = Symbol("MANAGER_SCOPE_QUERY");
