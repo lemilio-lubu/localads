@@ -101,6 +101,7 @@ implements TransactionExecutionPersistencePort {
   async completeTransactionDetail(command: Readonly<{
     transactionId: string;
     detailId: string;
+    executedBy: string;
     effectiveAmount: MonetaryAmount;
     effectiveRechargeDate: Date;
     completedAt: Date;
@@ -170,6 +171,7 @@ implements TransactionExecutionPersistencePort {
             transactionDetailId: detail.id,
             type: "RECHARGE",
             amount: effectiveAmount,
+            executedBy: command.executedBy,
             balanceBefore: monetaryAmountToDecimal(balanceBefore),
             balanceAfter: monetaryAmountToDecimal(balanceAfter),
             createdAt: command.completedAt,
@@ -353,6 +355,7 @@ function toExecutionContext(record: ExecutionRecord): TransactionExecutionContex
       pautaStatus: detail.pauta.status as PautaStatus,
       pausedAt: detail.pausedAt?.toISOString() ?? null,
       status: detail.status as TransactionDetailStatus,
+      requestedAmount: decimalToMonetaryAmount(detail.requestedAmount),
       effectiveAmount: detail.effectiveRechargeAmount ? decimalToMonetaryAmount(detail.effectiveRechargeAmount) : null,
       effectiveRechargeDate: detail.effectiveRechargeDate,
     })),

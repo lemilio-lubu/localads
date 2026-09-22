@@ -10,6 +10,14 @@ export type CompleteTransactionDetailCommand = Readonly<{
   transactionId: string;
   detailId: string;
   effectiveAmount: number;
+  /* Queda escrito en el movimiento de saldo: es el unico sitio donde el dinero
+     se vuelve credito y no guardaba autor. */
+  executedBy: string;
+  /* Acreditar un importe distinto al solicitado es de administrador. El gestor
+     lleva la relacion comercial con ese mismo cliente, asi que teclear el
+     numero que se le abona seria el mismo conflicto que confirmar su cobro,
+     un paso mas adelante y sin un si/no de por medio. */
+  mayDeviate?: boolean;
   effectiveRechargeDate: Date;
 }>;
 
@@ -32,6 +40,14 @@ export class CompleteTransactionDetail {
     const detail = context.details.find((candidate) => candidate.id === command.detailId);
     if (!detail) throw new ApplicationError("TRANSACTION_DETAIL_NOT_FOUND", "El detalle no pertenece a la transaccion", 404);
 
+    if (!amount.equals(detail.requestedAmount) && !command.mayDeviate) {
+      throw new ApplicationError(
+        "EFFECTIVE_AMOUNT_DEVIATION_NOT_ALLOWED",
+        "Acreditar un importe distinto al solicitado requiere un administrador",
+        403,
+      );
+    }
+
     if (detail.status === TransactionDetailStatus.COMPLETED) {
       if (detail.effectiveAmount?.equals(amount)) {
         return this.persistence.completeTransactionDetail({
@@ -40,6 +56,7 @@ export class CompleteTransactionDetail {
           effectiveAmount: amount,
           effectiveRechargeDate: command.effectiveRechargeDate,
           completedAt: this.clock(),
+          executedBy: command.executedBy,
         });
       }
       throw new ApplicationError(
@@ -65,6 +82,7 @@ export class CompleteTransactionDetail {
       effectiveAmount: amount,
       effectiveRechargeDate: command.effectiveRechargeDate,
       completedAt: this.clock(),
+      executedBy: command.executedBy,
     });
   }
 

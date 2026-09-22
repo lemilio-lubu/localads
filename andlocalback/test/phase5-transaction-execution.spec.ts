@@ -47,6 +47,7 @@ function context(overrides: Partial<TransactionExecutionContext> = {}): Transact
       pautaId: "pauta-1",
       pautaStatus: PautaStatus.ACTIVE,
       status: TransactionDetailStatus.APPROVED,
+      requestedAmount: MonetaryAmount.fromMajorUnits(100),
       effectiveAmount: null,
       effectiveRechargeDate: null,
     }],
@@ -137,6 +138,8 @@ describe("Phase 5 transaction execution", () => {
     const result = await new CompleteTransactionDetail(repo, () => at).execute({
       transactionId: "tx-1",
       detailId: "detail-1",
+      executedBy: "auth-admin",
+      mayDeviate: true,
       effectiveAmount: 95,
       effectiveRechargeDate: effectiveAt,
     });
@@ -160,10 +163,10 @@ describe("Phase 5 transaction execution", () => {
     });
     const repo = persistence(completed);
     await new CompleteTransactionDetail(repo).execute({
-      transactionId: "tx-1", detailId: "detail-1", effectiveAmount: 95, effectiveRechargeDate: new Date(),
+      transactionId: "tx-1", detailId: "detail-1", executedBy: "auth-admin", mayDeviate: true, effectiveAmount: 95, effectiveRechargeDate: new Date(),
     });
     await expect(new CompleteTransactionDetail(repo).execute({
-      transactionId: "tx-1", detailId: "detail-1", effectiveAmount: 96, effectiveRechargeDate: effectiveAt,
+      transactionId: "tx-1", detailId: "detail-1", executedBy: "auth-admin", mayDeviate: true, effectiveAmount: 96, effectiveRechargeDate: effectiveAt,
     })).rejects.toMatchObject<ApplicationError>({ code: "TRANSACTION_DETAIL_ALREADY_COMPLETED" });
   });
 
@@ -182,6 +185,8 @@ describe("Phase 5 transaction execution", () => {
     const result = await new CompleteTransactionDetail(repo).execute({
       transactionId: "tx-1",
       detailId: "detail-1",
+      executedBy: "auth-admin",
+      mayDeviate: true,
       effectiveAmount: 95,
       effectiveRechargeDate: new Date("2026-09-11T00:00:00.000Z"),
     });
@@ -267,5 +272,56 @@ describe("Phase 5 transaction execution", () => {
     pauta.recordCompletedRecharge("detail-1", MonetaryAmount.fromMajorUnits(95));
     pauta.recordCompletedRecharge("detail-1", MonetaryAmount.fromMajorUnits(95));
     expect(pauta.currentBalance.toSafeNumber()).toBe(195);
+  });
+
+  /* Acreditar saldo distinto al solicitado es de administrador. El gestor
+     ejecuta la recarga de su cartera, pero teclear el numero que se le abona a
+     su propio cliente seria el mismo conflicto que confirmarle el cobro, un
+     paso mas adelante y sin un si/no de por medio. */
+  it("un gestor no puede acreditar un importe distinto al solicitado", async () => {
+    const base = context();
+    const repo = persistence(context({
+      status: TransactionRechargeStatus.PROCESSING,
+      details: [{ ...base.details[0], status: TransactionDetailStatus.PROCESSING }],
+    }));
+
+    await expect(new CompleteTransactionDetail(repo, () => at).execute({
+      transactionId: "tx-1", detailId: "detail-1", executedBy: "auth-gestor",
+      effectiveAmount: 95, effectiveRechargeDate: effectiveAt,
+    })).rejects.toMatchObject<ApplicationError>({ code: "EFFECTIVE_AMOUNT_DEVIATION_NOT_ALLOWED", status: 403 });
+
+    expect(repo.completeTransactionDetail).not.toHaveBeenCalled();
+  });
+
+  /* Lo rutinario no se toca: el 100% de lo ejecutado hasta hoy coincide con lo
+     solicitado, asi que el gestor sigue completando sin friccion. */
+  it("un gestor completa con normalidad cuando el importe coincide", async () => {
+    const base = context();
+    const repo = persistence(context({
+      status: TransactionRechargeStatus.PROCESSING,
+      details: [{ ...base.details[0], status: TransactionDetailStatus.PROCESSING }],
+    }));
+
+    await expect(new CompleteTransactionDetail(repo, () => at).execute({
+      transactionId: "tx-1", detailId: "detail-1", executedBy: "auth-gestor",
+      effectiveAmount: 100, effectiveRechargeDate: effectiveAt,
+    })).resolves.toBeDefined();
+  });
+
+  /* El movimiento de saldo es el unico sitio donde el dinero se vuelve credito
+     y no guardaba autor. */
+  it("deja escrito quien movio el saldo", async () => {
+    const base = context();
+    const repo = persistence(context({
+      status: TransactionRechargeStatus.PROCESSING,
+      details: [{ ...base.details[0], status: TransactionDetailStatus.PROCESSING }],
+    }));
+
+    await new CompleteTransactionDetail(repo, () => at).execute({
+      transactionId: "tx-1", detailId: "detail-1", executedBy: "auth-gestor",
+      effectiveAmount: 100, effectiveRechargeDate: effectiveAt,
+    });
+
+    expect(repo.completeTransactionDetail).toHaveBeenCalledWith(expect.objectContaining({ executedBy: "auth-gestor" }));
   });
 });

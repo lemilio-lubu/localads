@@ -15,6 +15,9 @@ export type TransactionExecutionDetail = Readonly<{
   pautaId: string;
   pautaStatus: PautaStatus;
   status: TransactionDetailStatus;
+  /* Lo que el cliente pidio recargar. Hace falta en la ejecucion para poder
+     comparar: sin esto, el importe efectivo no tenia contra que contrastarse. */
+  requestedAmount: MonetaryAmount;
   effectiveAmount: MonetaryAmount | null;
   effectiveRechargeDate: Date | null;
 }>;
@@ -65,6 +68,8 @@ export interface TransactionExecutionPersistencePort {
     effectiveAmount: MonetaryAmount;
     effectiveRechargeDate: Date;
     completedAt: Date;
+    /* Queda escrito en el movimiento de saldo. */
+    executedBy: string;
   }>): Promise<CompletedTransactionDetailView>;
   /** Completes the transaction and inserts its unique invoice in one database transaction. */
   finalizeTransactionAndIssueInvoice(command: Readonly<{
