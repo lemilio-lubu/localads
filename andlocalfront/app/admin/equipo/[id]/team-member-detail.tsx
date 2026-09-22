@@ -78,7 +78,7 @@ export default function TeamMemberDetailView({ id }: { id: string }) {
         </dl>
       </header>
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.primaryPanel}`}>
         <h3>datos de la cuenta</h3>
         <div className={styles.fields}>
           <label><span>usuario</span><input value={username} onChange={(event) => setUsername(event.target.value)} minLength={3} maxLength={24} /></label>
@@ -111,46 +111,48 @@ export default function TeamMemberDetailView({ id }: { id: string }) {
         {actionError && <p className={styles.rowNotice} role="alert">{actionError}</p>}
       </section>
 
-      <section className={styles.panel}>
-        <div className={styles.panelHead}>
-          <h3>cuentas <b>{member.clients.length}</b></h3>
-          {member.role === "GESTOR" && member.status === "ACTIVE" && <button type="button" className={styles.link} onClick={() => setLinking((open) => !open)}><Link2 size={16} aria-hidden="true" />vincular cuenta</button>}
-        </div>
+      <aside className={styles.sideColumn}>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}>
+            <h3>cuentas <b>{member.clients.length}</b></h3>
+            {member.role === "GESTOR" && member.status === "ACTIVE" && <button type="button" className={styles.link} onClick={() => setLinking((open) => !open)}><Link2 size={16} aria-hidden="true" />vincular cuenta</button>}
+          </div>
 
-        {linking && <div className={styles.picker}>
-          {unassigned.length === 0
-            ? <p>No hay clientes sin gestor ahora mismo.</p>
-            : unassigned.map((client) => <button key={client.id} type="button" disabled={Boolean(busy)} onClick={() => void run("assign", async () => {
-                await assignClientManager(client.id, member.id);
-                setLinking(false); setNotice(`${client.name} quedó asignado.`); reload();
-              })}>{client.name}</button>)}
-        </div>}
+          {linking && <div className={styles.picker}>
+            {unassigned.length === 0
+              ? <p>No hay clientes sin gestor ahora mismo.</p>
+              : unassigned.map((client) => <button key={client.id} type="button" disabled={Boolean(busy)} onClick={() => void run("assign", async () => {
+                  await assignClientManager(client.id, member.id);
+                  setLinking(false); setNotice(`${client.name} quedó asignado.`); reload();
+                })}>{client.name}</button>)}
+          </div>}
 
-        {member.clients.length === 0
-          ? <p className={styles.empty}>Sin clientes asignados.</p>
-          : <ul className={styles.chips}>
-              {member.clients.map((client) => <li key={client.id} data-inactive={client.status === "INACTIVE"}>
-                <Link href="/admin/clientes">{client.name}</Link>
-                <button type="button" aria-label={`Desvincular a ${client.name}`} disabled={Boolean(busy)} onClick={() => void run("unassign", async () => {
-                  await assignClientManager(client.id, null);
-                  setNotice(`${client.name} quedó sin gestor.`); reload();
-                })}><Unlink size={13} aria-hidden="true" /></button>
-              </li>)}
-            </ul>}
-      </section>
+          {member.clients.length === 0
+            ? <p className={styles.empty}>Sin clientes asignados.</p>
+            : <ul className={styles.chips}>
+                {member.clients.map((client) => <li key={client.id} data-inactive={client.status === "INACTIVE"}>
+                  <Link href="/admin/clientes">{client.name}</Link>
+                  <button type="button" aria-label={`Desvincular a ${client.name}`} disabled={Boolean(busy)} onClick={() => void run("unassign", async () => {
+                    await assignClientManager(client.id, null);
+                    setNotice(`${client.name} quedó sin gestor.`); reload();
+                  })}><Unlink size={13} aria-hidden="true" /></button>
+                </li>)}
+              </ul>}
+        </section>
 
-      <section className={styles.panel}>
-        <h3>ventas <b>{member.sales.length}</b></h3>
-        {/* Sin acción de vincular: una venta pertenece al cliente y sigue a su
-            cartera. Asignarla a mano rompería esa relación. */}
-        {member.sales.length === 0
-          ? <p className={styles.empty}>Todavía no hay recargas completadas en esta cartera.</p>
-          : <ul className={styles.sales}>
-              {member.sales.map((sale) => <li key={sale.id}>
-                <Link href="/admin/transacciones"><strong>{sale.clientName}</strong><span>{formatAmount(sale.totalAmount)}</span><small>{formatDateTime(sale.createdAt)}</small></Link>
-              </li>)}
-            </ul>}
-      </section>
+        <section className={styles.panel}>
+          <h3>ventas <b>{member.sales.length}</b></h3>
+          {/* Sin acción de vincular: una venta pertenece al cliente y sigue a su
+              cartera. Asignarla a mano rompería esa relación. */}
+          {member.sales.length === 0
+            ? <p className={styles.empty}>Todavía no hay recargas completadas en esta cartera.</p>
+            : <ul className={styles.sales}>
+                {member.sales.map((sale) => <li key={sale.id}>
+                  <Link href="/admin/transacciones"><strong>{sale.clientName}</strong><span>{formatAmount(sale.totalAmount)}</span><small>{formatDateTime(sale.createdAt)}</small></Link>
+                </li>)}
+              </ul>}
+        </section>
+      </aside>
 
       <CredentialsModal credentials={issued?.credentials ?? null} title={issued?.title ?? ""} onClose={() => setIssued(null)} />
     </div>
