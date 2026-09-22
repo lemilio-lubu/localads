@@ -2,7 +2,7 @@ import { Controller, ForbiddenException, Get, Param, Query, UseFilters } from "@
 import { CurrentUser, Roles } from "../../auth/auth.decorators";
 import { AuthPrincipal } from "../../auth/auth.types";
 import { ApplicationError } from "../../../common/errors/application.error";
-import { scopeFor } from "../../../common/access/manager-scope";
+import { scopeFor, withUnassigned } from "../../../common/access/manager-scope";
 import { GetAdminTransactionDetail } from "../application/use-cases/get-admin-transaction-detail";
 import { GetMyPautas } from "../application/use-cases/get-my-pautas";
 import { GetRechargeContext } from "../application/use-cases/get-recharge-context";
@@ -90,7 +90,7 @@ export class AdminRechargeQueriesController {
   @Get("transactions")
   transactions(@Query() query: AdminTransactionsQueryDto, @CurrentUser() user: AuthPrincipal) {
     return this.listTransactions.execute({
-      managerId: scopeFor(user).managerId,
+      ...scopeOf(user, query.owner),
       page: query.page,
       pageSize: query.limit,
       search: query.search,
@@ -114,7 +114,7 @@ export class AdminRechargeQueriesController {
   @Get("verifications")
   verifications(@Query() query: AdminVerificationsQueryDto, @CurrentUser() user: AuthPrincipal) {
     return this.listVerifications.execute({
-      managerId: scopeFor(user).managerId,
+      ...scopeOf(user, query.owner),
       page: query.page,
       pageSize: query.limit,
       scope: query.scope,
@@ -142,4 +142,11 @@ function requireAuthenticatedClient(user: AuthPrincipal | string | undefined): s
   if (typeof user === "string" || user === undefined) return requireClientId(user);
   if (!user.clientId) throw new ForbiddenException("El usuario no está vinculado a un cliente");
   return user.clientId;
+}
+
+/* La autoridad sale del token y el filtro de la query; se combinan aqui para
+   que las dos pantallas lo hagan igual. */
+function scopeOf(user: AuthPrincipal, owner?: "unassigned") {
+  const { managerId, unassigned } = withUnassigned(scopeFor(user), owner === "unassigned");
+  return { managerId, unassigned };
 }

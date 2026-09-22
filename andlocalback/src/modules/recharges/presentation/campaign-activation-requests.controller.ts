@@ -19,7 +19,7 @@ import { RejectCampaignActivation } from "../application/use-cases/reject-campai
 import { RequestCampaignActivation } from "../application/use-cases/request-campaign-activation";
 import { StartCampaignActivationReview } from "../application/use-cases/start-campaign-activation-review";
 import { ApplicationErrorFilter } from "./application-error.filter";
-import { scopeFor } from "../../../common/access/manager-scope";
+import { scopeFor, withUnassigned } from "../../../common/access/manager-scope";
 import { AssertManagerScope } from "../application/ports/manager-scope.ports";
 import {
   CampaignActivationRejectionDto,
@@ -77,7 +77,8 @@ export class AdminCampaignActivationRequestsController {
 
   @Get()
   list(@Query() query: ListAdminCampaignActivationRequestsQueryDto, @CurrentUser() user: AuthPrincipal) {
-    return this.listPendingActivations.execute({ status: query.status, managerId: scopeFor(user).managerId });
+    const { managerId, unassigned } = withUnassigned(scopeFor(user), query.owner === "unassigned");
+    return this.listPendingActivations.execute({ status: query.status, managerId, unassigned });
   }
 
   @Patch(":id/review")

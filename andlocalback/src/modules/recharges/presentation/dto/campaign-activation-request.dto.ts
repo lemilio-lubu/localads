@@ -1,6 +1,7 @@
 import { Transform } from "class-transformer";
 import {
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -60,6 +61,8 @@ export class ListOwnCampaignActivationRequestsQueryDto {
 }
 
 export class ListAdminCampaignActivationRequestsQueryDto {
+  /* Cubo del admin: solicitudes de clientes sin gestor. */
+  @IsOptional() @IsIn(["unassigned"]) owner?: "unassigned";
   @IsOptional()
   @IsEnum(ActivationRequestStatus)
   status?: ActivationRequestStatus;

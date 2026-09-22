@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from "class-validator";
+import { IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from "class-validator";
 import {
   TransactionPaymentStatus,
   TransactionRechargeStatus,
@@ -56,6 +56,9 @@ export class MyTransactionsQueryDto extends TransactionFiltersQueryDto {
 }
 
 export class AdminTransactionsQueryDto extends TransactionFiltersQueryDto {
+  /* Cubo del admin: registros de clientes sin gestor. */
+  @IsOptional() @IsIn(["unassigned"]) owner?: "unassigned";
+
   @IsOptional()
   @Transform(trimmedOptionalString)
   @IsString()
@@ -76,6 +79,9 @@ export class AdminTransactionsQueryDto extends TransactionFiltersQueryDto {
 }
 
 export class AdminVerificationsQueryDto extends PaginationQueryDto {
+  /* Cubo del admin: registros de clientes sin gestor. */
+  @IsOptional() @IsIn(["unassigned"]) owner?: "unassigned";
+
   @IsOptional()
   @IsEnum(VerificationScopeDto)
   scope: VerificationScopeDto = VerificationScopeDto.REVIEW;

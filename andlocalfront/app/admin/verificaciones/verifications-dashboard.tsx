@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { Check, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Layers, RotateCw, Search, ShieldAlert } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Layers, RotateCw, Search, ShieldAlert, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import ToggleChip from "../../components/toggle-chip";
 import DateCell from "../../components/date-cell";
 import ModalShell from "../../components/modal-shell";
 import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
@@ -38,8 +39,8 @@ const scopeSegments: SegmentOption<VerificationFilter>[] = [
   { value: "APPROVED", label: "aprobada", Icon: Check, tone: "brand" },
 ];
 
-function fetchVerifications(filter: VerificationFilter, search: string, pageNumber: number) {
-  return getAdminVerifications({ page: pageNumber, limit: PAGE_SIZE, scope: filter, search: search.trim() || undefined });
+function fetchVerifications(filter: VerificationFilter, search: string, pageNumber: number, unassignedOnly = false) {
+  return getAdminVerifications({ page: pageNumber, limit: PAGE_SIZE, scope: filter, search: search.trim() || undefined, owner: unassignedOnly ? "unassigned" : undefined });
 }
 
 export default function VerificationsDashboard() {
@@ -52,9 +53,17 @@ export default function VerificationsDashboard() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [copied, setCopied] = useState<{ code: string; ok: boolean } | null>(null);
+  /* El cubo de los que no tienen gestor. Solo se le ofrece al admin: un
+     gestor que lo pidiera no obtendria huerfanos ajenos sino nada, porque
+     su recorte y este filtro condicionan el mismo campo. */
+  const isAdmin = getCurrentUser()?.role === "ADMIN";
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
   const filterRef = useRef(filter);
   const searchRef = useRef(search);
   const pageRef = useRef(pageNumber);
+  /* El refresco por tiempo real lee de refs; sin esta, un evento devolvia
+     la lista sin filtro y el cubo se vaciaba solo. */
+  const unassignedRef = useRef(unassignedOnly);
   const [selected, setSelected] = useState<{ item: PendingVerification; detail: AdminVerification } | null>(null);
   const selectedRef = useRef(selected);
   const [previewUrl, setPreviewUrl] = useState("");
@@ -70,7 +79,8 @@ export default function VerificationsDashboard() {
     filterRef.current = filter;
     searchRef.current = search;
     pageRef.current = pageNumber;
-  }, [search, filter, pageNumber]);
+    unassignedRef.current = unassignedOnly;
+  }, [search, filter, pageNumber, unassignedOnly]);
 
   /* La búsqueda va al servidor: se espera a que el administrador deje de
      escribir en vez de pedir una consulta por pulsación. */
@@ -80,13 +90,13 @@ export default function VerificationsDashboard() {
 
   useEffect(() => {
     let active = true;
-    fetchVerifications(filter, search, pageNumber).then((page) => {
+    fetchVerifications(filter, search, pageNumber, unassignedOnly).then((page) => {
       if (active) { setError(""); setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); setUpdatedAt(new Date()); }
     }).catch((cause: unknown) => {
       if (active) setError(cause instanceof Error ? cause.message : "No fue posible consultar las verificaciones");
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [search, filter, pageNumber, reloadToken]);
+  }, [search, filter, pageNumber, reloadToken, unassignedOnly]);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -94,7 +104,7 @@ export default function VerificationsDashboard() {
     const socket = io(transactionsRealtimeUrl, { auth: { accessToken }, transports: ["websocket"] });
     socket.on("connect", () => {
       socket.emit("transactions:subscribe", { scope: "admin" });
-      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
+      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
     });
     socket.io.on("reconnect_attempt", () => { socket.auth = { accessToken: getAccessToken() }; });
     socket.on("connect_error", () => {
@@ -111,7 +121,7 @@ export default function VerificationsDashboard() {
         item: { ...current.item, status: event.status, reviewReason: event.reason },
         detail: { ...current.detail, status: event.status, reviewReason: event.reason, updatedAt: event.occurredAt },
       } : current);
-      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
+      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
       if (selectedRef.current?.detail.id === event.verificationId) {
         void getAdminTransactionDetail(event.transactionId).then((transaction) => {
           const detail = transaction.verifications.find((verification) => verification.id === event.verificationId);
@@ -140,7 +150,8 @@ export default function VerificationsDashboard() {
   /* Aprobar declara el pago recibido y libera la recarga, asi que es solo de
      ADMIN. El boton no se oculta sin mas: al gestor se le dice quien firma,
      porque un control que desaparece se lee como una pantalla rota. */
-  const canApprove = getCurrentUser()?.role === "ADMIN";
+  const canApprove = isAdmin;
+
   const hardBlocked = selected?.detail.issues.some((issue) => ["COMPROBANTE_DUPLICADO", "REFERENCIA_BANCARIA_DUPLICADA"].includes(issue)) ?? false;
 
   async function open(item: PendingVerification) {
@@ -170,7 +181,7 @@ export default function VerificationsDashboard() {
       if (action === "approve") await approveVerification(current.detail.id);
       else await markVerificationUnderReview(current.detail.id, reason);
       const [page, transaction] = await Promise.all([
-        fetchVerifications(filter, search, pageNumber),
+        fetchVerifications(filter, search, pageNumber, unassignedOnly),
         getAdminTransactionDetail(current.item.transactionId),
       ]);
       setItems(page.items);
@@ -216,7 +227,7 @@ export default function VerificationsDashboard() {
       <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente, código o banco" /></label>
       <div className={styles.filters}><div className={styles.filterGroup}><span>estado</span>
         <SegmentedFilter label="Estado de la verificación" options={scopeSegments} value={filter} onChange={selectFilter} />
-      </div></div>
+      </div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
     </header>
 
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>

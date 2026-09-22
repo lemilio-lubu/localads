@@ -1,3 +1,4 @@
+import { clientOwnershipWhere } from "../../../../common/access/manager-scope";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { ApplicationError } from "../../../../common/errors/application.error";
@@ -247,8 +248,9 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
   async list(filters: CampaignActivationListFilters): Promise<readonly CampaignActivationRequestView[]> {
     const records = await this.prisma.campaignActivationRequest.findMany({
       // El recorte va por la relacion con el cliente: la solicitud es de un
-      // cliente, y el gestor solo ve las de su cartera.
-      where: { status: filters.status, clientId: filters.clientId, ...(filters.managerId ? { client: { is: { managerId: filters.managerId } } } : {}) },
+      // cliente, y el gestor solo ve las de su cartera. El admin puede ademas
+      // pedir el cubo de los que no tienen gestor.
+      where: { status: filters.status, clientId: filters.clientId, ...ownership(filters) },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     });
     return records.map(toView);
@@ -330,4 +332,11 @@ function mapConcurrentDecision(error: unknown): unknown {
 
 function isConcurrentWriteError(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && ["P1008", "P2028", "P2034"].includes(error.code);
+}
+
+/* La pertenencia cuelga del cliente, asi que el recorte y el filtro de «sin
+   asignar» se resuelven los dos sobre esa relacion. */
+function ownership(filters: CampaignActivationListFilters) {
+  const where = clientOwnershipWhere(filters);
+  return Object.keys(where).length ? { client: { is: where } } : {};
 }

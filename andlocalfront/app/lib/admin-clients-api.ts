@@ -49,8 +49,12 @@ async function request<T>(path: string, init?: RequestInit) {
   return payload as T;
 }
 
-export function getAdminClients() {
-  return request<AdminClient[]>("/admin/clients", { cache: "no-store" });
+/* `owner=unassigned` es el cubo de clientes sin gestor, resuelto en el
+   servidor. Antes se filtraba el array ya cargado, que con mas de una pagina
+   miente: la cuenta era la de lo traido, no la de lo que hay. */
+export function getAdminClients(owner?: "unassigned") {
+  const query = owner ? `?owner=${owner}` : "";
+  return request<AdminClient[]>(`/admin/clients${query}`, { cache: "no-store" });
 }
 
 export function createAdminClient(input: SaveAdminClient) {

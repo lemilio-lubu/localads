@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
-import { ManagerScope } from "../../../common/access/manager-scope";
+import { ManagerScope, clientOwnershipWhere } from "../../../common/access/manager-scope";
 import { ApplicationError } from "../../../common/errors/application.error";
 import { PrismaService } from "../../../database/prisma.service";
 import { ClientAdminRepository, UpdateClientInput } from "../application/ports/client-admin.repository";
@@ -26,9 +26,10 @@ const clientInclude = {
 
 type ClientRecord = Prisma.ClientGetPayload<{ include: typeof clientInclude }>;
 
-/* Sin managerId el where queda vacio y la consulta no se recorta: ese es el
-   admin. Con managerId, la base solo devuelve la cartera de ese gestor. */
-const managerWhere = (scope: ManagerScope): Prisma.ClientWhereInput => (scope.managerId ? { managerId: scope.managerId } : {});
+/* Sin recorte ni filtro el where queda vacio y la consulta devuelve todo: ese
+   es el admin. Con managerId sale la cartera de ese gestor; con `unassigned`,
+   el cubo de clientes sin dueno. */
+const managerWhere = (scope: ManagerScope): Prisma.ClientWhereInput => clientOwnershipWhere(scope) as Prisma.ClientWhereInput;
 
 @Injectable()
 export class PrismaClientAdminRepository implements ClientAdminRepository {

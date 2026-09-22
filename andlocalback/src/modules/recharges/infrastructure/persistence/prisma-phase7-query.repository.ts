@@ -1,3 +1,4 @@
+import { clientOwnershipWhere } from "../../../../common/access/manager-scope";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../../database/prisma.service";
@@ -190,7 +191,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
   async listTransactions(input: AdminTransactionFilters): Promise<AdminTransactionPage> {
     const where: Prisma.RechargeTransactionWhereInput = {
       ...transactionSearch(input.search),
-      ...managedClient(input.managerId),
+      ...managedClient(input),
       clientId: input.clientId,
       rechargeStatus: input.rechargeStatus,
       accountTypeSnapshot: input.accountType,
@@ -217,7 +218,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
      la convierte en 404. */
   async findTransactionDetail(transactionId: string, managerId?: string): Promise<AdminTransactionDetailView | null> {
     const record = await this.prisma.rechargeTransaction.findFirst({
-      where: { id: transactionId, ...managedClient(managerId) },
+      where: { id: transactionId, ...managedClient({ managerId }) },
       select: adminDetailSelect,
     });
     return record ? toAdminDetail(record) : null;
@@ -238,7 +239,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
        claves `transaction` separadas se pisarian y el recorte desapareceria. */
     const transactionFilter: Prisma.RechargeTransactionWhereInput = {
       ...(input.clientId ? { clientId: input.clientId } : {}),
-      ...managedClient(input.managerId),
+      ...managedClient(input),
     };
     const where: Prisma.TransactionVerificationWhereInput = {
       ...search,
@@ -511,8 +512,11 @@ function page<T>(items: readonly T[], pageNumber: number, pageSize: number, tota
    el del propio cliente para que una y otra encuentren lo mismo. */
 /* Recorte de cartera: sin gestor no hay clave y la consulta no se toca; con
    gestor, la transaccion tiene que pertenecer a un cliente suyo. */
-function managedClient(managerId: string | undefined): Prisma.RechargeTransactionWhereInput {
-  return managerId ? { client: { is: { managerId } } } : {};
+/* Recorte del gestor y filtro de «sin asignar», los dos sobre la relacion con
+   el cliente, que es de quien cuelga la pertenencia. */
+function managedClient(scope: Readonly<{ managerId?: string; unassigned?: boolean }>): Prisma.RechargeTransactionWhereInput {
+  const where = clientOwnershipWhere(scope);
+  return Object.keys(where).length ? { client: { is: where as Prisma.ClientWhereInput } } : {};
 }
 
 function transactionSearch(value: string | undefined): Prisma.RechargeTransactionWhereInput {
