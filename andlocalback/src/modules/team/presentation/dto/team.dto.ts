@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 import { TEAM_ROLES } from "../../domain/team-member";
 
 export class ListTeamQueryDto {
@@ -18,4 +18,10 @@ export class UpdateTeamMemberDto {
   @IsOptional() @IsIn([...TEAM_ROLES]) role?: "ADMIN" | "GESTOR";
   @IsOptional() @IsString() @MaxLength(500) note?: string;
   @IsOptional() @IsIn(["ACTIVE", "INACTIVE"]) status?: "ACTIVE" | "INACTIVE";
+  /* Solo se miran al pasar a INACTIVE, y solo si el gestor tiene cartera.
+     Son dos campos y no uno que admita null porque «no dijo nada» y «dijo que
+     las suelta» tienen que poder distinguirse: esa diferencia es justo la
+     regla. */
+  @IsOptional() @IsString() @MaxLength(64) reassignTo?: string;
+  @IsOptional() @IsBoolean() leaveUnassigned?: boolean;
 }

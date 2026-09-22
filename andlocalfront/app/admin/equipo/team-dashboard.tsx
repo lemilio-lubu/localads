@@ -7,6 +7,7 @@ import SegmentedFilter, { type SegmentOption } from "../../components/segmented-
 import CredentialsModal from "../../components/credentials-modal";
 import { getTeam, resetTeamMemberPassword, updateTeamMember, type IssuedCredentials, type TeamMember, type TeamRole } from "../../lib/team-api";
 import TeamFormModal from "./team-form-modal";
+import PortfolioHandoverModal from "./portfolio-handover-modal";
 import MetricCard from "../../components/metric-card";
 import styles from "./team-dashboard.module.css";
 
@@ -32,6 +33,9 @@ export default function TeamDashboard() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
   const [issued, setIssued] = useState<{ credentials: IssuedCredentials; title: string } | null>(null);
+  /* La baja de un gestor con cartera pasa por el modal de destino. */
+  const [handover, setHandover] = useState<TeamMember | null>(null);
+  const [handoverError, setHandoverError] = useState("");
 
   const hasFilters = Boolean(query.trim() || role);
   function clearFilters() { setQuery(""); setRole(null); }
@@ -58,13 +62,31 @@ export default function TeamDashboard() {
     setMembers((current) => current.some((item) => item.id === member.id) ? current.map((item) => item.id === member.id ? member : item) : [member, ...current]);
   }
 
+  async function confirmHandover(destination: { reassignTo?: string; leaveUnassigned?: boolean }) {
+    if (!handover) return;
+    setBusyId(handover.id); setHandoverError("");
+    try {
+      save(await updateTeamMember(handover.id, { status: "INACTIVE", ...destination }));
+      setHandover(null);
+      /* Cambia la cartera de dos personas a la vez, así que se recarga en vez
+         de parchear los recuentos a mano. */
+      setReloadToken((token) => token + 1);
+    } catch (reason) {
+      setHandoverError(reason instanceof Error ? reason.message : "No fue posible dar de baja la cuenta");
+    } finally { setBusyId(null); }
+  }
+
   async function run(member: TeamMember, action: "toggle" | "reset") {
+    /* Dar de baja a alguien con cartera no se resuelve aquí: hay que decir a
+       dónde van sus clientes. Sin cartera no hay nada que decidir y la baja
+       sigue siendo un clic. */
+    if (action === "toggle" && member.status === "ACTIVE" && member.metrics.clients > 0) {
+      setHandoverError(""); setHandover(member); return;
+    }
     setBusyId(member.id); setActionError(null);
     try {
       if (action === "toggle") {
         save(await updateTeamMember(member.id, { status: member.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" }));
-        /* Dar de baja libera la cartera del gestor, así que los recuentos de
-           las otras filas cambian: se recarga en vez de parchear a mano. */
         setReloadToken((token) => token + 1);
       } else {
         const updated = await resetTeamMemberPassword(member.id);
@@ -136,6 +158,14 @@ export default function TeamDashboard() {
         )}
       </div>
 
+      <PortfolioHandoverModal
+        member={handover}
+        candidates={members.filter((item) => item.role === "GESTOR" && item.status === "ACTIVE" && item.id !== handover?.id)}
+        pending={busyId === handover?.id}
+        error={handoverError}
+        onClose={() => { setHandover(null); setHandoverError(""); }}
+        onConfirm={(destination) => void confirmHandover(destination)}
+      />
       <TeamFormModal open={formOpen} onClose={() => setFormOpen(false)} onCreated={(member) => { setFormOpen(false); save(member); setIssued({ credentials: member.credentials, title: `cuenta de ${member.username} creada` }); }} />
       <CredentialsModal credentials={issued?.credentials ?? null} title={issued?.title ?? ""} onClose={() => setIssued(null)} />
     </div>

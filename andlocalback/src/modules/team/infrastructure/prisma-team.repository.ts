@@ -4,6 +4,7 @@ import { ApplicationError } from "../../../common/errors/application.error";
 import { PrismaService } from "../../../database/prisma.service";
 import { TEAM_ROLES, TeamMemberInput, TeamRole } from "../domain/team-member";
 import {
+  PortfolioDestination,
   TeamFilters,
   TeamMemberDetailView,
   TeamMemberView,
@@ -112,18 +113,33 @@ export class PrismaTeamRepository implements TeamRepository {
     }
   }
 
-  async deactivate(id: string) {
+  async deactivate(id: string, destination: PortfolioDestination) {
     const current = await this.prisma.authUser.findFirst({ where: { id, role: { in: [...TEAM_ROLES] } } });
     if (!current) return null;
-    /* Baja y liberacion de cartera en una sola transaccion: si solo pasara una
+
+    /* El destino se comprueba antes de tocar nada: reasignar a alguien de baja,
+       a un admin o al propio gestor que se esta dando de baja dejaria la
+       cartera peor que soltandola. */
+    if (destination.kind === "reassign") {
+      if (destination.managerId === id) {
+        throw new ApplicationError("INVALID_PORTFOLIO_DESTINATION", "La cartera no puede quedarse en el gestor que se da de baja");
+      }
+      const target = await this.prisma.authUser.findFirst({ where: { id: destination.managerId, role: "GESTOR", status: "ACTIVE" }, select: { id: true } });
+      if (!target) {
+        throw new ApplicationError("INVALID_PORTFOLIO_DESTINATION", "El gestor de destino no existe o no esta activo", 409);
+      }
+    }
+
+    /* Baja y traspaso de cartera en una sola transaccion: si solo pasara una
        de las dos, quedarian clientes apuntando a un gestor inactivo. */
-    const [, released] = await this.prisma.$transaction([
+    const managerId = destination.kind === "reassign" ? destination.managerId : null;
+    const [, moved] = await this.prisma.$transaction([
       this.prisma.authUser.update({ where: { id }, data: { status: "INACTIVE" } }),
-      this.prisma.client.updateMany({ where: { managerId: id }, data: { managerId: null } }),
+      this.prisma.client.updateMany({ where: { managerId: id }, data: { managerId } }),
       this.prisma.refreshSession.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } }),
     ]);
     const record = await this.prisma.authUser.findFirstOrThrow({ where: { id } });
-    return { member: this.toView(record, { clients: 0, sales: 0 }), releasedClients: released.count };
+    return { member: this.toView(record, { clients: 0, sales: 0 }), movedClients: moved.count };
   }
 
   async resetPassword(id: string, passwordHash: string) {
