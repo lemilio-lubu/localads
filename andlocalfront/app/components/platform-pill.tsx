@@ -5,6 +5,10 @@ import styles from "./platform-pill.module.css";
 type PlatformPillProps = {
   platform: AdvertisingPlatform;
   size?: "compact" | "regular" | "filter";
+  /** Solo para `size="filter"`: una pastilla que filtra esta encendida o
+      apagada. En las filas la pastilla es una etiqueta, no un control, y
+      siempre va a color — por eso el valor por defecto es `true`. */
+  active?: boolean;
 };
 
 /* Los logotipos de marca ya viven en public/figma. Van con el nombre, nunca
@@ -18,10 +22,11 @@ const logos: Record<AdvertisingPlatform, { src: string; width: number; height: n
   tiktok: { src: "/figma/tiktok.svg", width: 11, height: 12 },
 };
 
-export default function PlatformPill({ platform, size = "regular" }: PlatformPillProps) {
+export default function PlatformPill({ platform, size = "regular", active = true }: PlatformPillProps) {
   const logo = logos[platform];
+  const idle = size === "filter" && !active;
   return (
-    <span className={`${styles.pill} ${styles[platform]} ${styles[size]}`}>
+    <span className={`${styles.pill} ${styles[platform]} ${styles[size]} ${idle ? styles.idle : ""}`}>
       {size !== "regular" && <span className={styles.logo}><Image src={logo.src} alt="" width={logo.width} height={logo.height} /></span>}
       {platform === "tiktok" ? "tik tok" : platform}
     </span>
