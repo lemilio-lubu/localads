@@ -261,6 +261,10 @@ export type VerificationListItemView = Readonly<{
   receiptMimeType: string;
   decidedAt: string | null;
   decidedBy: string | null;
+  /* Nombre del interno que tiene el caso. Con mas de un administrador, dos
+     pueden abrir la misma verificacion y ver los dos «En revision» sin saber
+     que el otro esta dentro; el dato existia y se tiraba al pintar. */
+  decidedByName: string | null;
   reviewReason: string | null;
   createdAt: string;
 }>;

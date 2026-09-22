@@ -39,6 +39,10 @@ export type CampaignActivationRequestView = Readonly<{
   firstRechargeAmount: number;
   status: ActivationRequestStatus;
   reviewedBy: string | null;
+  /* Nombre del interno que tiene la solicitud. El id suelto -«auth-admin»- no
+     le dice nada a nadie, y sin el dos administradores pueden estar dentro del
+     mismo caso sin saberlo. */
+  reviewedByName: string | null;
   reviewedAt: string | null;
   rejectionReason: string | null;
   pautaId: string | null;
