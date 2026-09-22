@@ -6,6 +6,10 @@
 .filterGroup > span:first-child { margin-right: var(--space-1); color: var(--color-text); font-size: var(--font-size-body-sm); }
 /* El filtro de «sin asignar», con la misma medida que en Clientes: es el mismo
    control y el mismo concepto en las cuatro pantallas. */
+/* Quien tiene el caso. Va pegado al estado porque es ahi donde se mira antes
+   de entrar: «En revision» sin nombre no distingue «la tengo yo» de «la tiene
+   otro», y con dos administradores eso son dos personas en el mismo caso. */
+.holder { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
 .managerFilter { display: inline-flex; min-height: var(--hit-target); align-items: center; gap: var(--space-half); padding-inline: var(--space-2); font-size: var(--font-size-body-sm); }
 .search { display: flex; width: min(100%, 672px); height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); color: var(--color-text); }
 .search:focus-within { box-shadow: var(--focus-ring); }

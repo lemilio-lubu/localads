@@ -1,3 +1,4 @@
+import { resolveInternalNames } from "./internal-user-names";
 import { clientOwnershipWhere } from "../../../../common/access/manager-scope";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
@@ -274,6 +275,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
       this.prisma.transactionVerification.count({ where }),
     ]);
 
+    const names = await resolveInternalNames(this.prisma, records.map((record) => record.decidedBy));
     const items: VerificationListItemView[] = records.map((record) => ({
       id: record.id,
       transactionId: record.transaction.id,
@@ -295,6 +297,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
       receiptMimeType: record.receipt.mimeType,
       decidedAt: iso(record.decidedAt),
       decidedBy: record.decidedBy,
+      decidedByName: record.decidedBy ? names.get(record.decidedBy) ?? null : null,
       reviewReason: record.reviewReason,
       createdAt: record.createdAt.toISOString(),
     }));

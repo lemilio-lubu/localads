@@ -81,7 +81,7 @@ export default function ActivationsDashboard() {
         <div className={styles.cell}><strong>plataforma</strong><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></div>
         <div className={styles.cell}><strong>cuenta externa</strong><span>{item.externalAccountId}</span><span>{item.clientId}</span></div>
         <div className={styles.cell}><strong>primera recarga</strong><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span><span>se ejecuta al activar y validar el pago</span></div>
-        <div className={styles.cell}><strong>estado</strong><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill><span>{formatDateTime(item.createdAt)}</span></div>
+        <div className={styles.cell}><strong>estado</strong><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}<span>{formatDateTime(item.createdAt)}</span></div>
 
         {rejecting === item.id
           ? <div className={styles.reject}>

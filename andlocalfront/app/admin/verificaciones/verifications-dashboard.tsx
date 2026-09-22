@@ -243,7 +243,7 @@ export default function VerificationsDashboard() {
         </div>
         <div className={styles.cell}><strong>banco de origen</strong><span>{item.bank ?? "No identificado"}</span></div>
         <div className={styles.cell}><strong>a verificar / a recargar</strong><span className={styles.expected}>{formatAmount(item.expectedTransferAmount)}</span><span className={styles.detected}>recarga {formatAmount(item.requestedPautaAmount)}</span></div>
-        <div className={styles.cell}><strong>estado</strong><StatusPill tone={verificationStatusTone(item.status)}>{verificationStatusLabel(item.status)}</StatusPill></div>
+        <div className={styles.cell}><strong>estado</strong><StatusPill tone={verificationStatusTone(item.status)}>{verificationStatusLabel(item.status)}</StatusPill>{item.decidedByName && <span className={styles.holder}>por {item.decidedByName}</span>}</div>
         <button type="button" className={styles.reviewButton} aria-haspopup="dialog" disabled={busy} onClick={() => void open(item)}>revisar</button>
       </article>)}
       {loading && <><div className={styles.skeleton} /><div className={styles.skeleton} /></>}

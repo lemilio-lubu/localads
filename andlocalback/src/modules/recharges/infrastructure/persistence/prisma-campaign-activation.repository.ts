@@ -1,3 +1,4 @@
+import { resolveInternalNames } from "./internal-user-names";
 import { clientOwnershipWhere } from "../../../../common/access/manager-scope";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
@@ -108,7 +109,7 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
             activeRequestKey,
           },
         });
-        return toView(saved);
+        return withName(this.prisma, saved);
       });
     } catch (error: unknown) {
       if (isUniqueError(error) || isConcurrentWriteError(error)) {
@@ -130,7 +131,7 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
 
   async findById(requestId: string): Promise<CampaignActivationRequestView | null> {
     const record = await this.prisma.campaignActivationRequest.findUnique({ where: { id: requestId } });
-    return record ? toView(record) : null;
+    return record ? withName(this.prisma, record) : null;
   }
 
   async startReview(decision: CampaignActivationDecision): Promise<CampaignActivationRequestView> {
@@ -208,7 +209,7 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
         await database.client.update({ where: { id: request.clientId }, data: { platformsVersion: { increment: 1 } } });
         await database.platformLifecycleAudit.create({ data: { clientId: request.clientId, pautaId: pauta.id, action: existingPauta ? "REACTIVATE" : "ACTIVATE", actorId: decision.administratorId } });
         const saved = await database.campaignActivationRequest.findUniqueOrThrow({ where: { id: request.id } });
-        return toView(saved);
+        return withName(this.prisma, saved);
       });
     } catch (error: unknown) {
       if (isUniqueError(error)) {
@@ -253,7 +254,8 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
       where: { status: filters.status, clientId: filters.clientId, ...ownership(filters) },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     });
-    return records.map(toView);
+    const names = await resolveInternalNames(this.prisma, records.map((record) => record.reviewedBy));
+    return records.map((record) => toView(record, names));
   }
 
   private async requireById(requestId: string): Promise<CampaignActivationRequestView> {
@@ -265,7 +267,7 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
 
 type ActivationRecord = Prisma.CampaignActivationRequestGetPayload<Record<string, never>>;
 
-function toView(record: ActivationRecord): CampaignActivationRequestView {
+function toView(record: ActivationRecord, names?: ReadonlyMap<string, string>): CampaignActivationRequestView {
   return {
     id: record.id,
     clientId: record.clientId,
@@ -276,6 +278,7 @@ function toView(record: ActivationRecord): CampaignActivationRequestView {
     firstRechargeAmount: MonetaryAmount.fromMajorUnits(record.firstRechargeAmount.toString()).toSafeNumber(),
     status: record.status as ActivationRequestStatus,
     reviewedBy: record.reviewedBy,
+    reviewedByName: record.reviewedBy ? names?.get(record.reviewedBy) ?? null : null,
     reviewedAt: record.reviewedAt?.toISOString() ?? null,
     rejectionReason: record.rejectionReason,
     pautaId: record.pautaId,
@@ -339,4 +342,11 @@ function isConcurrentWriteError(error: unknown): boolean {
 function ownership(filters: CampaignActivationListFilters) {
   const where = clientOwnershipWhere(filters);
   return Object.keys(where).length ? { client: { is: where } } : {};
+}
+
+/* Un registro suelto -el que vuelve tras tomar o resolver el caso- tambien
+   necesita el nombre: sin esto, quien acaba de tomarlo no se veria a si mismo
+   hasta recargar la pantalla. */
+async function withName(prisma: PrismaService, record: ActivationRecord): Promise<CampaignActivationRequestView> {
+  return toView(record, await resolveInternalNames(prisma, [record.reviewedBy]));
 }
