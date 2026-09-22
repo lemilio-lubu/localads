@@ -2,21 +2,18 @@
 
 import { CalendarClock, Layers, Pencil, PlusCircle, Power, RotateCw, Search, UserMinus, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import MetricCard from "../../components/metric-card";
 import PlatformPill from "../../components/platform-pill";
 import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
 import ToggleChip from "../../components/toggle-chip";
 import CredentialsModal from "../../components/credentials-modal";
 import { deactivateAdminClient, getAdminClients, updateAdminClient, type AdminAccountType, type AdminClient, type AdminPlatform } from "../../lib/admin-clients-api";
+import MetricCard from "../../components/metric-card";
 import ClientDetailModal from "./client-detail-modal";
 import ClientFormModal from "./client-form-modal";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import { getCurrentUser } from "../../lib/auth-api";
+import { formatAmount } from "../../lib/format";
 import styles from "./clients-dashboard.module.css";
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(value);
-}
 
 /* Los iconos son de lucide y no SVG de marca a propósito: pintan con
    `currentColor`, así que se vuelven blancos al activarse el segmento. Un
@@ -95,10 +92,11 @@ export default function ClientsDashboard() {
     <div className={styles.module}>
       <div className={styles.toolbar}>
         <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o correo" /></label>
+        <button type="button" className={styles.createButton} onClick={openCreate}><PlusCircle size={17} aria-hidden="true" />crear nuevo cliente</button>
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
             <span>plataforma</span>
-            {(["META", "GOOGLE", "TIKTOK"] as const).map((item) => <ToggleChip key={item} className={styles.platformFilter} pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="filter" /></ToggleChip>)}
+            {(["META", "GOOGLE", "TIKTOK"] as const).map((item) => <ToggleChip key={item} className={styles.platformFilter} pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="filter" active={platform === item} /></ToggleChip>)}
           </div>
           {/* El tipo de cuenta es excluyente, así que se dibuja como una sola pieza
               con «todos» a la vista: antes había que deducir que se volvía a todos
@@ -116,7 +114,6 @@ export default function ClientsDashboard() {
         </div>
       </div>
 
-      <button type="button" className={styles.createButton} onClick={openCreate}><PlusCircle size={17} aria-hidden="true" />crear nuevo cliente</button>
 
       {!loading && !error && visibleClients.length > 0 && <div className={styles.listMeta}>
         <span>{visibleClients.length} {visibleClients.length === 1 ? "cliente" : "clientes"}{hasFilters && clients.length !== visibleClients.length ? ` de ${clients.length}` : ""}</span>
@@ -128,7 +125,7 @@ export default function ClientsDashboard() {
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
             <button type="button" className={styles.openDetailButton} onClick={() => setSelectedClient(client)} aria-label={`Ver detalle de ${client.name}`} aria-haspopup="dialog" />
             <div className={styles.clientIdentity}><small>clientes</small><strong>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>post</b>pago</> : <><b>pre</b>pago</>}</span></div>
-            <MetricCard label="recargado" tone="success">{formatMoney(client.totalRecharged)}</MetricCard>
+            <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="correo" valueSize="small">{client.email}</MetricCard>
             <MetricCard label="días de crédito" valueSize={client.account.type === "POSTPAGO" ? "regular" : "small"}>{client.account.type === "POSTPAGO" ? `${client.account.creditDays} días` : "no aplica"}</MetricCard>

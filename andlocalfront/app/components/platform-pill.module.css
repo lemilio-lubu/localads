@@ -12,3 +12,14 @@
 .meta { background: var(--color-meta-strong); color: #fff; }
 .google { background: var(--color-google-strong); color: #fff; }
 .tiktok { background: var(--color-tiktok-strong); color: #fff; }
+
+/* Apagada: el mismo idioma que `segmented-filter` —plana y en gris hasta que
+   se enciende—. Las tres iban a saturacion completa estuvieran o no
+   seleccionadas, asi que el unico indicio de estado era un halo gris al 16% y
+   la barra de filtros pesaba mas que la lista que hay debajo.
+   Gana a `.meta`/`.google`/`.tiktok` por especificidad (0,2,0 sobre 0,1,0),
+   no por orden. */
+.idle { background: var(--color-surface-muted); color: var(--color-text-muted); }
+/* El disco es blanco para despegar el logotipo del color pleno; sobre el gris
+   claro sobra y solo ensucia. */
+.idle .logo { background: transparent; }
