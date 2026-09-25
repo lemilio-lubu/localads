@@ -11,6 +11,24 @@
   padding: var(--space-4) var(--space-3);
 }
 
+/* Con pie (portal interno): una fila más a la derecha, bajo las tarjetas. */
+/* El sobrante de altura (la columna del resumen suele ser más alta) va al
+   final, no entre las tarjetas y el pie: las acciones quedan pegadas a lo que
+   afectan. */
+.withFooter {
+  row-gap: var(--space-3);
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "summary documents"
+    "summary platforms"
+    "summary footer";
+}
+.footer { grid-area: footer; align-self: start; min-width: 0; }
+.withFooter .platformGrid { align-self: start; }
+.subtitle { margin: calc(var(--space-1) * -1) 0 var(--space-2); color: var(--color-text); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); }
+/* Acciones del equipo dentro de la tarjeta de cada plataforma. */
+.cardActions { display: grid; gap: var(--space-1); margin-top: var(--space-2); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
+
 .summary { grid-area: summary; display: flex; min-width: 0; flex-direction: column; }
 .summary h2 { margin: 0 0 var(--space-2); color: var(--color-text); font-size: var(--font-size-title); line-height: 1.2; }
 .accountLabel { display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
@@ -66,6 +84,7 @@
     grid-template-areas: "documents" "summary" "platforms";
     gap: var(--space-3);
   }
+  .withFooter { grid-template-rows: auto auto auto auto; grid-template-areas: "documents" "summary" "platforms" "footer"; }
   .documentActions { justify-self: start; gap: var(--space-2); padding-right: 0; }
   .notes { margin: var(--space-3) 0 0; }
 }

@@ -20,7 +20,7 @@
 .overview > div { display: flex; min-width: 160px; flex-direction: column; padding-inline: var(--space-3); }
 .overview > div:first-child { padding-left: 0; }
 .overview > div + div { border-left: 1px solid var(--color-border); }
-.overview small, .sectionTitle small, .historyPanel > small, .modalHeader small { color: var(--color-text-muted); font-size: var(--font-size-micro); text-transform: lowercase; }
+.overview small { color: var(--color-text-muted); font-size: var(--font-size-micro); text-transform: lowercase; }
 .overview strong { margin-top: var(--space-half); font-size: var(--font-size-card-title); font-variant-numeric: tabular-nums; }
 .listMeta { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .listMeta span:last-child { color: var(--color-text-muted); }
@@ -70,13 +70,9 @@
 .pagination button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out); }
 .pagination button:disabled { opacity: .45; cursor: not-allowed; }
 .pagination button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
-.modal { width: min(100%, 1000px); max-height: min(90vh, 820px); overflow-y: auto; }
-.modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
-.modalHeader h2 { margin: var(--space-half) 0; font-size: var(--font-size-subhead); }
-.modalHeader p { margin: 0; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-caption); }
 /* Barra de ejecución: dice en qué punto está la recarga y ofrece el paso que
    toca. Solo aparece cuando el backend aceptaría esa transición. */
-.executeBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); border-radius: var(--radius-control); margin-top: var(--space-3); background: var(--color-brand-surface); padding: var(--space-2) var(--space-3); }
+.executeBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); border-radius: var(--radius-control); margin-top: 0; background: var(--color-brand-surface); padding: var(--space-2) var(--space-3); }
 .executeBar p { margin: 0; color: var(--color-brand); font-size: var(--font-size-caption); }
 .executeDetail { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
 .executeDetail label { color: var(--color-text-muted); font-size: var(--font-size-micro); }
@@ -85,33 +81,11 @@
 .executeDetail button { min-height: var(--control-height-compact); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding-inline: var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
 .executeDetail button:disabled { opacity: .5; cursor: not-allowed; }
 .executeDetail button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
-.auditFooter { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.detailGrid { display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--space-3); margin-top: var(--space-4); }
-.receiptPanel, .historyPanel { border-radius: var(--radius-control); background: var(--color-surface-raised); padding: var(--space-3); }
-.sectionTitle { display: flex; align-items: center; gap: var(--space-2); }
-.sectionTitle > div { display: flex; min-width: 0; flex-direction: column; gap: var(--space-half); }
-.sectionTitle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.receiptPanel dl { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); margin: 0; }
-.receiptPanel dl div { border-radius: var(--radius-small); background: var(--color-surface-muted); padding: var(--space-2); }
-.receiptPanel dt { display: flex; align-items: baseline; gap: var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-micro); }
+.auditFooter { display: flex; justify-content: space-between; gap: var(--space-2); margin: var(--space-3) 0 0; border-top: 1px solid var(--color-border); padding-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 /* La tarifa aplicada se dice al lado del importe: antes el ISD aparecía cobrado
    sin que nada explicara de dónde salía. */
-.receiptPanel dt em { border-radius: var(--radius-pill); background: var(--color-canvas); padding: 0 var(--space-half); color: var(--color-text-subtle); font-size: var(--font-size-micro); font-style: normal; font-weight: var(--font-weight-bold); }
-.totalRow { grid-column: 1 / -1; background: var(--color-brand-surface) !important; }
-.totalRow dt { color: var(--color-brand); }
-.totalRow dd { color: var(--color-brand); font-size: var(--font-size-card-title) !important; }
-.paymentRow { grid-column: 1 / -1; }
-.paymentRow dd { margin-top: var(--space-1) !important; }
-.receiptPanel dd { margin: var(--space-half) 0 0; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
-.historyPanel ol { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
-.historyPanel li { position: relative; display: grid; grid-template-columns: 12px 1fr; gap: var(--space-1); }
-.historyPanel li:not(:last-child)::before { position: absolute; top: 14px; bottom: calc(var(--space-2) * -1); left: 5px; width: 1px; background: #d9e5d7; content: ""; }
-.timelineDot { z-index: 1; width: 11px; height: 11px; border: 2px solid #c8ddc5; border-radius: 50%; margin-top: 3px; background: var(--color-surface-raised); }
-.historyPanel strong { font-size: var(--font-size-body-sm); }
-.historyPanel p { margin: var(--space-half) 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.historyPanel time { color: var(--color-text-muted); font-size: var(--font-size-micro); }
 @media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .pagination button:not(:disabled):hover { background: var(--color-surface-hover); } .detailsButton:not(:disabled):hover { color: var(--color-brand); } }
 @media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } .filters { flex-wrap: wrap; } .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .platforms, .detailsButton { align-self: end; } }
-@media (max-width: 760px) { .overview { align-items: stretch; } .overview > div { min-width: 0; flex: 1; padding-inline: var(--space-2); } .row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control); } .detailGrid { grid-template-columns: 1fr; } .modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
-@media (max-width: 520px) { .filters > span { flex-basis: 100%; } .row { grid-template-columns: 1fr; } .detailsButton { justify-self: start; } .receiptPanel dl { grid-template-columns: 1fr; } .auditFooter { flex-direction: column; } }
+@media (max-width: 760px) { .overview { align-items: stretch; } .overview > div { min-width: 0; flex: 1; padding-inline: var(--space-2); } .row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control); } }
+@media (max-width: 520px) { .filters > span { flex-basis: 100%; } .row { grid-template-columns: 1fr; } .detailsButton { justify-self: start; } .auditFooter { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .row, .pagination button, .detailsButton { transition-duration: 0ms; } .detailsButton:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
