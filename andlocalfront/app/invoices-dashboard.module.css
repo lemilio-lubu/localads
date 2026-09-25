@@ -1,15 +1,15 @@
 .invoiceModule { width: 100%; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-/* Misma barra que el portal de admin: buscador que crece a la izquierda y los
-   filtros a la derecha, con etiqueta y control agrupados para que no se separen. */
-/* El buscador cede antes que los filtros: puede encogerse sin perder nada,
-   mientras que un filtro que baja de línea rompe la relación con su etiqueta. */
-.toolbar { display: grid; grid-template-columns: minmax(200px, 1fr) auto; align-items: center; gap: var(--space-3); }
+/* Dos filas a propósito, como en Clientes: buscador arriba y filtros a todo
+   el ancho debajo. En una sola fila, con tres plataformas los filtros ya no
+   cabían junto al buscador: «plataforma» caía a una segunda línea y el
+   buscador quedaba flotando entre las dos. */
+.toolbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
 .search { display: flex; height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); color: var(--color-text); }
 .search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); }
 .search input::placeholder { color: var(--color-text-muted); }
 .search:focus-within { box-shadow: var(--focus-ring); }
-.filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: var(--space-2) var(--space-4); }
 .filterGroup { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: var(--space-1); border: 0; margin: 0; padding: 0; }
 .filterGroup legend { float: left; margin-right: var(--space-1); padding: 0; color: var(--color-text); font-size: var(--font-size-body-sm); }
 .rangeDash { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
@@ -49,7 +49,9 @@
 .cell .amount { color: var(--color-brand); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); }
 /* Con tres plataformas los pills no caben en una linea: envuelven dentro de
    la fila, que tiene alto de sobra. */
-.platforms { display: flex; flex-wrap: wrap; align-content: center; gap: var(--space-half); }
+/* La fila alinea sus celdas arriba (list-row), así que la pastilla, que no
+   lleva etiqueta, se centra ella sola, igual que en Transacciones. */
+.platforms { display: flex; flex-wrap: wrap; align-self: center; gap: var(--space-half); }
 .statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 .detailsLink { display: inline-flex; min-height: var(--button-height); align-items: center; align-self: center; justify-content: center; justify-self: end; border: 0; background: transparent; padding: 0; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) var(--ease-out); }
 .detailsLink:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }

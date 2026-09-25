@@ -4,6 +4,9 @@
    la pastilla siga midiendo 24 de alto. */
 .compact { display: inline-flex; min-width: var(--space-6); height: var(--space-3); align-items: center; gap: var(--space-half); padding-inline: var(--space-half) var(--space-1); }
 .compact .logo { width: var(--space-2); height: var(--space-2); }
+/* En el disco de 16 el logo de Meta (16 de ancho) tocaba el borde. A 12 queda
+   el mismo aire que en el disco de 24 del filtro. */
+.compact .logo img { width: auto; max-width: 12px; height: auto; max-height: 12px; }
 .regular { min-width: var(--space-9); height: var(--space-3); padding-inline: var(--space-1); }
 /* Variante de filtro: el logotipo va en un disco blanco para que la marca se
    lea sobre el color saturado de la pastilla. */
