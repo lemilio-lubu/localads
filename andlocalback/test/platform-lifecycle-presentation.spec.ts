@@ -12,7 +12,7 @@ import { UpdateClientDto } from "../src/modules/clients/presentation/dto/client.
 import { ClientsController } from "../src/modules/clients/presentation/clients.controller";
 
 /* Doble que nunca recorta: equivale al alcance de un admin. */
-const sinRecorte = new AssertManagerScope({ ownsTransaction: async () => true, ownsVerification: async () => true, ownsActivationRequest: async () => true, ownsReceipt: async () => true });
+const sinRecorte = new AssertManagerScope({ ownsTransaction: async () => true, ownsVerification: async () => true, ownsActivationRequest: async () => true, ownsReceipt: async () => true, managerOfClient: async () => null, managerOfAccount: async () => null });
 
 describe("contratos de baja y reanudación", () => {
 
@@ -31,7 +31,7 @@ describe("contratos de baja y reanudación", () => {
     const execution = { resumeDetail: vi.fn().mockResolvedValue({ clientId: "client-1" }) };
     const realtime = { publishPlatforms: vi.fn() };
     const controller = new TransactionExecutionController({} as never, {} as never, {} as never, execution as never, realtime as never, sinRecorte);
-    await controller.resume("tx-1", "detail-1", { userId: "real-admin", username: "admin", role: "ADMIN" }, dto);
+    await controller.resume("tx-1", "detail-1", { userId: "real-admin", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null }, dto);
     expect(execution.resumeDetail).toHaveBeenCalledWith("tx-1", "detail-1", "real-admin", 3);
     expect(realtime.publishPlatforms).toHaveBeenCalledWith("client-1");
   });

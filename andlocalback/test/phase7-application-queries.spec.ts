@@ -68,6 +68,7 @@ function port(overrides: Partial<Phase7QueryPort> = {}): Phase7QueryPort {
     listTransactions: vi.fn().mockResolvedValue(adminPage),
     findTransactionDetail: vi.fn().mockResolvedValue(adminDetail),
     listVerifications: vi.fn().mockResolvedValue({ items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 0 }),
+    getRechargeContext: vi.fn().mockResolvedValue(null),
     ...overrides,
   };
 }

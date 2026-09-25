@@ -14,6 +14,7 @@ import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domai
 import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/monetary-amount";
 import { RequestCampaignActivation } from "../src/modules/recharges/application/use-cases/request-campaign-activation";
 import { seedBackendData } from "../src/database/seed-data";
+import { validRuc } from "./ruc-fixture";
 
 describe("ciclo de plataformas y recargas en stop", () => {
   let directory: string;
@@ -42,7 +43,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
   async function fixture() {
     // Crear un cliente crea tambien su usuario: el repositorio exige las
     // credenciales ya preparadas, hasheadas fuera de la persistencia.
-    const client = await clients.create({ name: "Lifecycle", email: `${randomUUID()}@example.test`, accountType: AccountType.POSTPAID, creditDays: 30, platforms: [AdvertisingPlatform.META, AdvertisingPlatform.GOOGLE] }, { username: `lifecycle-${randomUUID()}`, passwordHash: "scrypt$salt$hash" });
+    const client = await clients.create({ name: "Lifecycle", email: `${randomUUID()}@example.test`, ruc: validRuc(), accountType: AccountType.POSTPAID, creditDays: 30, platforms: [AdvertisingPlatform.META, AdvertisingPlatform.GOOGLE] }, { username: `lifecycle-${randomUUID()}`, passwordHash: "scrypt$salt$hash" });
     const pautas = await prisma.pauta.findMany({ where: { clientId: client.id } });
     const meta = pautas.find((p) => p.platform === "META")!;
     const google = pautas.find((p) => p.platform === "GOOGLE")!;
@@ -85,7 +86,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
     await expect(execution.resumeDetail(transaction.id, detail.id, "admin-test")).rejects.toMatchObject({ code: "PAUTA_NOT_ACTIVE" });
     await setPlatforms(client.id, [AdvertisingPlatform.GOOGLE, AdvertisingPlatform.META]);
     expect((await prisma.transactionDetail.findUniqueOrThrow({ where: { id: detail.id } })).pausedAt).not.toBeNull();
-    const complete = { transactionId: transaction.id, detailId: detail.id, effectiveAmount: MonetaryAmount.fromMajorUnits(100), effectiveRechargeDate: new Date(), completedAt: new Date() };
+    const complete = { transactionId: transaction.id, detailId: detail.id, executedBy: "admin-test", effectiveAmount: MonetaryAmount.fromMajorUnits(100), effectiveRechargeDate: new Date(), completedAt: new Date() };
     await expect(execution.completeTransactionDetail(complete)).rejects.toMatchObject({ code: "DETAIL_PAUSED" });
     await execution.resumeDetail(transaction.id, detail.id, "admin-test");
     const completed = await execution.completeTransactionDetail(complete);

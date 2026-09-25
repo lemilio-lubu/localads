@@ -11,6 +11,7 @@ import { ManageTeam } from "../src/modules/team/application/use-cases/manage-tea
 import { TeamMemberDetailView, TeamRepository } from "../src/modules/team/application/ports/team.repository";
 import { normalizeUsername, validateTeamMember } from "../src/modules/team/domain/team-member";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
+import { validRuc } from "./ruc-fixture";
 
 const member = { id: "t1", username: "gestor", role: "GESTOR", status: "ACTIVE", mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
 const issuer = () => ({ issue: vi.fn().mockResolvedValue({ username: "gestor", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
@@ -132,7 +133,7 @@ describe("Fase 14 - equipo contra la base", () => {
     gestor = created.id;
     for (let index = 0; index < 2; index += 1) {
       const client = await clients.create(
-        { name: `Cliente ${index}`, email: `${randomUUID()}@example.test`, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
+        { name: `Cliente ${index}`, email: `${randomUUID()}@example.test`, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
         { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
         gestor,
       );
@@ -187,7 +188,7 @@ describe("Fase 14 - equipo contra la base", () => {
 
   it("no se puede crear un cliente colgando de un gestor inactivo", async () => {
     await expect(clients.create(
-      { name: "Huerfano", email: `${randomUUID()}@example.test`, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
+      { name: "Huerfano", email: `${randomUUID()}@example.test`, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
       { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
       "no-existe",
     )).rejects.toMatchObject({ code: "MANAGER_NOT_ACTIVE", status: 409 });
@@ -218,7 +219,7 @@ describe("Fase 14 - equipo contra la base", () => {
     const saliente = await team.create({ username: `sale-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `sale-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     const entrante = await team.create({ username: `entra-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `entra-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     const client = await clients.create(
-      { name: "Traspasado", email: `${randomUUID()}@example.test`, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
+      { name: "Traspasado", email: `${randomUUID()}@example.test`, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
       { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
       saliente.id,
     );
@@ -241,7 +242,7 @@ describe("Fase 14 - equipo contra la base", () => {
   ])("rechaza traspasar a %s sin tocar la cartera", async (_label, kind) => {
     const saliente = await team.create({ username: `s-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `s-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     const client = await clients.create(
-      { name: "Intacto", email: `${randomUUID()}@example.test`, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
+      { name: "Intacto", email: `${randomUUID()}@example.test`, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
       { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
       saliente.id,
     );

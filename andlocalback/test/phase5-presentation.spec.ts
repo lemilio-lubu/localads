@@ -10,7 +10,7 @@ import { CompleteTransactionDetailDto } from "../src/modules/recharges/presentat
 import { TransactionExecutionController } from "../src/modules/recharges/presentation/transaction-execution.controller";
 
 /* Doble que nunca recorta: equivale al alcance de un admin. */
-const sinRecorte = new AssertManagerScope({ ownsTransaction: async () => true, ownsVerification: async () => true, ownsActivationRequest: async () => true, ownsReceipt: async () => true });
+const sinRecorte = new AssertManagerScope({ ownsTransaction: async () => true, ownsVerification: async () => true, ownsActivationRequest: async () => true, ownsReceipt: async () => true, managerOfClient: async () => null, managerOfAccount: async () => null });
 const administrador = { userId: "admin-1", username: "admin", role: "ADMIN" as const, clientId: null, accountId: null, accountType: null };
 
 describe("Fase 5 - DTO de ejecucion de recarga", () => {

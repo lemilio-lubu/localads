@@ -57,6 +57,7 @@ describe("persistencia de ejecucion de recarga fase 5", () => {
       transactionId: context.id,
       detailId: "p5-detail-detail-0",
       effectiveAmount: MonetaryAmount.fromMajorUnits(95),
+      executedBy: "admin-test",
       effectiveRechargeDate: at("12:05"),
       completedAt: at("12:06"),
     };
@@ -80,6 +81,7 @@ describe("persistencia de ejecucion de recarga fase 5", () => {
       transactionId: context.id,
       detailId: "p5-detail-final-0",
       effectiveAmount: MonetaryAmount.fromMajorUnits(100),
+      executedBy: "admin-test",
       effectiveRechargeDate: at("12:05"),
       completedAt: at("12:06"),
     });
@@ -112,6 +114,7 @@ describe("persistencia de ejecucion de recarga fase 5", () => {
       transactionId: context.id,
       detailId: "p5-detail-detail-race-0",
       effectiveAmount: MonetaryAmount.fromMajorUnits(40),
+      executedBy: "admin-test",
       effectiveRechargeDate: at("12:05"),
       completedAt: at("12:06"),
     };
@@ -134,6 +137,7 @@ describe("persistencia de ejecucion de recarga fase 5", () => {
       transactionId: initial.id,
       detailId: "p5-detail-race-0",
       effectiveAmount: MonetaryAmount.fromMajorUnits(100),
+      executedBy: "admin-test",
       effectiveRechargeDate: at("12:05"),
       completedAt: at("12:06"),
     });

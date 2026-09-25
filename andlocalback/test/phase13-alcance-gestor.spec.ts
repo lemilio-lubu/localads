@@ -16,7 +16,7 @@ import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domai
 import { validRuc } from "./ruc-fixture";
 
 const profile = (email: string) => ({ name: "Cliente", email, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 });
-const issuer = () => ({ prepare: vi.fn().mockResolvedValue({ username: `u-${randomUUID()}`, temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
+const issuer = () => ({ prepare: vi.fn().mockResolvedValue({ username: `u-${randomUUID()}`, temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }), issue: vi.fn() });
 
 describe("Fase 13 - alcance del gestor, en memoria", () => {
   const view = { id: "c1" } as AdminClientView;
@@ -26,6 +26,9 @@ describe("Fase 13 - alcance del gestor, en memoria", () => {
     findById: vi.fn().mockResolvedValue(view),
     update: vi.fn().mockResolvedValue(view),
     deactivate: vi.fn().mockResolvedValue(view),
+    assignManager: vi.fn().mockResolvedValue(view),
+    findLoginUsername: vi.fn().mockResolvedValue("cliente"),
+    resetPassword: vi.fn().mockResolvedValue(true),
     ...overrides,
   });
 

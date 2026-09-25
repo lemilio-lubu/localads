@@ -18,7 +18,7 @@ import { TransactionVerificationsController } from "../src/modules/recharges/pre
 import { ROLES_KEY } from "../src/modules/auth/auth.decorators";
 
 /* Doble que nunca recorta: equivale al alcance de un admin. */
-const sinRecorte = new AssertManagerScope({ ownsTransaction: async () => true, ownsVerification: async () => true, ownsActivationRequest: async () => true, ownsReceipt: async () => true });
+const sinRecorte = new AssertManagerScope({ ownsTransaction: async () => true, ownsVerification: async () => true, ownsActivationRequest: async () => true, ownsReceipt: async () => true, managerOfClient: async () => null, managerOfAccount: async () => null });
 const administrador = { userId: "admin-1", username: "admin", role: "ADMIN" as const, clientId: null, accountId: null, accountType: null };
 
 describe("Fase 3 - DTO de decisiones administrativas", () => {
@@ -118,7 +118,7 @@ describe("Fase 3 - TransactionVerificationsController", () => {
     const gestor = { ...administrador, userId: "gestor-1", username: "gestor", role: "GESTOR" as const };
     const ajena = new TransactionVerificationsController(
       {} as never, approve as never, {} as never, {} as never, {} as never, {} as never, {} as never,
-      new AssertManagerScope({ ownsTransaction: async () => false, ownsVerification: async () => false, ownsActivationRequest: async () => false, ownsReceipt: async () => false }),
+      new AssertManagerScope({ ownsTransaction: async () => false, ownsVerification: async () => false, ownsActivationRequest: async () => false, ownsReceipt: async () => false, managerOfClient: async () => null, managerOfAccount: async () => null }),
     );
     await expect(ajena.approve("verification-ajena", { administratorId: "gestor-1" }, gestor))
       .rejects.toMatchObject({ code: "VERIFICATION_NOT_FOUND", status: 404 });

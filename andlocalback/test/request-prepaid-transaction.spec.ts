@@ -64,7 +64,12 @@ class MemoryPersistence implements MultiRechargePersistencePort {
   }
 }
 
-function activeContext(): MultiRechargeContext {
+/* El contexto del puerto es Readonly; los tests lo ajustan caso a caso
+   (cuenta sin credito, pautas suspendidas), asi que la fabrica lo devuelve
+   mutable. Sigue siendo asignable al tipo del puerto. */
+type Mutable<T> = { -readonly [K in keyof T]: T[K] };
+
+function activeContext(): Mutable<MultiRechargeContext> {
   return {
     client: { id: "client-1", status: ClientStatus.ACTIVE },
     account: { id: "account-1", clientId: "client-1", status: AccountStatus.ACTIVE, type: AccountType.PREPAID },

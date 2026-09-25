@@ -120,13 +120,13 @@ describe("Phase 5 transaction execution", () => {
     const base = context();
     const repo = persistence(context({ details: [{ ...base.details[0], pautaStatus: PautaStatus.SUSPENDED }] }));
     await expect(new StartTransactionRecharge(repo).execute({ transactionId: "tx-1" }))
-      .rejects.toMatchObject<ApplicationError>({ code: "PAUTA_NOT_ACTIVE" });
+      .rejects.toMatchObject({ code: "PAUTA_NOT_ACTIVE" });
   });
 
   it("rejects reprocessing a completed transaction", async () => {
     const repo = persistence(context({ status: TransactionRechargeStatus.COMPLETED }));
     await expect(new StartTransactionRecharge(repo).execute({ transactionId: "tx-1" }))
-      .rejects.toMatchObject<ApplicationError>({ code: "TRANSACTION_ALREADY_COMPLETED" });
+      .rejects.toMatchObject({ code: "TRANSACTION_ALREADY_COMPLETED" });
   });
 
   it("completes a detail with its effective amount", async () => {
@@ -167,7 +167,7 @@ describe("Phase 5 transaction execution", () => {
     });
     await expect(new CompleteTransactionDetail(repo).execute({
       transactionId: "tx-1", detailId: "detail-1", executedBy: "auth-admin", mayDeviate: true, effectiveAmount: 96, effectiveRechargeDate: effectiveAt,
-    })).rejects.toMatchObject<ApplicationError>({ code: "TRANSACTION_DETAIL_ALREADY_COMPLETED" });
+    })).rejects.toMatchObject({ code: "TRANSACTION_DETAIL_ALREADY_COMPLETED" });
   });
 
   it("accepts the same detail retry after the whole transaction was completed", async () => {
@@ -254,7 +254,7 @@ describe("Phase 5 transaction execution", () => {
       details: [{ ...base.details[0], status: TransactionDetailStatus.PROCESSING }],
     }));
     await expect(new CompleteTransaction(repo, { generate: vi.fn() }).execute({ transactionId: "tx-1" }))
-      .rejects.toMatchObject<ApplicationError>({ code: "INCOMPLETE_TRANSACTION_DETAILS" });
+      .rejects.toMatchObject({ code: "INCOMPLETE_TRANSACTION_DETAILS" });
     expect(repo.finalizeTransactionAndIssueInvoice).not.toHaveBeenCalled();
   });
 
@@ -288,7 +288,7 @@ describe("Phase 5 transaction execution", () => {
     await expect(new CompleteTransactionDetail(repo, () => at).execute({
       transactionId: "tx-1", detailId: "detail-1", executedBy: "auth-gestor",
       effectiveAmount: 95, effectiveRechargeDate: effectiveAt,
-    })).rejects.toMatchObject<ApplicationError>({ code: "EFFECTIVE_AMOUNT_DEVIATION_NOT_ALLOWED", status: 403 });
+    })).rejects.toMatchObject({ code: "EFFECTIVE_AMOUNT_DEVIATION_NOT_ALLOWED", status: 403 });
 
     expect(repo.completeTransactionDetail).not.toHaveBeenCalled();
   });

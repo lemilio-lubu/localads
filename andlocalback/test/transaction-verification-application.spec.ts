@@ -13,6 +13,7 @@ import { MarkTransactionVerificationUnderReview } from "../src/modules/recharges
 import { UploadPaymentReceipt } from "../src/modules/recharges/application/use-cases/upload-payment-receipt";
 import { AccountType, VerificationIssue, VerificationStatus } from "../src/modules/recharges/domain/recharge.types";
 import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/monetary-amount";
+import { TransactionPaymentStatus, TransactionRechargeStatus } from "../src/modules/recharges/domain/model/domain-status";
 
 const fixedDate = new Date("2026-09-09T12:00:00.000Z");
 
@@ -41,9 +42,9 @@ function decisionContext(overrides: Partial<VerificationDecisionContext> = {}): 
   return {
     transaction: {
       id: "transaction-1", accountId: "account-1", accountTypeSnapshot: AccountType.PREPAID,
-      status: "UNDER_REVIEW", version: 2,
+      status: TransactionRechargeStatus.UNDER_REVIEW, version: 2,
     },
-    payment: { id: "payment-1", status: "UNDER_REVIEW", expectedAmount: 1058, dueDate: null, version: 3 },
+    payment: { id: "payment-1", status: TransactionPaymentStatus.UNDER_REVIEW, expectedAmount: 1058, dueDate: null, version: 3 },
     receipt: { ...receiptContext().receipt, status: "PROCESSED", version: 1 },
     ocr: {
       bank: "Banco Local", detectedAmount: 1058, detectedDate: fixedDate,
