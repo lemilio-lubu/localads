@@ -6,7 +6,7 @@ export const TEAM_ROLES = ["ADMIN", "GESTOR"] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number];
 export const isTeamRole = (value: string): value is TeamRole => (TEAM_ROLES as readonly string[]).includes(value);
 
-export type TeamMemberInput = Readonly<{ username: string; role: TeamRole; note?: string | null }>;
+export type TeamMemberInput = Readonly<{ username: string; role: TeamRole }>;
 
 /* Minusculas, digitos, punto, guion y guion bajo. El usuario se dicta por
    telefono junto con la clave temporal, asi que no admite espacios ni
@@ -23,8 +23,5 @@ export function validateTeamMember(input: TeamMemberInput): void {
   }
   if (!isTeamRole(input.role)) {
     throw new ApplicationError("INVALID_TEAM_ROLE", "El rol del equipo solo puede ser administrador o gestor");
-  }
-  if (input.note !== undefined && input.note !== null && input.note.length > 500) {
-    throw new ApplicationError("NOTE_TOO_LONG", "La nota no puede superar 500 caracteres");
   }
 }

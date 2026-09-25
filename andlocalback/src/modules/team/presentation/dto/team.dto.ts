@@ -10,13 +10,11 @@ export class ListTeamQueryDto {
 export class CreateTeamMemberDto {
   @IsString() @MinLength(3) @MaxLength(24) username!: string;
   @IsIn([...TEAM_ROLES]) role!: "ADMIN" | "GESTOR";
-  @IsOptional() @IsString() @MaxLength(500) note?: string;
 }
 
 export class UpdateTeamMemberDto {
   @IsOptional() @IsString() @MinLength(3) @MaxLength(24) username?: string;
   @IsOptional() @IsIn([...TEAM_ROLES]) role?: "ADMIN" | "GESTOR";
-  @IsOptional() @IsString() @MaxLength(500) note?: string;
   @IsOptional() @IsIn(["ACTIVE", "INACTIVE"]) status?: "ACTIVE" | "INACTIVE";
   /* Solo se miran al pasar a INACTIVE, y solo si el gestor tiene cartera.
      Son dos campos y no uno que admita null porque «no dijo nada» y «dijo que

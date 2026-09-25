@@ -22,9 +22,6 @@ model AuthUser {
   // Quien creo la cuenta. Un gestor solo puede crear clientes, y esto deja
   // rastro de quien lo hizo sin necesidad de una tabla de auditoria.
   createdById  String?
-  // Nota interna que escribe quien crea la cuenta: para que sirve, de quien
-  // es. Aparece en el modal de alta del mockup y no la ve el usuario final.
-  note         String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   sessions     RefreshSession[]

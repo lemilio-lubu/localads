@@ -83,7 +83,6 @@ export class PrismaTeamRepository implements TeamRepository {
           username: credentials.username,
           passwordHash: credentials.passwordHash,
           role: input.role,
-          note: input.note ?? null,
           createdById,
           status: "ACTIVE",
           mustChangePassword: true,
@@ -102,7 +101,6 @@ export class PrismaTeamRepository implements TeamRepository {
         data: {
           ...(input.username !== undefined && { username: input.username }),
           ...(input.role !== undefined && { role: input.role }),
-          ...(input.note !== undefined && { note: input.note }),
           ...(input.status !== undefined && { status: input.status }),
         },
       });
@@ -171,7 +169,6 @@ export class PrismaTeamRepository implements TeamRepository {
       username: record.username,
       role: record.role as TeamRole,
       status: record.status as "ACTIVE" | "INACTIVE",
-      note: record.note,
       mustChangePassword: record.mustChangePassword,
       createdAt: record.createdAt.toISOString(),
       metrics,

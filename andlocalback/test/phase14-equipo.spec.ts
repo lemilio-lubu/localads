@@ -12,7 +12,7 @@ import { TeamMemberDetailView, TeamRepository } from "../src/modules/team/applic
 import { normalizeUsername, validateTeamMember } from "../src/modules/team/domain/team-member";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 
-const member = { id: "t1", username: "gestor", role: "GESTOR", status: "ACTIVE", note: null, mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
+const member = { id: "t1", username: "gestor", role: "GESTOR", status: "ACTIVE", mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
 const issuer = () => ({ issue: vi.fn().mockResolvedValue({ username: "gestor", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
 /* El stub base no tiene cartera; los casos de baja necesitan uno que si. */
 const conCartera = { ...member, metrics: { clients: 2, sales: 0 } } as TeamMemberDetailView;
@@ -55,9 +55,9 @@ describe("Fase 14 - reglas del equipo", () => {
 
   it("crear devuelve la clave temporal una vez y guarda quien lo creo", async () => {
     const team = repository();
-    const result = await new ManageTeam(team, issuer()).create({ username: "Gestor", role: "GESTOR", note: "  cartera norte  " }, "admin-1");
+    const result = await new ManageTeam(team, issuer()).create({ username: "Gestor", role: "GESTOR" }, "admin-1");
     expect(result.credentials).toEqual({ username: "gestor", temporaryPassword: "Abcd2345Wxyz" });
-    expect(team.create).toHaveBeenCalledWith({ username: "gestor", role: "GESTOR", note: "cartera norte" }, { username: "gestor", passwordHash: "scrypt$s$h" }, "admin-1");
+    expect(team.create).toHaveBeenCalledWith({ username: "gestor", role: "GESTOR" }, { username: "gestor", passwordHash: "scrypt$s$h" }, "admin-1");
   });
 
   /* Un PATCH con status INACTIVE dejaria clientes apuntando a un gestor de
@@ -107,7 +107,7 @@ describe("Fase 14 - reglas del equipo", () => {
   it("un usuario inexistente responde 404 en todas las operaciones", async () => {
     const team = repository({ findById: vi.fn().mockResolvedValue(null), deactivate: vi.fn().mockResolvedValue(null) });
     const manage = new ManageTeam(team, issuer());
-    for (const call of [manage.get("x"), manage.update("x", { note: "n" }), manage.deactivate("x"), manage.resetPassword("x")]) {
+    for (const call of [manage.get("x"), manage.update("x", { role: "GESTOR" }), manage.deactivate("x"), manage.resetPassword("x")]) {
       await expect(call).rejects.toMatchObject({ code: "TEAM_MEMBER_NOT_FOUND", status: 404 });
     }
   });
@@ -128,7 +128,7 @@ describe("Fase 14 - equipo contra la base", () => {
     team = new PrismaTeamRepository(prisma as PrismaService);
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
 
-    const created = await team.create({ username: `gestor-${randomUUID().slice(0, 8)}`, role: "GESTOR", note: "cartera de prueba" }, { username: `gestor-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const created = await team.create({ username: `gestor-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `gestor-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     gestor = created.id;
     for (let index = 0; index < 2; index += 1) {
       const client = await clients.create(
@@ -166,7 +166,6 @@ describe("Fase 14 - equipo contra la base", () => {
     expect(detail?.clients).toHaveLength(2);
     expect(detail?.sales).toHaveLength(2);
     expect(detail?.sales[0]).toMatchObject({ totalAmount: 132.25 });
-    expect(detail?.note).toBe("cartera de prueba");
   });
 
   it("un usuario con rol cliente no se encuentra por esta via", async () => {

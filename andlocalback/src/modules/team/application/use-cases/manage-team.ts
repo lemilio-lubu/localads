@@ -20,17 +20,17 @@ export class ManageTeam {
     validateTeamMember(input);
     const username = normalizeUsername(input.username);
     const issued = await this.credentials.issue(username);
-    const member = await this.team.create({ ...input, username, note: input.note?.trim() || null }, { username, passwordHash: issued.passwordHash }, createdById);
+    const member = await this.team.create({ ...input, username }, { username, passwordHash: issued.passwordHash }, createdById);
     return { ...member, credentials: { username, temporaryPassword: issued.temporaryPassword } };
   }
 
   async update(id: string, input: UpdateTeamMemberInput) {
     const current = await this.get(id);
-    validateTeamMember({ username: input.username ?? current.username, role: input.role ?? current.role, note: input.note ?? current.note });
+    validateTeamMember({ username: input.username ?? current.username, role: input.role ?? current.role });
     /* Desactivar pasa por su propio camino porque arrastra la cartera: un
      PATCH con status INACTIVE dejaria clientes apuntando a un gestor de baja. */
     if (input.status === "INACTIVE") return this.deactivate(id, input.portfolio);
-    const updated = await this.team.update(id, { ...input, ...(input.username ? { username: normalizeUsername(input.username) } : {}), ...(input.note !== undefined ? { note: input.note?.trim() || null } : {}) });
+    const updated = await this.team.update(id, { ...input, ...(input.username ? { username: normalizeUsername(input.username) } : {}) });
     if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El usuario no existe", 404);
     return updated;
   }
