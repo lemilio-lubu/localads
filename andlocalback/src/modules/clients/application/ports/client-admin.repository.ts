@@ -38,6 +38,11 @@ export interface ClientAdminRepository {
      undefined si el gestor propuesto no existe o no esta activo, para que el
      caso de uso lo distinga de un cliente inexistente. */
   assignManager(id: string, managerId: string | null): Promise<AdminClientView | null | undefined>;
+  /* El usuario con el que el cliente entra al portal; null si no tiene. */
+  findLoginUsername(id: string): Promise<string | null>;
+  /* Cambia el hash, vuelve a exigir el cambio de clave y revoca las sesiones
+     abiertas, todo junto. false si el usuario ya no existe. */
+  resetPassword(id: string, username: string, passwordHash: string): Promise<boolean>;
 }
 
 export const CLIENT_ADMIN_REPOSITORY = Symbol("CLIENT_ADMIN_REPOSITORY");

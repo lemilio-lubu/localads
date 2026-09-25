@@ -190,6 +190,23 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
     return this.findById(id, {});
   }
 
+  async findLoginUsername(id: string) {
+    const user = await this.prisma.authUser.findFirst({ where: { clientId: id, role: "CLIENT" }, select: { username: true }, orderBy: { createdAt: "asc" } });
+    return user?.username ?? null;
+  }
+
+  async resetPassword(id: string, username: string, passwordHash: string) {
+    /* El usuario se busca por nombre y cliente a la vez: si entre la lectura y
+       la escritura cambiara de dueno, no se toca la clave de otro. */
+    return this.prisma.$transaction(async (database) => {
+      const user = await database.authUser.findFirst({ where: { username, clientId: id, role: "CLIENT" }, select: { id: true } });
+      if (!user) return false;
+      await database.authUser.update({ where: { id: user.id }, data: { passwordHash, mustChangePassword: true } });
+      await database.refreshSession.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: new Date() } });
+      return true;
+    });
+  }
+
   private toView(record: ClientRecord) {
     const account = record.accounts[0];
     if (!account) throw new ApplicationError("ACCOUNT_NOT_FOUND", "El cliente no tiene una cuenta asociada", 409);
