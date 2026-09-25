@@ -94,16 +94,22 @@ describe("Fase 6 - endpoints de activacion", () => {
     const review = { execute: vi.fn(async () => ({ status: ActivationRequestStatus.IN_REVIEW })) };
     const approve = { execute: vi.fn(async () => ({ status: ActivationRequestStatus.APPROVED })) };
     const reject = { execute: vi.fn(async () => ({ status: ActivationRequestStatus.REJECTED })) };
+    const realtime = { publishPlatforms: vi.fn() };
+    // Sin recorte: estos tests no son de cartera, eso lo cubre fase 13.
+    const scope = { activationRequest: vi.fn(async () => undefined) };
 
     const clientController = new CampaignActivationRequestsController(
       requestActivation as never,
       listClient as never,
+      realtime as never,
     );
     const adminController = new AdminCampaignActivationRequestsController(
       listAdmin as never,
       review as never,
       approve as never,
       reject as never,
+      realtime as never,
+      scope as never,
     );
     return { clientController, adminController, requestActivation, listClient, listAdmin, review, approve, reject };
   }

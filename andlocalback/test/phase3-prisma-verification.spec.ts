@@ -38,7 +38,7 @@ describe("PrismaTransactionVerificationRepository", () => {
       verificationId: "verification-ocr",
       extracted: extracted("BANK-001"),
       evaluation: {
-        status: VerificationStatus.AUTOMATICALLY_VERIFIED,
+        status: VerificationStatus.AUTOMATICALLY_VERIFIED as const,
         amountMatches: true,
         issues: [] as VerificationIssue[],
         requiresManualReview: false,

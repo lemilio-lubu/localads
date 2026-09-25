@@ -19,6 +19,7 @@ import {
 
 const baseView: CampaignActivationRequestView = {
   id: "activation-1",
+  reviewedByName: null,
   clientId: "client-1",
   platform: AdvertisingPlatform.TIKTOK,
   requesterName: "Ana Perez",

@@ -17,6 +17,7 @@ import {
   AdminRechargeQueriesController,
   MyRechargeQueriesController,
 } from "../src/modules/recharges/presentation/phase7-query.controller";
+import { VerificationScopeDto } from "../src/modules/recharges/presentation/dto/phase7-query.dto";
 
 describe("Fase 7 - DTO de consultas", () => {
   it("aplica paginacion segura por defecto y transforma numeros", async () => {
@@ -168,6 +169,7 @@ describe("Fase 7 - endpoints de lectura", () => {
     await admin.verifications({
       page: 1,
       limit: 20,
+      scope: VerificationScopeDto.REVIEW,
       status: VerificationStatus.UNDER_REVIEW,
       bank: "Pichincha",
       from: "2026-09-01T00:00:00.000Z",
@@ -178,6 +180,7 @@ describe("Fase 7 - endpoints de lectura", () => {
       managerId: undefined,
       page: 1,
       pageSize: 20,
+      scope: VerificationScopeDto.REVIEW,
       status: VerificationStatus.UNDER_REVIEW,
       clientId: undefined,
       bank: "Pichincha",
@@ -192,7 +195,7 @@ describe("Fase 7 - endpoints de lectura", () => {
     const { admin, listAdminTransactions, getAdminTransactionDetail, listVerifications } = setup();
     await admin.transactions({ page: 1, limit: 20 }, gestor);
     await admin.transactionDetail("tx-1", gestor);
-    await admin.verifications({ page: 1, limit: 20 }, gestor);
+    await admin.verifications({ page: 1, limit: 20, scope: VerificationScopeDto.REVIEW }, gestor);
 
     expect(listAdminTransactions.execute).toHaveBeenCalledWith(expect.objectContaining({ managerId: "gestor-1" }));
     expect(getAdminTransactionDetail.execute).toHaveBeenCalledWith({ transactionId: "tx-1", managerId: "gestor-1" });

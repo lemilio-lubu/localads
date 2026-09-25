@@ -8,6 +8,7 @@ import { PrismaClientAdminRepository } from "../src/modules/clients/infrastructu
 import { ActivationRequestStatus, PautaStatus } from "../src/modules/recharges/domain/model/domain-status";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { PrismaCampaignActivationRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-campaign-activation.repository";
+import { validRuc } from "./ruc-fixture";
 
 describe("persistencia de primera pauta fase 6", () => {
   let directory: string;
@@ -148,6 +149,7 @@ describe("persistencia de primera pauta fase 6", () => {
     const created = await clients.create({
       name: "Cliente onboarding Fase 6",
       email: "phase6-onboarding@example.test",
+      ruc: validRuc(),
       accountType: AccountType.PREPAID,
       creditDays: 0,
       platforms: [AdvertisingPlatform.META, AdvertisingPlatform.GOOGLE],

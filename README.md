@@ -99,8 +99,11 @@ Backend:
 ```powershell
 cd .\andlocalback
 npm test
+npm run typecheck
 npm run build
 ```
+
+`npm test` (Vitest) no comprueba tipos y `npm run build` solo compila `src/`, así que sin `npm run typecheck` los tests se desalinean del código en silencio: un puerto gana un método o un campo pasa a obligatorio y los dobles de prueba siguen en verde sin cumplir el contrato. Al cambiar un puerto, una vista o un comando, actualiza sus dobles en `test/` en el mismo cambio. `rootDir: ./src` vive en `tsconfig.build.json`; `tsconfig.json` (el del editor) incluye `src/` y `test/`.
 
 Frontend:
 

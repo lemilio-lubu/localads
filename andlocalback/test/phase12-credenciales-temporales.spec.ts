@@ -10,7 +10,7 @@ import { AdminClientView, ClientAdminRepository } from "../src/modules/clients/a
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 
 const view: AdminClientView = {
-  id: "c1", name: "Cliente", email: "cliente@example.test", status: "ACTIVE", createdAt: "2026-09-20T00:00:00.000Z",
+  id: "c1", name: "Cliente", email: "cliente@example.test", ruc: "1712345675001", manager: null, status: "ACTIVE", createdAt: "2026-09-20T00:00:00.000Z",
   account: { id: "a1", type: AccountType.PREPAID, status: "ACTIVE", creditDays: 0, platforms: [AdvertisingPlatform.META] },
   totalRecharged: 0,
 };
@@ -22,6 +22,9 @@ function repository(overrides: Partial<ClientAdminRepository> = {}): ClientAdmin
     findById: vi.fn().mockResolvedValue(view),
     update: vi.fn().mockResolvedValue(view),
     deactivate: vi.fn().mockResolvedValue(view),
+    assignManager: vi.fn().mockResolvedValue(view),
+    findLoginUsername: vi.fn().mockResolvedValue("cliente"),
+    resetPassword: vi.fn().mockResolvedValue(true),
     ...overrides,
   };
 }
@@ -63,7 +66,7 @@ describe("Fase 12 - clave temporal", () => {
 
   it("crear un cliente devuelve la clave en claro una vez y persiste solo el hash", async () => {
     const clients = repository();
-    const credentials = { prepare: vi.fn().mockResolvedValue({ username: "cliente", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) };
+    const credentials = { prepare: vi.fn().mockResolvedValue({ username: "cliente", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }), issue: vi.fn() };
     const result = await new ManageClients(clients, credentials).create({
       name: "Cliente", email: "cliente@example.test", ruc: "1712345675001", accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0,
     }, {});

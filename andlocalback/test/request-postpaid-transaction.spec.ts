@@ -38,7 +38,12 @@ function pauta(id: string, platform: AdvertisingPlatform, status = PautaStatus.A
   });
 }
 
-function activeContext(): PostpaidRechargeContext {
+/* El contexto del puerto es Readonly; los tests lo ajustan caso a caso
+   (cuenta sin credito, pautas suspendidas), asi que la fabrica lo devuelve
+   mutable. Sigue siendo asignable al tipo del puerto. */
+type Mutable<T> = { -readonly [K in keyof T]: T[K] };
+
+function activeContext(): Mutable<PostpaidRechargeContext> {
   return {
     client: { id: "client-1", status: ClientStatus.ACTIVE },
     account: {
