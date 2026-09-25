@@ -1,6 +1,7 @@
 import { ManagerScope } from "../../../../common/access/manager-scope";
 import { ApplicationError } from "../../../../common/errors/application.error";
 import { ClientProfileInput, validateClientProfile } from "../../domain/client-profile";
+import { validateRuc } from "../../domain/ruc";
 import { ClientAdminRepository, UpdateClientInput } from "../ports/client-admin.repository";
 import { ClientCredentialsIssuer } from "../ports/client-credentials.port";
 
@@ -22,7 +23,8 @@ export class ManageClients {
   /* Un gestor se asigna a si mismo el cliente que crea, tomando el id del
      token; lo que pida el cuerpo se ignora. Un admin elige gestor o lo deja
      sin asignar. */
-  async create(input: ClientProfileInput, scope: ManagerScope, requestedManagerId?: string | null) {
+  async create(profile: ClientProfileInput, scope: ManagerScope, requestedManagerId?: string | null) {
+    const input = { ...profile, ruc: validateRuc(profile.ruc) };
     validateClientProfile(input);
     const managerId = scope.managerId ?? requestedManagerId?.trim() ?? null;
     const { username, temporaryPassword, passwordHash } = await this.credentials.prepare(input.email);
@@ -30,11 +32,15 @@ export class ManageClients {
     return { ...client, credentials: { username, temporaryPassword } };
   }
 
-  async update(id: string, input: UpdateClientInput, scope: ManagerScope) {
+  /* El RUC es opcional en el cuerpo (no cambiarlo), pero si llega se valida
+     igual que al crear: vacio no es una forma de borrarlo. */
+  async update(id: string, changes: UpdateClientInput, scope: ManagerScope) {
     const current = await this.get(id, scope);
+    const input = changes.ruc === undefined ? changes : { ...changes, ruc: validateRuc(changes.ruc) };
     validateClientProfile({
       name: input.name ?? current.name,
       email: input.email ?? current.email,
+      ruc: input.ruc ?? current.ruc ?? "",
       accountType: input.accountType ?? current.account.type,
       platforms: input.platforms ?? current.account.platforms,
       creditDays: input.accountType === "PREPAGO" ? 0 : input.creditDays ?? current.account.creditDays,

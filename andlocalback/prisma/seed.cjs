@@ -3,15 +3,15 @@ const { scryptSync } = require("node:crypto");
 
 const database = new PrismaClient();
 const accounts = [
-  { id: "account-prepaid-001", clientId: "client-001", type: "PREPAGO", name: "Migo Prepago", email: "prepago@andlocal.test", creditDays: 0, creditLimit: 0 },
-  { id: "account-postpaid-001", clientId: "client-002", type: "POSTPAGO", name: "Migo Postpago", email: "postpago@andlocal.test", creditDays: 5, creditLimit: 10000 },
+  { id: "account-prepaid-001", clientId: "client-001", type: "PREPAGO", name: "Migo Prepago", email: "prepago@andlocal.test", ruc: "1712345675001", creditDays: 0, creditLimit: 0 },
+  { id: "account-postpaid-001", clientId: "client-002", type: "POSTPAGO", name: "Migo Postpago", email: "postpago@andlocal.test", ruc: "0912345675001", creditDays: 5, creditLimit: 10000 },
 ];
 
 async function seed() {
   for (const account of accounts) {
     await database.client.upsert({
-      where: { id: account.clientId }, update: { name: account.name, email: account.email, status: "ACTIVE" },
-      create: { id: account.clientId, name: account.name, email: account.email, status: "ACTIVE" },
+      where: { id: account.clientId }, update: { name: account.name, email: account.email, ruc: account.ruc, status: "ACTIVE" },
+      create: { id: account.clientId, name: account.name, email: account.email, ruc: account.ruc, status: "ACTIVE" },
     });
     await database.account.upsert({
       where: { id: account.id }, update: { clientId: account.clientId, status: "ACTIVE", type: account.type, creditDays: account.creditDays, creditLimit: account.creditLimit },

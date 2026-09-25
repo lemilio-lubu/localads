@@ -13,8 +13,9 @@ import { AssertManagerScope } from "../src/modules/recharges/application/ports/m
 import { ManageClients } from "../src/modules/clients/application/use-cases/manage-clients";
 import { AdminClientView, ClientAdminRepository } from "../src/modules/clients/application/ports/client-admin.repository";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
+import { validRuc } from "./ruc-fixture";
 
-const profile = (email: string) => ({ name: "Cliente", email, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 });
+const profile = (email: string) => ({ name: "Cliente", email, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 });
 const issuer = () => ({ prepare: vi.fn().mockResolvedValue({ username: `u-${randomUUID()}`, temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
 
 describe("Fase 13 - alcance del gestor, en memoria", () => {
