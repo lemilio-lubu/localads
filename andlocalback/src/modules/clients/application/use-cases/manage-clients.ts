@@ -60,6 +60,19 @@ export class ManageClients {
     return updated;
   }
 
+  /* El mismo alcance que editar: el admin sobre cualquiera, el gestor solo
+     sobre su cartera. La clave anterior deja de servir y las sesiones abiertas
+     mueren con ella; la nueva se devuelve en claro una sola vez, como en el
+     alta. */
+  async resetPassword(id: string, scope: ManagerScope) {
+    const client = await this.get(id, scope);
+    const username = await this.clients.findLoginUsername(id);
+    if (!username) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene usuario de acceso", 409);
+    const { temporaryPassword, passwordHash } = await this.credentials.issue(username);
+    if (!(await this.clients.resetPassword(id, username, passwordHash))) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene usuario de acceso", 409);
+    return { ...client, credentials: { username, temporaryPassword } };
+  }
+
   async deactivate(id: string, scope: ManagerScope) {
     await this.get(id, scope);
     const client = await this.clients.deactivate(id);

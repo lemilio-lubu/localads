@@ -35,6 +35,10 @@ export class ClientsController {
     return this.clients.assignManager(id, body.managerId ?? null);
   }
 
+  @Post(":id/password-reset")
+  @HttpCode(HttpStatus.OK)
+  resetPassword(@Param("id") id: string, @CurrentUser() user: AuthPrincipal) { return this.clients.resetPassword(id, scopeFor(user)); }
+
   @Delete(":id")
   @HttpCode(HttpStatus.OK)
   deactivate(@Param("id") id: string, @CurrentUser() user: AuthPrincipal) { return this.clients.deactivate(id, scopeFor(user)); }
