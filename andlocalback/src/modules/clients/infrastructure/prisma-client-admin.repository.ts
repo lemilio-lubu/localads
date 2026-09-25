@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { ManagerScope, clientOwnershipWhere } from "../../../common/access/manager-scope";
 import { ApplicationError } from "../../../common/errors/application.error";
 import { PrismaService } from "../../../database/prisma.service";
-import { ClientAdminRepository, UpdateClientInput } from "../application/ports/client-admin.repository";
+import { AdminClientDetailView, ClientAdminRepository, ClientPlatformSummary, UpdateClientInput } from "../application/ports/client-admin.repository";
 import { PreparedCredentials } from "../application/ports/client-credentials.port";
 import { ClientProfileInput } from "../domain/client-profile";
 import { AccountType, AdvertisingPlatform } from "../../recharges/domain/recharge.types";
@@ -107,6 +107,26 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
   async findById(id: string, scope: ManagerScope) {
     const record = await this.prisma.client.findFirst({ where: { id, ...managerWhere(scope) }, include: clientInclude });
     return record ? this.toView(record) : null;
+  }
+
+  async findDetail(id: string, scope: ManagerScope): Promise<AdminClientDetailView | null> {
+    const view = await this.findById(id, scope);
+    if (!view) return null;
+    /* Un cliente tiene pocas recargas: una consulta de sus detalles no
+       rechazados y se agrega en memoria. */
+    const details = await this.prisma.transactionDetail.findMany({
+      where: { transaction: { clientId: id, rechargeStatus: { not: "REJECTED" } } },
+      select: { platformSnapshot: true, requestedAmount: true },
+    });
+    const platformSummary: ClientPlatformSummary[] = (["META", "GOOGLE", "TIKTOK"] as const).map((platform) => {
+      const own = details.filter((detail) => detail.platformSnapshot === platform);
+      return {
+        platform: platform as AdvertisingPlatform,
+        requested: own.reduce((total, detail) => total.add(detail.requestedAmount), new Prisma.Decimal(0)).toNumber(),
+        operations: own.length,
+      };
+    });
+    return { ...view, platformSummary };
   }
 
   async update(id: string, input: UpdateClientInput) {

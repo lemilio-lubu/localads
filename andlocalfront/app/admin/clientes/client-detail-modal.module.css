@@ -1,8 +1,16 @@
-.modal { width: min(calc(100vw - var(--space-6)), var(--layout-client-detail-max)); min-height: min(calc(100vh - var(--space-6)), var(--layout-client-detail-min-height)); max-height: calc(100vh - var(--space-6)); overflow-y: auto; scrollbar-gutter: stable; background: var(--color-surface-raised); }
+/* Sin altura máxima ni scroll propio: si no cabe en la ventana, hace scroll
+   el fondo (ModalShell), igual que el detalle de transacción. Un scroll dentro
+   de otro obligaba a atinar en qué caja girar la rueda. */
+.modal { width: min(calc(100vw - var(--space-6)), var(--layout-client-detail-max)); min-height: min(calc(100vh - var(--space-6)), var(--layout-client-detail-min-height)); background: var(--color-surface-raised); }
 .summary { display: grid; grid-template-columns: minmax(var(--space-20), 1fr) minmax(0, 2.2fr); align-items: center; gap: var(--space-4); }
 .identity { min-width: 0; }
-.accountBadge { display: inline-flex; align-items: center; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
-.identity h2 { overflow: hidden; margin: var(--space-1) 0; color: var(--color-text); font-size: var(--font-size-title); line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+/* inline-flex con gap: en un contenedor flex el espacio de «cliente » se
+   descartaba y se leía «clientepostpago». */
+.accountBadge { display: inline-flex; align-items: center; gap: .3em; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
+/* overflow: hidden es para los puntos suspensivos de nombres largos. Con
+   line-height 1 la caja medía justo la fuente y recortaba las letras que bajan
+   de la línea («p», «g»): 1.2 les deja sitio. */
+.identity h2 { overflow: hidden; margin: var(--space-1) 0; color: var(--color-text); font-size: var(--font-size-title); line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .platforms { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); }
 .metric { min-height: var(--space-9); border-radius: var(--radius-menu); padding: var(--space-2); }
@@ -17,6 +25,7 @@
 .platformTotals > div[data-platform="meta"] { background: var(--color-meta); }
 .platformTotals > div[data-platform="google"] { background: var(--color-google); color: var(--color-google-text); }
 .platformTotals > div[data-platform="tiktok"] { background: var(--color-tiktok); }
+.platformLogo { display: grid; width: var(--space-3); height: var(--space-3); flex: none; place-items: center; border-radius: 50%; margin-left: calc(var(--space-1) * -1); background: var(--color-surface-raised); }
 .platformTotals small { overflow: hidden; font-size: var(--font-size-micro); text-overflow: ellipsis; white-space: nowrap; }
 .detailGrid { display: grid; min-height: 536px; grid-template-columns: minmax(280px, .72fr) minmax(0, 1fr); grid-template-rows: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-4); }
 .panel { min-width: 0; overflow: hidden; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-3); }
@@ -49,7 +58,7 @@
 .error { color: var(--color-danger); }
 
 @media (max-width: 900px) {
-  .modal { overflow-y: auto; padding-block: var(--space-4); padding-inline-start: var(--space-4); }
+  .modal { padding-block: var(--space-4); padding-inline-start: var(--space-4); }
   .summary { grid-template-columns: 1fr; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .consumptionSummary { grid-template-columns: 1fr 1fr; }

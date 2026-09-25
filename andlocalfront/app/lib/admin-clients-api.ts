@@ -24,6 +24,10 @@ export type AdminClient = {
   totalRecharged: number;
 };
 
+/* La ficha añade el reparto por plataforma en dinero solicitado (sin
+   recargas rechazadas), que el listado no trae. */
+export type AdminClientDetail = AdminClient & { platformSummary: { platform: AdminPlatform; requested: number; operations: number }[] };
+
 export type SaveAdminClient = {
   name: string;
   email: string;
@@ -57,6 +61,10 @@ async function request<T>(path: string, init?: RequestInit) {
 export function getAdminClients(owner?: "unassigned") {
   const query = owner ? `?owner=${owner}` : "";
   return request<AdminClient[]>(`/admin/clients${query}`, { cache: "no-store" });
+}
+
+export function getAdminClientDetail(id: string) {
+  return request<AdminClientDetail>(`/admin/clients/${encodeURIComponent(id)}`, { cache: "no-store" });
 }
 
 export function createAdminClient(input: SaveAdminClient) {

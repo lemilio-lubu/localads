@@ -18,6 +18,12 @@ export class ManageClients {
     return client;
   }
 
+  async detail(id: string, scope: ManagerScope) {
+    const client = await this.clients.findDetail(id, scope);
+    if (!client) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
+    return client;
+  }
+
   /* La clave temporal se devuelve en claro una sola vez, aqui, y no vuelve a
      salir por ningun GET. Si se pierde, el camino es restablecerla. */
   /* Un gestor se asigna a si mismo el cliente que crea, tomando el id del
