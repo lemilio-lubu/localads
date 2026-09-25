@@ -5,6 +5,7 @@ import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useSta
 import AccountShell from "./account-shell";
 import ActionButton from "./components/action-button";
 import ModalShell from "./components/modal-shell";
+import RechargeConfirmModal from "./recharge-confirm-modal";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
 import type { AccountType } from "./design-system/types";
 import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getRechargeContext, getMyPautas, type ActivationRequest, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
@@ -34,6 +35,8 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [confirmStep, setConfirmStep] = useState<"confirm" | "sending" | "done" | null>(null);
+  const [confirmError, setConfirmError] = useState("");
   /* Las tasas se piden aparte y pueden fallar solas: sin este aviso el total se
      quedaba en «Calculando total…» para siempre, sin decir nada. */
   const [ratesFailed, setRatesFailed] = useState(false);
@@ -92,10 +95,18 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
   const exceedsCredit = creditAvailable !== null && estimatedTotal !== null && estimatedTotal > creditAvailable;
   const canSubmit = !loading && !submitting && acceptedTerms && lines.length > 0 && !exceedsCredit && (!isPrepaid || receipt !== null);
 
-  async function submitRecharge(event: FormEvent<HTMLFormElement>) {
+  /* «recargar» no envía: abre la confirmación con el monto de cada plataforma,
+     y la recarga sale solo cuando el cliente desliza para confirmar. */
+  function submitRecharge(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit) return;
-    setSubmitting(true); setError(""); setMessage("");
+    setError(""); setMessage(""); setConfirmError(""); setConfirmStep("confirm");
+  }
+
+  async function confirmRecharge() {
+    if (!canSubmit || confirmStep !== "confirm") return;
+    setConfirmStep("sending"); setConfirmError("");
+    setSubmitting(true);
     try {
       const transaction = isPrepaid && receipt
         ? await createPrepaidTransaction(accountId, lines, receipt)
@@ -103,7 +114,13 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
       setMessage(`Transacción ${transaction.code} creada con ${transaction.details.length} ${transaction.details.length === 1 ? "pauta" : "pautas"}. Pago ${transaction.payment.status.toLowerCase().replaceAll("_", " ")}.`);
       setAmounts({ META: "", GOOGLE: "", TIKTOK: "" }); setAcceptedTerms(false); setReceipt(null);
       if (fileInput.current) fileInput.current.value = "";
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "No fue posible procesar la recarga"); }
+      setConfirmStep("done");
+    } catch (reason) {
+      // El error se queda en la confirmación, junto al deslizador, para
+      // reintentar sin volver a rellenar nada.
+      setConfirmError(reason instanceof Error ? reason.message : "No fue posible procesar la recarga");
+      setConfirmStep("confirm");
+    }
     finally { setSubmitting(false); }
   }
 
@@ -184,6 +201,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
           {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <button type="button" onClick={retry}>reintentar</button></p>}
         </form>
 
+        <RechargeConfirmModal step={confirmStep} lines={lines} prepaid={isPrepaid} error={confirmError} onConfirm={() => void confirmRecharge()} onClose={() => { setConfirmStep(null); setConfirmError(""); }} />
         <ModalShell open={Boolean(activationPlatform)} labelledBy="activation-title" className={`${styles.activationModal} ${activationPlatform ? styles[activationPlatform.toLowerCase()] : ""}`} onClose={closeActivation}>
           {selectedPlatform && <form className={styles.activationPanel} onSubmit={submitActivation} aria-busy={submitting}>
             <header className={styles.activationHeading}>

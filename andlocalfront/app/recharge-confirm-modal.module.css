@@ -1,0 +1,55 @@
+/* Confirmación de recarga y «transacción recibida», según el mockup: panel
+   blanco, insignia grande a la izquierda y contenido en verde de marca a la
+   derecha. El verde apagado de las insignias es la marca al 60 %. */
+.modal { width: min(100%, 760px); background: var(--color-surface-raised); padding-block: var(--space-8) var(--space-6); padding-inline-start: var(--space-6); padding-inline-end: var(--space-8); box-shadow: 0 8px 24px rgb(0 0 0 / 18%); }
+
+/* El cerrar del mockup es un círculo rojo relleno con la X blanca. */
+.modal > button:last-child { top: var(--space-3); right: var(--space-3); width: var(--space-5); height: var(--space-5); background: var(--color-dismiss); color: var(--color-text-on-fill); }
+.modal > button:last-child svg { width: 22px; height: 22px; stroke-width: 1.5; }
+
+.layout { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--space-6); }
+.body { display: grid; gap: var(--space-2); min-width: 0; }
+.body h2 { margin: 0 0 var(--space-1); color: var(--color-brand); font-size: var(--font-size-card-title); font-weight: var(--font-weight-bold); line-height: 1.2; }
+.body .titleLarge { font-size: var(--font-size-headline); }
+
+.badge { display: grid; width: 136px; height: 136px; place-items: center; border-radius: 50%; }
+.badgeAsk { border: 9px solid color-mix(in srgb, var(--color-brand) 60%, white); color: color-mix(in srgb, var(--color-brand) 60%, white); font-size: 72px; font-weight: var(--font-weight-bold); line-height: 1; }
+.badgeDone { background: color-mix(in srgb, var(--color-brand) 60%, white); color: var(--color-text-on-fill); }
+
+.lines { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.lines li { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-3); }
+/* Columna fija para el logo: cada marca tiene otra proporción y, sin ella,
+   los montos quedaban desalineados. */
+.logo { display: grid; width: 32px; flex: none; place-items: center; }
+.logo img { width: auto; max-width: 30px; height: auto; max-height: 26px; }
+.lines strong { color: var(--color-brand); font-size: var(--font-size-card-title); }
+
+.notes { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.notes li { display: grid; grid-template-columns: 24px 1fr; align-items: start; gap: var(--space-3); color: var(--color-brand); font-size: var(--font-size-body); line-height: 1.4; }
+
+/* Deslizador: pista con borde y tirador verde. El relleno tenue que sigue al
+   tirador enseña cuánto falta sin necesidad de texto. */
+.track { position: relative; display: flex; align-items: center; height: 60px; overflow: hidden; margin-top: var(--space-3); border: 2px solid var(--color-text-subtle); border-radius: var(--radius-pill); padding: 4px; touch-action: none; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pill); background: var(--color-brand-surface); }
+.hint { position: absolute; inset: 0; display: grid; place-items: center; color: var(--color-text-muted); font-size: var(--font-size-body-sm); pointer-events: none; }
+.handle { position: relative; z-index: 1; display: grid; width: 48px; height: 48px; flex: none; place-items: center; border: 0; border-radius: 50%; background: var(--color-brand); color: var(--color-text-on-fill); cursor: grab; }
+.handle:active { cursor: grabbing; }
+.handle:disabled { cursor: progress; }
+.handle:focus-visible { outline: 3px solid rgb(11 89 1 / 30%); outline-offset: 3px; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error { margin: 0; color: var(--color-danger); font-size: var(--font-size-body-sm); }
+
+@media (max-width: 640px) {
+  .modal { padding-block: var(--space-7) var(--space-4); padding-inline-start: var(--space-3); padding-inline-end: var(--space-3); }
+  .layout { grid-template-columns: 1fr; justify-items: start; gap: var(--space-3); }
+  .badge { width: 88px; height: 88px; }
+  .badgeAsk { border-width: 6px; font-size: 48px; }
+  .badgeDone svg { width: 40px; height: 40px; }
+  .body .titleLarge { font-size: var(--font-size-title); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation-duration: 2.4s; }
+}

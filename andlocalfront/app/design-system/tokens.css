@@ -37,6 +37,9 @@
      sin que nada dijera que eran el mismo concepto. */
   --color-surface-hover: #ededed;
   --color-danger-surface: #fdf1f1;
+  /* Botón de cerrar relleno de los modales de recarga (mockup). Rojo de
+     descarte, no de error: el icono blanco encima llega a 3,9:1. */
+  --color-dismiss: #e23d5c;
   /* Un solo verde suave. Habia dos, #eef6ed y #e7f0e4, a un paso uno del otro
      y con el mismo papel: fondo tenue de marca bajo texto o pastilla. */
   --color-brand-surface: #eef6ed;
