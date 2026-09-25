@@ -65,7 +65,7 @@ describe("Fase 12 - clave temporal", () => {
     const clients = repository();
     const credentials = { prepare: vi.fn().mockResolvedValue({ username: "cliente", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) };
     const result = await new ManageClients(clients, credentials).create({
-      name: "Cliente", email: "cliente@example.test", accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0,
+      name: "Cliente", email: "cliente@example.test", ruc: "1712345675001", accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0,
     }, {});
 
     expect(result.credentials).toEqual({ username: "cliente", temporaryPassword: "Abcd2345Wxyz" });

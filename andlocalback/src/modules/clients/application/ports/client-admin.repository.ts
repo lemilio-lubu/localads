@@ -7,6 +7,7 @@ export type AdminClientView = {
   id: string;
   name: string;
   email: string;
+  ruc: string | null;
   manager: { id: string; username: string } | null;
   status: "ACTIVE" | "INACTIVE";
   createdAt: string;

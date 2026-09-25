@@ -4,6 +4,7 @@ import { AccountType, AdvertisingPlatform } from "../../recharges/domain/recharg
 export type ClientProfileInput = {
   name: string;
   email: string;
+  ruc: string;
   accountType: AccountType;
   platforms: AdvertisingPlatform[];
   creditDays: number;

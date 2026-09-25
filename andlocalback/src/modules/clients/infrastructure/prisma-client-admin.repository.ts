@@ -53,6 +53,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
           data: {
             id: clientId,
             name: input.name.trim(),
+            ruc: input.ruc,
             email: input.email.trim().toLowerCase(),
             status: "ACTIVE",
             managerId,
@@ -120,6 +121,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
           data: {
             ...(input.name !== undefined && { name: input.name.trim() }),
             ...(input.email !== undefined && { email: input.email.trim().toLowerCase() }),
+            ...(input.ruc !== undefined && { ruc: input.ruc }),
             ...(input.status !== undefined && { status: input.status }),
           },
         });
@@ -195,6 +197,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
       id: record.id,
       name: record.name,
       email: record.email,
+      ruc: record.ruc,
       manager: record.manager ? { id: record.manager.id, username: record.manager.username } : null,
       status: record.status as "ACTIVE" | "INACTIVE",
       createdAt: record.createdAt.toISOString(),
@@ -218,6 +221,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
          correo lo corrige quien crea el cliente, el usuario no. */
       const target = Array.isArray(error.meta?.target) ? (error.meta.target as string[]).join(",") : String(error.meta?.target ?? "");
       if (target.includes("username")) throw new ApplicationError("USERNAME_TAKEN", "El usuario derivado del correo ya existe", 409);
+      if (target.includes("ruc")) throw new ApplicationError("CLIENT_RUC_EXISTS", "Ya existe un cliente con este RUC", 409);
       throw new ApplicationError("CLIENT_EMAIL_EXISTS", "Ya existe un cliente con este correo", 409);
     }
     throw error;

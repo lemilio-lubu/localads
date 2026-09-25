@@ -55,6 +55,9 @@ model Client {
   platformsVersion     Int                         @default(0)
   name                 String
   email                String                      @unique
+  // RUC del SRI, normalizado a 13 digitos. Nullable solo por la columna: el
+  // dominio lo exige al crear y no deja vaciarlo al editar.
+  ruc                  String?                     @unique
   status               String
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt

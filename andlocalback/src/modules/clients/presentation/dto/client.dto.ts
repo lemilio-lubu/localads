@@ -4,6 +4,9 @@ import { AccountType, AdvertisingPlatform, ClientStatus } from "../../../recharg
 export class CreateClientDto {
   @IsString() @MinLength(2) @MaxLength(80) name!: string;
   @IsEmail() email!: string;
+  /* Solo forma y largo: la regla del SRI vive en el dominio (validateRuc),
+     que da el motivo concreto del rechazo. */
+  @IsString({ message: "El RUC es obligatorio" }) @MaxLength(20, { message: "El RUC debe tener 13 dígitos" }) ruc!: string;
   @IsEnum(AccountType) accountType!: AccountType;
   @IsArray() @IsEnum(AdvertisingPlatform, { each: true }) platforms!: AdvertisingPlatform[];
   @IsOptional() @IsInt() @Min(0) @Max(365) creditDays = 0;
@@ -15,6 +18,7 @@ export class CreateClientDto {
 export class UpdateClientDto {
   @IsOptional() @IsString() @MinLength(2) @MaxLength(80) name?: string;
   @IsOptional() @IsEmail() email?: string;
+  @IsOptional() @IsString({ message: "El RUC debe ser texto" }) @MaxLength(20, { message: "El RUC debe tener 13 dígitos" }) ruc?: string;
   @IsOptional() @IsEnum(AccountType) accountType?: AccountType;
   @IsOptional() @IsArray() @IsEnum(AdvertisingPlatform, { each: true }) platforms?: AdvertisingPlatform[];
   @ValidateIf((input: UpdateClientDto) => input.platforms !== undefined) @IsInt() @Min(0) expectedPlatformsVersion?: number;
