@@ -147,11 +147,6 @@ export default function VerificationsDashboard() {
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [selected]);
 
-  /* Aprobar declara el pago recibido y libera la recarga, asi que es solo de
-     ADMIN. El boton no se oculta sin mas: al gestor se le dice quien firma,
-     porque un control que desaparece se lee como una pantalla rota. */
-  const canApprove = isAdmin;
-
   const hardBlocked = selected?.detail.issues.some((issue) => ["COMPROBANTE_DUPLICADO", "REFERENCIA_BANCARIA_DUPLICADA"].includes(issue)) ?? false;
 
   async function open(item: PendingVerification) {
@@ -295,8 +290,7 @@ export default function VerificationsDashboard() {
             <span>Actualizado {formatDateTime(selected.detail.updatedAt ?? selected.detail.decisionAudit?.createdAt ?? selected.detail.createdAt)}</span>
           </div>}
           {selected.detail.issues.length > 0 && <div className={styles.issues}><strong>Señales de revisión</strong><ul>{selected.detail.issues.map((issue) => <li key={issue}>{verificationIssueLabel(issue)}</li>)}</ul></div>}
-          {reviewStatuses.includes(selected.detail.status) && <div className={styles.actions}>{reviewing ? <div className={styles.reviewForm}><label>Motivo de revisión<textarea autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label><div><button type="button" onClick={() => { setReviewing(false); setReason(""); }}>Cancelar</button><button type="button" disabled={!reason.trim() || busy} onClick={() => void decide("review")}><CircleAlert size={16} />Enviar a revisión</button></div></div> : <><button type="button" disabled={busy} onClick={() => { setReason(selected.detail.reviewReason ?? ""); setReviewing(true); }}><CircleAlert size={17} />En revisión</button>{canApprove && <button type="button" disabled={busy || hardBlocked} title={hardBlocked ? "La evidencia duplicada no puede aprobarse" : undefined} onClick={() => void decide("approve")}><Check size={17} />Aprobar transferencia</button>}</>}</div>}
-          {!canApprove && !reviewing && reviewStatuses.includes(selected.detail.status) && <p className={styles.handoffNote}>Puedes instruir el caso y rechazarlo. La aprobación la firma un administrador.</p>}
+          {reviewStatuses.includes(selected.detail.status) && <div className={styles.actions}>{reviewing ? <div className={styles.reviewForm}><label>Motivo de revisión<textarea autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label><div><button type="button" onClick={() => { setReviewing(false); setReason(""); }}>Cancelar</button><button type="button" disabled={!reason.trim() || busy} onClick={() => void decide("review")}><CircleAlert size={16} />Enviar a revisión</button></div></div> : <><button type="button" disabled={busy} onClick={() => { setReason(selected.detail.reviewReason ?? ""); setReviewing(true); }}><CircleAlert size={17} />En revisión</button><button type="button" disabled={busy || hardBlocked} title={hardBlocked ? "La evidencia duplicada no puede aprobarse" : undefined} onClick={() => void decide("approve")}><Check size={17} />Aprobar transferencia</button></>}</div>}
           {hardBlocked && !reviewing && <p className={styles.error}>La aprobación está bloqueada: el comprobante o código bancario ya fue utilizado.</p>}
           {error && <p className={styles.error} role="alert">{error}</p>}
         </section>

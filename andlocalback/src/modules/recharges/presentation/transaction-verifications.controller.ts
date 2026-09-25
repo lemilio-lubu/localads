@@ -44,17 +44,13 @@ export class TransactionVerificationsController {
   /* La pertenencia se comprueba antes de invocar el caso de uso: una
      verificacion fuera de la cartera no llega a evaluarse siquiera.
 
-     Aprobar, ademas, es solo de ADMIN, y es la unica accion de este controller que lo
-     es. Segregacion de funciones: aprobar declara el pago recibido —deja el
-     pago en PAID y, en PREPAGO, la recarga en APPROVED, que es lo que libera
-     la ejecucion— y el gestor es quien lleva la relacion comercial con ese
-     mismo cliente. Quien vende no confirma el cobro de su propia cartera.
-
-     El resto sigue siendo suyo porque nada de eso mueve valor: el OCR es una
-     lectura de maquina, «en revision» es triaje y rechazar es la direccion
-     conservadora. El gestor instruye el caso entero; la firma es de otro. */
+     Aprobar declara el pago recibido: deja el pago en PAID y, en PREPAGO, la
+     recarga en APPROVED, que es lo que libera la ejecucion. Estuvo reservado a
+     ADMIN (4d38f6e) y se reabrio al gestor por decision de negocio: aprueba
+     solo dentro de su cartera, y la decision queda firmada con su id en
+     decidedBy, visible en la pantalla de verificaciones. */
   @Patch("transaction-verifications/:verificationId/approve")
-  @Roles("ADMIN")
+  @Roles("ADMIN", "GESTOR")
   @HttpCode(HttpStatus.OK)
   async approve(
     @Param("verificationId") verificationId: string,
