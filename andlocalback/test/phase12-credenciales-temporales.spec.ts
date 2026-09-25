@@ -19,7 +19,7 @@ function repository(overrides: Partial<ClientAdminRepository> = {}): ClientAdmin
   return {
     create: vi.fn().mockResolvedValue(view),
     list: vi.fn().mockResolvedValue([view]),
-    findById: vi.fn().mockResolvedValue(view),
+    findById: vi.fn().mockResolvedValue(view), findDetail: vi.fn(),
     update: vi.fn().mockResolvedValue(view),
     deactivate: vi.fn().mockResolvedValue(view),
     assignManager: vi.fn().mockResolvedValue(view),

@@ -23,7 +23,7 @@ describe("Fase 15 - restablecer la clave de un cliente, en memoria", () => {
   const repository = (overrides: Partial<ClientAdminRepository> = {}): ClientAdminRepository => ({
     create: vi.fn(),
     list: vi.fn(),
-    findById: vi.fn().mockResolvedValue(view),
+    findById: vi.fn().mockResolvedValue(view), findDetail: vi.fn(),
     update: vi.fn(),
     deactivate: vi.fn(),
     assignManager: vi.fn(),

@@ -18,7 +18,8 @@ export class ClientsController {
   @Get() list(@Query() query: ListClientsQueryDto, @CurrentUser() user: AuthPrincipal) {
     return this.clients.list(withUnassigned(scopeFor(user), query.owner === "unassigned"));
   }
-  @Get(":id") get(@Param("id") id: string, @CurrentUser() user: AuthPrincipal) { return this.clients.get(id, scopeFor(user)); }
+  /* El detalle añade el reparto por plataforma, que el listado no necesita. */
+  @Get(":id") get(@Param("id") id: string, @CurrentUser() user: AuthPrincipal) { return this.clients.detail(id, scopeFor(user)); }
   @Post() create(@Body() body: CreateClientDto, @CurrentUser() user: AuthPrincipal) { return this.clients.create(body, scopeFor(user), body.managerId); }
   @Patch(":id") async update(@Param("id") id: string, @Body() body: UpdateClientDto, @CurrentUser() user: AuthPrincipal) {
     const result = await this.clients.update(id, { ...body, administratorId: user.userId }, scopeFor(user));

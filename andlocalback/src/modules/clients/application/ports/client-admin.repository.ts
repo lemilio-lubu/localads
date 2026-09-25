@@ -22,6 +22,12 @@ export type AdminClientView = {
   totalRecharged: number;
 };
 
+/* Reparto de una plataforma en la ficha del cliente: pauta solicitada en
+   recargas no rechazadas y número de operaciones. La participación se mide
+   en dinero, no en cuántas recargas incluyen la plataforma. */
+export type ClientPlatformSummary = { platform: AdvertisingPlatform; requested: number; operations: number };
+export type AdminClientDetailView = AdminClientView & { platformSummary: ClientPlatformSummary[] };
+
 export type UpdateClientInput = Partial<ClientProfileInput> & { status?: "ACTIVE" | "INACTIVE"; expectedPlatformsVersion?: number; administratorId?: string };
 
 export interface ClientAdminRepository {
@@ -32,6 +38,7 @@ export interface ClientAdminRepository {
      ajeno no llega nunca al proceso, asi que no puede escaparse por error. */
   list(scope: ManagerScope): Promise<AdminClientView[]>;
   findById(id: string, scope: ManagerScope): Promise<AdminClientView | null>;
+  findDetail(id: string, scope: ManagerScope): Promise<AdminClientDetailView | null>;
   update(id: string, input: UpdateClientInput): Promise<AdminClientView | null>;
   deactivate(id: string): Promise<AdminClientView | null>;
   /* null desvincula: el cliente vuelve a la bandeja de sin asignar. Devuelve

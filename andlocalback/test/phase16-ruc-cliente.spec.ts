@@ -62,7 +62,7 @@ describe("Fase 16 - regla del RUC", () => {
 describe("Fase 16 - RUC en el caso de uso", () => {
   const view = { id: "c1", name: "Cliente", email: "c@example.test", ruc: "1712345675001", account: { type: AccountType.PREPAID, creditDays: 0, platforms: [AdvertisingPlatform.META] } } as AdminClientView;
   const repository = (overrides: Partial<ClientAdminRepository> = {}): ClientAdminRepository => ({
-    create: vi.fn().mockResolvedValue(view), list: vi.fn(), findById: vi.fn().mockResolvedValue(view), update: vi.fn().mockResolvedValue(view),
+    create: vi.fn().mockResolvedValue(view), list: vi.fn(), findById: vi.fn().mockResolvedValue(view), findDetail: vi.fn(), update: vi.fn().mockResolvedValue(view),
     deactivate: vi.fn(), assignManager: vi.fn(), findLoginUsername: vi.fn(), resetPassword: vi.fn(), ...overrides,
   });
   const issuer = () => ({ prepare: vi.fn().mockResolvedValue({ username: "c", temporaryPassword: "Abcd2345Wxyz", passwordHash: "h" }), issue: vi.fn() });
