@@ -54,7 +54,10 @@
 .pagination button:disabled { opacity: .45; cursor: not-allowed; }
 .pagination button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
 .skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 112px; }
-.modal { width: min(1120px, 100%); max-height: min(92vh, 860px); overflow-y: auto; }
+/* Sin altura máxima ni scroll propio: si no cabe en la ventana, hace scroll
+   el fondo (ModalShell), igual que el detalle de transacción. Un scroll dentro
+   de otro obligaba a atinar en qué caja girar la rueda. */
+.modal { width: min(1120px, 100%); }
 .modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
 .modalHeader small { color: var(--color-text-muted); }
 .modalHeader h2 { margin: 4px 0; font-size: var(--font-size-subhead); }
