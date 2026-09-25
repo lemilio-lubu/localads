@@ -156,7 +156,7 @@ export default function ClientsDashboard() {
         )}
       </div>
 
-      {formOpen && <ClientFormModal client={editing} open isAdmin={isAdmin} onClose={() => setFormOpen(false)} onSaved={saveClient} onCreated={(client) => setIssued({ credentials: client.credentials, title: `acceso de ${client.name}` })} />}
+      {formOpen && <ClientFormModal client={editing} open isAdmin={isAdmin} onClose={() => setFormOpen(false)} onSaved={saveClient} onCreated={(client) => setIssued({ credentials: client.credentials, title: `acceso de ${client.name}` })} onPasswordReset={(client) => { setFormOpen(false); setIssued({ credentials: client.credentials, title: `nueva contraseña de ${client.name}` }); }} />}
       <CredentialsModal credentials={issued?.credentials ?? null} title={issued?.title ?? ""} onClose={() => setIssued(null)} />
       <ClientDetailModal key={selectedClient?.id ?? "closed"} client={selectedClient} onClose={() => setSelectedClient(null)} />
     </div>
