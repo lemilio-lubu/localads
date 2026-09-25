@@ -123,12 +123,12 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
 
   return (
     <ModalShell open={open} labelledBy="client-form-title" className={styles.modal} onClose={onClose}>
-      <FormHeader titleId="client-form-title" Icon={client ? UserPen : UserPlus} title={client ? "Editar cliente" : "Nuevo cliente"} subtitle={client?.name} />
+      <FormHeader titleId="client-form-title" Icon={client ? UserPen : UserPlus} eyebrow="cliente" title={client ? client.name : "Nuevo cliente"} subtitle={client ? "Editar datos, cuenta y plataformas" : undefined} />
 
       {/* noValidate: el globo nativo del navegador habla con su propia voz y no
           admite estilo. El mensaje lo escribe el producto, junto a cada campo. */}
-      <form className={form.form} onSubmit={submit} noValidate>
-        <Section title="Identidad">
+      <form className={`${form.form} ${styles.layout}`} onSubmit={submit} noValidate>
+        <Section title="Identidad" className={styles.identity}>
           <div className={form.grid}>
             <Field className={form.wide} label="Nombre o razón social" Icon={UserRound} error={shown("name")}>
               {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={touch("name")} maxLength={80} autoComplete="organization" placeholder="Ej. Comercial Andina S.A." aria-invalid={invalid} aria-describedby={describedBy} />}
@@ -190,7 +190,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
           )}
         </Section>
 
-        <Section title="Plataformas">
+        <Section title="Plataformas" className={styles.wide}>
           <div className={styles.platforms}>
             {platformOptions.map(({ value, label, logo, width, height }) => (
               <label key={value} className={`${form.choice} ${styles.platform}`} data-platform={value.toLowerCase()}>
@@ -208,7 +208,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
         </Section>
 
         {client && (
-          <Section title="Acceso al portal">
+          <Section title="Acceso al portal" className={styles.wide}>
             {resetStep === "idle"
               ? <div className={styles.accessRow}><p><KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />Genera una contraseña temporal nueva.</p><button type="button" className={form.secondary} onClick={() => setResetStep("confirm")}>Restablecer contraseña</button></div>
               : <div className={styles.resetConfirm}>
