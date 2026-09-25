@@ -18,7 +18,6 @@ export default function TeamMemberDetailView({ id }: { id: string }) {
   const [reloadToken, setReloadToken] = useState(0);
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<TeamRole>("GESTOR");
-  const [note, setNote] = useState("");
   const [busy, setBusy] = useState("");
   const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
@@ -29,7 +28,7 @@ export default function TeamMemberDetailView({ id }: { id: string }) {
   useEffect(() => {
     let active = true;
     getTeamMember(id)
-      .then((data) => { if (!active) return; setError(""); setMember(data); setUsername(data.username); setRole(data.role); setNote(data.note ?? ""); })
+      .then((data) => { if (!active) return; setError(""); setMember(data); setUsername(data.username); setRole(data.role); })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar la cuenta"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -44,7 +43,7 @@ export default function TeamMemberDetailView({ id }: { id: string }) {
     return () => { active = false; };
   }, [linking, reloadToken]);
 
-  const dirty = useMemo(() => Boolean(member) && (username !== member?.username || role !== member?.role || note !== (member?.note ?? "")), [member, note, role, username]);
+  const dirty = useMemo(() => Boolean(member) && (username !== member?.username || role !== member?.role), [member, role, username]);
 
   function reload() { setReloadToken((token) => token + 1); }
 
@@ -88,11 +87,10 @@ export default function TeamMemberDetailView({ id }: { id: string }) {
               <option value="ADMIN">administrador</option>
             </select>
           </label>
-          <label className={styles.noteField}><span>nota</span><textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} /></label>
         </div>
         <div className={styles.panelActions}>
           <button type="button" className={styles.primary} disabled={!dirty || Boolean(busy)} onClick={() => void run("save", async () => {
-            await updateTeamMember(member.id, { username, role, note: note.trim() || null });
+            await updateTeamMember(member.id, { username, role });
             setNotice("Cambios guardados."); reload();
           })}><Save size={16} aria-hidden="true" />{busy === "save" ? "guardando…" : "guardar cambios"}</button>
           <button type="button" disabled={Boolean(busy)} onClick={() => void run("reset", async () => {

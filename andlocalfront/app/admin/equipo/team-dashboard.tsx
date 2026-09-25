@@ -55,7 +55,7 @@ export default function TeamDashboard() {
      día crece lo bastante para necesitarlo. */
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return members.filter((member) => (!normalized || `${member.username} ${member.note ?? ""}`.toLowerCase().includes(normalized)) && (!role || member.role === role));
+    return members.filter((member) => (!normalized || member.username.toLowerCase().includes(normalized)) && (!role || member.role === role));
   }, [members, query, role]);
 
   function save(member: TeamMember) {
@@ -101,7 +101,7 @@ export default function TeamDashboard() {
   return (
     <div className={styles.module}>
       <div className={styles.toolbar}>
-        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por usuario o nota" /></label>
+        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por usuario" /></label>
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
             <span>rol</span>
@@ -125,7 +125,6 @@ export default function TeamDashboard() {
               <small>usuario</small>
               <strong>{member.username}</strong>
               <span data-role={member.role}>{roleLabel(member.role)}</span>
-              {member.note && <p className={styles.note}>{member.note}</p>}
             </div>
             {/* «no aplica» en tamaño pequeño, como en Clientes: es una ausencia,
                 no una cifra, y en grande competía con los números de al lado. */}

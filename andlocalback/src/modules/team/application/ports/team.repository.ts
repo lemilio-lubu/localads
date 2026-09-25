@@ -5,7 +5,6 @@ export type TeamMemberView = Readonly<{
   username: string;
   role: TeamRole;
   status: "ACTIVE" | "INACTIVE";
-  note: string | null;
   mustChangePassword: boolean;
   createdAt: string;
   /* Las dos cajas del mockup. «cuentas» son los clientes asignados y «ventas»
