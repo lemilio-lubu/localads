@@ -5,6 +5,27 @@ import { PrismaService } from "../../database/prisma.service";
 import { CurrentUser } from "./auth.decorators";
 import { AuthPrincipal } from "./auth.types";
 
+type ReceiptOwner = Readonly<{ clientId: string; client: { managerId: string | null } }>;
+
+/* Quién puede abrir un comprobante:
+   - ADMIN, cualquiera.
+   - GESTOR, solo los de clientes de su cartera. Fuera de ella responde 404,
+     como el resto de recortes por cartera: un 403 confirmaría que existe y
+     de quién es. Antes el gestor recibía 403 siempre, porque esta regla es
+     anterior a su rol y solo miraba clientId, que un gestor no tiene: veía la
+     verificación de su cliente pero no podía abrir la evidencia.
+   - CLIENT, solo los suyos (403 si no). */
+function assertCanRead(user: AuthPrincipal, owner: ReceiptOwner) {
+  if (user.role === "ADMIN") return;
+  if (user.role === "GESTOR") {
+    if (owner.client.managerId !== user.userId) throw new NotFoundException("Comprobante no encontrado");
+    return;
+  }
+  if (user.clientId !== owner.clientId) throw new ForbiddenException("No puedes consultar este comprobante");
+}
+
+const ownerSelect = { payment: { select: { transaction: { select: { clientId: true, client: { select: { managerId: true } } } } } } } as const;
+
 @Controller("files")
 export class SecureFilesController {
   constructor(private readonly database: PrismaService) {}
@@ -17,13 +38,11 @@ export class SecureFilesController {
         originalName: true,
         mimeType: true,
         url: true,
-        payment: { select: { transaction: { select: { clientId: true } } } },
+        ...ownerSelect,
       },
     });
     if (!receipt) throw new NotFoundException("Comprobante no encontrado");
-    if (user.role !== "ADMIN" && user.clientId !== receipt.payment.transaction.clientId) {
-      throw new ForbiddenException("No puedes consultar este comprobante");
-    }
+    assertCanRead(user, receipt.payment.transaction);
     return this.sendReceipt(response, receipt.url, receipt.originalName, receipt.mimeType);
   }
 
@@ -31,10 +50,9 @@ export class SecureFilesController {
   async receipt(@Param("filename") filename: string, @CurrentUser() user: AuthPrincipal, @Res() response: Response) {
     if (!/^[A-Za-z0-9._-]+$/.test(filename)) throw new NotFoundException();
     const url = `/uploads/receipts/${filename}`;
-    const receipt = await this.database.paymentReceipt.findFirst({ where: { url }, select: { payment: { select: { transaction: { select: { clientId: true } } } } } });
-    const ownerId = receipt?.payment.transaction.clientId;
-    if (!ownerId) throw new NotFoundException("Comprobante no encontrado");
-    if (user.role !== "ADMIN" && user.clientId !== ownerId) throw new ForbiddenException("No puedes consultar este comprobante");
+    const receipt = await this.database.paymentReceipt.findFirst({ where: { url }, select: ownerSelect });
+    if (!receipt) throw new NotFoundException("Comprobante no encontrado");
+    assertCanRead(user, receipt.payment.transaction);
     return this.sendReceipt(response, url, filename, undefined);
   }
 
