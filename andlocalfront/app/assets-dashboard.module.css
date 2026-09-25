@@ -41,14 +41,6 @@
 .assetDeck[data-has-selection="true"] .platformCard[data-selected="true"] .lastRecharge { display: flex; }
 .lastRecharge small { font-size: var(--font-size-caption); }
 .lastRecharge strong { font-size: var(--font-size-title); line-height: 1.1; }
-/* Va en la franja de 112px que asoma del naipe, no en su mitad tapada: el
-   resto de la tarjeta queda bajo la siguiente y el gesto no se vería. */
-.disclosure { position: absolute; top: var(--space-6); right: var(--space-4); color: rgb(255 255 255 / 70%); transition: transform var(--duration-ui) var(--ease-out); }
-.googleCard .disclosure { color: var(--color-google-text); }
-/* Abierta, la tarjeta se ve entera y el gesto baja: arriba chocaba con
-   «última recarga», que ocupa esa esquina. */
-.platformCard[data-selected="true"] .disclosure { top: auto; right: var(--space-6); bottom: var(--space-5); transform: rotate(180deg); }
-.lockedCard .disclosure { display: none; }
 .balance { position: absolute; top: var(--space-6); right: var(--space-9); display: flex; flex-direction: column; color: #fff; }
 .balance small { font-size: var(--font-size-body); line-height: 20px; }
 .balance strong { font-size: var(--font-size-title); line-height: 28px; }
@@ -71,7 +63,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .disclosure { transition-duration: 0ms; }
   .platformCard, .totalCard a { transition-duration: 0ms; }
 }
 
@@ -87,8 +78,6 @@
   .metaIcon { width: 48px; height: 40px; }
   .googleIcon { width: 40px; height: 40px; }
   .balance { top: var(--space-3); right: var(--space-3); }
-  .disclosure { top: var(--space-3); right: var(--space-1); }
-  .platformCard[data-selected="true"] .disclosure { right: var(--space-3); bottom: var(--space-3); }
   .balance small { font-size: var(--font-size-caption); line-height: var(--space-2); }
   .balance strong { font-size: var(--font-size-card-title); line-height: var(--space-3); }
   .lastRecharge { top: var(--space-2); right: var(--space-3); }
@@ -102,20 +91,6 @@
 
 @media (max-width: 390px) {
   .totalCard a { top: auto; right: auto; bottom: var(--space-2); left: var(--space-3); }
-}
-
-/* Naipe de plataforma sin activar: mismo mazo, distinto peso visual. */
-.lockedCard { display: block; background: var(--color-surface-muted); box-shadow: 0 -8px 16px rgb(0 0 0 / 14%); text-decoration: none; }
-.lockedCard .assetIcon { opacity: .45; filter: grayscale(1); }
-.lockedLabel { position: absolute; top: var(--space-6); right: var(--space-9); display: flex; flex-direction: column; align-items: flex-end; color: var(--color-text-muted); text-align: right; }
-.lockedLabel small { font-size: var(--font-size-body); line-height: 20px; }
-.lockedLabel strong { color: var(--color-brand); font-size: var(--font-size-title); line-height: 28px; text-decoration: underline; }
-.lockedCard:focus-visible { outline: 3px solid var(--color-brand); outline-offset: -6px; }
-@media (hover: hover) and (pointer: fine) { .lockedCard:hover .lockedLabel strong { color: var(--color-text); } }
-@media (max-width: 680px) {
-  .lockedLabel { top: var(--space-3); right: var(--space-3); }
-  .lockedLabel small { font-size: var(--font-size-caption); line-height: var(--space-2); }
-  .lockedLabel strong { font-size: var(--font-size-card-title); line-height: var(--space-3); }
 }
 
 /* El credito cabe en la tarjeta de total: es informacion financiera del mismo

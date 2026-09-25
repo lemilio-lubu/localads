@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, RotateCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import AccountShell from "./account-shell";
@@ -38,7 +38,6 @@ function AssetCard({ pauta, selected, position, layer, reduceMotion, onSelect }:
       <span className={`${styles.assetIcon} ${item.iconClass}`}><Image src={item.icon} alt="" fill sizes="64px" /></span>
       <span className={styles.lastRecharge}><small>última recarga</small><strong>{pauta.lastRechargeAt ? formatDay(pauta.lastRechargeAt) : "Sin recargas"}</strong></span>
       <span className={styles.balance}><small>saldo disponible</small><strong>{formatAmount(pauta.currentBalance)}</strong></span>
-      <ChevronDown className={styles.disclosure} size={20} aria-hidden="true" />
     </span>
   </motion.button>;
 }
@@ -62,15 +61,10 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
 
   useEffect(() => { let active = true; void getRechargeContext().then((value) => { if (active) setContext(value); }).catch(() => undefined); getMyWallet(clientId).then((wallet) => { if (active) { setPautas(wallet.pautas); setTotal(wallet.balanceTotal); setError(""); setSelected((current) => wallet.pautas.some((pauta) => pauta.id === current && pauta.status === "ACTIVE") ? current : null); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible cargar tus activos"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [clientId, revision, reloadToken]);
   const visible = pautas.filter((pauta) => pauta.status === "ACTIVE");
-  // Las plataformas que faltan se muestran como naipe bloqueado: desde aqui
-  // tambien se llega a activarlas, no solo desde el formulario de recarga.
+  /* Como en una billetera real, solo aparecen las tarjetas contratadas: las
+     plataformas sin pauta activa no se pintan. Para activarlas está el enlace
+     de la tarjeta de total. */
   const credit = context && context.account.type === "POSTPAGO" ? context.account : null;
-  /* Si la consulta falló no sabemos qué pautas tiene: pintar las tres como «sin
-     activar» convierte un fallo de carga en un estado de negocio, e invita a
-     activar una pauta que quizá ya existe. */
-  const missing = error ? [] : (Object.keys(config) as RechargePlatform[])
-    .filter((platform) => !visible.some((pauta) => pauta.platform === platform))
-    .sort((a, b) => a.localeCompare(b));
   const others = visible.filter((pauta) => pauta.id !== selected);
   // El paso coincide con --card-stride del CSS; si cambia uno, cambia el otro.
   /* Con una tarjeta abierta, las demás arrancan donde ella termina y se apilan
@@ -82,27 +76,12 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
      quedan como franjas finas, que es la composición del mockup. */
   const layerFor = (pauta: PautaResponse, index: number) => !selected ? index + 1 : pauta.id === selected ? 1 : others.findIndex((item) => item.id === pauta.id) + 2;
   // La del total baja con las franjas para no comerse la última.
-  const totalTop = selected ? stripTop(others.length + missing.length) : null;
+  const totalTop = selected ? stripTop(others.length) : null;
 
   return <AccountShell accountType={accountType} activePage="assets"><>
-    <section className={styles.assetDeck} ref={deckRef} style={{ "--card-count": Math.max(visible.length + missing.length, 1), ...(totalTop === null ? {} : { "--total-top": `${totalTop}px` }) } as CSSProperties} data-has-selection={selected !== null} aria-label="Balance de activos publicitarios" aria-busy={loading}>
+    <section className={styles.assetDeck} ref={deckRef} style={{ "--card-count": Math.max(visible.length, 1), ...(totalTop === null ? {} : { "--total-top": `${totalTop}px` }) } as CSSProperties} data-has-selection={selected !== null} aria-label="Balance de activos publicitarios" aria-busy={loading}>
       <div className={styles.deckBase} aria-hidden="true" />
       {visible.map((pauta, index) => <AssetCard key={pauta.id} pauta={pauta} selected={selected === pauta.id} position={positionFor(pauta, index)} layer={layerFor(pauta, index)} reduceMotion={reduceMotion} onSelect={() => setSelected((current) => current === pauta.id ? null : pauta.id)} />)}
-      {missing.map((platform, index) => {
-        const item = config[platform];
-        return <Link
-          key={platform}
-          href={`/${accountType}`}
-          className={`${styles.assetCard} ${styles.platformCard} ${styles.lockedCard}`}
-          style={{ zIndex: (selected ? others.length + 2 : visible.length + 1) + index, transform: `translate3d(0, ${selected ? stripTop(others.length + index) : (visible.length + index) * metrics.stride}px, 0)` }}
-          aria-label={`Activar ${item.label}`}
-        >
-          <span className={styles.cardContent}>
-            <span className={`${styles.assetIcon} ${item.iconClass}`}><Image src={item.icon} alt="" fill sizes="64px" /></span>
-            <span className={styles.lockedLabel}><small>sin activar</small><strong>activar {item.label}</strong></span>
-          </span>
-        </Link>;
-      })}
       <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "balance total" : "sin pautas activas"}</span><strong>{error ? "—" : formatAmount(total)}</strong></span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
         {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de {formatAmount(credit.creditLimit)} · {credit.creditDays} días</span>}
       </span></article>
