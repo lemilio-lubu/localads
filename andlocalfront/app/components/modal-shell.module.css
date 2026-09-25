@@ -1,6 +1,10 @@
 /* El fondo atrapa el scroll: con el contenido en su propio contenedor, bloquear
    el body ya no basta para que la página de atrás se quede quieta. */
-.backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; overflow-y: auto; overscroll-behavior: contain; background: rgb(255 255 255 / 60%); padding: var(--space-3); backdrop-filter: blur(6px); }
+/* Columna flex + margin-block: auto en el panel: se centra si cabe y, si es
+   más alto que la ventana, los márgenes pasan a cero y arranca arriba. Con
+   place-items: center un modal alto se desbordaba por los dos lados y la
+   parte de arriba -título y botón de cerrar- quedaba fuera del scroll. */
+.backdrop { position: fixed; z-index: 100; inset: 0; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overscroll-behavior: contain; background: rgb(255 255 255 / 60%); padding: var(--space-3); backdrop-filter: blur(6px); }
 /* El padding vive aquí y no en cada modal: era opcional y alguno se olvidaba,
    y su contenido salía pegado a los bordes del panel.
 
@@ -9,7 +13,7 @@
 
    Un modal que necesite otras medidas usa longhands -padding-block,
    padding-inline-start- y nunca el atajo `padding`, que borraría el hueco. */
-.panel { position: relative; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-5); padding-inline-end: var(--space-6); box-shadow: var(--shadow-modal); }
+.panel { position: relative; flex: none; margin-block: auto; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-5); padding-inline-end: var(--space-6); box-shadow: var(--shadow-modal); }
 .closeButton { position: absolute; top: var(--space-1); right: var(--space-1); display: grid; width: var(--hit-target); height: var(--hit-target); place-items: center; border: 0; border-radius: 50%; background: transparent; padding: 0; color: var(--color-text-muted); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .closeButton svg { width: var(--icon-size-sm); height: var(--icon-size-sm); }
 .closeButton:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
@@ -20,7 +24,7 @@
 }
 
 @media (max-width: 680px) {
-  .backdrop { align-items: start; padding: var(--space-1); }
+  .backdrop { padding: var(--space-1); }
   /* En móvil el aire baja, pero el hueco del botón se mantiene: el botón
      sigue ahí y el título sigue siendo igual de largo. */
   .panel { margin-block: var(--space-1); border-radius: var(--radius-control); padding: var(--space-3); padding-inline-end: var(--space-6); }

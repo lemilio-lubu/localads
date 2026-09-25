@@ -19,6 +19,12 @@ export default function ModalShell({ open, labelledBy, children, className = "",
   const modal = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
+  /* onClose suele llegar como función nueva en cada render. Si fuera
+     dependencia del efecto de abajo, cada render lo repetiría: el foco
+     saltaba al botón de cerrar a mitad de uso, perdiendo el sitio a quien
+     navega con teclado. Se lee desde una ref y el efecto depende solo de open. */
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
 
   useEffect(() => {
     if (!open) return;
@@ -30,7 +36,7 @@ export default function ModalShell({ open, labelledBy, children, className = "",
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -55,7 +61,7 @@ export default function ModalShell({ open, labelledBy, children, className = "",
       window.removeEventListener("keydown", handleKeyDown);
       returnFocus.current?.focus();
     };
-  }, [onClose, open]);
+  }, [open]);
 
   return (
     <AnimatePresence>
