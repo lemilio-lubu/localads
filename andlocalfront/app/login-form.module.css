@@ -1,40 +1,64 @@
-.loginPage { display: grid; min-height: 100vh; place-items: center; padding: var(--space-4) var(--space-3); background: radial-gradient(circle at 50% 38%, rgb(11 89 1 / 5%), transparent 34%), var(--color-canvas); color: var(--color-text); }
-.loginCard { width: min(440px, 100%); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); padding: var(--space-6); box-shadow: var(--shadow-panel); }
-.logo { display: flex; justify-content: center; height: var(--space-7); overflow: hidden; }
-.logo > div { width: 152px; }
-.heading { margin-top: var(--space-4); text-align: center; }
-.heading p, .demoAccess > p { margin: 0; color: var(--color-brand); font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); letter-spacing: .08em; text-transform: uppercase; }
-.heading h1 { margin: var(--space-1) 0; color: var(--color-text); font-size: var(--font-size-headline); line-height: 1.25; letter-spacing: -.8px; }
-.heading > span { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
-.form { display: flex; flex-direction: column; margin-top: var(--space-4); }
-.form label { display: flex; flex-direction: column; gap: var(--space-1); }
-.form label + label { margin-top: var(--space-2); }
-.form label > span { padding-left: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
-.form input { width: 100%; height: var(--control-height); border: 1px solid transparent; border-radius: var(--radius-control); outline: 0; background: var(--color-surface-raised); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body); transition: border-color var(--duration-ui) ease, box-shadow var(--duration-ui) ease; }
-.form input::placeholder { color: var(--color-text-muted); }
-.form input:focus { border-color: rgb(11 89 1 / 36%); box-shadow: var(--focus-ring); }
-.error { min-height: var(--space-3); margin: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
-.demoAccess { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
-.demoAccess > p { color: var(--color-text-muted); text-align: center; }
-/* Cuatro accesos desde que existe el gestor: en tres columnas el cuarto se
-   quedaba solo en una fila. Dos por dos reparte el peso. */
-.demoAccess > div { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-1); margin-top: var(--space-2); }
-.demoAccess button { display: flex; min-width: 0; flex-direction: column; gap: 4px; border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: rgb(255 255 255 / 72%); padding: 12px var(--space-2); color: var(--color-text); text-align: left; cursor: pointer; transition: border-color var(--duration-ui) ease, background-color var(--duration-ui) ease; }
-.demoAccess strong { font-size: var(--font-size-body-sm); }
-.demoAccess span { overflow: hidden; color: var(--color-text-muted); font-size: var(--font-size-micro); text-overflow: ellipsis; white-space: nowrap; }
-.demoAccess button:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
-.demoAccess button:active { border-color: rgb(11 89 1 / 30%); background: #f3f8f2; }
+/* Login: un solo lienzo claro. A la izquierda la historia (la billetera con
+   las tres plataformas y qué es Local Ads); a la derecha el acceso, en un
+   panel de cristal esmerilado. Contención: pocas piezas y mucho aire, con
+   la misma tipografía que el resto del producto. Los campos vienen de
+   components/form-modal, los mismos del portal. */
+.page { position: relative; display: grid; min-height: 100vh; grid-template-columns: minmax(0, 1.2fr) minmax(380px, 1fr); align-items: center; gap: var(--space-4); overflow: hidden; padding: var(--space-6) clamp(var(--space-3), 6vw, var(--space-12)); background: var(--color-surface); color: var(--color-text); }
+
+/* Aurora: tres manchas difusas de color de marca que derivan muy despacio. */
+.aurora { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.aurora span { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; filter: blur(90px); opacity: .5; animation: drift 26s ease-in-out infinite alternate; }
+.aurora span:nth-child(1) { top: -18vmax; left: -10vmax; background: color-mix(in srgb, var(--color-brand) 22%, transparent); }
+.aurora span:nth-child(2) { top: 20%; left: 18%; background: color-mix(in srgb, var(--color-meta) 16%, transparent); animation-duration: 32s; animation-delay: -8s; }
+.aurora span:nth-child(3) { bottom: -22vmax; left: 30%; background: color-mix(in srgb, var(--color-tiktok) 12%, transparent); animation-duration: 38s; animation-delay: -16s; }
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(6vmax, -4vmax, 0) scale(1.12); }
+}
+
+.story { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
+.storyText { display: grid; max-width: 520px; gap: var(--space-2); text-align: center; }
+/* Titular en dos tonos: la primera frase afirma, la segunda remata en gris. */
+.storyText h2 { margin: 0; color: var(--color-text); font-size: var(--font-size-display); font-weight: var(--font-weight-bold); line-height: 1.1; letter-spacing: -.02em; text-wrap: balance; }
+/* Sin punto final, la segunda frase va siempre en su propia línea: en la
+   misma se leerían como una sola («…de pauta En una…»). */
+.storyText h2 span { display: block; color: var(--color-text-subtle); }
+.storyText p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-card-title); line-height: 1.4; letter-spacing: -.01em; text-wrap: balance; }
+
+/* Panel de cristal: translúcido, desenfoca lo de detrás, filo claro. */
+.panel { position: relative; z-index: 1; display: grid; width: min(420px, 100%); gap: var(--space-4); justify-self: center; border: 1px solid rgb(255 255 255 / 70%); border-radius: 28px; background: rgb(255 255 255 / 62%); padding: var(--space-6) var(--space-5); box-shadow: 0 30px 80px -30px rgb(20 40 20 / 25%), inset 0 1px 0 rgb(255 255 255 / 90%); backdrop-filter: saturate(180%) blur(24px); }
+.logo { height: var(--space-5); }
+.logo > div { width: 124px; }
+.heading h1 { margin: 0; color: var(--color-text); font-size: var(--font-size-headline); font-weight: var(--font-weight-bold); line-height: 1.15; letter-spacing: -.015em; }
+.heading p { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.5; }
+.form { gap: var(--space-2); }
+.submit { min-height: var(--control-height) !important; margin-top: var(--space-1); font-size: var(--font-size-body) !important; }
+
+/* Mostrar/ocultar contraseña, dentro del campo a la derecha. */
+.passwordInput { padding-right: var(--space-7) !important; }
+.reveal { position: absolute; right: var(--space-1); display: grid; width: var(--hit-target); height: var(--hit-target); place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--color-text-muted); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.reveal:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 0; }
+
+.demo { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.6; text-align: center; }
+.demo button { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-weight: var(--font-weight-bold); cursor: pointer; }
+.demo button:disabled { opacity: .5; cursor: wait; }
+.demo button:focus-visible { border-radius: 4px; outline: 2px solid var(--color-brand); outline-offset: 2px; }
 
 @media (hover: hover) and (pointer: fine) {
-  .demoAccess button:hover { border-color: rgb(11 89 1 / 22%); background: var(--color-surface-raised); }
+  .reveal:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .demo button:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+/* Pantallas estrechas: la historia arriba, más corta, y el acceso debajo. */
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; align-items: start; gap: var(--space-2); padding: var(--space-3) var(--space-2) var(--space-6); }
+  .storyText h2 { font-size: var(--font-size-headline); }
+  .storyText p { font-size: var(--font-size-body); }
+  .panel { padding: var(--space-4) var(--space-3); border-radius: 24px; }
+  .heading h1 { font-size: var(--font-size-title); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .form input, .demoAccess button { transition-duration: 0ms; }
-}
-
-@media (max-width: 480px) {
-  .loginPage { padding-inline: var(--space-2); }
-  .loginCard { border-radius: var(--radius-control); padding: var(--space-4) var(--space-3); }
-  .demoAccess > div { grid-template-columns: 1fr; }
+  .aurora span { animation: none; }
+  .reveal { transition-duration: 0ms; }
 }
