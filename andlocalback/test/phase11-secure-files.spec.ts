@@ -4,15 +4,17 @@ import { SecureFilesController } from "../src/modules/auth/secure-files.controll
 import type { AuthPrincipal } from "../src/modules/auth/auth.types";
 import { TransactionsGateway } from "../src/modules/recharges/presentation/transactions.gateway";
 import { VerificationStatus } from "../src/modules/recharges/domain/recharge.types";
+import { TransactionPaymentStatus, TransactionRechargeStatus } from "../src/modules/recharges/domain/model/domain-status";
 
 const admin: AuthPrincipal = { userId: "admin-1", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null };
+const gestor = (userId: string): AuthPrincipal => ({ userId, username: userId, role: "GESTOR", clientId: null, accountId: null, accountType: null });
 const client = (clientId: string): AuthPrincipal => ({ userId: `user-${clientId}`, username: clientId, role: "CLIENT", clientId, accountId: "account-1", accountType: "PREPAGO" });
 
 describe("SecureFilesController fase 11", () => {
   function setup(mimeType = "image/png") {
     const database = { paymentReceipt: { findUnique: vi.fn().mockResolvedValue({
       originalName: "transferencia cliente.png", mimeType, url: "/uploads/receipts/receipt-1.png",
-      payment: { transaction: { clientId: "client-1" } },
+      payment: { transaction: { clientId: "client-1", client: { managerId: "gestor-1" } } },
     }) } };
     const response = { type: vi.fn(), set: vi.fn(), sendFile: vi.fn().mockReturnValue("sent") };
     return { controller: new SecureFilesController(database as never), database, response };
@@ -35,6 +37,15 @@ describe("SecureFilesController fase 11", () => {
     await expect(other.controller.receiptContent("receipt-1", client("client-2"), other.response as never)).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  it("el gestor abre los comprobantes de su cartera y no los ajenos", async () => {
+    const own = setup();
+    await expect(own.controller.receiptContent("receipt-1", gestor("gestor-1"), own.response as never)).resolves.toBe("sent");
+    // Fuera de su cartera, 404 y no 403: no confirma que el comprobante exista.
+    const foreign = setup();
+    await expect(foreign.controller.receiptContent("receipt-1", gestor("gestor-2"), foreign.response as never)).rejects.toBeInstanceOf(NotFoundException);
+    expect(foreign.response.sendFile).not.toHaveBeenCalled();
+  });
+
   it("rechaza formatos no permitidos aunque existan en base", async () => {
     const { controller, response } = setup("text/html");
     await expect(controller.receiptContent("receipt-1", admin, response as never)).rejects.toBeInstanceOf(NotFoundException);
@@ -50,8 +61,9 @@ describe("eventos de verificaciones fase 11", () => {
     (gateway as unknown as { server: typeof transport }).server = transport;
 
     gateway.publishVerification({
-      verificationId: "verification-1", transactionId: "transaction-1", accountId: "account-1",
-      status: VerificationStatus.APPROVED, paymentStatus: "PAID", decidedAt: "2026-09-11T12:00:00.000Z",
+      eventId: "event-1", verificationId: "verification-1", transactionId: "transaction-1", accountId: "account-1",
+      status: VerificationStatus.APPROVED, paymentStatus: TransactionPaymentStatus.PAID,
+      rechargeStatus: TransactionRechargeStatus.APPROVED, reason: null, version: 1, occurredAt: "2026-09-11T12:00:00.000Z",
     });
 
     expect(transport.to).toHaveBeenNthCalledWith(1, "transactions:admin");
