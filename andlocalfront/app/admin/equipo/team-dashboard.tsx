@@ -1,13 +1,13 @@
 "use client";
 
 import { CirclePlus, KeyRound, Layers, Power, RotateCw, Search, Shield, UserCog } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
 import CredentialsModal from "../../components/credentials-modal";
 import { getTeam, resetTeamMemberPassword, updateTeamMember, type IssuedCredentials, type TeamMember, type TeamRole } from "../../lib/team-api";
 import TeamFormModal from "./team-form-modal";
 import PortfolioHandoverModal from "./portfolio-handover-modal";
+import TeamMemberModal from "./team-member-modal";
 import MetricCard from "../../components/metric-card";
 import styles from "./team-dashboard.module.css";
 
@@ -36,13 +36,31 @@ export default function TeamDashboard() {
   /* La baja de un gestor con cartera pasa por el modal de destino. */
   const [handover, setHandover] = useState<TeamMember | null>(null);
   const [handoverError, setHandoverError] = useState("");
+  /* Ficha abierta. Se refleja en la URL (?miembro=) para que el enlace a un
+     miembro se pueda compartir o guardar, como cuando era una pantalla. */
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  function openMember(id: string | null) {
+    setSelectedId(id);
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set("miembro", id); else url.searchParams.delete("miembro");
+    window.history.replaceState(null, "", url);
+  }
 
   const hasFilters = Boolean(query.trim() || role);
   function clearFilters() { setQuery(""); setRole(null); }
 
   useEffect(() => {
     let active = true;
-    getTeam().then((data) => { if (active) { setError(""); setMembers(data); } })
+    getTeam().then((data) => {
+      if (!active) return;
+      setError(""); setMembers(data);
+      /* Un enlace con ?miembro= abre esa ficha sobre la lista, ya cargada. Se
+         lee aquí y no al iniciar el estado: el servidor no ve la URL del
+         navegador y el HTML de los dos no coincidiría. */
+      const fromUrl = new URLSearchParams(window.location.search).get("miembro");
+      if (fromUrl) setSelectedId((current) => current ?? fromUrl);
+    })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar el equipo"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -120,7 +138,7 @@ export default function TeamDashboard() {
       <div className={styles.list} aria-live="polite" aria-busy={loading}>
         {!loading && !error && visible.map((member) => (
           <article key={member.id} className={`${styles.row} ${member.status === "INACTIVE" ? styles.inactive : ""}`}>
-            <Link className={styles.openDetail} href={`/admin/equipo/${member.id}`} aria-label={`Ver detalle de ${member.username}`} />
+            <button type="button" className={styles.openDetail} onClick={() => openMember(member.id)} aria-label={`Ver detalle de ${member.username}`} aria-haspopup="dialog" />
             <div className={styles.identity}>
               <small>usuario</small>
               <strong>{member.username}</strong>
@@ -164,6 +182,17 @@ export default function TeamDashboard() {
         error={handoverError}
         onClose={() => { setHandover(null); setHandoverError(""); }}
         onConfirm={(destination) => void confirmHandover(destination)}
+      />
+      {/* Restablecer y dar de baja cierran la ficha y siguen por los flujos de
+          la lista (credenciales, destino de cartera): un modal nunca se apila
+          sobre otro. */}
+      <TeamMemberModal
+        key={selectedId ?? "closed"}
+        memberId={selectedId}
+        onClose={() => openMember(null)}
+        onChanged={() => setReloadToken((token) => token + 1)}
+        onResetPassword={(member) => { openMember(null); void run(member, "reset"); }}
+        onToggleStatus={(member) => { openMember(null); void run(member, "toggle"); }}
       />
       <TeamFormModal open={formOpen} onClose={() => setFormOpen(false)} onCreated={(member) => { setFormOpen(false); save(member); setIssued({ credentials: member.credentials, title: `cuenta de ${member.username} creada` }); }} />
       <CredentialsModal credentials={issued?.credentials ?? null} title={issued?.title ?? ""} onClose={() => setIssued(null)} />

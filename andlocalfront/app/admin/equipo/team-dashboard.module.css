@@ -20,7 +20,7 @@
    Las dos cajas del mockup, cuentas y ventas, comparten 0,786 porque son un
    número corto; «acceso» sube a 1 porque su valor es texto. */
 .row { position: relative; display: grid; min-height: var(--space-15); grid-template-columns: minmax(var(--space-15), 1.272fr) minmax(var(--space-10), .786fr) minmax(var(--space-10), .786fr) minmax(var(--space-10), .618fr) minmax(var(--space-15), 1fr) minmax(var(--space-20), 1fr); align-items: stretch; gap: var(--space-1); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-2); transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out), opacity var(--duration-ui) var(--ease-out); }
-.openDetail { position: absolute; z-index: 1; inset: 0; border-radius: inherit; outline: 0; }
+.openDetail { position: absolute; z-index: 1; inset: 0; border: 0; border-radius: inherit; outline: 0; background: transparent; cursor: pointer; }
 .openDetail:focus-visible { box-shadow: inset var(--focus-ring); }
 .row:has(.openDetail:active) { transform: scale(.99); }
 .row > *:not(.openDetail, .rowActions) { pointer-events: none; }

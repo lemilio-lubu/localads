@@ -1,0 +1,97 @@
+/* Ficha de miembro del equipo con la composición del detalle de cliente
+   (admin/clientes/client-detail-modal): mismas medidas, mismas etiquetas,
+   mismas tarjetas de métricas y la misma rejilla de paneles. Si cambia uno,
+   conviene cambiar el otro. */
+.modal { width: min(calc(100vw - var(--space-6)), var(--layout-client-detail-max)); background: var(--color-surface-raised); }
+
+.summary { display: grid; grid-template-columns: minmax(var(--space-20), 1fr) minmax(0, 2.2fr); align-items: center; gap: var(--space-4); }
+.identity { min-width: 0; }
+/* inline-flex con gap: en flex el espacio de «cuenta » se descartaría. */
+.accountBadge { display: inline-flex; align-items: center; gap: .3em; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
+.identity h2 { overflow: hidden; margin: var(--space-1) 0; color: var(--color-text); font-size: var(--font-size-title); line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); }
+.metric { min-height: var(--space-9); border-radius: var(--radius-menu); padding: var(--space-2); }
+.metric strong { font-size: var(--font-size-card-title); }
+/* Tarjeta con texto en vez de cifra: misma caja, sin agrandar el valor, que
+   así usa el tamaño pequeño de MetricCard. */
+.metricText { min-height: var(--space-9); border-radius: var(--radius-menu); padding: var(--space-2); }
+
+/* Datos de la cuenta a toda altura a la izquierda; cartera y ventas a la
+   derecha, como ciclo / transacciones / participación en el de cliente. */
+.detailGrid { display: grid; grid-template-columns: minmax(280px, .72fr) minmax(0, 1fr); grid-template-rows: auto 1fr; gap: var(--space-2); margin-top: var(--space-4); }
+.panel { display: grid; align-content: start; gap: var(--space-2); min-width: 0; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-3); }
+.panel h3 { margin: 0 0 var(--space-1); color: var(--color-text); font-size: var(--font-size-title); line-height: 1; }
+.accountPanel { grid-row: 1 / -1; }
+.panelHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.panelHead h3 { margin: 0; }
+
+.fields { display: grid; gap: var(--space-2); }
+.primary { display: inline-flex; min-height: var(--button-height); align-items: center; justify-self: start; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding-inline: var(--space-3); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
+.primary:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Acceso y estado, al pie del panel y separados por una línea: actúan en el
+   momento, no se guardan con los datos. */
+.access { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); border-top: 1px solid var(--color-border-strong); padding-top: var(--space-3); }
+.access > button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); cursor: pointer; }
+.access > button:disabled { opacity: .5; cursor: not-allowed; }
+.access > .danger { color: var(--color-danger); }
+.confirm { display: grid; width: 100%; gap: var(--space-2); }
+.confirm p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.5; }
+.confirm strong { color: var(--color-text); }
+.confirm > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); }
+
+.notice { margin: 0; color: var(--color-brand); font-size: var(--font-size-body-sm); }
+
+.link { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
+.picker { display: flex; flex-wrap: wrap; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-raised); padding: var(--space-2); }
+.picker p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.picker button { min-height: var(--hit-target); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); cursor: pointer; }
+
+/* Cartera: cada chip navega; el icono de al lado es la única acción
+   destructiva y va separado para no confundirlos. */
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.chips li { display: inline-flex; align-items: center; gap: var(--space-half); border-radius: var(--radius-pill); background: var(--color-surface-raised); padding: 0 var(--space-half) 0 var(--space-2); }
+.chips li[data-inactive="true"] { opacity: .55; }
+.chips a { display: inline-flex; min-height: var(--hit-target); align-items: center; color: var(--color-text); font-size: var(--font-size-caption); text-decoration: none; }
+.chips button { display: grid; width: var(--space-3); height: var(--space-3); place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--color-text-muted); cursor: pointer; }
+.chips button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Ventas: misma fila que las transacciones del detalle de cliente. */
+.sales { display: grid; gap: var(--space-1); }
+.sale { display: grid; min-height: var(--space-6); grid-template-columns: 1.4fr 1fr auto; align-items: center; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-raised); padding: 0 var(--space-2); color: var(--color-text); font-size: var(--font-size-micro); text-decoration: none; }
+.sale > span, .sale > time { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sale > span { font-size: var(--font-size-caption); }
+.sale strong { color: var(--color-brand); font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
+
+.empty { margin: var(--space-2) 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); text-align: center; }
+
+.skeleton { composes: base from "../../design-system/skeleton.module.css"; height: var(--space-20); border-radius: var(--radius-card); }
+.errorPanel { display: grid; justify-items: center; gap: var(--space-1); padding: var(--space-5) var(--space-3); color: var(--color-danger); text-align: center; }
+.errorPanel h2 { margin: 0; font-size: var(--font-size-card-title); }
+.errorPanel p { margin: 0; max-width: 46ch; }
+.errorPanel button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
+
+.primary:focus-visible, .access > button:focus-visible, .link:focus-visible, .picker button:focus-visible, .chips a:focus-visible, .chips button:focus-visible, .sale:focus-visible, .errorPanel button:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .access > button:hover:not(:disabled), .picker button:hover { border-color: var(--color-text-subtle); }
+  .link:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .chips li:hover, .sale:hover { background: var(--color-surface-hover); }
+}
+
+@media (max-width: 900px) {
+  .modal { padding-block: var(--space-4); padding-inline-start: var(--space-4); }
+  .summary { grid-template-columns: 1fr; }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detailGrid { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .accountPanel { grid-row: auto; }
+}
+
+@media (max-width: 560px) {
+  .modal { width: calc(100vw - var(--space-2)); padding-block: var(--space-3); padding-inline-start: var(--space-3); }
+  .metrics { grid-template-columns: 1fr; }
+  .sale { grid-template-columns: 1fr auto; padding-block: var(--space-1); }
+  .sale > time { grid-column: 1 / -1; grid-row: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
