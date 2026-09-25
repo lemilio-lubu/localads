@@ -43,6 +43,11 @@ export type CampaignActivationRequestView = Readonly<{
      le dice nada a nadie, y sin el dos administradores pueden estar dentro del
      mismo caso sin saberlo. */
   reviewedByName: string | null;
+  /* El cliente al que pertenece la solicitud, por nombre y RUC. El id
+     interno no le dice a quien revisa de qué cliente se trata. Opcionales:
+     solo los rellenan las lecturas que los resuelven. */
+  clientName?: string | null;
+  clientRuc?: string | null;
   reviewedAt: string | null;
   rejectionReason: string | null;
   pautaId: string | null;

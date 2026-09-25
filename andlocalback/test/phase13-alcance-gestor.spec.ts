@@ -203,4 +203,13 @@ describe("Fase 13 - alcance del gestor contra la base", () => {
     const all = await activations.list({ status: undefined });
     expect(all.length).toBeGreaterThan(own.length);
   });
+
+  /* Quien revisa ve de qué cliente es la solicitud por nombre y RUC, no por
+     el id interno. Se resuelven en una consulta por página. */
+  it("las solicitudes traen el nombre y el RUC de su cliente", async () => {
+    const [request] = await activations.list({ status: undefined, managerId });
+    const client = await prisma.client.findUniqueOrThrow({ where: { id: mine } });
+    expect(request).toMatchObject({ clientName: client.name, clientRuc: client.ruc });
+    expect(request.clientRuc).toMatch(/^\d{13}$/);
+  });
 });

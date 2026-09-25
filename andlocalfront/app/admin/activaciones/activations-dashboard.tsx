@@ -47,7 +47,7 @@ export default function ActivationsDashboard() {
 
   const visible = useMemo(() => {
     const value = query.trim().toLowerCase();
-    return items.filter((item) => !value || `${item.requesterName} ${item.externalAccountId} ${item.platform}`.toLowerCase().includes(value));
+    return items.filter((item) => !value || `${item.clientName ?? ""} ${item.clientRuc ?? ""} ${item.requesterName} ${item.externalAccountId} ${item.platform}`.toLowerCase().includes(value));
   }, [items, query]);
 
   async function act(item: ActivationRequest, action: "review" | "approve" | "reject") {
@@ -66,7 +66,7 @@ export default function ActivationsDashboard() {
 
   return <div className={styles.module}>
     <header className={styles.toolbar}>
-      <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por solicitante, plataforma o ID externo" /></label>
+      <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por cliente, RUC, solicitante o ID externo" /></label>
       <div className={styles.filters}>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
     </header>
 
@@ -77,11 +77,18 @@ export default function ActivationsDashboard() {
 
     <div className={styles.list} aria-live="polite" aria-busy={loading}>
       {!loading && !error && visible.map((item) => <article key={item.id} className={styles.row}>
-        <div className={styles.cell}><strong>solicitante</strong><span className={styles.requester}>{item.requesterName}</span><span>{item.phone}</span></div>
-        <div className={styles.cell}><strong>plataforma</strong><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></div>
-        <div className={styles.cell}><strong>cuenta externa</strong><span>{item.externalAccountId}</span><span>{item.clientId}</span></div>
-        <div className={styles.cell}><strong>primera recarga</strong><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span><span>se ejecuta al activar y validar el pago</span></div>
-        <div className={styles.cell}><strong>estado</strong><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}<span>{formatDateTime(item.createdAt)}</span></div>
+        {/* Primero de qué cliente es: su nombre y RUC. Quien la pidió y su
+            teléfono van debajo, para contactarle. */}
+        <div className={styles.cell}><strong>cliente</strong><span className={styles.requester}>{item.clientName ?? "cliente sin nombre"}</span>{item.clientRuc && <span className={styles.subtle}>RUC {item.clientRuc}</span>}<span className={styles.subtle} title={`${item.requesterName} · ${item.phone}`}>{item.requesterName} · {item.phone}</span></div>
+        <div className={styles.cell}><strong>plataforma</strong><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span className={styles.subtle}>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></div>
+        <div className={styles.cell}><strong>cuenta externa</strong><span title={item.externalAccountId}>{item.externalAccountId}</span></div>
+        <div className={styles.cell}><strong>primera recarga</strong><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span></div>
+        <div className={styles.cell}><strong>estado</strong><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}
+          {/* Tomar el caso no decide nada: marca quién lo lleva. Vive junto al
+              estado, donde luego aparece «por …», y no entre los botones de
+              decisión, donde parecía un paso obligatorio. Activar o rechazar
+              funcionan igual sin tomarlo. */}
+          {item.status === "PENDING" && <button type="button" className={styles.claim} disabled={busy === item.id} title="Marca la solicitud como tuya para que el equipo sepa que la estás revisando" onClick={() => void act(item, "review")}>tomar el caso</button>}<span className={styles.subtle}>{formatDateTime(item.createdAt)}</span></div>
 
         {rejecting === item.id
           ? <div className={styles.reject}>
@@ -89,10 +96,9 @@ export default function ActivationsDashboard() {
               <div><button type="button" onClick={() => { setRejecting(null); setReason(""); }}>Cancelar</button><button type="button" className={styles.dangerButton} disabled={!reason.trim() || busy === item.id} onClick={() => void act(item, "reject")}><X size={16} aria-hidden="true" />Confirmar rechazo</button></div>
             </div>
           : <div className={styles.actions}>
-              {item.status === "PENDING" && <button type="button" disabled={busy === item.id} onClick={() => void act(item, "review")}>Tomar para revisión</button>}
               {["PENDING", "IN_REVIEW"].includes(item.status) && <>
                 <button type="button" className={styles.rejectButton} disabled={busy === item.id} onClick={() => setRejecting(item.id)}><X size={16} aria-hidden="true" />Rechazar</button>
-                <button type="button" className={styles.approveButton} disabled={busy === item.id} onClick={() => void act(item, "approve")}><Check size={16} aria-hidden="true" />Activar pauta</button>
+                <button type="button" className={styles.approveButton} disabled={busy === item.id} title="La primera recarga se ejecuta al activar y validar el pago" onClick={() => void act(item, "approve")}><Check size={16} aria-hidden="true" />Activar pauta</button>
               </>}
             </div>}
         {actionError?.id === item.id && <p className={styles.rowNotice} role="alert">{actionError.message}</p>}

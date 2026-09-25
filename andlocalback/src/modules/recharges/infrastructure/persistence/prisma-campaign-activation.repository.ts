@@ -254,8 +254,11 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
       where: { status: filters.status, clientId: filters.clientId, ...ownership(filters) },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     });
-    const names = await resolveInternalNames(this.prisma, records.map((record) => record.reviewedBy));
-    return records.map((record) => toView(record, names));
+    const [names, clients] = await Promise.all([
+      resolveInternalNames(this.prisma, records.map((record) => record.reviewedBy)),
+      resolveClients(this.prisma, records.map((record) => record.clientId)),
+    ]);
+    return records.map((record) => toView(record, names, clients));
   }
 
   private async requireById(requestId: string): Promise<CampaignActivationRequestView> {
@@ -267,7 +270,19 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
 
 type ActivationRecord = Prisma.CampaignActivationRequestGetPayload<Record<string, never>>;
 
-function toView(record: ActivationRecord, names?: ReadonlyMap<string, string>): CampaignActivationRequestView {
+type ClientIdentity = Readonly<{ name: string; ruc: string | null }>;
+
+/* Nombre y RUC de los clientes de una página de solicitudes, en una sola
+   consulta: nada de una lectura por fila. */
+async function resolveClients(prisma: PrismaService, ids: readonly string[]): Promise<ReadonlyMap<string, ClientIdentity>> {
+  const unique = [...new Set(ids)];
+  if (!unique.length) return new Map();
+  const clients = await prisma.client.findMany({ where: { id: { in: unique } }, select: { id: true, name: true, ruc: true } });
+  return new Map(clients.map((client) => [client.id, { name: client.name, ruc: client.ruc }]));
+}
+
+function toView(record: ActivationRecord, names?: ReadonlyMap<string, string>, clients?: ReadonlyMap<string, ClientIdentity>): CampaignActivationRequestView {
+  const client = clients?.get(record.clientId);
   return {
     id: record.id,
     clientId: record.clientId,
@@ -279,6 +294,7 @@ function toView(record: ActivationRecord, names?: ReadonlyMap<string, string>): 
     status: record.status as ActivationRequestStatus,
     reviewedBy: record.reviewedBy,
     reviewedByName: record.reviewedBy ? names?.get(record.reviewedBy) ?? null : null,
+    ...(clients ? { clientName: client?.name ?? null, clientRuc: client?.ruc ?? null } : {}),
     reviewedAt: record.reviewedAt?.toISOString() ?? null,
     rejectionReason: record.rejectionReason,
     pautaId: record.pautaId,
@@ -348,5 +364,6 @@ function ownership(filters: CampaignActivationListFilters) {
    necesita el nombre: sin esto, quien acaba de tomarlo no se veria a si mismo
    hasta recargar la pantalla. */
 async function withName(prisma: PrismaService, record: ActivationRecord): Promise<CampaignActivationRequestView> {
-  return toView(record, await resolveInternalNames(prisma, [record.reviewedBy]));
+  const [names, clients] = await Promise.all([resolveInternalNames(prisma, [record.reviewedBy]), resolveClients(prisma, [record.clientId])]);
+  return toView(record, names, clients);
 }
