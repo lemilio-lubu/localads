@@ -1,26 +1,4 @@
-/* Mismo patrón que «crear nuevo cliente»: dos columnas, campos sobre gris,
-   etiqueta en negrita y «cancelar» como texto. Antes esto inventaba fondo
-   blanco, otro borde y otra escala de etiqueta, y los dos modales del portal
-   no se parecían. */
+/* Mismo formulario que «nuevo cliente»: cabecera, secciones, campos con icono
+   y tarjetas de elección vienen de components/form-modal. Aquí solo queda lo
+   propio de este modal, que es más corto. */
 .modal { width: min(560px, 100%); }
-.modal h2 { margin: 0 0 var(--space-3); color: var(--color-text); font-size: var(--font-size-title); }
-.modal form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
-.modal label { display: grid; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
-.modal input, .modal select, .modal textarea { width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-control); outline: 0; background: var(--color-surface-muted); padding: 0 var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body); }
-.modal input, .modal select { height: var(--control-height); }
-.modal textarea { padding: var(--space-1) var(--space-2); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-regular); resize: vertical; }
-.modal input:focus, .modal select:focus, .modal textarea:focus { border-color: rgb(11 89 1 / 32%); box-shadow: var(--focus-ring); }
-.modal input[aria-invalid="true"] { border-color: var(--color-danger); }
-/* La explicación del rol va pegada a su selector, no al final del formulario:
-   describe la opción que se acaba de elegir. */
-.hint, .error, .actions, .wide { grid-column: 1 / -1; }
-.hint { margin: calc(var(--space-1) * -1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.error { min-height: var(--space-2); margin: 0; color: var(--color-danger); font-size: var(--font-size-caption); }
-.actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
-.actions > button:first-child { border: 0; background: transparent; color: var(--color-text-muted); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), color var(--duration-fast) ease; }
-.actions > button:first-child:active { transform: scale(.97); color: var(--color-text); }
-/* ActionButton es `inline-grid` con `place-items: center`: con dos hijos —el
-   icono y el texto— los apilaba en dos filas. Aquí pasa a fila única. */
-.submit { display: inline-flex !important; width: auto !important; align-items: center; gap: var(--space-1); padding-inline: var(--space-4) !important; }
-@media (prefers-reduced-motion: reduce) { .actions > button:first-child { transition-duration: 0ms; } }
-@media (max-width: 560px) { .modal { padding-block: var(--space-4); padding-inline-start: var(--space-3); } .modal form { grid-template-columns: 1fr; } }

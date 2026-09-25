@@ -1,0 +1,90 @@
+/* Formularios en modal, en clave mínima: bloques separados solo por una línea
+   fina, sin tarjetas; iconos finos en gris que se vuelven verdes al enfocar o
+   elegir. El color de marca aparece únicamente donde hay una elección hecha.
+   Todo sale de tokens. Lo usan el formulario de cliente y el de equipo. */
+
+.header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+/* Verde tenue, no relleno: marca el contexto sin competir con el título. */
+.headerIcon { display: grid; flex: none; width: var(--space-5); height: var(--space-5); place-items: center; border-radius: var(--radius-menu); background: var(--color-brand-surface); color: var(--color-brand); }
+.header h2 { margin: 0; color: var(--color-text); font-size: var(--font-size-title); line-height: 1.15; letter-spacing: -.01em; }
+.header p { margin: var(--space-half) 0 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+
+.form { display: grid; }
+
+.section { display: grid; gap: var(--space-2); border-top: 1px solid var(--color-border-strong); padding-block: var(--space-3); }
+.section:first-of-type { border-top: 0; padding-top: 0; }
+.section h3 { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); letter-spacing: .06em; text-transform: uppercase; }
+.sectionNote { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.5; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.wide { grid-column: 1 / -1; }
+
+.field { display: grid; align-content: start; gap: var(--space-1); min-width: 0; }
+.field > label { color: var(--color-text); font-size: var(--font-size-body-sm); }
+.control { position: relative; display: flex; align-items: center; }
+/* Icono dentro del campo: gris en reposo, verde al enfocar, rojo con error. */
+.control > svg { position: absolute; left: var(--space-2); color: var(--color-text-subtle); pointer-events: none; transition: color var(--duration-fast) var(--ease-out); }
+.control:has(textarea) > svg { top: 15px; }
+.control:focus-within > svg { color: var(--color-brand); }
+.field[data-invalid="true"] .control > svg { color: var(--color-danger); }
+.control input, .control select, .control textarea { width: 100%; border: 1px solid var(--color-border-strong); border-radius: var(--radius-menu); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-2) 0 calc(var(--space-2) + 18px + var(--space-1)); color: var(--color-text); font: inherit; font-size: var(--font-size-body); transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.control input, .control select { height: var(--control-height); }
+.control textarea { min-height: calc(var(--control-height) * 2); padding-block: 13px; line-height: 1.45; resize: vertical; }
+.control select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%), linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%); background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; background-size: 6px 6px; background-repeat: no-repeat; cursor: pointer; }
+.control input::placeholder, .control textarea::placeholder { color: var(--color-text-subtle); }
+.control input:focus, .control select:focus, .control textarea:focus { border-color: var(--color-brand); box-shadow: var(--focus-ring); }
+.field[data-invalid="true"] .control input { border-color: var(--color-danger); }
+.mono { font-family: var(--font-family-mono) !important; letter-spacing: .06em; }
+.fieldHint, .fieldError { display: flex; align-items: center; gap: var(--space-half); margin: 0; font-size: var(--font-size-caption); line-height: 1.4; }
+.fieldHint { color: var(--color-text-muted); }
+.fieldError { color: var(--color-danger); }
+.fieldError svg { flex: none; }
+.valid { display: inline-flex; align-items: center; gap: var(--space-half); color: var(--color-brand); }
+
+/* Tarjetas de elección. El input nativo sigue ahí, invisible pero enfocable:
+   teclado y lector de pantalla funcionan igual que con un radio o un
+   checkbox de siempre. */
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); }
+.choice { position: relative; display: flex; align-items: center; gap: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-menu); background: var(--color-surface-raised); padding: var(--space-2); cursor: pointer; transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.choice input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.choice:has(input:checked) { border-color: var(--color-brand); box-shadow: inset 0 0 0 1px var(--color-brand); }
+.choice:has(input:focus-visible) { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
+.choiceIcon { flex: none; color: var(--color-text-subtle); transition: color var(--duration-fast) var(--ease-out); }
+.choice:has(input:checked) .choiceIcon { color: var(--color-brand); }
+.choiceText { display: grid; gap: 2px; min-width: 0; }
+.choiceText strong { color: var(--color-text); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); }
+.choiceText small { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.choiceCheck { display: grid; width: 18px; height: 18px; flex: none; place-items: center; margin-left: auto; border: 1.5px solid var(--color-border-strong); border-radius: 50%; color: transparent; transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.choiceCheck svg { width: 12px; height: 12px; }
+.choice:has(input:checked) .choiceCheck { border-color: var(--color-brand); background: var(--color-brand); color: var(--color-text-on-fill); }
+
+.formError { display: flex; align-items: center; gap: var(--space-1); margin: 0 0 var(--space-2); color: var(--color-danger); font-size: var(--font-size-body-sm); }
+.formError svg { flex: none; }
+
+.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); border-top: 1px solid var(--color-border-strong); padding-top: var(--space-3); }
+.footer p { display: flex; align-items: center; gap: var(--space-1); margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.footer p svg { flex: none; color: var(--color-brand); }
+.footer > div { display: flex; align-items: center; gap: var(--space-1); margin-left: auto; }
+
+.ghost, .secondary { min-height: var(--button-height); border-radius: var(--radius-pill); padding-inline: var(--space-3); font: inherit; font-size: var(--font-size-body-sm); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.ghost { border: 0; background: transparent; color: var(--color-text-muted); }
+.secondary { border: 1px solid var(--color-border-strong); background: var(--color-surface-raised); color: var(--color-text); }
+.ghost:active, .secondary:active { transform: scale(.97); }
+.ghost:disabled, .secondary:disabled { opacity: .55; cursor: wait; }
+.ghost:focus-visible, .secondary:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .choice:hover:not(:has(input:checked)) { border-color: var(--color-text-subtle); }
+  .ghost:hover:not(:disabled) { color: var(--color-text); }
+  .secondary:hover:not(:disabled) { border-color: var(--color-text-subtle); }
+}
+
+@media (max-width: 640px) {
+  .grid, .choices { grid-template-columns: 1fr; }
+  .footer > div { width: 100%; justify-content: flex-end; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choice, .choiceCheck, .choiceIcon, .control > svg, .control input, .control select, .control textarea, .ghost, .secondary { transition-duration: 0ms; }
+  .ghost:active, .secondary:active { transform: none; }
+}

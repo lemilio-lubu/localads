@@ -7,6 +7,7 @@ export type AdminClient = {
   id: string;
   name: string;
   email: string;
+  ruc: string | null;
   status: "ACTIVE" | "INACTIVE";
   createdAt: string;
   /* Gestor responsable. `null` es la bandeja de sin asignar que reparte el
@@ -26,6 +27,7 @@ export type AdminClient = {
 export type SaveAdminClient = {
   name: string;
   email: string;
+  ruc: string;
   accountType: AdminAccountType;
   platforms: AdminPlatform[];
   creditDays: number;
@@ -63,6 +65,11 @@ export function createAdminClient(input: SaveAdminClient) {
 
 export function updateAdminClient(id: string, input: Partial<SaveAdminClient> & { status?: AdminClient["status"]; expectedPlatformsVersion?: number }) {
   return request<AdminClient>(`/admin/clients/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
+}
+
+/* La clave anterior deja de servir en el acto; la nueva llega una sola vez. */
+export function resetAdminClientPassword(id: string) {
+  return request<AdminClientWithCredentials>(`/admin/clients/${id}/password-reset`, { method: "POST" });
 }
 
 export function deactivateAdminClient(id: string) {
