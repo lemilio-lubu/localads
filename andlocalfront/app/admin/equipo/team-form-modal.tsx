@@ -49,10 +49,10 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
 
   return (
     <ModalShell open={open} labelledBy="team-form-title" className={styles.modal} onClose={onClose}>
-      <FormHeader titleId="team-form-title" Icon={UserPlus} title="Nueva cuenta de equipo" />
+      <FormHeader titleId="team-form-title" Icon={UserPlus} eyebrow="equipo" title="Nueva cuenta" />
       {/* noValidate: el navegador mostraba su propio globo negro, con su voz y
           sin poder darle estilo. El mensaje lo escribe el producto. */}
-      <form className={form.form} onSubmit={submit} noValidate>
+      <form className={`${form.form} ${styles.layout}`} onSubmit={submit} noValidate>
         <FormSection title="Acceso">
           {/* Se escribe libre y se guarda en minúscula: rechazar «Gestor» por
               llevar mayúscula sería hostil sin motivo. */}
