@@ -51,8 +51,15 @@
 .activationDescription { margin: 0; color: var(--activation-ink); font-size: var(--font-size-caption); line-height: 1.5; text-align: center; }
 .google .activationDescription { color: var(--color-google-text); }
 .activationPanel label { display: grid; gap: 6px; color: var(--color-text); font-size: var(--font-size-caption); text-align: center; }
-.activationPanel input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding: 0 12px; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); }
-.activationPanel input:focus { border-color: var(--activation-ink); outline: 2px solid var(--activation-ink); outline-offset: 2px; }
+/* El panel es gris claro: con el mismo gris y borde transparente el campo
+   desaparecía y solo se veía al enfocarlo. Ahora es blanco, con un filo de
+   6% y una sombra en dos capas muy difusas: se despega del fondo sin marcar
+   una línea dura. El foco no dobla el anillo; tiñe el filo y abre un halo
+   tenue del color de la plataforma. */
+.activationPanel input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid rgb(0 0 0 / 6%); border-radius: var(--radius-pill); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 6px 16px -6px rgb(0 0 0 / 8%); transition: border-color var(--duration-ui) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out); }
+.activationPanel input:focus { border-color: var(--activation-ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--activation-ink) 12%, transparent), 0 6px 16px -6px rgb(0 0 0 / 8%); }
+@media (hover: hover) and (pointer: fine) { .activationPanel input:hover:not(:focus):not(:disabled) { border-color: rgb(0 0 0 / 12%); box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 10px 22px -8px rgb(0 0 0 / 12%); } }
+@media (prefers-reduced-motion: reduce) { .activationPanel input { transition-duration: 0ms; } }
 .activationPanel input:disabled { opacity: .6; }
 .activationActions { display: flex; justify-content: center; margin-top: 8px; }
 .activationSubmit, .activationSubmit:not(:disabled):hover, .activationSubmit:not(:disabled):active { background: var(--activation-surface); color: var(--activation-text); box-shadow: none; }
