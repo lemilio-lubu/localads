@@ -13,7 +13,13 @@
 
    Un modal que necesite otras medidas usa longhands -padding-block,
    padding-inline-start- y nunca el atajo `padding`, que borraría el hueco. */
-.panel { position: relative; flex: none; margin-block: auto; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-5); padding-inline-end: var(--space-6); box-shadow: var(--shadow-modal); }
+/* :where() deja estos estilos base con especificidad cero. Cada modal
+   personaliza el panel con su propia clase (fondo, relleno, radio), y antes
+   ambas reglas pesaban lo mismo: ganaba la que el navegador cargaba última,
+   que cambia según la ruta o una recarga en caliente. Resultado: a veces el
+   modal salía gris y sus paneles grises desaparecían. Con :where() la clase
+   del modal gana siempre. */
+:where(.panel) { position: relative; flex: none; margin-block: auto; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-5); padding-inline-end: var(--space-6); box-shadow: var(--shadow-modal); }
 .closeButton { position: absolute; top: var(--space-1); right: var(--space-1); display: grid; width: var(--hit-target); height: var(--hit-target); place-items: center; border: 0; border-radius: 50%; background: transparent; padding: 0; color: var(--color-text-muted); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .closeButton svg { width: var(--icon-size-sm); height: var(--icon-size-sm); }
 .closeButton:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
@@ -27,7 +33,7 @@
   .backdrop { padding: var(--space-1); }
   /* En móvil el aire baja, pero el hueco del botón se mantiene: el botón
      sigue ahí y el título sigue siendo igual de largo. */
-  .panel { margin-block: var(--space-1); border-radius: var(--radius-control); padding: var(--space-3); padding-inline-end: var(--space-6); }
+  :where(.panel) { margin-block: var(--space-1); border-radius: var(--radius-control); padding: var(--space-3); padding-inline-end: var(--space-6); }
 }
 
 @media (prefers-reduced-motion: reduce) {
