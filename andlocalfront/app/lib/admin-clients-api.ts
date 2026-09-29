@@ -24,6 +24,10 @@ export type AdminClient = {
   totalRecharged: number;
 };
 
+/* La ficha añade el reparto por plataforma en dinero solicitado (sin
+   recargas rechazadas), que el listado no trae. */
+export type AdminClientDetail = AdminClient & { platformSummary: { platform: AdminPlatform; requested: number; operations: number }[] };
+
 export type SaveAdminClient = {
   name: string;
   email: string;

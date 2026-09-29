@@ -2,12 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
+import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
 import ActionButton from "./components/action-button";
 import BrandLogo from "./components/brand-logo";
 import { enterTransition } from "./design-system/motion";
 import { homeFor, login } from "./lib/auth-api";
 import styles from "./login-form.module.css";
+
+type Field = "username" | "password";
+const demoAccounts = ["prepago", "flex", "gestor", "admin"] as const;
 
 export default function LoginForm() {
   const router = useRouter(); const reduceMotion = useReducedMotion();

@@ -22,6 +22,12 @@ export type AdminClientView = {
   totalRecharged: number;
 };
 
+/* Reparto de una plataforma en la ficha del cliente: pauta solicitada en
+   recargas no rechazadas y número de operaciones. La participación se mide
+   en dinero, no en cuántas recargas incluyen la plataforma. */
+export type ClientPlatformSummary = { platform: AdvertisingPlatform; requested: number; operations: number };
+export type AdminClientDetailView = AdminClientView & { platformSummary: ClientPlatformSummary[] };
+
 export type UpdateClientInput = Partial<ClientProfileInput> & { status?: "ACTIVE" | "INACTIVE"; expectedPlatformsVersion?: number; administratorId?: string };
 
 export interface ClientAdminRepository {

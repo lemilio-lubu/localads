@@ -109,6 +109,26 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
     return record ? this.toView(record) : null;
   }
 
+  async findDetail(id: string, scope: ManagerScope): Promise<AdminClientDetailView | null> {
+    const view = await this.findById(id, scope);
+    if (!view) return null;
+    /* Un cliente tiene pocas recargas: una consulta de sus detalles no
+       rechazados y se agrega en memoria. */
+    const details = await this.prisma.transactionDetail.findMany({
+      where: { transaction: { clientId: id, rechargeStatus: { not: "REJECTED" } } },
+      select: { platformSnapshot: true, requestedAmount: true },
+    });
+    const platformSummary: ClientPlatformSummary[] = (["META", "GOOGLE", "TIKTOK"] as const).map((platform) => {
+      const own = details.filter((detail) => detail.platformSnapshot === platform);
+      return {
+        platform: platform as AdvertisingPlatform,
+        requested: own.reduce((total, detail) => total.add(detail.requestedAmount), new Prisma.Decimal(0)).toNumber(),
+        operations: own.length,
+      };
+    });
+    return { ...view, platformSummary };
+  }
+
   async update(id: string, input: UpdateClientInput) {
     const current = await this.prisma.client.findUnique({ where: { id }, include: { accounts: true } });
     const account = current?.accounts[0];

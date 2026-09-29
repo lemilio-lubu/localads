@@ -26,15 +26,20 @@
 .demoAccess button:active { border-color: rgb(11 89 1 / 30%); background: #f3f8f2; }
 
 @media (hover: hover) and (pointer: fine) {
-  .demoAccess button:hover { border-color: rgb(11 89 1 / 22%); background: var(--color-surface-raised); }
+  .reveal:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .demo button:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+/* Pantallas estrechas: la historia arriba, más corta, y el acceso debajo. */
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; align-items: start; gap: var(--space-2); padding: var(--space-3) var(--space-2) var(--space-6); }
+  .storyText h2 { font-size: var(--font-size-headline); }
+  .storyText p { font-size: var(--font-size-body); }
+  .panel { padding: var(--space-4) var(--space-3); border-radius: 24px; }
+  .heading h1 { font-size: var(--font-size-title); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .form input, .demoAccess button { transition-duration: 0ms; }
-}
-
-@media (max-width: 480px) {
-  .loginPage { padding-inline: var(--space-2); }
-  .loginCard { border-radius: var(--radius-control); padding: var(--space-4) var(--space-3); }
-  .demoAccess > div { grid-template-columns: 1fr; }
+  .aurora span { animation: none; }
+  .reveal { transition-duration: 0ms; }
 }

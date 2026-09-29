@@ -1,0 +1,51 @@
+/* Escenario 3D de la baraja del login. */
+.stage { position: relative; display: grid; width: 100%; height: 380px; place-items: center; }
+/* La perspectiva va en el padre directo de la baraja: si quedara en el
+   escenario, este envoltorio (que escala en móvil) aplanaría el 3D. */
+.scaler { display: grid; place-items: center; perspective: 1200px; }
+.deck { position: relative; width: 296px; height: 186px; transform-style: preserve-3d; }
+/* Sombra de contacto: una elipse muy difusa bajo la baraja. */
+.floor { position: absolute; bottom: 12%; left: 50%; width: 62%; height: 36px; border-radius: 50%; background: rgb(0 0 0 / 14%); filter: blur(26px); transform: translateX(-50%); pointer-events: none; }
+
+.card { position: absolute; inset: 0; transform-style: preserve-3d; }
+/* Material: degradado de marca, filo interior de luz y dos sombras, una
+   amplia y lejana y otra corta y cercana. */
+.face { position: relative; display: flex; height: 100%; flex-direction: column; justify-content: space-between; overflow: hidden; border-radius: 22px; padding: var(--space-3); color: var(--color-text-on-fill); box-shadow: 0 40px 70px -30px rgb(0 0 0 / 45%), 0 10px 20px -12px rgb(0 0 0 / 25%), inset 0 0 0 1px rgb(255 255 255 / 16%), inset 0 1px 0 rgb(255 255 255 / 30%); }
+.tiktok .face { background: linear-gradient(145deg, color-mix(in srgb, var(--color-tiktok) 75%, var(--color-tiktok-strong)), var(--color-tiktok-strong) 55%, color-mix(in srgb, var(--color-tiktok-strong) 65%, black)); }
+.meta .face { background: linear-gradient(145deg, var(--color-meta), var(--color-meta-strong) 55%, color-mix(in srgb, var(--color-meta-strong) 65%, black)); }
+.google .face { background: linear-gradient(145deg, color-mix(in srgb, var(--color-google) 65%, white), var(--color-google) 55%, color-mix(in srgb, var(--color-google) 82%, black)); color: var(--color-google-text); }
+
+/* Luz especular que sigue al cursor (fondo animado desde el componente). Con
+   movimiento reducido queda fija arriba a la izquierda. */
+.specular { position: absolute; inset: 0; background: radial-gradient(circle at 30% 20%, rgb(255 255 255 / 24%), transparent 55%); mix-blend-mode: soft-light; pointer-events: none; }
+
+.top { position: relative; display: flex; align-items: center; gap: var(--space-1); }
+.logo { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: 10px; background: var(--color-surface-raised); box-shadow: 0 1px 2px rgb(0 0 0 / 18%); }
+.brand { font-size: var(--font-size-body); font-weight: var(--font-weight-semibold); letter-spacing: -.01em; }
+
+/* Chip de tarjeta dibujado con CSS. */
+.chip { position: relative; width: 36px; height: 26px; border-radius: 6px; background: linear-gradient(135deg, color-mix(in srgb, var(--color-google) 30%, white), color-mix(in srgb, var(--color-google) 70%, var(--color-google-strong))); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 12%), inset 12px 0 0 -11px rgb(0 0 0 / 22%), inset -12px 0 0 -11px rgb(0 0 0 / 22%), inset 0 9px 0 -8px rgb(0 0 0 / 22%); }
+
+.bottom { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-2); }
+.balance { display: grid; gap: 2px; }
+.balance small { font-size: var(--font-size-micro); letter-spacing: .02em; opacity: .8; }
+.balance strong { font-size: var(--font-size-card-title); font-weight: var(--font-weight-semibold); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.number { font-family: var(--font-family-mono); font-size: var(--font-size-caption); letter-spacing: .16em; opacity: .75; }
+
+/* La tarjeta de la derecha asoma por su borde derecho: su contenido se
+   alinea a ese lado, o el logo y el saldo quedarían tapados por la del frente. */
+.mirrored .top { flex-direction: row-reverse; }
+.mirrored .chip { align-self: flex-end; }
+.mirrored .bottom { flex-direction: row-reverse; }
+.mirrored .balance { text-align: right; }
+
+/* En pantallas estrechas se escala la baraja entera, abanico incluido: los
+   desplazamientos del abanico son fijos y, sin escalar, se salían del borde. */
+@media (max-width: 900px) {
+  .stage { height: 250px; }
+  .scaler { transform: scale(.72); }
+}
+@media (max-width: 420px) {
+  .stage { height: 210px; }
+  .scaler { transform: scale(.58); }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import MetricCard from "../../components/metric-card";
 import ModalShell from "../../components/modal-shell";
@@ -7,7 +8,7 @@ import PlatformPill from "../../components/platform-pill";
 import { formatAmount, formatDateTime, formatDay } from "../../lib/format";
 import { paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
 import type { AdvertisingPlatform } from "../../design-system/types";
-import type { AdminClient, AdminPlatform } from "../../lib/admin-clients-api";
+import { getAdminClientDetail, type AdminClient, type AdminClientDetail, type AdminPlatform } from "../../lib/admin-clients-api";
 import { getAdminTransactionsPage } from "../../lib/admin-recharges-api";
 import type { TransactionListItem } from "../../lib/recharges-api";
 import styles from "./client-detail-modal.module.css";
@@ -18,9 +19,28 @@ const platformOrder: AdminPlatform[] = ["META", "GOOGLE", "TIKTOK"];
 function cycleStep(item?: TransactionListItem) { if (!item) return 0; if (item.rechargeStatus === "COMPLETED") return 4; if (item.rechargeStatus === "PROCESSING") return 3; if (item.rechargeStatus === "APPROVED") return 2; return 1; }
 
 export default function ClientDetailModal({ client, onClose }: Props) {
-  const [transactions, setTransactions] = useState<TransactionListItem[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
-  useEffect(() => { if (!client) return; let active = true; getAdminTransactionsPage({ clientId: client.id, limit: 100 }).then((page) => { if (active) setTransactions(page.items); }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar las transacciones"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [client]);
-  const summary = useMemo(() => { const total = transactions.reduce((sum, item) => sum + item.pautaAmount, 0); const months = new Set(transactions.map((item) => item.createdAt.slice(0, 7))).size || 1; const appearances = Object.fromEntries(platformOrder.map((platform) => [platform, transactions.filter((item) => item.platforms.includes(platform)).length])) as Record<AdminPlatform, number>; const totalAppearances = Object.values(appearances).reduce((sum, value) => sum + value, 0); return { total, average: transactions.length ? total / months : 0, appearances, totalAppearances }; }, [transactions]);
+  const [transactions, setTransactions] = useState<TransactionListItem[]>([]); const [detail, setDetail] = useState<AdminClientDetail | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  useEffect(() => { if (!client) return; let active = true; Promise.all([getAdminTransactionsPage({ clientId: client.id, limit: 100 }), getAdminClientDetail(client.id)]).then(([page, data]) => { if (active) { setTransactions(page.items); setDetail(data); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar las transacciones"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [client]);
+  const summary = useMemo(() => {
+    /* Las recargas rechazadas no son inversión: no cuentan en el total, el
+       promedio ni las operaciones por plataforma. */
+    const valid = transactions.filter((item) => item.rechargeStatus !== "REJECTED");
+    const total = valid.reduce((sum, item) => sum + item.pautaAmount, 0);
+    /* El promedio mensual solo dice algo con al menos dos meses de historia:
+       con uno repite el total. Se divide por los meses transcurridos desde la
+       primera recarga, no solo por los meses con actividad. */
+    const first = valid.at(-1)?.createdAt;
+    const months = first ? monthsSince(first) : 0;
+    const appearances = Object.fromEntries(platformOrder.map((platform) => [platform, valid.filter((item) => item.platforms.includes(platform)).length])) as Record<AdminPlatform, number>;
+    /* Participación en dinero solicitado (viene del backend por plataforma),
+       no en cuántas recargas incluyen la plataforma. */
+    const requested = Object.fromEntries(platformOrder.map((platform) => [platform, detail?.platformSummary?.find((item) => item.platform === platform)?.requested ?? 0])) as Record<AdminPlatform, number>;
+    const requestedTotal = Object.values(requested).reduce((sum, value) => sum + value, 0);
+    /* Vencimiento: el pago abierto más antiguo, no el de la última recarga. */
+    const dueDates = valid.filter((item) => item.paymentStatus && OPEN_PAYMENTS.includes(item.paymentStatus) && item.dueDate).map((item) => item.dueDate!).sort();
+    const nextDue = dueDates[0] ?? null;
+    return { total, average: months >= 2 ? total / months : null, appearances, requested, requestedTotal, nextDue, overdue: nextDue ? daysUntil(nextDue) < 0 : false };
+  }, [transactions, detail]);
   if (!client) return null;
   const latest = transactions[0]; const currentStep = cycleStep(latest); const pending = loading ? "consultando…" : "—";
   return <ModalShell open labelledBy="client-detail-title" className={styles.modal} onClose={onClose}>
