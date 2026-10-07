@@ -81,9 +81,12 @@ import {
   MyRechargeQueriesController,
 } from "./presentation/phase7-query.controller";
 import { AuthModule } from "../auth/auth.module";
+import { StorageModule } from "../storage/storage.module";
+import { RECEIPT_OBJECT_STORAGE, ReceiptObjectStorage } from "../storage/receipt-object-storage";
+import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-processor";
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, StorageModule],
   exports: [TransactionsGateway],
   controllers: [TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
   providers: [
@@ -111,12 +114,18 @@ import { AuthModule } from "../auth/auth.module";
       inject: [MANAGER_SCOPE_QUERY],
       useFactory: (queries: ManagerScopeQueryPort) => new AssertManagerScope(queries),
     },
-    { provide: RECEIPT_PROCESSOR, useClass: LocalReceiptProcessor },
+    {
+      provide: RECEIPT_PROCESSOR,
+      inject: [RECEIPT_OBJECT_STORAGE],
+      useFactory: (storage: ReceiptObjectStorage) => process.env.NODE_ENV === "production" || process.env.R2_BUCKET
+        ? new R2ReceiptProcessor(storage)
+        : new LocalReceiptProcessor(),
+    },
     { provide: OCR_PROCESSOR, useClass: TesseractOcrProcessor },
     {
       provide: TRANSACTION_RECEIPT_OCR,
-      inject: [OCR_PROCESSOR],
-      useFactory: (ocr: OcrProcessor) => new LocalTransactionReceiptOcr(ocr),
+      inject: [OCR_PROCESSOR, RECEIPT_OBJECT_STORAGE],
+      useFactory: (ocr: OcrProcessor, storage: ReceiptObjectStorage) => new LocalTransactionReceiptOcr(ocr, storage),
     },
     { provide: ID_GENERATOR, useClass: CryptoIdGenerator },
     {

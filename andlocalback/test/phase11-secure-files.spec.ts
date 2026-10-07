@@ -17,7 +17,8 @@ describe("SecureFilesController fase 11", () => {
       payment: { transaction: { clientId: "client-1", client: { managerId: "gestor-1" } } },
     }) } };
     const response = { type: vi.fn(), set: vi.fn(), sendFile: vi.fn().mockReturnValue("sent") };
-    return { controller: new SecureFilesController(database as never), database, response };
+    const storage = { put: vi.fn(), get: vi.fn() };
+    return { controller: new SecureFilesController(database as never, storage), database, response };
   }
 
   it("sirve evidencia por receiptId con headers privados e inline", async () => {

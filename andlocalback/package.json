@@ -5,17 +5,22 @@
   "description": "API modular para recargas prepago de Andlocal",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "prisma generate && nest build",
     "start": "node dist/main.js",
+    "start:prod": "node dist/main.js",
     "start:dev": "nest start --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "prisma db seed"
+    "prisma:deploy": "prisma migrate deploy",
+    "db:migrate": "prisma migrate deploy",
+    "prisma:seed": "prisma db seed",
+    "bootstrap:admin": "node prisma/bootstrap-admin.cjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1147.0",
     "@nestjs/common": "^12.0.1",
     "@nestjs/core": "^12.0.1",
     "@nestjs/platform-express": "^12.0.1",

@@ -1,9 +1,10 @@
-import { Controller, ForbiddenException, Get, NotFoundException, Param, Res } from "@nestjs/common";
+import { Controller, ForbiddenException, Get, Inject, NotFoundException, Param, Res } from "@nestjs/common";
 import { Response } from "express";
 import { basename, join } from "node:path";
 import { PrismaService } from "../../database/prisma.service";
 import { CurrentUser } from "./auth.decorators";
 import { AuthPrincipal } from "./auth.types";
+import { RECEIPT_OBJECT_STORAGE, ReceiptObjectStorage } from "../storage/receipt-object-storage";
 
 type ReceiptOwner = Readonly<{ clientId: string; client: { managerId: string | null } }>;
 
@@ -28,7 +29,7 @@ const ownerSelect = { payment: { select: { transaction: { select: { clientId: tr
 
 @Controller("files")
 export class SecureFilesController {
-  constructor(private readonly database: PrismaService) {}
+  constructor(private readonly database: PrismaService, @Inject(RECEIPT_OBJECT_STORAGE) private readonly storage: ReceiptObjectStorage) {}
 
   @Get("receipts/:receiptId/content")
   async receiptContent(@Param("receiptId") receiptId: string, @CurrentUser() user: AuthPrincipal, @Res() response: Response) {
@@ -56,7 +57,19 @@ export class SecureFilesController {
     return this.sendReceipt(response, url, filename, undefined);
   }
 
-  private sendReceipt(response: Response, storedUrl: string, originalName: string, storedMimeType: string | undefined) {
+  private async sendReceipt(response: Response, storedUrl: string, originalName: string, storedMimeType: string | undefined) {
+    if (storedUrl.startsWith("r2://")) {
+      const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+      if (storedMimeType && !allowedMimeTypes.has(storedMimeType)) throw new NotFoundException("Formato de comprobante no permitido");
+      const body = await this.storage.get(storedUrl.slice("r2://".length));
+      if (storedMimeType) response.type(storedMimeType);
+      response.set({
+        "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(originalName)}`,
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-store, max-age=0",
+      });
+      return response.send(body);
+    }
     const filename = basename(storedUrl);
     if (!/^[A-Za-z0-9._-]+$/.test(filename) || !storedUrl.startsWith("/uploads/receipts/")) throw new NotFoundException();
     const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
