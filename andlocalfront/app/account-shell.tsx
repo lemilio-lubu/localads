@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import AccountNavigation from "./components/account-navigation";
 import BrandLogo from "./components/brand-logo";
+import PwaInstallButton from "./components/pwa-install-button";
 import ProfileMenu from "./components/profile-menu";
 import type { AccountPage, AccountType } from "./design-system/types";
 import { getCurrentUser, logout, refreshSession } from "./lib/auth-api";
@@ -14,5 +15,5 @@ export default function AccountShell({ accountType, activePage, contentSize = "s
   useEffect(() => { let active = true; refreshSession().then((user) => { const expected = accountType === "prepago" ? "PREPAGO" : "POSTPAGO"; if (!user || user.role !== "CLIENT" || user.accountType !== expected) router.replace("/"); else if (user.mustChangePassword) router.replace("/cambiar-contrasena"); else if (active) setAuthorized(true); }); return () => { active = false; }; }, [accountType, router]);
   async function logOut() { await logout(); router.replace("/"); }
   if (!authorized) return null;
-  return <main className={styles.pageShell}><header className={styles.header}><BrandLogo edition={isPrepaid ? "pro" : "flex"} /></header><div className={`${styles.workspace} ${contentSize === "wide" ? styles.wideWorkspace : ""}`}><div className={styles.navColumn}><AccountNavigation accountType={accountType} activePage={activePage} /><div className={styles.navFooter}><ProfileMenu userName={getCurrentUser()?.username} compact placement="up" onLogout={logOut} /></div></div><div className={styles.content}>{children}</div></div></main>;
+  return <main className={styles.pageShell}><header className={styles.header}><BrandLogo edition={isPrepaid ? "pro" : "flex"} /><PwaInstallButton /></header><div className={`${styles.workspace} ${contentSize === "wide" ? styles.wideWorkspace : ""}`}><div className={styles.navColumn}><AccountNavigation accountType={accountType} activePage={activePage} /><div className={styles.navFooter}><ProfileMenu userName={getCurrentUser()?.username} compact placement="up" onLogout={logOut} /></div></div><div className={styles.content}>{children}</div></div></main>;
 }

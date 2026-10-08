@@ -1,7 +1,7 @@
 /* El padding inferior reservaba 72px de vacío al final de la página. */
 .pageShell { --shell-content-top: calc(var(--layout-page-top) + var(--layout-header-height) + var(--layout-section-gap)); min-height: 100vh; background: var(--color-canvas); color: var(--color-text); padding: var(--layout-page-top) var(--space-4) var(--space-6); }
 .header, .workspace { width: min(var(--layout-max), 100%); margin-inline: auto; }
-.header { display: flex; height: var(--layout-header-height); align-items: center; justify-content: space-between; }
+.header { display: flex; height: var(--layout-header-height); align-items: center; justify-content: space-between; gap: var(--space-2); }
 .workspace { display: grid; grid-template-columns: var(--layout-sidebar) minmax(0, var(--layout-content)); gap: var(--layout-gutter); align-items: start; margin-top: var(--layout-section-gap); }
 .wideWorkspace { grid-template-columns: var(--layout-wide-sidebar) minmax(0, var(--layout-wide-content)); gap: var(--layout-wide-gutter); }
 .content { width: 100%; min-width: 0; }
@@ -27,4 +27,5 @@
 
 @media (max-width: 480px) {
   .pageShell { padding-inline: var(--space-2); }
+  .header { height: auto; min-height: var(--layout-header-height); flex-wrap: wrap; }
 }

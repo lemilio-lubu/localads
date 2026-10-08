@@ -6,6 +6,7 @@ import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
 import ActionButton from "./components/action-button";
 import BrandLogo from "./components/brand-logo";
+import PwaInstallButton from "./components/pwa-install-button";
 import { FormError, FormField, formStyles as form } from "./components/form-modal";
 import { homeFor, login } from "./lib/auth-api";
 import LoginWalletDeck, { type DeckState } from "./login-wallet-deck";
@@ -85,7 +86,7 @@ export default function LoginForm() {
         animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
         transition={reduceMotion ? { duration: 0 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
       >
-        <div className={styles.logo}><BrandLogo /></div>
+        <div className={styles.brandRow}><div className={styles.logo}><BrandLogo /></div><PwaInstallButton /></div>
         <header className={styles.heading}>
           <h1 id="login-title">Inicia sesión</h1>
           <p>Clientes, gestores y administradores usan el mismo acceso.</p>
