@@ -10,21 +10,45 @@ type InstallPromptEvent = Event & {
 };
 
 let appWasInstalled = false;
+const installedStorageKey = "andlocal-pwa-installed";
 
 function subscribeInstallStatus(onChange: () => void) {
   if (typeof window === "undefined") return () => undefined;
   const displayMode = window.matchMedia("(display-mode: standalone)");
-  const handleInstalled = () => { appWasInstalled = true; onChange(); };
+  const handleInstalled = () => markInstalled();
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === installedStorageKey) onChange();
+  };
   displayMode.addEventListener("change", onChange);
   window.addEventListener("appinstalled", handleInstalled);
+  window.addEventListener("and-pwa-installed", onChange);
+  window.addEventListener("storage", handleStorage);
   return () => {
     displayMode.removeEventListener("change", onChange);
     window.removeEventListener("appinstalled", handleInstalled);
+    window.removeEventListener("and-pwa-installed", onChange);
+    window.removeEventListener("storage", handleStorage);
   };
 }
 
+function markInstalled() {
+  appWasInstalled = true;
+  try {
+    window.localStorage.setItem(installedStorageKey, "true");
+  } catch {
+    // The in-memory state still hides the button if storage is unavailable.
+  }
+  window.dispatchEvent(new Event("and-pwa-installed"));
+}
+
 function getInstallStatus() {
-  return appWasInstalled || window.matchMedia("(display-mode: standalone)").matches
+  let wasInstalled = false;
+  try {
+    wasInstalled = window.localStorage.getItem(installedStorageKey) === "true";
+  } catch {
+    // Standalone mode and the appinstalled event remain available.
+  }
+  return appWasInstalled || wasInstalled || window.matchMedia("(display-mode: standalone)").matches
     || ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
 }
 
@@ -61,6 +85,10 @@ export default function PwaInstallButton({ className = "" }: { className?: strin
     if (!showHelp && dialog.open) dialog.close();
   }, [showHelp]);
 
+  useEffect(() => {
+    if (installed) markInstalled();
+  }, [installed]);
+
   async function install() {
     if (!installPrompt) {
       setIsIOS(/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
@@ -69,7 +97,11 @@ export default function PwaInstallButton({ className = "" }: { className?: strin
     }
     try {
       await installPrompt.prompt();
-      await installPrompt.userChoice;
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === "accepted") {
+        markInstalled();
+        setShowHelp(false);
+      }
     } catch {
       setIsIOS(/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
       setShowHelp(true);
@@ -93,7 +125,10 @@ export default function PwaInstallButton({ className = "" }: { className?: strin
         <li><span>1</span><p>Toca <b>Compartir</b> <Share size={15} aria-hidden="true" /> en Safari.</p></li>
         <li><span>2</span><p>Elige <b>Añadir a pantalla de inicio</b> y confirma.</p></li>
       </ol> : <p className={styles.helpText}>Abre el menú de tu navegador y elige <b>Instalar app</b> o <b>Añadir a pantalla principal</b>.</p>}
-      <button type="button" className={styles.done} onClick={() => setShowHelp(false)}>Listo</button>
+      <div className={styles.dialogActions}>
+        <button type="button" className={styles.done} onClick={() => setShowHelp(false)}>Cerrar</button>
+        <button type="button" className={styles.done} onClick={() => { markInstalled(); setShowHelp(false); }}>Ya la instalé</button>
+      </div>
     </dialog>}
   </>;
 }
