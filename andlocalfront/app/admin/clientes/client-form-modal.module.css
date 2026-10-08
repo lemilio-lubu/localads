@@ -18,10 +18,10 @@
 
 .reveal { overflow: hidden; }
 .credit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: var(--space-2); padding-top: var(--space-half); }
+.creditLimit { grid-column: 1 / -1; }
 .credit input { padding-right: var(--space-7) !important; }
-.presets { grid-column: 1 / -1; }
 .suffix { position: absolute; right: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); pointer-events: none; }
-.presets { display: flex; flex-wrap: wrap; gap: var(--space-half); padding-bottom: var(--space-half); }
+.presets { display: flex; flex-wrap: wrap; align-self: end; align-items: center; gap: var(--space-half); min-height: var(--control-height); }
 .presets button { min-width: var(--space-6); height: var(--button-height); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .presets button[aria-pressed="true"] { background: var(--color-brand-surface); color: var(--color-brand); font-weight: var(--font-weight-bold); }
 .presets button:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }

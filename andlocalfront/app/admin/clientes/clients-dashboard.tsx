@@ -130,7 +130,7 @@ export default function ClientsDashboard() {
             <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="correo" valueSize="small">{client.email}</MetricCard>
-            <MetricCard label="línea / plazo" valueSize="small">{client.account.type === "POSTPAGO" ? `${formatAmount(client.account.creditLimit)} · ${client.account.creditDays} días` : "no aplica"}</MetricCard>
+            <MetricCard label="plazo" valueSize="small">{client.account.type === "POSTPAGO" ? `${client.account.creditDays} días` : "no aplica"}</MetricCard>
             <MetricCard label="gestor" valueSize="small">{client.manager?.username ?? "sin asignar"}</MetricCard>
             <div className={styles.rowActions}>
               <button type="button" disabled={busyClientId === client.id} onClick={() => { setEditing(client); setFormOpen(true); }}><Pencil size={16} aria-hidden="true" />editar</button>

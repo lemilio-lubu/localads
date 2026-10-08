@@ -168,11 +168,11 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
                 transition={{ duration: reduceMotion ? 0 : .22, ease: [.23, 1, .32, 1] }}
               >
                 <div className={styles.credit}>
+                  <Field className={styles.creditLimit} label="Línea de crédito" Icon={Wallet} error={shown("creditLimit")} hint="Monto máximo para financiar recargas">
+                    {({ id, describedBy, invalid }) => <><input id={id} type="number" min="0.01" step="0.01" inputMode="decimal" value={creditLimit} onChange={(event) => { setCreditLimit(event.target.value); setError(""); }} onBlur={touch("creditLimit")} aria-invalid={invalid} aria-describedby={describedBy} placeholder="1000.00" /><span className={styles.suffix}>USD</span></>}
+                  </Field>
                   <Field label="Días de crédito" Icon={CalendarClock} error={shown("creditDays")}>
                     {({ id, describedBy, invalid }) => <><input id={id} type="number" min={1} max={365} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy} /><span className={styles.suffix}>días</span></>}
-                  </Field>
-                  <Field label="Línea de crédito" Icon={Wallet} error={shown("creditLimit")} hint="Monto máximo para financiar recargas">
-                    {({ id, describedBy, invalid }) => <><input id={id} type="number" min="0.01" step="0.01" inputMode="decimal" value={creditLimit} onChange={(event) => { setCreditLimit(event.target.value); setError(""); }} onBlur={touch("creditLimit")} aria-invalid={invalid} aria-describedby={describedBy} placeholder="1000.00" /><span className={styles.suffix}>USD</span></>}
                   </Field>
                   <div className={styles.presets} role="group" aria-label="Plazos frecuentes">
                     {creditPresets.map((days) => <button key={days} type="button" aria-pressed={creditDays === days} onClick={() => { setCreditDays(days); setError(""); }}>{days}</button>)}
