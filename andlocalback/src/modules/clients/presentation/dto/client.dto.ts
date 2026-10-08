@@ -1,4 +1,4 @@
-import { IsArray, IsEmail, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, ValidateIf } from "class-validator";
+import { IsArray, IsEmail, IsEnum, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength, ValidateIf } from "class-validator";
 import { AccountType, AdvertisingPlatform, ClientStatus } from "../../../recharges/domain/recharge.types";
 
 export class CreateClientDto {
@@ -10,6 +10,7 @@ export class CreateClientDto {
   @IsEnum(AccountType) accountType!: AccountType;
   @IsArray() @IsEnum(AdvertisingPlatform, { each: true }) platforms!: AdvertisingPlatform[];
   @IsOptional() @IsInt() @Min(0) @Max(365) creditDays = 0;
+  @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) creditLimit = 0;
   /* Solo lo aplica un admin. Un gestor se asigna a si mismo desde el token y
      lo que venga aqui se ignora: el alcance no se amplia por el cuerpo. */
   @IsOptional() @IsString() @MaxLength(60) managerId?: string;
@@ -23,6 +24,7 @@ export class UpdateClientDto {
   @IsOptional() @IsArray() @IsEnum(AdvertisingPlatform, { each: true }) platforms?: AdvertisingPlatform[];
   @ValidateIf((input: UpdateClientDto) => input.platforms !== undefined) @IsInt() @Min(0) expectedPlatformsVersion?: number;
   @IsOptional() @IsInt() @Min(0) @Max(365) creditDays?: number;
+  @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) creditLimit?: number;
   @IsOptional() @IsEnum(ClientStatus) status?: ClientStatus;
 }
 

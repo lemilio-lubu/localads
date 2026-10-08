@@ -19,6 +19,7 @@ export type AdminClient = {
     type: AdminAccountType;
     status: "ACTIVE" | "INACTIVE";
     creditDays: number;
+    creditLimit: number;
     platforms: AdminPlatform[];
   };
   totalRecharged: number;
@@ -35,6 +36,7 @@ export type SaveAdminClient = {
   accountType: AdminAccountType;
   platforms: AdminPlatform[];
   creditDays: number;
+  creditLimit: number;
   /* Solo lo aplica un admin. Un gestor se asigna a sí mismo desde el token y
      el backend ignora lo que venga aquí. */
   managerId?: string | null;

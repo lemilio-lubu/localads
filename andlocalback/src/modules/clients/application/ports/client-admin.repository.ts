@@ -17,6 +17,7 @@ export type AdminClientView = {
     type: AccountType;
     status: "ACTIVE" | "INACTIVE";
     creditDays: number;
+    creditLimit: number;
     platforms: AdvertisingPlatform[];
   };
   totalRecharged: number;

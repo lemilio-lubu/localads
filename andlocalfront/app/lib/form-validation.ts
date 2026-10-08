@@ -54,11 +54,11 @@ export function rucKind(value: string): "persona natural" | "entidad pública" |
   return type <= 5 ? "persona natural" : type === 6 ? "entidad pública" : "sociedad";
 }
 
-export type ClientProfileField = "name" | "email" | "ruc" | "creditDays";
+export type ClientProfileField = "name" | "email" | "ruc" | "creditDays" | "creditLimit";
 
 /* Un mensaje por campo, para pintarlo junto a su campo y no en un único
    aviso al pie que obliga a buscar cuál falló. Solo trae los que fallan. */
-export function validateClientFields(input: { name: string; email: string; ruc: string; accountType: "PREPAGO" | "POSTPAGO"; creditDays: number }): Partial<Record<ClientProfileField, string>> {
+export function validateClientFields(input: { name: string; email: string; ruc: string; accountType: "PREPAGO" | "POSTPAGO"; creditDays: number; creditLimit: number }): Partial<Record<ClientProfileField, string>> {
   const errors: Partial<Record<ClientProfileField, string>> = {};
   if (input.name.trim().length < 2) errors.name = "El nombre necesita al menos 2 caracteres.";
   /* Comprobación mínima a propósito: la única validación que manda es la del
@@ -67,5 +67,6 @@ export function validateClientFields(input: { name: string; email: string; ruc: 
   const ruc = validateRuc(input.ruc);
   if (ruc) errors.ruc = ruc;
   if (input.accountType === "POSTPAGO" && (!Number.isInteger(input.creditDays) || input.creditDays < 1 || input.creditDays > 365)) errors.creditDays = "Entre 1 y 365 días de crédito.";
+  if (input.accountType === "POSTPAGO" && (!Number.isFinite(input.creditLimit) || input.creditLimit <= 0 || !Number.isSafeInteger(Math.round(input.creditLimit * 100)) || Math.abs(input.creditLimit * 100 - Math.round(input.creditLimit * 100)) > 1e-7)) errors.creditLimit = "Escribe una línea de crédito mayor que cero, con máximo dos decimales.";
   return errors;
 }

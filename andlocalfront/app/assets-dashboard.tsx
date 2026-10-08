@@ -37,7 +37,7 @@ function AssetCard({ pauta, selected, position, layer, reduceMotion, onSelect }:
     <span className={styles.cardContent}>
       <span className={`${styles.assetIcon} ${item.iconClass}`}><Image src={item.icon} alt="" fill sizes="64px" /></span>
       <span className={styles.lastRecharge}><small>última recarga</small><strong>{pauta.lastRechargeAt ? formatDay(pauta.lastRechargeAt) : "Sin recargas"}</strong></span>
-      <span className={styles.balance}><small>saldo disponible</small><strong>{formatAmount(pauta.currentBalance)}</strong></span>
+      <span className={styles.balance}><small>saldo en plataforma</small><strong>{formatAmount(pauta.currentBalance)}</strong></span>
     </span>
   </motion.button>;
 }
@@ -82,8 +82,8 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
     <section className={styles.assetDeck} ref={deckRef} style={{ "--card-count": Math.max(visible.length, 1), ...(totalTop === null ? {} : { "--total-top": `${totalTop}px` }) } as CSSProperties} data-has-selection={selected !== null} aria-label="Balance de activos publicitarios" aria-busy={loading}>
       <div className={styles.deckBase} aria-hidden="true" />
       {visible.map((pauta, index) => <AssetCard key={pauta.id} pauta={pauta} selected={selected === pauta.id} position={positionFor(pauta, index)} layer={layerFor(pauta, index)} reduceMotion={reduceMotion} onSelect={() => setSelected((current) => current === pauta.id ? null : pauta.id)} />)}
-      <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "balance total" : "sin pautas activas"}</span><strong>{error ? "—" : formatAmount(total)}</strong></span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
-        {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de {formatAmount(credit.creditLimit)} · {credit.creditDays} días</span>}
+      <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "saldo total en plataformas" : "sin pautas activas"}</span><strong>{error ? "—" : formatAmount(total)}</strong></span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
+        {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de {formatAmount(credit.creditLimit)} · {credit.creditDays} días<small>El saldo de plataforma aumenta al completar una recarga.</small></span>}
       </span></article>
     </section>
     {error && <div className={styles.errorPanel} role="alert">

@@ -11,7 +11,7 @@ import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domai
 
 const view: AdminClientView = {
   id: "c1", name: "Cliente", email: "cliente@example.test", ruc: "1712345675001", manager: null, status: "ACTIVE", createdAt: "2026-09-20T00:00:00.000Z",
-  account: { id: "a1", type: AccountType.PREPAID, status: "ACTIVE", creditDays: 0, platforms: [AdvertisingPlatform.META] },
+  account: { id: "a1", type: AccountType.PREPAID, status: "ACTIVE", creditDays: 0, creditLimit: 0, platforms: [AdvertisingPlatform.META] },
   totalRecharged: 0,
 };
 

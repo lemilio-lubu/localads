@@ -97,4 +97,5 @@
    bloque y no obliga a que el mazo crezca. */
 .creditLine { position: absolute; right: var(--space-8); bottom: var(--space-5); left: var(--space-8); color: rgb(255 255 255 / 82%); font-size: var(--font-size-caption); text-align: right; }
 .creditLine b { color: #fff; font-variant-numeric: tabular-nums; }
+.creditLine small { display: block; margin-top: 2px; opacity: .82; }
 @media (max-width: 680px) { .creditLine { right: var(--space-3); bottom: var(--space-3); left: var(--space-3); text-align: left; } }

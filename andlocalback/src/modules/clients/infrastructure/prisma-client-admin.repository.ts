@@ -72,6 +72,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
                 status: "ACTIVE",
                 type: input.accountType,
                 creditDays: input.accountType === "PREPAGO" ? 0 : input.creditDays,
+                creditLimit: new Prisma.Decimal(input.accountType === "PREPAGO" ? 0 : input.creditLimit ?? 0),
               },
             },
           },
@@ -150,6 +151,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
           data: {
             ...(input.accountType !== undefined && { type: input.accountType }),
             ...(input.creditDays !== undefined && { creditDays: input.creditDays }),
+            ...(input.creditLimit !== undefined && { creditLimit: new Prisma.Decimal(input.creditLimit) }),
             ...(input.status !== undefined && { status: input.status }),
           },
         });
@@ -244,6 +246,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
         type: account.type as AccountType,
         status: account.status as "ACTIVE" | "INACTIVE",
         creditDays: account.creditDays,
+        creditLimit: account.creditLimit.toNumber(),
         platforms: record.pautas.filter((pauta) => pauta.status === "ACTIVE").map((pauta) => pauta.platform as AdvertisingPlatform),
       },
       totalRecharged: record.rechargeTransactions
