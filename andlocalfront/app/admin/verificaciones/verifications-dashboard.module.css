@@ -109,3 +109,9 @@
 @media (max-width: 780px) { .module { margin-top: var(--space-3); }.toolbar { grid-template-columns: 1fr; }.row { grid-template-columns: 56px repeat(2, minmax(0, 1fr)); padding: var(--space-2); }.modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
 @media (max-width: 560px) { .search { min-width: 0; }.row { grid-template-columns: 46px 1fr; border-radius: var(--radius-control) }.reviewButton { grid-column: 1 / -1; justify-self: start; }.transferIcon, .transferIcon img { width: 44px; height: 44px; }.cell { grid-column: 2; }.preview { min-height: 320px; }.preview img, .preview iframe { height: 320px; }.actions { flex-direction: column; }.actions > button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .row, .pagination button, .reviewButton, .actions button, .reviewForm { transition-duration: 0ms; }.actions button:active:not(:disabled) { transform: none; }.skeleton { animation: none; } }
+
+/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
+   Solo en táctil: con ratón el campo conserva sus 13px. */
+@media (pointer: coarse) {
+  .search input, .reviewForm textarea { font-size: var(--font-size-body); }
+}

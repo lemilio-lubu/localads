@@ -1,5 +1,5 @@
 /* El padding inferior reservaba 72px de vacío al final de la página. */
-.pageShell { --shell-content-top: calc(var(--layout-page-top) + var(--layout-header-height) + var(--layout-section-gap)); min-height: 100vh; background: var(--color-canvas); color: var(--color-text); padding: var(--layout-page-top) var(--space-4) var(--space-6); }
+.pageShell { --shell-content-top: calc(var(--layout-page-top) + var(--layout-header-height) + var(--layout-section-gap)); min-height: 100vh; min-height: 100dvh; background: var(--color-canvas); color: var(--color-text); padding: var(--layout-page-top) var(--space-4) var(--space-6); }
 .header, .workspace { width: min(var(--layout-max), 100%); margin-inline: auto; }
 .header { display: flex; height: var(--layout-header-height); align-items: center; justify-content: space-between; }
 .workspace { display: grid; grid-template-columns: var(--layout-sidebar) minmax(0, var(--layout-content)); gap: var(--layout-gutter); align-items: start; margin-top: var(--layout-section-gap); }

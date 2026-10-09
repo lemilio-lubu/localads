@@ -77,3 +77,9 @@
 @media (max-width: 760px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .actions { grid-auto-columns: 1fr; justify-content: stretch; } }
 @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .row, .actions button, .reject button { transition-duration: 0ms; } .actions button:not(:disabled):active, .reject button:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
+
+/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
+   Solo en táctil: con ratón el campo conserva sus 13px. */
+@media (pointer: coarse) {
+  .search input, .reject textarea { font-size: var(--font-size-body); }
+}

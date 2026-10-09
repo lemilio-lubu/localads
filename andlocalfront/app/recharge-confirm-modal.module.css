@@ -4,8 +4,10 @@
 .modal { width: min(100%, 760px); background: var(--color-surface-raised); padding-block: var(--space-8) var(--space-6); padding-inline-start: var(--space-6); padding-inline-end: var(--space-8); box-shadow: 0 8px 24px rgb(0 0 0 / 18%); }
 
 /* El cerrar del mockup es un círculo rojo relleno con la X blanca. */
-.modal > button:last-child { top: var(--space-3); right: var(--space-3); width: var(--space-5); height: var(--space-5); background: var(--color-dismiss); color: var(--color-text-on-fill); }
-.modal > button:last-child svg { width: 22px; height: 22px; stroke-width: 1.5; }
+/* Absolute también en móvil: es un modal corto y el círculo rojo va en su
+   esquina del mockup, no pegado arriba como en los modales largos. */
+.modal > button:first-child { position: absolute; margin: 0; box-shadow: none; top: var(--space-3); right: var(--space-3); width: var(--space-5); height: var(--space-5); background: var(--color-dismiss); color: var(--color-text-on-fill); }
+.modal > button:first-child svg { width: 22px; height: 22px; stroke-width: 1.5; }
 
 .layout { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--space-6); }
 .body { display: grid; gap: var(--space-2); min-width: 0; }

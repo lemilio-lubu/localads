@@ -19,7 +19,7 @@
    que cambia según la ruta o una recarga en caliente. Resultado: a veces el
    modal salía gris y sus paneles grises desaparecían. Con :where() la clase
    del modal gana siempre. */
-:where(.panel) { position: relative; flex: none; margin-block: auto; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-5); padding-inline-end: var(--space-6); box-shadow: var(--shadow-modal); }
+:where(.panel) { --modal-pad-top-default: var(--space-5); position: relative; flex: none; margin-block: auto; border-radius: var(--radius-card); background: var(--color-surface-muted); padding: var(--space-5); padding-inline-end: var(--space-6); box-shadow: var(--shadow-modal); }
 .closeButton { position: absolute; top: var(--space-1); right: var(--space-1); display: grid; width: var(--hit-target); height: var(--hit-target); place-items: center; border: 0; border-radius: 50%; background: transparent; padding: 0; color: var(--color-text-muted); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .closeButton svg { width: var(--icon-size-sm); height: var(--icon-size-sm); }
 .closeButton:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
@@ -33,7 +33,37 @@
   .backdrop { padding: var(--space-1); }
   /* En móvil el aire baja, pero el hueco del botón se mantiene: el botón
      sigue ahí y el título sigue siendo igual de largo. */
-  :where(.panel) { margin-block: var(--space-1); border-radius: var(--radius-control); padding: var(--space-3); padding-inline-end: var(--space-6); }
+  :where(.panel) { --modal-pad-top-default: var(--space-3); margin-block: var(--space-1); border-radius: var(--radius-control); padding: var(--space-3); padding-inline-end: var(--space-6); }
+}
+
+/* Botón de cerrar sticky: pantallas estrechas y cualquier pantalla táctil. */
+@media (max-width: 680px), (pointer: coarse) {
+  /* En un modal más alto que la pantalla, el botón absolute se iba con el
+     scroll y para cerrar había que volver arriba. Pasa en cualquier pantalla
+     táctil (también un teléfono en horizontal o una tablet), no solo en las
+     estrechas; con ratón se queda absolute. Sticky lo mantiene en la
+     esquina. No vale fixed: el transform de la animación y el backdrop-filter
+     del fondo convierten al panel en su bloque contenedor.
+
+     Los márgenes negativos lo llevan desde la caja de contenido a la misma
+     esquina que en escritorio (8px del borde) y dejan su alto neto en cero,
+     así que el contenido no se mueve. Para eso necesitan el padding del
+     panel: un modal que cambie el de arriba o el de la derecha lo declara en
+     --modal-pad-top / --modal-pad-end. En paneles grid ocupa todas las filas
+     y columnas y se superpone, en vez de quedarse una celda. */
+  .closeButton {
+    --close-shift-top: calc(var(--space-1) - var(--modal-pad-top, var(--modal-pad-top-default)));
+    position: sticky;
+    z-index: 1;
+    top: var(--space-1);
+    grid-row: 1 / -1;
+    grid-column: 1 / -1;
+    align-self: start;
+    justify-self: end;
+    margin: var(--close-shift-top) calc(var(--space-1) - var(--modal-pad-end, var(--space-6))) calc(-1 * var(--hit-target) - var(--close-shift-top)) auto;
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-card);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
