@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:responsive": "playwright test responsive.spec",
+    "test:responsive:audit": "RESPONSIVE_AUDIT=1 npm run test:responsive; node e2e/responsive/report.mjs",
+    "test:desktop-baseline": "playwright test desktop-baseline"
   },
   "dependencies": {
     "lucide-react": "^1.41.0",
@@ -17,6 +20,7 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
