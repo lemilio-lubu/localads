@@ -80,8 +80,17 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
         const style = getComputedStyle(element);
         if (style.display === "inline" && element.parentElement && /^(P|SPAN|SMALL|LI)$/.test(element.parentElement.tagName)) continue;
         const rect = element.getBoundingClientRect();
-        if (Math.min(rect.width, rect.height) < 40) {
-          findings.push({ severity: "P1", rule: "area-tactil", detail: `${Math.round(rect.width)}×${Math.round(rect.height)}px`, target: describe(element) });
+        /* El área táctil puede crecer con un ::after invisible
+           (design-system/hit-area.module.css): cuenta lo que sobresale. */
+        let { width, height } = rect;
+        const after = getComputedStyle(element, "::after");
+        if (after.content !== "none" && after.position === "absolute") {
+          const px = (value: string) => parseFloat(value) || 0;
+          width = Math.max(width, rect.width - px(after.left) - px(after.right));
+          height = Math.max(height, rect.height - px(after.top) - px(after.bottom));
+        }
+        if (Math.min(width, height) < 39.5) {
+          findings.push({ severity: "P1", rule: "area-tactil", detail: `${Math.round(width)}×${Math.round(height)}px`, target: describe(element) });
         }
       }
 
@@ -120,8 +129,17 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
       if (panel.left < -1 || panel.right > vw + 1) {
         findings.push({ severity: "P0", rule: "modal-mas-ancho-que-viewport", detail: `panel x ${Math.round(panel.left)}→${Math.round(panel.right)} de ${vw}; lo que sobresale a la izquierda no se puede alcanzar con scroll` });
       }
-      if (panel.height > vh) {
-        findings.push({ severity: "P2", rule: "modal-mas-alto-que-viewport", detail: `${Math.round(panel.height)}px en ${vh}px (el botón de cerrar se va con el scroll)` });
+      /* En un modal más alto que la pantalla, el botón de cerrar tiene que
+         seguir a mano al llegar al final. */
+      const backdrop = dialog.parentElement;
+      if (close && backdrop && backdrop.scrollHeight > backdrop.clientHeight) {
+        const previous = backdrop.scrollTop;
+        backdrop.scrollTop = backdrop.scrollHeight;
+        const rect = close.getBoundingClientRect();
+        backdrop.scrollTop = previous;
+        if (rect.bottom < 0 || rect.top > vh) {
+          findings.push({ severity: "P1", rule: "cerrar-se-pierde-al-scroll", detail: `modal de ${Math.round(panel.height)}px en ${vh}px` });
+        }
       }
     }
 
