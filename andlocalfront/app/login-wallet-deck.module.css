@@ -40,12 +40,11 @@
 .mirrored .balance { text-align: right; }
 
 /* En pantallas estrechas se escala la baraja entera, abanico incluido: los
-   desplazamientos del abanico son fijos y, sin escalar, se salían del borde. */
+   desplazamientos del abanico son fijos y, sin escalar, se salían del borde.
+   En móvil la baraja es compacta (150px): la historia va antes que el
+   acceso, y con 210-250px el formulario quedaba casi entero bajo el borde de
+   la pantalla. */
 @media (max-width: 900px) {
-  .stage { height: 250px; }
-  .scaler { transform: scale(.72); }
-}
-@media (max-width: 420px) {
-  .stage { height: 210px; }
-  .scaler { transform: scale(.58); }
+  .stage { height: 150px; }
+  .scaler { transform: scale(.52); }
 }

@@ -58,9 +58,15 @@ export default function LoginForm() {
   function fillDemoAccount(account: (typeof demoAccounts)[number]) { setUsername(account); setPassword("1234"); setError(""); }
 
   /* Los textos entran desenfocados y se enfocan en cascada. */
-  const reveal = (delay: number) => reduceMotion
-    ? { initial: false as const }
-    : { initial: { opacity: 0, y: 12, filter: "blur(10px)" }, animate: { opacity: 1, y: 0, filter: "blur(0px)" }, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const, delay } };
+  /* Con movimiento reducido el destino se declara igual y solo se anula la
+     duración. Sin `animate`, el texto se quedaba invisible: el HTML del
+     servidor sale con el estado inicial (opacity 0), porque allí aún no se
+     conoce la preferencia, y al hidratar nada lo llevaba a 1. */
+  const reveal = (delay: number) => ({
+    initial: { opacity: 0, y: 12, filter: "blur(10px)" },
+    animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+    transition: reduceMotion ? { duration: 0 } : { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const, delay },
+  });
 
   return (
     <main className={styles.page}>
