@@ -118,6 +118,19 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
       }
     }
 
+    /* 5b. Recortado con elipsis: aceptable en un identificador que se puede
+       copiar, no en un importe ni en un plazo. Sin title, lo que queda tras
+       los puntos suspensivos no se puede leer de ninguna forma. */
+    for (const element of (dialog ?? document.body).querySelectorAll<HTMLElement>("*")) {
+      if (!isVisible(element) || element.title) continue;
+      const style = getComputedStyle(element);
+      if (style.textOverflow !== "ellipsis" || element.scrollWidth <= element.clientWidth + 1) continue;
+      const text = (element.textContent ?? "").trim();
+      if (/US\$|\d+[.,]\d{2}\b|vence|venció|días?/.test(text) && !/^TX-|^tx-/i.test(text)) {
+        findings.push({ severity: "P1", rule: "dato-truncado", detail: `«${text.slice(0, 40)}»`, target: describe(element) });
+      }
+    }
+
     /* 6. El modal: se ve entero al abrir y se puede cerrar. */
     if (dialog) {
       const panel = dialog.getBoundingClientRect();
