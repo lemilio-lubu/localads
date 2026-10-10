@@ -10,7 +10,7 @@
    de entrar: «En revision» sin nombre no distingue «la tengo yo» de «la tiene
    otro», y con dos administradores eso son dos personas en el mismo caso. */
 /* Enlace discreto bajo el estado para quedarse el caso. */
-.claim { align-self: flex-start; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.claim { composes: hitArea from "../../design-system/hit-area.module.css"; align-self: flex-start; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .claim:disabled { opacity: .5; cursor: wait; }
 .claim:focus-visible { border-radius: 4px; outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .holder { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
@@ -75,7 +75,19 @@
 }
 @media (max-width: 1180px) { .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .actions { grid-column: 1 / -1; grid-auto-flow: column; justify-content: end; } }
 @media (max-width: 760px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .actions { grid-auto-columns: 1fr; justify-content: stretch; } }
-@media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+/* En móvil, dos columnas como «tus facturas»; el cliente y las acciones
+   ocupan la fila entera. La barra baja de línea: en una sola fila el filtro
+   «sin asignar» se salía hasta 70px a 320. */
+/* En móvil los valores se parten en vez de recortarse: la cuenta externa
+   solo se leía en un title (con el dedo no aparece) y la fecha del caso
+   tomado acababa en «07:…». Las acciones reparten el ancho con mínimo cero:
+   con el mínimo del contenido, «Activar pauta» se salía de la fila. */
+@media (max-width: 520px) {
+  .cell > span { overflow-wrap: anywhere; white-space: normal; }
+  .actions { grid-auto-columns: minmax(0, 1fr); }
+  .actions button { padding-inline: var(--space-1); }
+}
+@media (max-width: 520px) { .toolbar { flex-wrap: wrap; } .toolbar > * { min-width: 0; flex: 1 1 100%; } .row > .cell:first-child { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .row, .actions button, .reject button { transition-duration: 0ms; } .actions button:not(:disabled):active, .reject button:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
 
 /* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
