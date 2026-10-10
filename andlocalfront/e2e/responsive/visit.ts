@@ -11,8 +11,12 @@ export const FIXED_NOW = new Date("2026-10-09T10:00:00-05:00");
 export async function visit(page: Page, surface: Surface) {
   await page.clock.setFixedTime(FIXED_NOW);
   await login(page, surface.role);
-  if (surface.role === "public" || new URL(page.url()).pathname !== surface.path) await page.goto(surface.path);
+  if (surface.prepare) {
+    await surface.prepare(page);
+    await page.goto(surface.path);
+  } else if (surface.role === "public" || new URL(page.url()).pathname !== surface.path) await page.goto(surface.path);
   await surface.ready(page);
+  if (surface.interact) await surface.interact(page);
   /* El indicador de desarrollo de Next no es parte del producto: ni se mide
      ni sale en las capturas. */
   await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });

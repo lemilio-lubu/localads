@@ -7,7 +7,7 @@ import { visit } from "./visit";
    altera, el test falla y la corrección se reescribe dentro de su media query.
    Regenerarlas (--update-snapshots) solo cuando el cambio de escritorio se
    haya pedido expresamente. */
-for (const surface of surfaces.filter((item) => !item.mutates)) {
+for (const surface of surfaces.filter((item) => !item.mutates && !item.state)) {
   test(surface.id, async ({ page }) => {
     const opened = await visit(page, surface);
     test.skip(!opened, "los datos actuales no permiten abrir este modal");

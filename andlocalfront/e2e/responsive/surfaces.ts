@@ -17,6 +17,15 @@ export type Surface = {
   /* Abrirlo escribe en la base de datos. Solo corre con
      RESPONSIVE_MUTATIONS=1, y solo contra la copia `e2e.db`. */
   mutates?: boolean;
+  /* Antes de navegar (tras el login): intercepta la API para forzar un
+     estado de error o de carga. */
+  prepare?: (page: Page) => Promise<void>;
+  /* Tras `ready`: lleva la pantalla a otro estado, como una búsqueda sin
+     resultados. */
+  interact?: (page: Page) => Promise<void>;
+  /* Variante de estado (vacío, error, cargando): se mide en móvil, pero no
+     entra en la línea base de escritorio. */
+  state?: boolean;
 };
 
 const visible = (locator: Locator) => expect(locator.first()).toBeVisible({ timeout: 15_000 });
@@ -145,3 +154,40 @@ export const surfaces: Surface[] = [
      (sin «equipo»), así que basta una para revisar su shell. */
   { id: "gestor-clientes", role: "gestor", path: "/admin/clientes", ready: adminList("crear nuevo cliente") },
 ];
+
+/* ---- Estados: vacío, error y cargando de cada lista ---- */
+
+const isData = (url: URL) => url.pathname.startsWith("/api/v1/") && !url.pathname.startsWith("/api/v1/auth/");
+const failApi = async (page: Page) => { await page.route(isData, (route) => route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "Error simulado por la suite responsive" }) })); };
+/* La petición queda pendiente para siempre: la pantalla se queda cargando. */
+const hangApi = async (page: Page) => { await page.route(isData, () => undefined); };
+const settle = (ms: number) => async (page: Page) => { await page.waitForTimeout(ms); };
+const errorShown = async (page: Page) => { await visible(page.getByRole("alert").or(page.getByText(/reintentar|no fue posible|no pudimos/i))); };
+const searchNothing = async (page: Page) => {
+  await page.getByPlaceholder(/^Buscar por/).first().fill("zzqx-sin-resultados");
+  await page.waitForTimeout(800);
+  await page.waitForLoadState("networkidle", { timeout: 3_000 }).catch(() => undefined);
+};
+
+const lists: { id: string; role: Surface["role"]; path: string; ready: Surface["ready"] }[] = [
+  { id: "admin-clientes", role: "admin", path: "/admin/clientes", ready: adminList("crear nuevo cliente") },
+  { id: "admin-transacciones", role: "admin", path: "/admin/transacciones", ready: adminList(/actualizado a las/) },
+  { id: "admin-verificaciones", role: "admin", path: "/admin/verificaciones", ready: adminList(/actualizado a las/) },
+  { id: "admin-activaciones", role: "admin", path: "/admin/activaciones", ready: adminList(/actualizado a las/) },
+  { id: "admin-equipo", role: "admin", path: "/admin/equipo", ready: adminList("crear cuenta") },
+  { id: "prepago-facturas", role: "prepago", path: "/prepago/facturas", ready: async (page) => { await visible(page.getByText(/actualizado a las/)); } },
+];
+
+for (const list of lists) {
+  surfaces.push(
+    { ...list, id: `${list.id}--vacio`, state: true, interact: searchNothing },
+    { ...list, id: `${list.id}--error`, state: true, prepare: failApi, ready: errorShown },
+    { ...list, id: `${list.id}--cargando`, state: true, prepare: hangApi, ready: settle(1_500) },
+  );
+}
+surfaces.push(
+  { id: "prepago-recarga--error", role: "prepago", path: "/prepago", state: true, prepare: failApi, ready: errorShown },
+  { id: "prepago-recarga--cargando", role: "prepago", path: "/prepago", state: true, prepare: hangApi, ready: settle(1_500) },
+  { id: "prepago-activos--error", role: "prepago", path: "/prepago/activos", state: true, prepare: failApi, ready: errorShown },
+  { id: "prepago-activos--cargando", role: "prepago", path: "/prepago/activos", state: true, prepare: hangApi, ready: settle(1_500) },
+);

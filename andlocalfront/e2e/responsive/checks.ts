@@ -169,7 +169,10 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
       /* Solo en táctil o estrecho: con ratón el botón se queda absolute a
          propósito (decisión del 2026-10-09) y se cierra también con Esc o
          tocando fuera. */
-      if (close && backdrop && (touch || vw <= 680) && backdrop.scrollHeight > backdrop.clientHeight) {
+      /* Un modal con su propio botón «cerrar» al final (credenciales) ya
+         ofrece cómo salir al llegar abajo. */
+      const ownClose = [...dialog.querySelectorAll("button")].some((button) => button !== close && button.textContent?.trim().toLowerCase() === "cerrar");
+      if (close && backdrop && !ownClose && (touch || vw <= 680) && backdrop.scrollHeight > backdrop.clientHeight) {
         const previous = backdrop.scrollTop;
         backdrop.scrollTop = backdrop.scrollHeight;
         const rect = close.getBoundingClientRect();
