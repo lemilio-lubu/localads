@@ -87,10 +87,13 @@ export default function ModalShell({ open, labelledBy, children, className = "",
             exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, transform: "scale(0.96)", transition: modalExitTransition }}
             transition={reduceMotion ? { duration: 0 } : modalEnterTransition}
           >
-            {children}
+            {/* Primero en el DOM: en móvil es sticky y solo se pega arriba si
+                va antes que el contenido. En escritorio es absolute y el orden
+                no se ve; el foco ya empezaba aquí al abrir. */}
             <button ref={closeButton} type="button" className={styles.closeButton} onClick={onClose} aria-label="Cerrar modal">
               <X size={24} strokeWidth={2} aria-hidden="true" />
             </button>
+            {children}
           </motion.section>
         </motion.div>
       )}

@@ -41,7 +41,7 @@
 .ratesError button:focus-visible, .formStatus button:focus-visible { outline: 2px solid currentcolor; outline-offset: 2px; }
 .formStatus:empty { margin-top: 0; }
 .error { color: var(--color-danger); }
-.activationModal { width: min(100%, var(--layout-content)); padding-block: 40px 28px; padding-inline-start: 44px; background: var(--color-surface-raised); box-shadow: 0 4px 20px rgb(0 0 0 / 25%); }
+.activationModal { --modal-pad-top: 40px; width: min(100%, var(--layout-content)); padding-block: 40px 28px; padding-inline-start: 44px; background: var(--color-surface-raised); box-shadow: 0 4px 20px rgb(0 0 0 / 25%); }
 .activationModal > button { color: var(--activation-ink); }
 .activationPanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
 .activationHeading, .activationDescription, .activationActions, .activationError { grid-column: 1 / -1; }
@@ -66,7 +66,7 @@
 .activationError { margin: 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: center; }
 @media (hover: hover) and (pointer: fine) { .platformField:hover, .activationButton:not(:disabled):hover { border-color: rgb(11 89 1 / 18%); box-shadow: var(--shadow-card); } .uploadArea:hover { border-color: rgb(11 89 1 / 30%); } }
 @media (prefers-reduced-motion: reduce) { .platformField, .activationButton, .uploadArea, .checkbox img, .activationSubmit { transition: none; } .activationButton:not(:disabled):active, .uploadArea:active, .activationSubmit:not(:disabled):active { transform: none; } }
-@media (max-width: 680px) { .rechargePanel { border-radius: var(--radius-control); padding: 28px 20px; } .heading { align-items: flex-start; flex-direction: column; } .summary { text-align: left; } .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); } .activationPanel { grid-template-columns: 1fr; } .activationPanel label { grid-column: 1 / -1; } .activationModal { padding-block: 48px 28px; padding-inline-start: 20px; } .activationHeading { gap: 12px; } .activationHeading h2 { font-size: var(--font-size-body-sm); } }
+@media (max-width: 680px) { .rechargePanel { border-radius: var(--radius-control); padding: 28px 20px; } .heading { align-items: flex-start; flex-direction: column; } .summary { text-align: left; } .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); } .activationPanel { grid-template-columns: 1fr; } .activationPanel label { grid-column: 1 / -1; } .activationModal { --modal-pad-top: 48px; padding-block: 48px 28px; padding-inline-start: 20px; } .activationHeading { gap: 12px; } .activationHeading h2 { font-size: var(--font-size-body-sm); } }
 
 /* Fase 2: el cliente decide con la informacion a la vista. */
 .currentBalance { display: grid; justify-items: end; gap: 2px; color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-align: right; text-transform: uppercase; letter-spacing: .04em; }
@@ -88,4 +88,19 @@
   .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); }
   .currentBalance { display: none; }
   .summary span { justify-content: space-between; }
+}
+
+/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
+   Solo en táctil: con ratón el campo conserva sus 13px. */
+@media (pointer: coarse) {
+  .activationPanel input { font-size: var(--font-size-body); }
+}
+
+/* En móvil la nota de formatos le quitaba el ancho al texto: «adjuntar c…» a
+   320px, y con un archivo elegido no se veía qué se había subido. La nota
+   baja a su propia línea y el nombre se parte en vez de recortarse. */
+@media (max-width: 680px) {
+  .uploadArea { flex-wrap: wrap; row-gap: var(--space-half); padding: var(--space-2); }
+  .uploadArea span { max-width: calc(100% - 36px - var(--space-2)); overflow-wrap: anywhere; white-space: normal; }
+  .uploadHint { flex-basis: 100%; margin-top: 0; text-align: center; }
 }

@@ -27,7 +27,12 @@
 .metaCard { background: var(--color-meta-strong); }
 .googleCard { background: var(--color-google); }
 .googleCard .balance, .googleCard .lastRecharge { color: var(--color-google-text); }
-.totalCard { z-index: 4; top: var(--total-top); cursor: default; background: var(--color-dark); box-shadow: 0 -4px 24px rgb(0 0 0 / 45%); }
+/* La tarjeta llega justo al borde inferior del mazo (bottom: 0). Heredaba los
+   240 de .assetCard y el mazo la recortaba a 144 (208 en móvil): lo anclado
+   abajo quedaba fuera. La línea de crédito de Flex no se veía nunca, y en
+   móvil el botón se cortaba y tapaba esa línea. */
+/* Abajo, esquinas rectas: antes quedaban fuera del recorte y así se veían. */
+.totalCard { z-index: 4; top: var(--total-top); bottom: 0; height: auto; border-bottom-right-radius: 0; border-bottom-left-radius: 0; cursor: default; background: var(--color-dark); box-shadow: 0 -4px 24px rgb(0 0 0 / 45%); }
 .assetDeck[data-has-selection="true"] .platformCard[data-selected="true"] { box-shadow: none; }
 .platformCard:focus-visible { outline: 4px solid rgb(255 255 255 / 72%); outline-offset: -6px; }
 .platformCard:active { box-shadow: 0 -8px 16px rgb(0 0 0 / 22%), inset 0 0 0 3px rgb(255 255 255 / 38%); }
@@ -73,6 +78,7 @@
 @media (max-width: 560px) {
   .assetDeck { --card-stride: 96px; --card-height: 240px; --total-height: 208px; --total-overlap: 132px; border-radius: var(--radius-control); }
   .assetCard { right: var(--space-1); left: var(--space-1); width: calc(100% - var(--space-2)); border-radius: var(--radius-control); }
+  .totalCard { border-bottom-right-radius: 0; border-bottom-left-radius: 0; }
   .assetIcon { top: var(--space-3); left: var(--space-4); }
   .tiktokIcon { width: 48px; height: 48px; }
   .metaIcon { width: 48px; height: 40px; }
@@ -90,6 +96,9 @@
 }
 
 @media (max-width: 390px) {
+  /* Tres piezas apiladas en 208px: saldo arriba, crédito en medio, botón
+     abajo. Con el saldo a 64 y el crédito a 24 del borde, se pisaban. */
+  .totalBalance { top: var(--space-3); }
   .totalCard a { top: auto; right: auto; bottom: var(--space-2); left: var(--space-3); }
 }
 
@@ -99,3 +108,5 @@
 .creditLine b { color: #fff; font-variant-numeric: tabular-nums; }
 .creditLine small { display: block; margin-top: 2px; opacity: .82; }
 @media (max-width: 680px) { .creditLine { right: var(--space-3); bottom: var(--space-3); left: var(--space-3); text-align: left; } }
+/* Con el botón abajo, el crédito sube por encima de él. */
+@media (max-width: 390px) { .creditLine { bottom: calc(var(--space-2) + var(--button-height) + var(--space-2)); } }

@@ -3,7 +3,7 @@
    panel de cristal esmerilado. Contención: pocas piezas y mucho aire, con
    la misma tipografía que el resto del producto. Los campos vienen de
    components/form-modal, los mismos del portal. */
-.page { position: relative; display: grid; min-height: 100vh; grid-template-columns: minmax(0, 1.2fr) minmax(380px, 1fr); align-items: center; gap: var(--space-4); overflow: hidden; padding: var(--space-6) clamp(var(--space-3), 6vw, var(--space-12)); background: var(--color-surface); color: var(--color-text); }
+.page { position: relative; display: grid; min-height: 100vh; min-height: 100dvh; grid-template-columns: minmax(0, 1.2fr) minmax(380px, 1fr); align-items: center; gap: var(--space-4); overflow: hidden; padding: var(--space-6) clamp(var(--space-3), 6vw, var(--space-12)); background: var(--color-surface); color: var(--color-text); }
 
 /* Aurora: tres manchas difusas de color de marca que derivan muy despacio. */
 .aurora { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
@@ -53,8 +53,10 @@
 /* Pantallas estrechas: la historia arriba, más corta, y el acceso debajo. */
 @media (max-width: 900px) {
   .page { grid-template-columns: 1fr; align-items: start; gap: var(--space-2); padding: var(--space-3) var(--space-2) var(--space-6); }
-  .storyText h2 { font-size: var(--font-size-headline); }
-  .storyText p { font-size: var(--font-size-body); }
+  /* Historia compacta: el titular baja un paso y el párrafo se omite, para
+     que el acceso entre en la primera pantalla. */
+  .storyText h2 { font-size: var(--font-size-title); }
+  .storyText p { display: none; }
   .panel { padding: var(--space-4) var(--space-3); border-radius: 24px; }
   .heading h1 { font-size: var(--font-size-title); }
 }

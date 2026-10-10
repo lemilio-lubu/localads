@@ -43,7 +43,7 @@
 .codeCell strong { display: inline-flex; align-items: center; gap: var(--space-half); }
 .codeCell[data-account="POSTPAGO"] strong { color: var(--color-accent-teal); }
 .codeCell[data-account="PREPAGO"] strong { color: var(--color-brand); }
-.copyCode { display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin-left: -4px; background: transparent; padding: 2px 4px; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); text-align: left; cursor: pointer; }
+.copyCode { composes: hitArea from "../../design-system/hit-area.module.css"; display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin-left: -4px; background: transparent; padding: 2px 4px; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); text-align: left; cursor: pointer; }
 .copyCode span { overflow: hidden; font-family: var(--font-family-mono); text-overflow: ellipsis; white-space: nowrap; }
 .copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); letter-spacing: .06em; text-transform: uppercase; }
 /* Copiar puede negarse (permiso, contexto inseguro, foco perdido): el fallo se
@@ -55,6 +55,12 @@
 .statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 .dueDate { color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-wrap: balance; }
 .dueOverdue { color: var(--color-danger); font-weight: var(--font-weight-bold); }
+/* Un importe o un plazo no se recortan con «…»: se parten en dos líneas
+   cuando la columna no da para más (escritorio medio y móvil). */
+.cell > .totalDue, .cell > .dueDate { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
+/* El importe tampoco: si no cabe (siete cifras en una columna estrecha), se
+   parte entre dígitos. Mejor una cifra en dos líneas que una cifra oculta. */
+.cell > .amount { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
 .platforms { display: flex; flex-wrap: wrap; align-self: center; gap: var(--space-half); }
 /* Abrir el detalle no compromete nada: es un enlace con nombre, no una acción
    con peso de decisión. El área táctil sigue siendo de 40px aunque lo que se
@@ -85,7 +91,39 @@
 /* La tarifa aplicada se dice al lado del importe: antes el ISD aparecía cobrado
    sin que nada explicara de dónde salía. */
 @media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .pagination button:not(:disabled):hover { background: var(--color-surface-hover); } .detailsButton:not(:disabled):hover { color: var(--color-brand); } }
+/* Escritorio medio: los mínimos fijos (150, 164, 180…) sumaban 1168px de fila
+   y la columna de trabajo solo tiene 1096 a 1440, así que la fila se salía
+   por la derecha hasta ~1520 y «ver detalles» quedaba cortado. Aquí los
+   mínimos son los del contenido real y lo que sobra se reparte en las mismas
+   proporciones. A partir de 1521 la fila es la de siempre. */
+@media (min-width: 1181px) and (max-width: 1520px) {
+  .row { grid-template-columns: minmax(90px, 1.1fr) minmax(88px, .9fr) minmax(90px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(80px, .7fr) minmax(76px, .6fr); }
+}
 @media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } .filters { flex-wrap: wrap; } .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .platforms, .detailsButton { align-self: end; } }
 @media (max-width: 760px) { .overview { align-items: stretch; } .overview > div { min-width: 0; flex: 1; padding-inline: var(--space-2); } .row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control); } }
-@media (max-width: 520px) { .filters > span { flex-basis: 100%; } .row { grid-template-columns: 1fr; } .detailsButton { justify-self: start; } .auditFooter { flex-direction: column; } }
+/* En móvil la fila sigue en dos columnas, como «tus facturas»: en una sola
+   cada transacción medía ~500px y once llenaban 6000. */
+/* A 400 o menos, cada cifra del resumen tiene un tercio del ancho y «US$
+   3.109,23» a 20px no cabía: sobresalía y desplazaba la página. Baja un
+   paso, como el valor de las tarjetas de Clientes. El nombre del cliente se
+   parte en vez de recortarse: en dos columnas no cabía ni «Migo Postpago». */
+@media (max-width: 400px) { .overview strong { font-size: var(--font-size-body); } }
+/* A 520 o menos, el resumen va en dos filas: recuento e inversión arriba,
+   total facturable debajo a todo el ancho. En tres tercios, un total de siete
+   cifras («US$ 1.634.462,41») no cabía ni a 16px y desplazaba la página, y
+   con ella el fondo de los modales. */
+@media (max-width: 520px) {
+  .overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--space-2); }
+  .overview > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; padding-left: 0; }
+}
+/* También en cualquier pantalla táctil: en tablet el nombre largo se
+   recortaba y el title que lo completa no aparece con el dedo. */
+@media (max-width: 520px), (pointer: coarse) { .cell > .clientName { overflow-wrap: anywhere; white-space: normal; } }
+@media (max-width: 520px) { .filters > span { flex-basis: 100%; } .auditFooter { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .row, .pagination button, .detailsButton { transition-duration: 0ms; } .detailsButton:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
+
+/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
+   Solo en táctil: con ratón el campo conserva sus 13px. */
+@media (pointer: coarse) {
+  .search input, .executeDetail input { font-size: var(--font-size-body); }
+}

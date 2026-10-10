@@ -1,4 +1,6 @@
-.status { display: inline-grid; width: fit-content; min-width: var(--space-9); height: var(--space-3); place-items: center; border-radius: var(--radius-pill); background: var(--color-success); padding-inline: var(--space-1); color: #fff; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); line-height: 1; }
+/* Alto fijo de 24: si el texto se partía en dos líneas (en un flex estrecho,
+   como la cabecera del modal de revisión en móvil), quedaba recortado. */
+.status { flex-shrink: 0; white-space: nowrap; display: inline-grid; width: fit-content; min-width: var(--space-9); height: var(--space-3); place-items: center; border-radius: var(--radius-pill); background: var(--color-success); padding-inline: var(--space-1); color: #fff; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); line-height: 1; }
 .success { background: var(--color-success); }
 /* Naranja para lo que está en marcha pero sin terminar. El token es oscuro,
    así que el texto blanco mantiene el contraste AA. */

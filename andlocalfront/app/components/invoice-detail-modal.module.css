@@ -9,6 +9,9 @@
     "summary platforms";
   gap: var(--space-5);
   padding: var(--space-4) var(--space-3);
+  /* Su padding no es el de ModalShell: el botón de cerrar sticky lo necesita. */
+  --modal-pad-top: var(--space-4);
+  --modal-pad-end: var(--space-3);
 }
 
 /* Con pie (portal interno): una fila más a la derecha, bajo las tarjetas. */

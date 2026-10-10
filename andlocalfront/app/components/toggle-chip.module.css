@@ -1,5 +1,10 @@
-.chip { display: inline-grid; min-width: var(--space-5); min-height: var(--space-3); place-items: center; border: 0; border-radius: var(--radius-pill); outline: 0; background: transparent; padding: var(--space-half); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
-.chip[aria-pressed="true"] { box-shadow: 0 0 0 3px rgb(67 67 67 / 16%); }
+/* :where() deja la base con especificidad cero, como en ModalShell. Cada
+   pantalla personaliza el chip con su clase (.managerFilter, .platformFilter)
+   y antes las dos pesaban lo mismo: ganaba la que se cargaba última, que
+   cambia según la ruta o una recarga. Con la del chip al final, «sin
+   asignar» salía en rejilla y el icono quedaba encima del texto. */
+:where(.chip) { white-space: nowrap; display: inline-grid; min-width: var(--space-5); min-height: var(--space-3); place-items: center; border: 0; border-radius: var(--radius-pill); outline: 0; background: transparent; padding: var(--space-half); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
+:where(.chip)[aria-pressed="true"] { box-shadow: 0 0 0 3px rgb(67 67 67 / 16%); }
 .chip:focus-visible { box-shadow: var(--focus-ring); }
 .chip:active { transform: scale(.97); }
 @media (hover: hover) and (pointer: fine) { .chip:hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 9%); } }

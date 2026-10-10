@@ -1,3 +1,6 @@
+/* Script de Node en CommonJS (lo ejecuta `npm start` con node, sin
+   compilar): require() es lo correcto aquí, no un import de TypeScript. */
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { spawn } = require("node:child_process");
 
 const port = process.env.PORT || "3000";

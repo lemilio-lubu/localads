@@ -5,4 +5,8 @@
 .layout > :not(section) { grid-column: 1 / -1; }
 /* En media columna, gestor y administrador van uno sobre otro. */
 .layout [role="radiogroup"] { grid-template-columns: 1fr; }
-@media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+/* Una columna con mínimo cero: con 1fr las secciones no bajaban de su
+   contenido y a 320 se salían 12px. A 560 o menos el modal usa casi todo el
+   ancho, como los detalles de cliente y de miembro (tenía 48px menos). */
+@media (max-width: 760px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .modal { width: calc(100vw - var(--space-2)); } }

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# suite responsive: capturas y JSON del barrido (la línea base de escritorio sí se versiona)
+/e2e/responsive/results/
+/playwright-report/

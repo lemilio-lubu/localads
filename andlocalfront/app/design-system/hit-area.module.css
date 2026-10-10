@@ -1,0 +1,17 @@
+/* Área táctil mínima sin tocar el aspecto. Un control que se ve más pequeño
+   que --hit-target (40px, el mínimo de patrones-lista.md) recibe un ::after
+   invisible que crece hasta 40 en el eje que le falta y no encoge en el que
+   le sobra. Solo con el dedo: con ratón la precisión basta y el área de más
+   solo robaría clics al control de al lado.
+
+   Uso: `composes: hitArea from "<ruta>/design-system/hit-area.module.css";`
+   No sirve en un control que ya es absolute o fixed (perdería su posición)
+   ni en uno que ya usa ::after. */
+@media (pointer: coarse) {
+  .hitArea { position: relative; }
+  .hitArea::after {
+    position: absolute;
+    inset: min(0px, calc((100% - var(--hit-target)) / 2));
+    content: "";
+  }
+}

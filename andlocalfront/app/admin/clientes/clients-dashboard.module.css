@@ -59,7 +59,16 @@
 .message { margin: var(--space-4); color: var(--color-text-muted); text-align: center; }
 .search:focus-within, .createButton:focus-visible, .rowActions button:focus-visible { outline: 3px solid rgb(11 89 1 / 14%); outline-offset: 2px; }
 @media (hover: hover) and (pointer: fine) { .clientRow:hover { box-shadow: var(--shadow-card); } .createButton:hover { box-shadow: var(--shadow-card); color: var(--color-text); } .rowActions button:hover { background: var(--color-surface-hover); color: var(--color-text); } }
-@media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } .clientRow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .clientIdentity { grid-row: span 2; } .rowActions { grid-column: span 2; grid-template-columns: 1fr 1fr; min-height: 40px; } }
+@media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } }
+/* La fila de siete columnas solo cabe desde ~1360: por debajo recortaba el
+   importe («US$ 12…»), el estado («ac…») y el correo. Hasta ahí usa la
+   composición en tres columnas, la misma que ya tenía en tablet. */
+@media (max-width: 1360px) { .clientRow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .clientIdentity { grid-row: span 2; } .rowActions { grid-column: span 2; grid-template-columns: 1fr 1fr; min-height: 40px; } }
+/* En móvil cada pieza de la barra va en su fila, en el mismo orden que en
+   Equipo: buscador, filtros, botón. La columna 2 que el botón tiene en
+   escritorio creaba aquí una columna implícita que llevaba la página a 512px
+   de ancho y dejaba el botón fuera de la pantalla. */
+@media (max-width: 650px) { .toolbar > .search { grid-row: 1; } .toolbar > .filters { grid-row: 2; } .toolbar > .createButton { grid-column: 1; grid-row: 3; justify-self: start; } }
 @media (max-width: 650px) { .filters { justify-content: start; } .filters > span { flex-basis: 100%; margin-right: 0; } .clientRow { grid-template-columns: 1fr 1fr; } .clientIdentity, .rowActions { grid-column: 1 / -1; grid-row: auto; } }
 @media (prefers-reduced-motion: reduce) { .filters button, .createButton, .clientRow, .rowActions button { transition-duration: 0ms; }
   .skeleton { animation: none; } .clientRow:has(.openDetailButton:active) { transform: none; } }
@@ -78,3 +87,15 @@
 .message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
 .clearFilters { display: inline-grid; min-height: var(--button-height); align-content: center; margin-top: var(--space-1); border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
 .clearFilters:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+
+/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
+   Solo en táctil: con ratón el campo conserva sus 13px. */
+@media (pointer: coarse) {
+  .search input { font-size: var(--font-size-body); }
+}
+
+/* A 360 o menos, «recargado» (la tarjeta que sigue a la identidad) ocupa las
+   dos columnas: en media fila no cabía ningún importe, ni bajando a 16px. */
+@media (max-width: 360px) {
+  .clientIdentity + * { grid-column: 1 / -1; }
+}

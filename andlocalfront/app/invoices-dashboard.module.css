@@ -26,7 +26,7 @@
 /* La salida está siempre que haya filtro, no solo cuando no devuelve nada:
    con resultados había que recordar qué se activó para deshacerlo. */
 .metaRange { display: inline-flex; align-items: baseline; gap: var(--space-2); }
-.clearFilters { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
+.clearFilters { composes: hitArea from "./design-system/hit-area.module.css"; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
 .clearFilters:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .pagination button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
@@ -93,8 +93,16 @@
 
 .dueDate { color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-wrap: balance; }
 .dueOverdue { color: var(--color-danger); font-weight: var(--font-weight-bold); }
+/* Un importe o un plazo no se recortan con «…»: lo que queda detrás no se
+   puede leer de ninguna forma. La regla de .cell > span (una línea, elipsis)
+   vale para el resto de valores; estos dos se parten en dos líneas cuando no
+   caben, que solo pasa en móvil. */
+.cell > .totalDue, .cell > .dueDate { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
+/* El importe tampoco: si no cabe (siete cifras en una columna estrecha), se
+   parte entre dígitos. Mejor una cifra en dos líneas que una cifra oculta. */
+.cell > .amount { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
 
-.copyCode { display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); background: transparent; padding: 2px 4px; margin-left: -4px; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body); cursor: pointer; text-align: left; }
+.copyCode { composes: hitArea from "./design-system/hit-area.module.css"; display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); background: transparent; padding: 2px 4px; margin-left: -4px; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body); cursor: pointer; text-align: left; }
 .copyCode span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); text-transform: uppercase; letter-spacing: .06em; }
 .copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
@@ -102,3 +110,9 @@
 
 .emptyAction { display: inline-grid; min-height: var(--button-height); align-content: center; margin-top: var(--space-1); border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: none; cursor: pointer; }
 .emptyAction:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+
+/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
+   Solo en táctil: con ratón el campo conserva sus 13px. */
+@media (pointer: coarse) {
+  .search input, .filterGroup input[type="date"] { font-size: var(--font-size-body); }
+}
