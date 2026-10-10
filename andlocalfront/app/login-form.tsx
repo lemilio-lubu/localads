@@ -8,7 +8,8 @@ import ActionButton from "./components/action-button";
 import BrandLogo from "./components/brand-logo";
 import PwaInstallButton from "./components/pwa-install-button";
 import { FormError, FormField, formStyles as form } from "./components/form-modal";
-import { homeFor, login } from "./lib/auth-api";
+import { login } from "./lib/auth-api";
+import { landingFor } from "./lib/recharges-api";
 import LoginWalletDeck, { type DeckState } from "./login-wallet-deck";
 import styles from "./login-form.module.css";
 
@@ -47,9 +48,12 @@ export default function LoginForm() {
     setDeck("gathering");
     try {
       const user = await login(username.trim().toLowerCase(), password);
+      // El destino depende del historial del cliente: se decide mientras el
+      // mazo sigue reunido, antes de despegar.
+      const destination = await landingFor(user);
       // Al entrar, el mazo despega antes de cambiar de pantalla.
       setDeck("launching");
-      window.setTimeout(() => router.push(homeFor(user)), reduceMotion ? 0 : 380);
+      window.setTimeout(() => router.push(destination), reduceMotion ? 0 : 380);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Usuario o contraseña incorrectos");
       setDeck("idle");
