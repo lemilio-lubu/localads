@@ -22,6 +22,9 @@
   /* En móvil la navegación es una fila: se deshace el anclaje y el perfil
      vuelve junto a ella, sin reservar el alto de la pantalla. */
   .navColumn { position: static; height: auto; }
+  /* Apiladas, navegación y contenido no tenían hueco: el avatar quedaba
+     pegado a la tarjeta de debajo. */
+  .navColumn { margin-bottom: var(--space-3); }
   .navFooter { display: flex; justify-content: center; margin-top: 0; padding-top: var(--space-2); }
 }
 
