@@ -72,13 +72,14 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
       }
 
       /* 3. Áreas táctiles: 40px es el mínimo que fija `patrones-lista.md`.
-         Los enlaces dentro de un párrafo quedan fuera (excepción «inline» de
-         WCAG 2.5.8): crecerlos rompería el interlineado. */
+         Los controles en línea dentro de una frase quedan fuera (excepción
+         «inline» de WCAG 2.5.8): crecerlos haría que las líneas se pisaran. */
       const controls = [...scope.querySelectorAll<HTMLElement>('button, a[href], select, [role="button"], [role="menuitem"], [role="tab"], [role="radio"], summary')]
         .filter((element) => isVisible(element) && !(element as HTMLButtonElement).disabled);
       for (const element of controls) {
         const style = getComputedStyle(element);
-        if (style.display === "inline" && element.parentElement && /^(P|SPAN|SMALL|LI)$/.test(element.parentElement.tagName)) continue;
+        const sentence = element.closest("p");
+        if (style.display.startsWith("inline") && sentence && sentence !== element && (sentence.textContent ?? "").trim().length > (element.textContent ?? "").trim().length + 12) continue;
         const rect = element.getBoundingClientRect();
         /* El área táctil puede crecer con un ::after o ::before invisible
            (design-system/hit-area.module.css): cuenta lo que sobresale. */
