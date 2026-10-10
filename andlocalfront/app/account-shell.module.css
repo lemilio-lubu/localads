@@ -25,9 +25,17 @@
   /* Apiladas, navegación y contenido no tenían hueco: el avatar quedaba
      pegado a la tarjeta de debajo. */
   .navColumn { margin-bottom: var(--space-3); }
-  .navFooter { display: flex; justify-content: center; margin-top: 0; padding-top: var(--space-2); }
+  /* El perfil sube a la fila del logo, a la derecha, como en el admin: en su
+     propia fila centrada se comía ~70px de alto. Vive en otro contenedor que
+     el logo, así que se coloca sobre la cabecera: arriba el padding de la
+     página y la misma altura que ella, para centrarlo con el logo. */
+  .pageShell { position: relative; }
+  .navFooter { position: absolute; top: var(--space-4); right: var(--space-3); display: flex; height: var(--layout-header-height); align-items: center; margin-top: 0; border-top: 0; padding-top: 0; }
+  /* Arriba de la página el menú no puede subir: abre hacia abajo. */
+  .pageShell .navFooter [role="menu"] { top: calc(100% + var(--space-1)); right: 0; bottom: auto; left: auto; transform-origin: top right; }
 }
 
 @media (max-width: 480px) {
   .pageShell { padding-inline: var(--space-2); }
+  .navFooter { right: var(--space-2); }
 }
