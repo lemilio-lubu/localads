@@ -80,14 +80,15 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
         const style = getComputedStyle(element);
         if (style.display === "inline" && element.parentElement && /^(P|SPAN|SMALL|LI)$/.test(element.parentElement.tagName)) continue;
         const rect = element.getBoundingClientRect();
-        /* El área táctil puede crecer con un ::after invisible
+        /* El área táctil puede crecer con un ::after o ::before invisible
            (design-system/hit-area.module.css): cuenta lo que sobresale. */
         let { width, height } = rect;
-        const after = getComputedStyle(element, "::after");
-        if (after.content !== "none" && after.position === "absolute") {
+        for (const pseudo of ["::after", "::before"]) {
+          const style = getComputedStyle(element, pseudo);
+          if (style.content === "none" || style.position !== "absolute") continue;
           const px = (value: string) => parseFloat(value) || 0;
-          width = Math.max(width, rect.width - px(after.left) - px(after.right));
-          height = Math.max(height, rect.height - px(after.top) - px(after.bottom));
+          width = Math.max(width, rect.width - px(style.left) - px(style.right));
+          height = Math.max(height, rect.height - px(style.top) - px(style.bottom));
         }
         if (Math.min(width, height) < 39.5) {
           findings.push({ severity: "P1", rule: "area-tactil", detail: `${Math.round(width)}×${Math.round(height)}px`, target: describe(element) });
