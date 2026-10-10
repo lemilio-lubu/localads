@@ -49,6 +49,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
   // Una cuenta postpago necesita al menos un dia de credito (BR-029), asi que
   // el valor inicial es valido y el campo no admite cero.
   const [creditDays, setCreditDays] = useState(client?.account.creditDays || 30);
+  const [creditLimit, setCreditLimit] = useState(client?.account.creditLimit?.toString() ?? "");
   const [managerId, setManagerId] = useState(client?.manager?.id ?? "");
   const [managers, setManagers] = useState<TeamMember[]>([]);
   const [pending, setPending] = useState(false);
@@ -60,7 +61,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
   const [resetStep, setResetStep] = useState<"idle" | "confirm" | "pending">("idle");
   const [resetError, setResetError] = useState("");
 
-  const fieldErrors = validateClientFields({ name, email, ruc, accountType, creditDays });
+  const fieldErrors = validateClientFields({ name, email, ruc, accountType, creditDays, creditLimit: Number(creditLimit) });
   const shown = (field: ClientProfileField) => (submitted || touched[field]) ? fieldErrors[field] : undefined;
   const touch = (field: ClientProfileField) => () => setTouched((current) => ({ ...current, [field]: true }));
   const kind = rucKind(ruc);
@@ -91,7 +92,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
       return;
     }
     setPending(true); setError("");
-    const input = { name, email, ruc: normalizeRuc(ruc), accountType, platforms, creditDays: accountType === "PREPAGO" ? 0 : creditDays };
+    const input = { name, email, ruc: normalizeRuc(ruc), accountType, platforms, creditDays: accountType === "PREPAGO" ? 0 : creditDays, creditLimit: accountType === "PREPAGO" ? 0 : Number(creditLimit) };
     try {
       if (client) {
         const saved = await updateAdminClient(client.id, { ...input, expectedPlatformsVersion: client.platformsVersion });
@@ -167,6 +168,9 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
                 transition={{ duration: reduceMotion ? 0 : .22, ease: [.23, 1, .32, 1] }}
               >
                 <div className={styles.credit}>
+                  <Field className={styles.creditLimit} label="Línea de crédito" Icon={Wallet} error={shown("creditLimit")} hint="Monto máximo para financiar recargas">
+                    {({ id, describedBy, invalid }) => <><input id={id} type="number" min="0.01" step="0.01" inputMode="decimal" value={creditLimit} onChange={(event) => { setCreditLimit(event.target.value); setError(""); }} onBlur={touch("creditLimit")} aria-invalid={invalid} aria-describedby={describedBy} placeholder="1000.00" /><span className={styles.suffix}>USD</span></>}
+                  </Field>
                   <Field label="Días de crédito" Icon={CalendarClock} error={shown("creditDays")}>
                     {({ id, describedBy, invalid }) => <><input id={id} type="number" min={1} max={365} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy} /><span className={styles.suffix}>días</span></>}
                   </Field>

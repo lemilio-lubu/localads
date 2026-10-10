@@ -145,10 +145,8 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
       <section className={`${styles.rechargePanel} ${isPrepaid ? styles.prepaidPanel : ""}`} aria-labelledby="recharge-title">
         <header className={styles.heading}>
           <h1 id="recharge-title">sistema de recargas</h1>
-          {creditAvailable !== null && context && <p className={`${styles.creditInfo} ${exceedsCredit ? styles.creditExceeded : ""}`} role={exceedsCredit ? "alert" : undefined}>
-            {exceedsCredit
-              ? `El total supera tu crédito disponible de ${formatAmount(creditAvailable)}. Reduce los montos para continuar.`
-              : `Crédito disponible ${formatAmount(creditAvailable)} de ${formatAmount(context.account.creditLimit)} · ${context.account.creditDays} días de plazo`}
+          {exceedsCredit && creditAvailable !== null && context && <p className={`${styles.creditInfo} ${styles.creditExceeded}`} role="alert">
+            El total supera tu crédito disponible de {formatAmount(creditAvailable)}. Reduce los montos para continuar.
           </p>}
         </header>
 

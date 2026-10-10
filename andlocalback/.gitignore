@@ -5,4 +5,5 @@ coverage/
 uploads/
 prisma/*.db
 prisma/*.db-journal
+prisma/*.sqlite-backup-*
 *.tsbuildinfo

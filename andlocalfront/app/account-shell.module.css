@@ -1,7 +1,7 @@
 /* El padding inferior reservaba 72px de vacío al final de la página. */
 .pageShell { --shell-content-top: calc(var(--layout-page-top) + var(--layout-header-height) + var(--layout-section-gap)); min-height: 100vh; min-height: 100dvh; background: var(--color-canvas); color: var(--color-text); padding: var(--layout-page-top) var(--space-4) var(--space-6); }
 .header, .workspace { width: min(var(--layout-max), 100%); margin-inline: auto; }
-.header { display: flex; height: var(--layout-header-height); align-items: center; justify-content: space-between; }
+.header { display: flex; height: var(--layout-header-height); align-items: center; justify-content: space-between; gap: var(--space-2); }
 .workspace { display: grid; grid-template-columns: var(--layout-sidebar) minmax(0, var(--layout-content)); gap: var(--layout-gutter); align-items: start; margin-top: var(--layout-section-gap); }
 .wideWorkspace { grid-template-columns: var(--layout-wide-sidebar) minmax(0, var(--layout-wide-content)); gap: var(--layout-wide-gutter); }
 .content { width: 100%; min-width: 0; }
@@ -30,6 +30,9 @@
      el logo, así que se coloca sobre la cabecera: arriba el padding de la
      página y la misma altura que ella, para centrarlo con el logo. */
   .pageShell { position: relative; }
+  /* La cabecera deja libre a la derecha el sitio del avatar (48 + 16 de
+     aire): sin ese hueco, el botón de instalar la app quedaba debajo. */
+  .header { padding-right: calc(var(--space-6) + var(--space-2)); }
   .navFooter { position: absolute; top: var(--space-4); right: var(--space-3); display: flex; height: var(--layout-header-height); align-items: center; margin-top: 0; border-top: 0; padding-top: 0; }
   /* Arriba de la página el menú no puede subir: abre hacia abajo. */
   .pageShell .navFooter [role="menu"] { top: calc(100% + var(--space-1)); right: 0; bottom: auto; left: auto; transform-origin: top right; }
@@ -38,4 +41,5 @@
 @media (max-width: 480px) {
   .pageShell { padding-inline: var(--space-2); }
   .navFooter { right: var(--space-2); }
+  .header { height: auto; min-height: var(--layout-header-height); flex-wrap: wrap; }
 }

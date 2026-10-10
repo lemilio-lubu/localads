@@ -7,8 +7,9 @@ import { CredentialsService } from "./credentials.service";
 import { AuthService } from "./auth.service";
 import { PasswordService } from "./password.service";
 import { SecureFilesController } from "./secure-files.controller";
+import { StorageModule } from "../storage/storage.module";
 
 /* Orden de los guards: autenticar, comprobar rol y, por ultimo, bloquear a
    quien arrastra una clave temporal sin cambiar. */
-@Module({ controllers: [AuthController, SecureFilesController], providers: [AccessTokenService, PasswordService, AuthService, CredentialsService, { provide: APP_GUARD, useClass: JwtAuthGuard }, { provide: APP_GUARD, useClass: RolesGuard }, { provide: APP_GUARD, useClass: TemporaryPasswordGuard }], exports: [AccessTokenService, CredentialsService] })
+@Module({ imports: [StorageModule], controllers: [AuthController, SecureFilesController], providers: [AccessTokenService, PasswordService, AuthService, CredentialsService, { provide: APP_GUARD, useClass: JwtAuthGuard }, { provide: APP_GUARD, useClass: RolesGuard }, { provide: APP_GUARD, useClass: TemporaryPasswordGuard }], exports: [AccessTokenService, CredentialsService] })
 export class AuthModule {}

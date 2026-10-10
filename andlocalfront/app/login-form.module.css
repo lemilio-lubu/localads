@@ -27,6 +27,7 @@
 
 /* Panel de cristal: translúcido, desenfoca lo de detrás, filo claro. */
 .panel { position: relative; z-index: 1; display: grid; width: min(420px, 100%); gap: var(--space-4); justify-self: center; border: 1px solid rgb(255 255 255 / 70%); border-radius: 28px; background: rgb(255 255 255 / 62%); padding: var(--space-6) var(--space-5); box-shadow: 0 30px 80px -30px rgb(20 40 20 / 25%), inset 0 1px 0 rgb(255 255 255 / 90%); backdrop-filter: saturate(180%) blur(24px); }
+.brandRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .logo { height: var(--space-5); }
 .logo > div { width: 124px; }
 .heading h1 { margin: 0; color: var(--color-text); font-size: var(--font-size-headline); font-weight: var(--font-weight-bold); line-height: 1.15; letter-spacing: -.015em; }

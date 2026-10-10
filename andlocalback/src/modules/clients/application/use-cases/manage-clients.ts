@@ -30,8 +30,8 @@ export class ManageClients {
      token; lo que pida el cuerpo se ignora. Un admin elige gestor o lo deja
      sin asignar. */
   async create(profile: ClientProfileInput, scope: ManagerScope, requestedManagerId?: string | null) {
-    const input = { ...profile, ruc: validateRuc(profile.ruc) };
-    validateClientProfile(input);
+    const input = { ...profile, ruc: validateRuc(profile.ruc), creditLimit: profile.creditLimit ?? 0 };
+    validateClientProfile(input, { requirePostpaidLimit: true });
     const managerId = scope.managerId ?? requestedManagerId?.trim() ?? null;
     const { username, temporaryPassword, passwordHash } = await this.credentials.prepare(input.email);
     const client = await this.clients.create(input, { username, passwordHash }, managerId || null);
@@ -50,8 +50,9 @@ export class ManageClients {
       accountType: input.accountType ?? current.account.type,
       platforms: input.platforms ?? current.account.platforms,
       creditDays: input.accountType === "PREPAGO" ? 0 : input.creditDays ?? current.account.creditDays,
+      creditLimit: input.accountType === "PREPAGO" ? 0 : input.creditLimit ?? current.account.creditLimit ?? 0,
     });
-    const updated = await this.clients.update(id, input.accountType === "PREPAGO" ? { ...input, creditDays: 0 } : input);
+    const updated = await this.clients.update(id, input.accountType === "PREPAGO" ? { ...input, creditDays: 0, creditLimit: 0 } : input);
     if (!updated) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
     return updated;
   }

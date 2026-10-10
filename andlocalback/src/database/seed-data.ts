@@ -15,7 +15,7 @@ export async function seedBackendData(database: PrismaClient) {
     });
     await database.account.upsert({
       where: { id: account.id },
-      update: {},
+      update: account.id === "account-postpaid-001" ? { creditLimit: account.creditLimit } : {},
       create: { id: account.id, clientId: account.clientId, status: "ACTIVE", type: account.type, creditDays: account.creditDays, creditLimit: account.creditLimit },
     });
     for (const platform of ["META", "GOOGLE"] as const) {

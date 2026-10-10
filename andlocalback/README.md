@@ -11,12 +11,36 @@ npm run start:dev
 
 La API escucha en `http://localhost:3001/api/v1` y acepta el frontend en `http://localhost:3000`.
 
-La persistencia usa Prisma con SQLite. La migración inicial está versionada en `prisma/migrations` y la base local se crea con:
+La persistencia usa Prisma con PostgreSQL. Configura `DATABASE_URL` en `.env` con una URL PostgreSQL local o de Railway. Las migraciones de PostgreSQL están en `prisma/migrations`; las migraciones históricas de SQLite se conservaron en `prisma/migrations-sqlite-backup` y no se ejecutan en PostgreSQL. El proceso del backend ya no inserta usuarios ni datos demo al iniciar; carga esos datos sólo con `npm run prisma:seed` cuando sea necesario.
 
 ```bash
-npm run prisma:migrate
+npm run prisma:deploy
 npm run prisma:seed
 ```
+
+La migración inicial crea el esquema, pero no copia automáticamente los datos de `prisma/dev.db`. Ese archivo y un respaldo fechado se conservan localmente; el respaldo está excluido de Git para no publicar datos potencialmente sensibles. Los comprobantes de `uploads/` tampoco se han migrado a almacenamiento remoto.
+
+## Despliegue en Railway
+
+El servicio del backend debe usar `andlocalback` como **Root Directory** y `/andlocalback/railway.json` como archivo de configuración Railway. El archivo configura la compilación, ejecuta `prisma migrate deploy` antes de publicar y arranca la API. Añade un servicio PostgreSQL al proyecto y crea en el servicio backend estas variables:
+
+```dotenv
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+NODE_ENV=production
+JWT_ACCESS_SECRET=<secreto aleatorio de al menos 32 caracteres>
+FRONTEND_ORIGIN=https://<dominio-del-frontend>
+R2_ACCOUNT_ID=<account-id>
+R2_ACCESS_KEY_ID=<access-key-id>
+R2_SECRET_ACCESS_KEY=<secret-access-key>
+R2_BUCKET=<nombre-del-bucket>
+R2_REGION=auto
+```
+
+En Cloudflare R2 crea un bucket privado y un token **Object Read & Write** limitado a ese bucket. El backend usa el endpoint S3 `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`; no hace falta exponer el bucket públicamente porque las descargas pasan por la API autenticada. Guarda el secreto únicamente en Railway. La comprobación de salud está en `/api/v1/health`.
+
+No ejecutes `npm run prisma:seed` en producción: crea cuentas demo con contraseñas conocidas. Para crear el primer administrador, agrega temporalmente `BOOTSTRAP_ADMIN_USERNAME` y `BOOTSTRAP_ADMIN_PASSWORD` (mínimo 12 caracteres) al servicio, ejecuta `npm run bootstrap:admin` desde la consola del servicio y elimina esas dos variables inmediatamente. El comando solo crea el usuario cuando la tabla de usuarios está vacía y nunca modifica cuentas existentes.
+
+Los comprobantes nuevos se guardan en R2 y PostgreSQL almacena el identificador `r2://...`, junto con tipo, tamaño y checksum. Las filas antiguas que apuntan a `/uploads/receipts/...` necesitan que esos archivos se copien a R2 antes de abandonar el servidor donde se subieron: los archivos del disco local no se transfieren solos.
 
 ## Cuentas de demostración
 

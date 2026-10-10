@@ -3,7 +3,7 @@
 Aplicación local compuesta por:
 
 - `andlocalfront`: portal web en Next.js.
-- `andlocalback`: API en NestJS con Prisma y SQLite.
+- `andlocalback`: API en NestJS con Prisma y PostgreSQL.
 
 ## Requisitos
 
@@ -11,7 +11,9 @@ Aplicación local compuesta por:
 - npm 10 o superior.
 - Dos terminales disponibles: una para el backend y otra para el frontend.
 
-No es necesario instalar SQLite ni levantar una base de datos externa.
+El backend requiere una base PostgreSQL configurada en `DATABASE_URL`.
+
+Para Railway, configura `andlocalback` como directorio raíz del servicio y usa `/andlocalback/railway.json` como archivo de configuración. El archivo ejecuta las migraciones de PostgreSQL antes de iniciar la API. Añade también las variables `JWT_ACCESS_SECRET`, `FRONTEND_ORIGIN` y las credenciales `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` y `R2_REGION=auto` en el servicio backend. Los detalles están en [andlocalback/README.md](andlocalback/README.md#despliegue-en-railway).
 
 ## 1. Preparar y levantar el backend
 
@@ -22,7 +24,7 @@ cd .\andlocalback
 Copy-Item .env.example .env -ErrorAction SilentlyContinue
 npm install
 npx prisma generate
-npx prisma migrate deploy
+npm run prisma:deploy
 npm run prisma:seed
 npm run start:dev
 ```
@@ -32,7 +34,7 @@ El backend queda disponible en:
 - API: <http://localhost:3001/api/v1>
 - Los comprobantes se consultan mediante `/api/v1/files/receipts/:receiptId/content` y requieren autenticacion; el directorio de archivos no es publico. La ruta por nombre se mantiene solo por compatibilidad temporal.
 
-La base de datos local se crea en `andlocalback/prisma/dev.db`. El comando de seed crea cuentas PREPAGO y POSTPAGO con campañas META y GOOGLE activas.
+El comando de seed crea cuentas PREPAGO y POSTPAGO con campañas META y GOOGLE activas. El respaldo de la base SQLite anterior está en `andlocalback/prisma/dev.db.sqlite-backup-20261006`; no se carga automáticamente en PostgreSQL.
 
 ## 2. Preparar y levantar el frontend
 
@@ -78,7 +80,7 @@ Variables principales:
 # andlocalback/.env
 PORT=3001
 FRONTEND_ORIGIN=http://localhost:3000
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public"
 JWT_ACCESS_SECRET=reemplazar-por-un-secreto-aleatorio-de-al-menos-32-caracteres
 ```
 
