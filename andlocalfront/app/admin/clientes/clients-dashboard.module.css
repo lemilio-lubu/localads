@@ -93,3 +93,9 @@
 @media (pointer: coarse) {
   .search input { font-size: var(--font-size-body); }
 }
+
+/* A 360 o menos, «recargado» (la tarjeta que sigue a la identidad) ocupa las
+   dos columnas: en media fila no cabía ningún importe, ni bajando a 16px. */
+@media (max-width: 360px) {
+  .clientIdentity + * { grid-column: 1 / -1; }
+}
