@@ -82,6 +82,9 @@
    solo se leía en un title (con el dedo no aparece) y la fecha del caso
    tomado acababa en «07:…». Las acciones reparten el ancho con mínimo cero:
    con el mínimo del contenido, «Activar pauta» se salía de la fila. */
+/* También en tablets táctiles: el title que completa un dato recortado no
+   aparece con el dedo. */
+@media (pointer: coarse) { .cell > span { overflow-wrap: anywhere; white-space: normal; } }
 @media (max-width: 520px) {
   .cell > span { overflow-wrap: anywhere; white-space: normal; }
   .actions { grid-auto-columns: minmax(0, 1fr); }

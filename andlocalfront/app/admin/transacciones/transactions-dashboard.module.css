@@ -57,7 +57,10 @@
 .dueOverdue { color: var(--color-danger); font-weight: var(--font-weight-bold); }
 /* Un importe o un plazo no se recortan con «…»: se parten en dos líneas
    cuando la columna no da para más (escritorio medio y móvil). */
-.cell > .totalDue, .cell > .dueDate { overflow: visible; white-space: normal; }
+.cell > .totalDue, .cell > .dueDate { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
+/* El importe tampoco: si no cabe (siete cifras en una columna estrecha), se
+   parte entre dígitos. Mejor una cifra en dos líneas que una cifra oculta. */
+.cell > .amount { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
 .platforms { display: flex; flex-wrap: wrap; align-self: center; gap: var(--space-half); }
 /* Abrir el detalle no compromete nada: es un enlace con nombre, no una acción
    con peso de decisión. El área táctil sigue siendo de 40px aunque lo que se
@@ -105,6 +108,14 @@
    paso, como el valor de las tarjetas de Clientes. El nombre del cliente se
    parte en vez de recortarse: en dos columnas no cabía ni «Migo Postpago». */
 @media (max-width: 400px) { .overview strong { font-size: var(--font-size-body); } }
+/* A 520 o menos, el resumen va en dos filas: recuento e inversión arriba,
+   total facturable debajo a todo el ancho. En tres tercios, un total de siete
+   cifras («US$ 1.634.462,41») no cabía ni a 16px y desplazaba la página, y
+   con ella el fondo de los modales. */
+@media (max-width: 520px) {
+  .overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--space-2); }
+  .overview > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; padding-left: 0; }
+}
 /* También en cualquier pantalla táctil: en tablet el nombre largo se
    recortaba y el title que lo completa no aparece con el dedo. */
 @media (max-width: 520px), (pointer: coarse) { .cell > .clientName { overflow-wrap: anywhere; white-space: normal; } }
