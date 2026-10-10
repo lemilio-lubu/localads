@@ -16,7 +16,11 @@
 .workspace h1 { min-width: 0; margin: 0; color: var(--color-text-subtle); font-size: var(--font-size-display); line-height: 1.1; }
 
 @media (max-width: 900px) {
-  .shell { grid-template-columns: 1fr; }
+  /* Dos filas: la franja mide lo que su contenido y el espacio sobrante va al
+     área de trabajo. Con filas automáticas, en una pantalla con poco
+     contenido (una lista vacía) el alto mínimo del shell se repartía entre
+     las dos y abría un hueco entre la franja y el título. */
+  .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   /* En móvil la barra pasa a ser una franja superior compacta: logo y perfil
      en la primera fila, navegación en una sola fila deslizable debajo, como
      la del portal de cliente. Con los enlaces bajando de línea la franja
