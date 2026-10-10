@@ -150,6 +150,17 @@ export const surfaces: Surface[] = [
     },
   },
 
+  /* El diálogo de instalar la app (PWA): con <dialog> nativo, no ModalShell.
+     Sin el evento de instalación del navegador, explica los pasos. */
+  {
+    id: "prepago-instalar", role: "prepago", path: "/prepago", ready: async (page) => { await visible(button(page, "recargar")); },
+    open: async (page) => { await tap(page.getByRole("button", { name: /instalar/i }).first()); return true; },
+  },
+  {
+    id: "admin-instalar", role: "admin", path: "/admin/clientes", ready: adminList("crear nuevo cliente"),
+    open: async (page) => { await tap(page.getByRole("button", { name: /instalar/i }).first()); return true; },
+  },
+
   /* El gestor ve las mismas pantallas que el admin; solo cambia la navegación
      (sin «equipo»), así que basta una para revisar su shell. */
   { id: "gestor-clientes", role: "gestor", path: "/admin/clientes", ready: adminList("crear nuevo cliente") },

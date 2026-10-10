@@ -1,19 +1,28 @@
 #!/usr/bin/env sh
-# Prepara la base de datos de la suite responsive: una copia de dev.db en la
-# que la suite puede escribir sin tocar tus datos. Arranca el backend contra
-# ella con:
-#   cd andlocalback && DATABASE_URL="file:./e2e.db" npm run start:dev
+# Prepara la base de datos de la suite responsive: una base PostgreSQL propia
+# (localads_e2e), separada de la de desarrollo, en la que la suite puede
+# escribir sin tocar tus datos.
 #
-# Ajustes sobre la copia: deja TikTok inactivo en las dos cuentas demo (si
-# no, el botón de reactivar no aparece y el modal de activación no se puede
-# auditar) y mete datos largos.
+#   1. sh e2e/responsive/prepare-e2e-db.sh
+#   2. cd ../andlocalback && DATABASE_URL="<la misma URL>" npm run start:dev
+#   3. node e2e/responsive/seed-e2e.mjs        (con el backend del paso 2)
+#
+# La URL sale de E2E_DATABASE_URL; por defecto, la base local con tu usuario.
+#
+# Sobre el seed del backend se ajusta lo que la suite necesita ver: un nombre
+# de cliente de 60 caracteres, para comprobar qué se recorta y qué se parte.
+# El resto de datos (transacciones, comprobantes, verificaciones, solicitudes
+# de activación, un gestor más) los crea seed-e2e.mjs a través de la API,
+# como lo haría la aplicación.
 set -eu
-prisma_dir="$(cd "$(dirname "$0")/../../../andlocalback/prisma" && pwd)"
-cp "$prisma_dir/dev.db" "$prisma_dir/e2e.db"
-sqlite3 "$prisma_dir/e2e.db" "UPDATE Pauta SET status = 'INACTIVE' WHERE platform = 'TIKTOK' AND clientId IN ('client-001', 'client-002');"
-# Datos largos a propósito: un nombre de 60 caracteres en la cuenta prepago
-# (sale en transacciones, verificaciones y detalles) y un correo largo en un
-# cliente sin cartera, para ver qué se recorta y qué se parte.
-sqlite3 "$prisma_dir/e2e.db" "UPDATE Client SET name = 'Comercializadora Internacional de Productos del Litoral S.A.' WHERE id = 'client-001';"
-sqlite3 "$prisma_dir/e2e.db" "UPDATE Client SET email = 'facturacion.electronica.departamento.contable@empresa-ejemplo.com.ec' WHERE id = 'ae2024ff-7187-487c-9c1a-f35aa83237b3';"
-echo "e2e.db lista en $prisma_dir"
+url="${E2E_DATABASE_URL:-postgresql://${USER}@localhost:5432/localads_e2e?schema=public}"
+database="$(printf '%s' "$url" | sed -E 's#.*/([^/?]+)(\?.*)?$#\1#')"
+backend="$(cd "$(dirname "$0")/../../../andlocalback" && pwd)"
+
+dropdb --if-exists "$database"
+createdb "$database"
+(cd "$backend" && DATABASE_URL="$url" npx prisma migrate deploy && DATABASE_URL="$url" npm run prisma:seed)
+
+psql -q -d "$database" -c "UPDATE \"Client\" SET name = 'Comercializadora Internacional de Productos del Litoral S.A.' WHERE id = 'client-001';"
+
+echo "Base $database lista. Arranca el backend con DATABASE_URL=\"$url\" y ejecuta node e2e/responsive/seed-e2e.mjs"
