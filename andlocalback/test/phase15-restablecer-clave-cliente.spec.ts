@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -11,6 +8,7 @@ import { AdminClientView, ClientAdminRepository } from "../src/modules/clients/a
 import { PrismaClientAdminRepository } from "../src/modules/clients/infrastructure/prisma-client-admin.repository";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { validRuc } from "./ruc-fixture";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 const profile = (email: string) => ({ name: "Cliente", email, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 });
 const issuer = () => ({
@@ -71,22 +69,19 @@ describe("Fase 15 - restablecer la clave de un cliente, en memoria", () => {
 });
 
 describe("Fase 15 - restablecer la clave de un cliente contra la base", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let clients: PrismaClientAdminRepository;
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-reset-"));
-    const database = join(directory, "test.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), database);
-    prisma = new PrismaClient({ datasourceUrl: `file:${database.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase15_restablecer_clav");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
-    if (dirname(resolve(directory)) !== resolve(tmpdir())) throw new Error("Unexpected temporary path");
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("la clave anterior deja de servir, se exige el cambio y las sesiones abiertas se revocan", async () => {

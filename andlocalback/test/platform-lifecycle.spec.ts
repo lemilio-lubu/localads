@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve, dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -15,20 +12,19 @@ import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/mo
 import { RequestCampaignActivation } from "../src/modules/recharges/application/use-cases/request-campaign-activation";
 import { seedBackendData } from "../src/database/seed-data";
 import { validRuc } from "./ruc-fixture";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 describe("ciclo de plataformas y recargas en stop", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let clients: PrismaClientAdminRepository;
   let activation: PrismaCampaignActivationRepository;
   let execution: PrismaTransactionExecutionRepository;
   let queries: PrismaPhase7QueryRepository;
 
-  beforeAll(() => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-lifecycle-"));
-    const database = join(directory, "test.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), database);
-    prisma = new PrismaClient({ datasourceUrl: `file:${database.replace(/\\/g, "/")}` });
+  beforeAll(async () => {
+    testDatabase = await createTestDatabase("platform_lifecycle");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
     activation = new PrismaCampaignActivationRepository(prisma as PrismaService);
     execution = new PrismaTransactionExecutionRepository(prisma as PrismaService);
@@ -36,8 +32,7 @@ describe("ciclo de plataformas y recargas en stop", () => {
   });
   afterAll(async () => {
     await prisma.$disconnect();
-    if (dirname(resolve(directory)) !== resolve(tmpdir())) throw new Error("Unexpected temporary path");
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   async function fixture() {

@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaService } from "../src/database/prisma.service";
@@ -9,19 +6,18 @@ import { ActivationRequestStatus, PautaStatus } from "../src/modules/recharges/d
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { PrismaCampaignActivationRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-campaign-activation.repository";
 import { validRuc } from "./ruc-fixture";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 describe("persistencia de primera pauta fase 6", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let repository: PrismaCampaignActivationRepository;
   const clientId = "phase6-client";
   const accountId = "phase6-account";
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-phase6-"));
-    const databasePath = join(directory, "phase6.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), databasePath);
-    prisma = new PrismaClient({ datasourceUrl: `file:${databasePath.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase6_prisma_campaign_a");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     repository = new PrismaCampaignActivationRepository(prisma as PrismaService);
     await prisma.client.create({
       data: { id: clientId, name: "Cliente Fase 6", email: "phase6@example.test", status: "ACTIVE" },
@@ -33,7 +29,7 @@ describe("persistencia de primera pauta fase 6", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("protege solicitudes concurrentes para el mismo cliente y plataforma", async () => {

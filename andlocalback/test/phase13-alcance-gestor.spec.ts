@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -14,6 +11,7 @@ import { ManageClients } from "../src/modules/clients/application/use-cases/mana
 import { AdminClientView, ClientAdminRepository } from "../src/modules/clients/application/ports/client-admin.repository";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { validRuc } from "./ruc-fixture";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 const profile = (email: string) => ({ name: "Cliente", email, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 });
 const issuer = () => ({ prepare: vi.fn().mockResolvedValue({ username: `u-${randomUUID()}`, temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }), issue: vi.fn() });
@@ -78,7 +76,7 @@ describe("Fase 13 - alcance del gestor, en memoria", () => {
 });
 
 describe("Fase 13 - alcance del gestor contra la base", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let clients: PrismaClientAdminRepository;
   let queries: PrismaPhase7QueryRepository;
@@ -89,10 +87,8 @@ describe("Fase 13 - alcance del gestor contra la base", () => {
   const managerId = "auth-gestor-test";
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-scope-"));
-    const database = join(directory, "test.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), database);
-    prisma = new PrismaClient({ datasourceUrl: `file:${database.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase13_alcance_gestor");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
     queries = new PrismaPhase7QueryRepository(prisma as PrismaService);
     activations = new PrismaCampaignActivationRepository(prisma as PrismaService);
@@ -120,8 +116,7 @@ describe("Fase 13 - alcance del gestor contra la base", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    if (dirname(resolve(directory)) !== resolve(tmpdir())) throw new Error("Unexpected temporary path");
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("el listado de clientes solo devuelve la cartera del gestor", async () => {

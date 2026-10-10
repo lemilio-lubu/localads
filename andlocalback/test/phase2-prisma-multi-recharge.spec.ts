@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaService } from "../src/database/prisma.service";
@@ -10,9 +7,10 @@ import { PautaStatus, TransactionPaymentStatus } from "../src/modules/recharges/
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/monetary-amount";
 import { PrismaMultiRechargeRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-multi-recharge.repository";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 describe("PrismaMultiRechargeRepository", () => {
-  let temporaryDirectory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let repository: PrismaMultiRechargeRepository;
 
@@ -20,10 +18,8 @@ describe("PrismaMultiRechargeRepository", () => {
   const accountId = "phase2-account";
 
   beforeAll(async () => {
-    temporaryDirectory = mkdtempSync(join(tmpdir(), "andlocal-phase2-"));
-    const databasePath = join(temporaryDirectory, "phase2.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), databasePath);
-    prisma = new PrismaClient({ datasourceUrl: `file:${databasePath.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase2_prisma_multi_rech");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     repository = new PrismaMultiRechargeRepository(prisma as PrismaService);
 
     await prisma.client.create({
@@ -42,7 +38,7 @@ describe("PrismaMultiRechargeRepository", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    rmSync(temporaryDirectory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("carga cliente, cuenta y pautas desde el nuevo modelo", async () => {
