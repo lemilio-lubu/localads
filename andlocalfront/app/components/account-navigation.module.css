@@ -14,3 +14,10 @@
   .navigation { flex-direction: row; justify-content: center; gap: clamp(var(--space-2), 6vw, var(--space-5)); overflow-x: auto; padding: 0 0 var(--space-3); }
   .navigation a { flex: 0 0 auto; font-size: var(--font-size-body); }
 }
+
+/* Área táctil de 40px, sin cambiar el aspecto (patrón de
+   design-system/hit-area.module.css). Va en ::before porque ::after ya es el
+   subrayado del enlace activo. */
+@media (pointer: coarse) {
+  .navigation a::before { position: absolute; inset: min(0px, calc((100% - var(--hit-target)) / 2)); content: ""; }
+}
