@@ -95,3 +95,12 @@
 @media (pointer: coarse) {
   .activationPanel input { font-size: var(--font-size-body); }
 }
+
+/* En móvil la nota de formatos le quitaba el ancho al texto: «adjuntar c…» a
+   320px, y con un archivo elegido no se veía qué se había subido. La nota
+   baja a su propia línea y el nombre se parte en vez de recortarse. */
+@media (max-width: 680px) {
+  .uploadArea { flex-wrap: wrap; row-gap: var(--space-half); padding: var(--space-2); }
+  .uploadArea span { max-width: calc(100% - 36px - var(--space-2)); overflow-wrap: anywhere; white-space: normal; }
+  .uploadHint { flex-basis: 100%; margin-top: 0; text-align: center; }
+}
