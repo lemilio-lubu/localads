@@ -142,7 +142,8 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
     for (const element of (dialog ?? document.body).querySelectorAll<HTMLElement>("*")) {
       if (!isVisible(element) || element.title) continue;
       const style = getComputedStyle(element);
-      if (style.textOverflow !== "ellipsis" || element.scrollWidth <= element.clientWidth + 1) continue;
+      /* Sin tolerancia: con un solo píxel de más el navegador ya pinta «…». */
+      if (style.textOverflow !== "ellipsis" || element.scrollWidth <= element.clientWidth) continue;
       const text = (element.textContent ?? "").trim();
       if (/US\$|\d+[.,]\d{2}\b|vence|venció|días?/.test(text) && !/^TX-|^tx-/i.test(text)) {
         findings.push({ severity: "P1", rule: "dato-truncado", detail: `«${text.slice(0, 40)}»`, target: describe(element) });
@@ -165,7 +166,10 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
       /* En un modal más alto que la pantalla, el botón de cerrar tiene que
          seguir a mano al llegar al final. */
       const backdrop = dialog.parentElement;
-      if (close && backdrop && backdrop.scrollHeight > backdrop.clientHeight) {
+      /* Solo en táctil o estrecho: con ratón el botón se queda absolute a
+         propósito (decisión del 2026-10-09) y se cierra también con Esc o
+         tocando fuera. */
+      if (close && backdrop && (touch || vw <= 680) && backdrop.scrollHeight > backdrop.clientHeight) {
         const previous = backdrop.scrollTop;
         backdrop.scrollTop = backdrop.scrollHeight;
         const rect = close.getBoundingClientRect();
