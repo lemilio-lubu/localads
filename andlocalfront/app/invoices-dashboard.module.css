@@ -93,8 +93,13 @@
 
 .dueDate { color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-wrap: balance; }
 .dueOverdue { color: var(--color-danger); font-weight: var(--font-weight-bold); }
+/* Un importe o un plazo no se recortan con «…»: lo que queda detrás no se
+   puede leer de ninguna forma. La regla de .cell > span (una línea, elipsis)
+   vale para el resto de valores; estos dos se parten en dos líneas cuando no
+   caben, que solo pasa en móvil. */
+.cell > .totalDue, .cell > .dueDate { overflow: visible; white-space: normal; }
 
-.copyCode { display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); background: transparent; padding: 2px 4px; margin-left: -4px; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body); cursor: pointer; text-align: left; }
+.copyCode { composes: hitArea from "./design-system/hit-area.module.css"; display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); background: transparent; padding: 2px 4px; margin-left: -4px; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body); cursor: pointer; text-align: left; }
 .copyCode span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); text-transform: uppercase; letter-spacing: .06em; }
 .copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
