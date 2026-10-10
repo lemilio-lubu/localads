@@ -58,6 +58,24 @@ export function measure(page: Page, options: Options): Promise<Finding[]> {
         const rect = element.getBoundingClientRect();
         findings.push({ severity: "P0", rule: "desborda", detail: `x ${Math.round(rect.left)}→${Math.round(rect.right)} de ${vw}`, target: describe(element) });
       }
+      /* Un texto puede salirse de una caja que sí cabe (nowrap sin recorte):
+         ningún elemento sobresale, pero la página se desplaza igual. */
+      if (culprits.length === 0) {
+        const walker = document.createTreeWalker(dialog ?? document.body, NodeFilter.SHOW_TEXT);
+        let found = 0;
+        while (walker.nextNode() && found < 4) {
+          const node = walker.currentNode;
+          const parent = node.parentElement;
+          if (!node.textContent?.trim() || !parent || !isVisible(parent)) continue;
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          const rect = range.getBoundingClientRect();
+          if (rect.right > vw + 1 && !clippedByAncestor(node as unknown as Element, dialog) && getComputedStyle(parent).overflowX === "visible") {
+            findings.push({ severity: "P0", rule: "texto-desborda", detail: `x ${Math.round(rect.left)}→${Math.round(rect.right)} de ${vw}`, target: describe(parent) });
+            found++;
+          }
+        }
+      }
     }
 
     if (touch) {
