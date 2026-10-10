@@ -4,3 +4,9 @@
 .success { color: var(--color-brand); }
 .danger { color: var(--color-danger); }
 .small strong { font-size: var(--font-size-caption); }
+
+/* A 360 o menos, en dos columnas, un importe de 20px no cabía y se recortaba
+   («US$ 1.234,…»). El valor baja al tamaño del texto normal. */
+@media (max-width: 360px) {
+  .card strong { font-size: var(--font-size-body); }
+}
