@@ -135,6 +135,10 @@
 @media (max-width: 1180px) {
   .dataPanel dd { min-width: 0; overflow-wrap: anywhere; }
   .previewHeader strong { overflow-wrap: anywhere; white-space: normal; }
+  /* El título cede y se parte; la pastilla de estado no encoge, y con un
+     nombre largo la empujaba fuera de la pantalla. */
+  .modalHeader > :first-child { min-width: 0; flex: 1; }
+  .modalHeader h2 { overflow-wrap: anywhere; }
 }
 
 /* Área táctil de 40px en «Abrir», sin cambiar el aspecto (patrón de

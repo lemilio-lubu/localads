@@ -92,9 +92,7 @@
   .metrics { grid-template-columns: 1fr; }
   .sale { grid-template-columns: 1fr auto; padding-block: var(--space-1); }
   .sale > time { grid-column: 1 / -1; grid-row: 2; }
-  /* El nombre del cliente se parte: recortado no se podía leer (el title
-     lleva el código de la venta, no el nombre). */
-  .sale > span { overflow-wrap: anywhere; white-space: normal; }
+
 }
 
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
@@ -104,4 +102,11 @@
 @media (pointer: coarse) {
   .chips button { position: relative; }
   .chips button::after { position: absolute; inset: min(0px, calc((100% - var(--hit-target)) / 2)); content: ""; }
+}
+
+/* El nombre del cliente de cada venta se parte en móvil y en táctil:
+   recortado no se podía leer (el title lleva el código de la venta, no el
+   nombre, y con el dedo tampoco aparece). */
+@media (max-width: 560px), (pointer: coarse) {
+  .sale > span { overflow-wrap: anywhere; white-space: normal; }
 }

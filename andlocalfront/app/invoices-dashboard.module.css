@@ -26,7 +26,7 @@
 /* La salida está siempre que haya filtro, no solo cuando no devuelve nada:
    con resultados había que recordar qué se activó para deshacerlo. */
 .metaRange { display: inline-flex; align-items: baseline; gap: var(--space-2); }
-.clearFilters { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
+.clearFilters { composes: hitArea from "./design-system/hit-area.module.css"; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
 .clearFilters:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .pagination button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }

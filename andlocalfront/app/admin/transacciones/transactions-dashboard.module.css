@@ -105,7 +105,9 @@
    paso, como el valor de las tarjetas de Clientes. El nombre del cliente se
    parte en vez de recortarse: en dos columnas no cabía ni «Migo Postpago». */
 @media (max-width: 400px) { .overview strong { font-size: var(--font-size-body); } }
-@media (max-width: 520px) { .cell > .clientName { overflow-wrap: anywhere; white-space: normal; } }
+/* También en cualquier pantalla táctil: en tablet el nombre largo se
+   recortaba y el title que lo completa no aparece con el dedo. */
+@media (max-width: 520px), (pointer: coarse) { .cell > .clientName { overflow-wrap: anywhere; white-space: normal; } }
 @media (max-width: 520px) { .filters > span { flex-basis: 100%; } .auditFooter { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .row, .pagination button, .detailsButton { transition-duration: 0ms; } .detailsButton:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
 
