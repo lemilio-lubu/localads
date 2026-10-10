@@ -113,7 +113,7 @@
 @media (min-width: 1181px) and (max-width: 1420px) {
   .row { grid-template-columns: 56px minmax(88px, .9fr) minmax(110px, 1.2fr) minmax(100px, .9fr) minmax(110px, 1fr) minmax(96px, .8fr) minmax(64px, .5fr); }
 }
-@media (max-width: 1180px) { .row { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); } .transferIcon { grid-row: span 2; } .reviewButton { align-self: end; }.reviewGrid { grid-template-columns: 1fr; }.preview { min-height: 420px; }.preview img, .preview iframe { height: 420px; } }
+@media (max-width: 1180px) { .row { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); } .transferIcon { grid-row: span 2; } .reviewButton { align-self: end; }.reviewGrid { grid-template-columns: minmax(0, 1fr); }.preview { min-height: 420px; }.preview img, .preview iframe { height: 420px; } }
 @media (max-width: 780px) { .module { margin-top: var(--space-3); }.toolbar { grid-template-columns: 1fr; }.row { grid-template-columns: 56px repeat(2, minmax(0, 1fr)); padding: var(--space-2); }.modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
 /* En móvil los valores se parten en vez de recortarse: el banco de origen
    es un dato a contrastar y acababa en «BANCO PIC…». */
@@ -127,4 +127,19 @@
    Solo en táctil: con ratón el campo conserva sus 13px. */
 @media (pointer: coarse) {
   .search input, .reviewForm textarea { font-size: var(--font-size-body); }
+}
+
+/* Revisión en una columna: con 1fr el mínimo era el contenido, y el nombre
+   del archivo (una sola línea) ensanchaba la columna hasta sacar comprobante
+   y datos 110-166px de la pantalla. Los valores a validar se parten. */
+@media (max-width: 1180px) {
+  .dataPanel dd { min-width: 0; overflow-wrap: anywhere; }
+  .previewHeader strong { overflow-wrap: anywhere; white-space: normal; }
+}
+
+/* Área táctil de 40px en «Abrir», sin cambiar el aspecto (patrón de
+   design-system/hit-area.module.css). */
+@media (pointer: coarse) {
+  .previewHeader button { position: relative; }
+  .previewHeader button::after { position: absolute; inset: min(0px, calc((100% - var(--hit-target)) / 2)); content: ""; }
 }
