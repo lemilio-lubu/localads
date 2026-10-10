@@ -247,10 +247,12 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
         // La liberación también opera en centavos enteros, para que el crédito
         // devuelto sea exactamente el reservado.
         const releasedCents = Number(MonetaryAmount.fromMajorUnits(input.context.payment.expectedAmount).cents);
+        // Nombres entre comillas (PostgreSQL pasa a minúsculas los que no las
+        // llevan) y GREATEST, el máximo de dos valores en PostgreSQL.
         await database.$executeRaw`
-          UPDATE Account
-          SET creditUsed = MAX(0, CAST(ROUND("creditUsed" * 100) AS INTEGER) - ${releasedCents}) / 100.0
-          WHERE id = ${input.context.transaction.accountId}
+          UPDATE "Account"
+          SET "creditUsed" = GREATEST(0, CAST(ROUND("creditUsed" * 100) AS BIGINT) - ${releasedCents}) / 100.0
+          WHERE "id" = ${input.context.transaction.accountId}
         `;
       }
       return toVerificationView(verification);
