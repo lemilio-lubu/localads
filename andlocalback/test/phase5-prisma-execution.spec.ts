@@ -1,23 +1,19 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaService } from "../src/database/prisma.service";
 import { TransactionDetailStatus, TransactionRechargeStatus } from "../src/modules/recharges/domain/model/domain-status";
 import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/monetary-amount";
 import { PrismaTransactionExecutionRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-transaction-execution.repository";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 describe("persistencia de ejecucion de recarga fase 5", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let repository: PrismaTransactionExecutionRepository;
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-phase5-"));
-    const databasePath = join(directory, "phase5.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), databasePath);
-    prisma = new PrismaClient({ datasourceUrl: `file:${databasePath.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase5_prisma_execution");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     repository = new PrismaTransactionExecutionRepository(prisma as PrismaService);
     await prisma.client.create({
       data: { id: "p5-client", name: "Cliente Phase 5", email: "phase5@example.test", status: "ACTIVE" },
@@ -34,7 +30,7 @@ describe("persistencia de ejecucion de recarga fase 5", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("inicia la transaccion y todos sus detalles mediante CAS", async () => {

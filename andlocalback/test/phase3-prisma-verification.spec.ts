@@ -1,23 +1,19 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ApplicationError } from "../src/common/errors/application.error";
 import { PrismaService } from "../src/database/prisma.service";
 import { VerificationIssue, VerificationStatus } from "../src/modules/recharges/domain/recharge.types";
 import { PrismaTransactionVerificationRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-transaction-verification.repository";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 describe("PrismaTransactionVerificationRepository", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let repository: PrismaTransactionVerificationRepository;
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-phase3-"));
-    const databasePath = join(directory, "phase3.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), databasePath);
-    prisma = new PrismaClient({ datasourceUrl: `file:${databasePath.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase3_prisma_verificati");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     repository = new PrismaTransactionVerificationRepository(prisma as PrismaService);
     await prisma.client.create({ data: { id: "p3-client", name: "Phase 3", email: "phase3@example.test", status: "ACTIVE" } });
     await prisma.account.create({ data: { id: "p3-account", clientId: "p3-client", type: "PREPAGO", status: "ACTIVE" } });
@@ -26,7 +22,7 @@ describe("PrismaTransactionVerificationRepository", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("guarda OCR, verificacion y estado del comprobante atomicamente e idempotente", async () => {

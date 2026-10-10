@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -8,27 +5,25 @@ import { PrismaService } from "../src/database/prisma.service";
 import { PrismaClientAdminRepository } from "../src/modules/clients/infrastructure/prisma-client-admin.repository";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { validRuc } from "./ruc-fixture";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 /* La ficha del cliente reparte por plataforma en dinero solicitado. Antes la
    pantalla contaba en cuántas recargas aparecía cada plataforma y enseñaba
    porcentajes al revés de la realidad. */
 describe("Fase 17 - reparto por plataforma del detalle de cliente", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let clients: PrismaClientAdminRepository;
 
-  beforeAll(() => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-detail-"));
-    const database = join(directory, "test.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), database);
-    prisma = new PrismaClient({ datasourceUrl: `file:${database.replace(/\\/g, "/")}` });
+  beforeAll(async () => {
+    testDatabase = await createTestDatabase("phase17_detalle_cliente");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
-    if (dirname(resolve(directory)) !== resolve(tmpdir())) throw new Error("Unexpected temporary path");
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   async function recharge(clientId: string, accountId: string, lines: Array<{ pautaId: string; platform: string; amount: number }>, rechargeStatus = "APPROVED") {

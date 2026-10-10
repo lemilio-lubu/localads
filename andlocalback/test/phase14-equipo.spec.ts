@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -12,6 +9,7 @@ import { TeamMemberDetailView, TeamRepository } from "../src/modules/team/applic
 import { normalizeUsername, validateTeamMember } from "../src/modules/team/domain/team-member";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { validRuc } from "./ruc-fixture";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 const member = { id: "t1", username: "gestor", role: "GESTOR", status: "ACTIVE", mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
 const issuer = () => ({ issue: vi.fn().mockResolvedValue({ username: "gestor", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
@@ -115,17 +113,15 @@ describe("Fase 14 - reglas del equipo", () => {
 });
 
 describe("Fase 14 - equipo contra la base", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let team: PrismaTeamRepository;
   let clients: PrismaClientAdminRepository;
   let gestor: string;
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-team-"));
-    const database = join(directory, "test.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), database);
-    prisma = new PrismaClient({ datasourceUrl: `file:${database.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase14_equipo");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     team = new PrismaTeamRepository(prisma as PrismaService);
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
 
@@ -147,8 +143,7 @@ describe("Fase 14 - equipo contra la base", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    if (dirname(resolve(directory)) !== resolve(tmpdir())) throw new Error("Unexpected temporary path");
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("el listado nunca incluye clientes, solo admins y gestores", async () => {

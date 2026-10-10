@@ -1,15 +1,13 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaService } from "../src/database/prisma.service";
 import { TransactionDetailStatus, TransactionPaymentStatus, TransactionRechargeStatus } from "../src/modules/recharges/domain/model/domain-status";
 import { AccountType, AdvertisingPlatform, VerificationIssue, VerificationStatus } from "../src/modules/recharges/domain/recharge.types";
 import { PrismaPhase7QueryRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-phase7-query.repository";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 describe("persistencia de consultas fase 7", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let repository: PrismaPhase7QueryRepository;
   const clientA = "phase7-client-a";
@@ -17,10 +15,8 @@ describe("persistencia de consultas fase 7", () => {
   const createdAt = new Date("2026-09-10T15:00:00.000Z");
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-phase7-"));
-    const databasePath = join(directory, "phase7.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), databasePath);
-    prisma = new PrismaClient({ datasourceUrl: `file:${databasePath.replace(/\\/g, "/")}` });
+    testDatabase = await createTestDatabase("phase7_prisma_queries");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     repository = new PrismaPhase7QueryRepository(prisma as PrismaService);
 
     await prisma.client.createMany({ data: [
@@ -64,7 +60,7 @@ describe("persistencia de consultas fase 7", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("lee saldos y ultima recarga desde Pauta sin una Wallet persistida", async () => {

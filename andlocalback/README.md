@@ -18,6 +18,14 @@ npm run prisma:deploy
 npm run prisma:seed
 ```
 
+### Tests
+
+```bash
+npm test && npm run typecheck && npm run build
+```
+
+Los tests de persistencia necesitan un servidor PostgreSQL: toman su dirección de `TEST_DATABASE_URL` o, si no existe, de `DATABASE_URL`. Cada archivo de test crea una base temporal propia (`andlocal_test_…`) con las migraciones y el seed, y la borra al terminar; la base de esa URL no se lee ni se escribe. El usuario necesita permiso para crear bases de datos (`CREATEDB`).
+
 La migración inicial crea el esquema, pero no copia automáticamente los datos de `prisma/dev.db`. Ese archivo y un respaldo fechado se conservan localmente; el respaldo está excluido de Git para no publicar datos potencialmente sensibles. Los comprobantes de `uploads/` tampoco se han migrado a almacenamiento remoto.
 
 ## Despliegue en Railway

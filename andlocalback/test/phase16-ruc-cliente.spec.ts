@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -11,6 +8,7 @@ import { AdminClientView, ClientAdminRepository } from "../src/modules/clients/a
 import { PrismaClientAdminRepository } from "../src/modules/clients/infrastructure/prisma-client-admin.repository";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
 import { validRuc } from "./ruc-fixture";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 const rejects = (value: string, message: RegExp) => expect(() => validateRuc(value)).toThrowError(expect.objectContaining({ code: "INVALID_RUC", message: expect.stringMatching(message) }));
 
@@ -99,24 +97,21 @@ describe("Fase 16 - RUC en el caso de uso", () => {
 });
 
 describe("Fase 16 - RUC contra la base", () => {
-  let directory: string;
+  let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let clients: PrismaClientAdminRepository;
   const profile = (ruc: string) => ({ name: "Cliente", email: `${randomUUID()}@example.test`, ruc, accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 });
   const credentials = () => ({ username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" });
 
-  beforeAll(() => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-ruc-"));
-    const database = join(directory, "test.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), database);
-    prisma = new PrismaClient({ datasourceUrl: `file:${database.replace(/\\/g, "/")}` });
+  beforeAll(async () => {
+    testDatabase = await createTestDatabase("phase16_ruc_cliente");
+    prisma = new PrismaClient({ datasourceUrl: testDatabase.url });
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
-    if (dirname(resolve(directory)) !== resolve(tmpdir())) throw new Error("Unexpected temporary path");
-    rmSync(directory, { recursive: true, force: true });
+    await testDatabase.drop();
   });
 
   it("guarda el RUC y lo devuelve en la vista", async () => {

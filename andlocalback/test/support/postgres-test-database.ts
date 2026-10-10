@@ -4,8 +4,8 @@ import { resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
 
 /* Base PostgreSQL temporal para los tests de persistencia. Cada archivo de
-   test crea la suya con las migraciones reales y la borra al terminar: los
-   tests no comparten estado ni tocan la base de desarrollo.
+   test crea la suya con las migraciones reales y el seed, y la borra al
+   terminar: los tests no comparten estado ni tocan la base de desarrollo.
 
    El servidor sale de TEST_DATABASE_URL o, si no está, de DATABASE_URL (el
    .env del backend). Solo se usa su servidor y credenciales: la base de esa
@@ -35,7 +35,13 @@ export async function createTestDatabase(prefix: string) {
   const admin = new PrismaClient({ datasourceUrl: withDatabase(base, "postgres") });
   await admin.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
   const url = withDatabase(base, name);
-  execFileSync("npx", ["prisma", "migrate", "deploy"], { cwd: backendRoot, env: { ...process.env, DATABASE_URL: url }, stdio: "pipe" });
+  const env = { ...process.env, DATABASE_URL: url };
+  execFileSync("npx", ["prisma", "migrate", "deploy"], { cwd: backendRoot, env, stdio: "pipe" });
+  /* Con el seed, el punto de partida es el que tenían los tests cuando
+     copiaban dev.db: usuarios demo (auth-admin, auth-gestor…), clientes y
+     pautas. Los tests crean además sus propios datos con identificadores
+     únicos. */
+  execFileSync("npx", ["prisma", "db", "seed"], { cwd: backendRoot, env, stdio: "pipe" });
   return {
     url,
     async drop() {
