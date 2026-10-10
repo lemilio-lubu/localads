@@ -1,4 +1,4 @@
-import { authenticatedFetch, getCurrentUser } from "./auth-api";
+import { authenticatedFetch, getCurrentUser, homeFor, type AuthUser } from "./auth-api";
 
 export type RechargePlatform = "META" | "GOOGLE" | "TIKTOK";
 export type AccountMode = "prepago" | "flex";
@@ -41,6 +41,21 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const getMyPautas = (clientId?: string) => { void clientId; return api<PautaResponse[]>("/me/pautas"); };
+
+/* Dónde entra un cliente al iniciar sesión. Quien ya ha recargado alguna vez
+   vuelve sobre todo a mirar su saldo: entra a «tus activos». Quien nunca lo
+   ha hecho viene a recargar: entra a «recargar». Si las pautas no se pueden
+   leer, «recargar», como antes: un fallo aquí no puede bloquear la entrada. */
+export async function landingFor(user: AuthUser) {
+  const home = homeFor(user);
+  if (user.role !== "CLIENT" || user.mustChangePassword) return home;
+  try {
+    const pautas = await getMyPautas();
+    return pautas.some((pauta) => pauta.lastRechargeAt) ? `${home}/activos` : home;
+  } catch {
+    return home;
+  }
+}
 export const getRechargeContext = () => api<RechargeContext>("/me/recharge-context");
 export function uploadPaymentReceipt(paymentId: string, receipt: File) {
   const body = new FormData();
