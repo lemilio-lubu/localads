@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ApplicationError } from "../src/common/errors/application.error";
@@ -12,9 +9,10 @@ import { AccountType, AdvertisingPlatform, VerificationStatus } from "../src/mod
 import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/monetary-amount";
 import { PrismaPostpaidTransactionRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-postpaid-transaction.repository";
 import { PrismaTransactionVerificationRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-transaction-verification.repository";
+import { createTestDatabase } from "./support/postgres-test-database";
 
 describe("persistencia POSTPAGO fase 4", () => {
-  let directory: string;
+  let database: Awaited<ReturnType<typeof createTestDatabase>>;
   let prisma: PrismaClient;
   let postpaid: PrismaPostpaidTransactionRepository;
   let verification: PrismaTransactionVerificationRepository;
@@ -23,10 +21,10 @@ describe("persistencia POSTPAGO fase 4", () => {
   const accountId = "phase4-account";
 
   beforeAll(async () => {
-    directory = mkdtempSync(join(tmpdir(), "andlocal-phase4-"));
-    const databasePath = join(directory, "phase4.db");
-    copyFileSync(resolve(__dirname, "../prisma/dev.db"), databasePath);
-    prisma = new PrismaClient({ datasourceUrl: `file:${databasePath.replace(/\\/g, "/")}` });
+    /* PostgreSQL de verdad: las reservas de crédito son SQL escrito a mano y
+       solo una base real comprueba su dialecto. */
+    database = await createTestDatabase("phase4");
+    prisma = new PrismaClient({ datasourceUrl: database.url });
     postpaid = new PrismaPostpaidTransactionRepository(prisma as PrismaService);
     verification = new PrismaTransactionVerificationRepository(prisma as PrismaService);
     await prisma.client.create({
@@ -43,7 +41,7 @@ describe("persistencia POSTPAGO fase 4", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    rmSync(directory, { recursive: true, force: true });
+    await database.drop();
   });
 
   it("reserva el total facturable y persiste una sola transaccion con N detalles", async () => {
