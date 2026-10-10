@@ -114,14 +114,16 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
         // One conditional SQL write performs the availability check and the
         // reservation. It compares against the live database values, not the
         // context snapshot previously read by the application.
+        // PostgreSQL pasa a minúsculas los nombres sin comillas: tabla y
+        // columnas van entre comillas dobles, como las crea Prisma.
         const reserved = await database.$executeRaw`
-          UPDATE Account
-          SET creditUsed = (CAST(ROUND("creditUsed" * 100) AS INTEGER) + ${totalCents}) / 100.0
-          WHERE id = ${transaction.accountId}
-            AND status = 'ACTIVE'
-            AND type = 'POSTPAGO'
-            AND CAST(ROUND("creditUsed" * 100) AS INTEGER) + ${totalCents}
-                <= CAST(ROUND("creditLimit" * 100) AS INTEGER)
+          UPDATE "Account"
+          SET "creditUsed" = (CAST(ROUND("creditUsed" * 100) AS BIGINT) + ${totalCents}) / 100.0
+          WHERE "id" = ${transaction.accountId}
+            AND "status" = 'ACTIVE'
+            AND "type" = 'POSTPAGO'
+            AND CAST(ROUND("creditUsed" * 100) AS BIGINT) + ${totalCents}
+                <= CAST(ROUND("creditLimit" * 100) AS BIGINT)
         `;
         if (reserved !== 1) {
           // A same-key request may have committed while this call waited for
