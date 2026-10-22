@@ -10,6 +10,7 @@ import { CurrentUser, Roles } from "../../auth/auth.decorators";
 import { AuthPrincipal } from "../../auth/auth.types";
 import { PrismaTransactionExecutionRepository } from "../infrastructure/persistence/prisma-transaction-execution.repository";
 import { TransactionsGateway } from "./transactions.gateway";
+import { InvoiceAuthorizationRunner } from "../application/services/invoice-authorization-runner";
 import { ResumeTransactionDetailDto } from "./dto/resume-transaction-detail.dto";
 
 /* Ejecutar una recarga es una decision administrativa mas: el gestor la toma
@@ -25,6 +26,7 @@ export class TransactionExecutionController {
     private readonly execution: PrismaTransactionExecutionRepository,
     private readonly realtime: TransactionsGateway,
     private readonly scope: AssertManagerScope,
+    private readonly invoiceAuthorization: InvoiceAuthorizationRunner,
   ) {}
 
   @Patch(":transactionId/details/:detailId/resume")
@@ -70,6 +72,10 @@ export class TransactionExecutionController {
   @HttpCode(HttpStatus.OK)
   async complete(@Param("transactionId") transactionId: string, @CurrentUser() user: AuthPrincipal) {
     await this.scope.transaction(transactionId, scopeFor(user));
-    return this.completeTransaction.execute({ transactionId });
+    const completed = await this.completeTransaction.execute({ transactionId });
+    // La autorización fiscal va aparte: si el emisor tarda o falla, la recarga
+    // ya quedó completada y el reintento periódico se encarga de la factura.
+    this.invoiceAuthorization.dispatch(completed.invoice.id);
+    return completed;
   }
 }

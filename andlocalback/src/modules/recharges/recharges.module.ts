@@ -9,6 +9,19 @@ import {
 import { RequestPrepaidTransaction } from "./application/use-cases/request-prepaid-transaction";
 import { TransactionReceiptOcrDispatcher } from "./application/services/transaction-receipt-ocr-dispatcher";
 import { OverduePaymentsRunner } from "./application/services/overdue-payments-runner";
+import { InvoiceAuthorizationRunner } from "./application/services/invoice-authorization-runner";
+import { AuthorizeInvoice } from "./application/use-cases/authorize-invoice";
+import { AuthorizePendingInvoices } from "./application/use-cases/authorize-pending-invoices";
+import { GetInvoiceDocument } from "./application/use-cases/get-invoice-document";
+import {
+  INVOICE_AUTHORIZATION_PERSISTENCE,
+  INVOICE_ISSUER,
+  InvoiceAuthorizationPersistencePort,
+  InvoiceIssuer,
+} from "./application/ports/invoice-issuer.ports";
+import { PrismaInvoiceAuthorizationRepository } from "./infrastructure/persistence/prisma-invoice-authorization.repository";
+import { DisabledInvoiceIssuer, SimulatedInvoiceIssuer } from "./infrastructure/services/simulated-invoice-issuer";
+import { InvoiceDocumentsController } from "./presentation/invoice-documents.controller";
 import { MarkOverduePayments } from "./application/use-cases/mark-overdue-payments";
 import { RequestPostpaidTransaction } from "./application/use-cases/request-postpaid-transaction";
 import {
@@ -88,7 +101,7 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
 @Module({
   imports: [AuthModule, StorageModule],
   exports: [TransactionsGateway],
-  controllers: [TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
+  controllers: [InvoiceDocumentsController, TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
   providers: [
     PrismaMultiRechargeRepository,
     PrismaPostpaidTransactionRepository,
@@ -100,6 +113,39 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
     TransactionsGateway,
     TransactionReceiptOcrDispatcher,
     OverduePaymentsRunner,
+    InvoiceAuthorizationRunner,
+    PrismaInvoiceAuthorizationRepository,
+    { provide: INVOICE_AUTHORIZATION_PERSISTENCE, useExisting: PrismaInvoiceAuthorizationRepository },
+    /* Quién autoriza las facturas. INVOICE_ISSUER=simulado|desactivado (pronto
+       «sergei»). Sin valor: simulado en desarrollo y desactivado en
+       producción, para que nunca llegue a un cliente real una factura de
+       prueba. Desactivado, las facturas quedan pendientes y se autorizan
+       solas en cuanto se configure el emisor real. */
+    {
+      provide: INVOICE_ISSUER,
+      useFactory: (): InvoiceIssuer => {
+        const configured = process.env.INVOICE_ISSUER ?? (process.env.NODE_ENV === "production" ? "desactivado" : "simulado");
+        if (configured === "simulado") return new SimulatedInvoiceIssuer();
+        if (configured === "desactivado") return new DisabledInvoiceIssuer();
+        throw new Error(`INVOICE_ISSUER no reconocido: ${configured}`);
+      },
+    },
+    {
+      provide: AuthorizeInvoice,
+      inject: [INVOICE_AUTHORIZATION_PERSISTENCE, INVOICE_ISSUER],
+      useFactory: (persistence: InvoiceAuthorizationPersistencePort, issuer: InvoiceIssuer) => new AuthorizeInvoice(persistence, issuer),
+    },
+    {
+      provide: AuthorizePendingInvoices,
+      inject: [INVOICE_AUTHORIZATION_PERSISTENCE, INVOICE_ISSUER, AuthorizeInvoice],
+      useFactory: (persistence: InvoiceAuthorizationPersistencePort, issuer: InvoiceIssuer, authorize: AuthorizeInvoice) =>
+        new AuthorizePendingInvoices(persistence, issuer, authorize),
+    },
+    {
+      provide: GetInvoiceDocument,
+      inject: [INVOICE_AUTHORIZATION_PERSISTENCE, INVOICE_ISSUER],
+      useFactory: (persistence: InvoiceAuthorizationPersistencePort, issuer: InvoiceIssuer) => new GetInvoiceDocument(persistence, issuer),
+    },
     { provide: MULTI_RECHARGE_PERSISTENCE, useExisting: PrismaMultiRechargeRepository },
     { provide: POSTPAID_TRANSACTION_PERSISTENCE, useExisting: PrismaPostpaidTransactionRepository },
     { provide: TRANSACTION_VERIFICATION_PERSISTENCE, useExisting: PrismaTransactionVerificationRepository },
