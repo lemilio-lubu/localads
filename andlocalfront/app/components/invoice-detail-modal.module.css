@@ -41,7 +41,23 @@
 .transactionData div { display: grid; grid-template-columns: var(--space-20) minmax(0, 1fr); align-items: center; gap: var(--space-1); }
 .transactionData dt, .notes strong { color: var(--color-text-muted); font-weight: var(--font-weight-bold); }
 .transactionData dd { min-width: 0; overflow: hidden; margin: 0; color: var(--color-text-muted); text-overflow: ellipsis; white-space: nowrap; }
+.copyCode { composes: hitArea from "../design-system/hit-area.module.css"; display: flex; max-width: 100%; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin-left: -4px; background: transparent; padding: 2px 4px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.copyCode span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); letter-spacing: .06em; text-transform: uppercase; }
+.copyCode[data-state="failed"] small { color: var(--color-danger); }
+.copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
+@media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } }
 .notes { margin: auto 0 var(--space-3); font-size: var(--font-size-body-sm); }
+/* Avance de la recarga (cliente): pasos alcanzados en verde, los que faltan
+   en gris, y debajo una frase con lo que está pasando y lo que falta. */
+.progress { display: grid; gap: var(--space-1); margin-top: var(--space-3); color: var(--color-text); font-size: var(--font-size-body-sm); }
+.progress ol { display: flex; margin: 0; padding: 0; list-style: none; }
+.progress li { position: relative; display: grid; flex: 1 1 0; min-width: 0; justify-items: center; gap: var(--space-half); color: var(--color-text-subtle); font-size: var(--font-size-caption); line-height: 1.2; text-align: center; }
+.progress li::before { z-index: 1; width: 12px; height: 12px; border: 2px solid currentColor; border-radius: 50%; background: var(--color-surface-muted); content: ""; }
+.progress li + li::after { position: absolute; top: 5px; right: 50%; left: -50%; height: 2px; background: currentColor; content: ""; }
+.progress li[data-reached="true"] { color: var(--color-brand); font-weight: var(--font-weight-bold); }
+.progress li[data-reached="true"]::before { background: currentColor; }
+.progress p { margin: 0; color: var(--color-text-muted); line-height: 1.4; }
 .verificationSummary { display: grid; gap: var(--space-1); margin-top: var(--space-3); border: 1px solid #eadba9; border-radius: var(--radius-menu); background: #fffaf0; padding: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
 .verificationSummary > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); }
 .verificationSummary p { display: grid; gap: 3px; margin: 0; line-height: 1.4; }
@@ -88,7 +104,9 @@
     gap: var(--space-3);
   }
   .withFooter { grid-template-rows: auto auto auto auto; grid-template-areas: "documents" "summary" "platforms" "footer"; }
-  .documentActions { justify-self: start; gap: var(--space-2); padding-right: 0; }
+  /* Factura, transferencia y el botón de subirla no caben en fila a 320px:
+     el botón baja a la línea siguiente en vez de salirse de la pantalla. */
+  .documentActions { flex-wrap: wrap; justify-self: start; max-width: 100%; gap: var(--space-2); padding-right: 0; }
   .notes { margin: var(--space-3) 0 0; }
 }
 
@@ -108,8 +126,8 @@
 
 /* Fase 3: cerrar el ciclo del pago postpago desde el propio detalle. */
 .uploadReceipt { display: grid; justify-items: center; gap: var(--space-half); text-align: center; }
-.uploadReceipt button { border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: var(--space-1) var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
-.uploadReceipt button:disabled { opacity: .7; cursor: progress; }
-.uploadReceipt button:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.uploadButton { composes: hitArea from "../design-system/hit-area.module.css"; border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: var(--space-1) var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
+.uploadButton:disabled { opacity: .7; cursor: progress; }
+.uploadButton:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .uploadReceipt small { color: var(--color-text-muted); font-size: var(--font-size-micro); }
 .uploadError { color: var(--color-danger); font-weight: var(--font-weight-bold); }
