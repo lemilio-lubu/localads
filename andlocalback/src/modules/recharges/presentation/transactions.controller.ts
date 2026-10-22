@@ -11,6 +11,7 @@ import {
 import { CurrentUser, Roles } from "../../auth/auth.decorators";
 import { AuthPrincipal } from "../../auth/auth.types";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { receiptUploadOptions } from "./receipt-upload.options";
 import { ApplicationError } from "../../../common/errors/application.error";
 import { RequestPrepaidTransaction } from "../application/use-cases/request-prepaid-transaction";
 import { RequestPostpaidTransaction } from "../application/use-cases/request-postpaid-transaction";
@@ -32,7 +33,7 @@ export class TransactionsController {
 
   @Post("prepaid")
   @Roles("CLIENT")
-  @UseInterceptors(FileInterceptor("receipt", { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
+  @UseInterceptors(FileInterceptor("receipt", receiptUploadOptions))
   async requestPrepaid(
     @Body() body: RequestPrepaidTransactionDto,
     @Headers("idempotency-key") rawIdempotencyKey: string | undefined,
