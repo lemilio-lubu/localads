@@ -37,7 +37,7 @@ function AssetCard({ pauta, selected, position, layer, reduceMotion, onSelect }:
     <span className={styles.cardContent}>
       <span className={`${styles.assetIcon} ${item.iconClass}`}><Image src={item.icon} alt="" fill sizes="64px" /></span>
       <span className={styles.lastRecharge}><small>última recarga</small><strong>{pauta.lastRechargeAt ? formatDay(pauta.lastRechargeAt) : "Sin recargas"}</strong></span>
-      <span className={styles.balance}><small>saldo en plataforma</small><strong>{formatAmount(pauta.currentBalance)}</strong></span>
+      <span className={styles.balance}><small>saldo en plataforma</small><strong>{formatAmount(pauta.currentBalance)}</strong>{pauta.pendingAmount > 0 && <small className={styles.pending}>+ {formatAmount(pauta.pendingAmount)} en camino</small>}</span>
     </span>
   </motion.button>;
 }
@@ -48,6 +48,7 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
   const { clientId } = accountContext(accountType === "prepago" ? "prepago" : "flex");
   const [pautas, setPautas] = useState<PautaResponse[]>([]);
   const [total, setTotal] = useState(0);
+  const [pendingTotal, setPendingTotal] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,7 +60,7 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
   useEffect(() => { const element = deckRef.current; if (!element) return; const observer = new ResizeObserver(() => setMetrics(readMetrics(element))); observer.observe(element); return () => observer.disconnect(); }, []);
   function retry() { setLoading(true); setError(""); setReloadToken((token) => token + 1); }
 
-  useEffect(() => { let active = true; void getRechargeContext().then((value) => { if (active) setContext(value); }).catch(() => undefined); getMyWallet(clientId).then((wallet) => { if (active) { setPautas(wallet.pautas); setTotal(wallet.balanceTotal); setError(""); setSelected((current) => wallet.pautas.some((pauta) => pauta.id === current && pauta.status === "ACTIVE") ? current : null); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible cargar tus activos"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [clientId, revision, reloadToken]);
+  useEffect(() => { let active = true; void getRechargeContext().then((value) => { if (active) setContext(value); }).catch(() => undefined); getMyWallet(clientId).then((wallet) => { if (active) { setPautas(wallet.pautas); setTotal(wallet.balanceTotal); setPendingTotal(wallet.pendingTotal); setError(""); setSelected((current) => wallet.pautas.some((pauta) => pauta.id === current && pauta.status === "ACTIVE") ? current : null); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible cargar tus activos"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [clientId, revision, reloadToken]);
   const visible = pautas.filter((pauta) => pauta.status === "ACTIVE");
   /* Como en una billetera real, solo aparecen las tarjetas contratadas: las
      plataformas sin pauta activa no se pintan. Para activarlas está el enlace
@@ -82,8 +83,8 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
     <section className={styles.assetDeck} ref={deckRef} style={{ "--card-count": Math.max(visible.length, 1), ...(totalTop === null ? {} : { "--total-top": `${totalTop}px` }) } as CSSProperties} data-has-selection={selected !== null} aria-label="Balance de activos publicitarios" aria-busy={loading}>
       <div className={styles.deckBase} aria-hidden="true" />
       {visible.map((pauta, index) => <AssetCard key={pauta.id} pauta={pauta} selected={selected === pauta.id} position={positionFor(pauta, index)} layer={layerFor(pauta, index)} reduceMotion={reduceMotion} onSelect={() => setSelected((current) => current === pauta.id ? null : pauta.id)} />)}
-      <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "saldo total en plataformas" : "sin pautas activas"}</span><strong>{error ? "—" : formatAmount(total)}</strong></span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
-        {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de {formatAmount(credit.creditLimit)} · {credit.creditDays} días<small>El saldo de plataforma aumenta al completar una recarga.</small></span>}
+      <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "saldo total en plataformas" : "sin pautas activas"}</span><strong>{error ? "—" : formatAmount(total)}</strong>{!error && pendingTotal > 0 && <small className={styles.pendingTotal}>+ {formatAmount(pendingTotal)} en camino</small>}</span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
+        {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de <span>{formatAmount(credit.creditLimit)}</span> <span>· {credit.creditDays} días</span><small>{pendingTotal > 0 ? "Lo que está en camino se suma al saldo cuando lo acreditamos." : "El saldo de plataforma aumenta al completar una recarga."}</small></span>}
       </span></article>
     </section>
     {error && <div className={styles.errorPanel} role="alert">

@@ -158,6 +158,7 @@ export default function TransactionsDashboard() {
       transaction={selected}
       onClose={() => setSelected(null)}
       allowReceiptUpload={false}
+      audience="team"
       subtitle={selected?.clientName}
       /* Sin nada que hacer sobre la plataforma devuelve null: un fragmento vacío
          pintaría el separador de la tarjeta sin contenido debajo. */

@@ -30,7 +30,7 @@ describe("contratos de baja y reanudación", () => {
     expect(dto).toEqual({ expectedVersion: 3 });
     const execution = { resumeDetail: vi.fn().mockResolvedValue({ clientId: "client-1" }) };
     const realtime = { publishPlatforms: vi.fn() };
-    const controller = new TransactionExecutionController({} as never, {} as never, {} as never, execution as never, realtime as never, sinRecorte);
+    const controller = new TransactionExecutionController({} as never, {} as never, {} as never, execution as never, realtime as never, sinRecorte, { dispatch: () => undefined } as never);
     await controller.resume("tx-1", "detail-1", { userId: "real-admin", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null }, dto);
     expect(execution.resumeDetail).toHaveBeenCalledWith("tx-1", "detail-1", "real-admin", 3);
     expect(realtime.publishPlatforms).toHaveBeenCalledWith("client-1");

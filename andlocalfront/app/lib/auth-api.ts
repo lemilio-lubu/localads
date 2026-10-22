@@ -54,10 +54,16 @@ export function homeFor(user: AuthUser) {
 export const getCurrentUser = () => currentUser;
 export const getAccessToken = () => accessToken;
 
-export async function openAuthenticatedFile(url: string) {
+/* Los archivos privados piden el token: no sirven en un <img src> directo.
+   Se descargan como blob y quien los muestre crea (y revoca) su URL local. */
+export async function fetchAuthenticatedFile(url: string): Promise<Blob> {
   const response = await authenticatedFetch(url);
   if (!response.ok) throw new Error("No fue posible abrir el archivo");
-  const objectUrl = URL.createObjectURL(await response.blob());
+  return response.blob();
+}
+
+export async function openAuthenticatedFile(url: string) {
+  const objectUrl = URL.createObjectURL(await fetchAuthenticatedFile(url));
   window.open(objectUrl, "_blank", "noopener,noreferrer");
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }

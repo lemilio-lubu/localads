@@ -3,8 +3,8 @@ import { authenticatedFetch, getCurrentUser, homeFor, type AuthUser } from "./au
 export type RechargePlatform = "META" | "GOOGLE" | "TIKTOK";
 export type AccountMode = "prepago" | "flex";
 
-export type PautaResponse = { id: string; platform: RechargePlatform; externalAccountId: string | null; status: "PENDING_ACTIVATION" | "ACTIVE" | "INACTIVE" | "SUSPENDED"; currentBalance: number; activatedAt: string | null; lastRechargeAt: string | null };
-export type WalletResponse = { balanceTotal: number; pautas: PautaResponse[] };
+export type PautaResponse = { id: string; platform: RechargePlatform; externalAccountId: string | null; status: "PENDING_ACTIVATION" | "ACTIVE" | "INACTIVE" | "SUSPENDED"; currentBalance: number; pendingAmount: number; activatedAt: string | null; lastRechargeAt: string | null };
+export type WalletResponse = { balanceTotal: number; pendingTotal: number; pautas: PautaResponse[] };
 export type TransactionListItem = { pausedDetails?: number; id: string; code: string; clientId: string; clientName: string; accountId: string; accountTypeSnapshot: "PREPAGO" | "POSTPAGO"; rechargeStatus: string; paymentStatus: string | null; pautaAmount: number; totalAmount: number; platforms: RechargePlatform[]; dueDate: string | null; createdAt: string };
 export type TransactionDetail = { version?: number; pausedAt?: string | null; pautaStatus?: PautaResponse["status"]; id: string; pautaId: string; platform: RechargePlatform; externalAccountId: string | null; requestedAmount: number; isdAmount: number; agencyFeeAmount: number; vatBaseAmount: number; vatAmount: number; totalAmount: number; effectiveRechargeAmount: number | null; status: string; effectiveRechargeDate: string | null; completedAt: string | null };
 export type ClientTransactionDetail = { id: string; code: string; clientId: string; accountId: string; accountTypeSnapshot: "PREPAGO" | "POSTPAGO"; creditDaysSnapshot: number | null; rechargeStatus: string; pautaAmount: number; isdAmount: number; agencyFeeAmount: number; vatBaseAmount: number; vatAmount: number; totalAmount: number; isdRate: number; agencyFeeRate: number; vatRate: number; completedAt: string | null; createdAt: string; details: TransactionDetail[]; payment: null | { id: string; status: string; expectedAmount: number; confirmedAmount: number | null; dueDate: string | null; confirmedAt: string | null; createdAt: string; receipts: Array<{ id: string; originalName: string; mimeType: string; size: number; url: string; status: string; createdAt: string }> }; verification: null | { status: string; reviewReason: string | null; updatedAt: string }; invoice: null | { id: string; invoiceNumber: string; status: string; issuedAt: string; pautaSubtotal: number; isdAmount: number; agencyFeeAmount: number; vatBaseAmount: number; vatAmount: number; totalAmount: number; documentUrl: string | null } };
@@ -88,6 +88,8 @@ export const createActivationRequest = (input: { accountId: string; platform: Re
 export const getActivationRequests = (accountId: string) => api<ActivationRequest[]>(`/campaign-activation-requests?accountId=${encodeURIComponent(accountId)}`);
 export function resolveApiAssetUrl(path: string) {
   if (path.startsWith("/uploads/receipts/")) return `${apiUrl}/files/receipts/${encodeURIComponent(path.split("/").at(-1) ?? "")}`;
+  /* Rutas de la API (p. ej. el PDF de la factura): van con su prefijo /api/v1. */
+  if (path.startsWith("/files/")) return `${apiUrl}${path}`;
   const resolved = new URL(path, apiOrigin);
   if (resolved.origin === apiOrigin) return `${resolved.pathname}${resolved.search}${resolved.hash}`;
   return resolved.toString();

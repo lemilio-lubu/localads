@@ -45,6 +45,7 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
     return {
       transaction: {
         id: record.payment.transaction.id,
+        code: record.payment.transaction.code,
         accountId: record.payment.transaction.accountId,
         status: record.payment.transaction.rechargeStatus,
         version: record.payment.transaction.version,

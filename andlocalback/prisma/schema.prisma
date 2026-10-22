@@ -350,6 +350,13 @@ model Invoice {
   vatAmount       Decimal
   totalAmount     Decimal
   documentUrl     String?
+  /* Autorización fiscal del emisor (Serguéi o el simulado). Nula mientras
+     está pendiente; la reserva evita pedirla dos veces a la vez. */
+  authorizationNumber       String?   @unique
+  authorizedAt              DateTime?
+  issuer                    String?
+  authorizationClaimedUntil DateTime?
+  authorizationError        String?
   version         Int                 @default(0)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt

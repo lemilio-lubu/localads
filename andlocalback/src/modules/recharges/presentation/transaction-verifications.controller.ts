@@ -1,5 +1,6 @@
 import { Body, Controller, ForbiddenException, HttpCode, HttpStatus, Param, Patch, Post, UploadedFile, UseFilters, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { receiptUploadOptions } from "./receipt-upload.options";
 import { ApplicationError } from "../../../common/errors/application.error";
 import { TransactionReceiptOcrDispatcher } from "../application/services/transaction-receipt-ocr-dispatcher";
 import { ApproveTransactionVerification } from "../application/use-cases/approve-transaction-verification";
@@ -91,7 +92,7 @@ export class TransactionVerificationsController {
 
   @Post("payments/:paymentId/receipts")
   @Roles("CLIENT")
-  @UseInterceptors(FileInterceptor("receipt", { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
+  @UseInterceptors(FileInterceptor("receipt", receiptUploadOptions))
   async addPaymentReceipt(
     @Param("paymentId") paymentId: string,
     @UploadedFile() file?: Express.Multer.File,

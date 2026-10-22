@@ -61,6 +61,7 @@ const verificationIssueLabels: Labels = {
   FECHA_FUERA_DE_RANGO: "La fecha está fuera del rango esperado",
   COMPROBANTE_DUPLICADO: "El comprobante ya fue utilizado",
   REFERENCIA_BANCARIA_DUPLICADA: "La referencia bancaria ya fue utilizada",
+  CODIGO_TRANSACCION_NO_ENCONTRADO: "El comprobante no menciona el código de la transacción",
 };
 
 export const rechargeStatusLabel = (value: string | null | undefined) => translate(value, rechargeLabels, "Sin estado");

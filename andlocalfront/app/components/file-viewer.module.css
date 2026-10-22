@@ -1,0 +1,45 @@
+/* Fondo oscuro a pantalla completa: un comprobante se lee mejor sin la
+   interfaz alrededor, y por encima del detalle (z-index 100). */
+.overlay { position: fixed; z-index: 120; inset: 0; display: flex; flex-direction: column; background: rgb(20 20 20 / 94%); color: #fff; }
+
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3); }
+.name { min-width: 0; overflow: hidden; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-overflow: ellipsis; white-space: nowrap; }
+.tools { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-half); }
+.tools button, .tools a { display: grid; width: var(--hit-target); height: var(--hit-target); place-items: center; border: 0; border-radius: 50%; background: transparent; padding: 0; color: #fff; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out); }
+.tools svg { width: var(--icon-size-sm); height: var(--icon-size-sm); }
+.tools button:disabled { opacity: .35; cursor: default; }
+.tools button:focus-visible, .tools a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tools button:not(:disabled):active, .tools a:active { background: rgb(255 255 255 / 22%); }
+.percent { min-width: 4ch; font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; text-align: center; }
+
+/* touch-action: none deja el pellizco y el arrastre al visor, no al zoom de
+   la página. Sin zoom la mano invita a acercar; con zoom, a arrastrar. */
+.stage { position: relative; display: grid; flex: 1; min-height: 0; place-items: center; overflow: hidden; padding: var(--space-2); touch-action: none; user-select: none; }
+/* Centrada con absolute + inset + margin: auto: dentro de la rejilla el
+   max-height: 100% no se resolvía y una captura alta se salía por abajo. */
+.stage img { position: absolute; inset: var(--space-2); max-width: calc(100% - var(--space-4)); max-height: calc(100% - var(--space-4)); margin: auto; cursor: zoom-in; transform-origin: center; will-change: transform; }
+.stage[data-zoomed="true"] img { cursor: grab; }
+.stage[data-zoomed="true"] img:active { cursor: grabbing; }
+.pdf { width: min(100%, 960px); height: 100%; border: 0; border-radius: var(--radius-small); background: #fff; }
+
+.status { display: grid; justify-items: center; gap: var(--space-1); margin: 0; color: rgb(255 255 255 / 82%); font-size: var(--font-size-body-sm); text-align: center; }
+.status p { margin: 0; }
+.status button, .status a { border: 1px solid rgb(255 255 255 / 60%); border-radius: var(--radius-pill); background: transparent; padding: var(--space-1) var(--space-2); color: #fff; font: inherit; text-decoration: none; cursor: pointer; }
+
+@media (hover: hover) and (pointer: fine) {
+  .tools button:not(:disabled):hover, .tools a:hover { background: rgb(255 255 255 / 14%); }
+}
+
+/* En móvil el nombre deja sitio a las herramientas; se ve igual en el título
+   del archivo descargado. */
+@media (max-width: 480px) {
+  .toolbar { padding-inline: var(--space-1); }
+  .name { font-size: var(--font-size-caption); }
+  .tools { gap: 0; }
+  .stage { padding: var(--space-1); }
+  .stage img { inset: var(--space-1); max-width: calc(100% - var(--space-2)); max-height: calc(100% - var(--space-2)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tools button, .tools a { transition-duration: 0ms; }
+}

@@ -22,12 +22,16 @@ export type PautaQueryView = Readonly<{
   externalAccountId: string | null;
   status: PautaStatus;
   currentBalance: number;
+  /** Aprobado y aún sin acreditar en la plataforma. No forma parte del saldo
+   *  (BR-038): pasa a currentBalance cuando el equipo completa el detalle. */
+  pendingAmount: number;
   activatedAt: string | null;
   lastRechargeAt: string | null;
 }>;
 
 export type WalletOverviewView = Readonly<{
   balanceTotal: number;
+  pendingTotal: number;
   pautas: readonly PautaQueryView[];
 }>;
 

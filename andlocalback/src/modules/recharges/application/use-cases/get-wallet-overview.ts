@@ -8,6 +8,7 @@ export class GetWalletOverview {
     const clientId = requiredQueryId(input.clientId, "CLIENT_REQUIRED", "El cliente es obligatorio");
     const pautas = await this.queries.listPautasByClient(clientId);
     const cents = pautas.reduce((total, pauta) => total + Math.round(pauta.currentBalance * 100), 0);
-    return { balanceTotal: cents / 100, pautas };
+    const pendingCents = pautas.reduce((total, pauta) => total + Math.round(pauta.pendingAmount * 100), 0);
+    return { balanceTotal: cents / 100, pendingTotal: pendingCents / 100, pautas };
   }
 }

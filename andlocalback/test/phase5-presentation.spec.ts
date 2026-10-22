@@ -57,6 +57,7 @@ describe("Fase 5 - endpoints de ejecucion", () => {
         invoice: { id: "invoice-001", number: "FAC-001", status: "ISSUED" },
       })),
     };
+    const invoiceAuthorization = { dispatch: vi.fn() };
     const controller = new TransactionExecutionController(
       start as unknown as StartTransactionRecharge,
       detail as unknown as CompleteTransactionDetail,
@@ -64,8 +65,9 @@ describe("Fase 5 - endpoints de ejecucion", () => {
       {} as never,
       {} as never,
       sinRecorte,
+      invoiceAuthorization as never,
     );
-    return { controller, start, detail, complete };
+    return { controller, start, detail, complete, invoiceAuthorization };
   }
 
   it("inicia una transaccion sin aceptar un estado desde HTTP", async () => {
@@ -95,9 +97,11 @@ describe("Fase 5 - endpoints de ejecucion", () => {
   });
 
   it("cierra la transaccion y devuelve el resultado con su factura", async () => {
-    const { controller, complete } = setup();
+    const { controller, complete, invoiceAuthorization } = setup();
     const result = await controller.complete("tx-001", administrador);
     expect(complete.execute).toHaveBeenCalledWith({ transactionId: "tx-001" });
+    // La autorización fiscal se pide aparte, con la factura recién creada.
+    expect(invoiceAuthorization.dispatch).toHaveBeenCalledWith("invoice-001");
     expect(result).toMatchObject({
       transaction: { status: "COMPLETED" },
       invoice: { id: "invoice-001", status: "ISSUED" },
