@@ -11,7 +11,7 @@ export type AdminTransactionFilters = { owner?: "unassigned"; page?: number; lim
    sumarlos en el navegador haría que el resumen contradijera al listado. */
 export type AdminTransactionPage = PageResponse<TransactionListItem> & { totals: { pautaAmount: number; totalAmount: number } };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const apiUrl = "/api/v1";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await authenticatedFetch(`${apiUrl}${path}`, { cache: "no-store", ...init });

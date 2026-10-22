@@ -5,7 +5,7 @@
 export type AuthUser = { userId: string; username: string; role: "CLIENT" | "GESTOR" | "ADMIN"; clientId: string | null; accountId: string | null; accountType: "PREPAGO" | "POSTPAGO" | null; mustChangePassword?: boolean };
 type AuthResponse = { accessToken: string; expiresIn: number; user: AuthUser };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const apiUrl = "/api/v1";
 let accessToken: string | null = null; let currentUser: AuthUser | null = null; let refreshPromise: Promise<AuthUser | null> | null = null;
 
 async function payload<T>(response: Response): Promise<T> {

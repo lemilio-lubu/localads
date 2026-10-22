@@ -18,8 +18,9 @@ export type RechargeContext = {
   pautas: PautaResponse[];
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
-export const transactionsRealtimeUrl = process.env.NEXT_PUBLIC_WS_URL ?? `${new URL(apiUrl).origin}/transactions`;
+const apiUrl = "/api/v1";
+const apiOrigin = new URL(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1").origin;
+export const transactionsRealtimeUrl = process.env.NEXT_PUBLIC_WS_URL ?? `${apiOrigin}/transactions`;
 
 export function accountContext(mode: AccountMode) {
   const authenticated = getCurrentUser();
@@ -89,5 +90,7 @@ export function resolveApiAssetUrl(path: string) {
   if (path.startsWith("/uploads/receipts/")) return `${apiUrl}/files/receipts/${encodeURIComponent(path.split("/").at(-1) ?? "")}`;
   /* Rutas de la API (p. ej. el PDF de la factura): van con su prefijo /api/v1. */
   if (path.startsWith("/files/")) return `${apiUrl}${path}`;
-  return new URL(path, new URL(apiUrl).origin).toString();
+  const resolved = new URL(path, apiOrigin);
+  if (resolved.origin === apiOrigin) return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+  return resolved.toString();
 }

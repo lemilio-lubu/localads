@@ -46,7 +46,7 @@ export type SaveAdminClient = {
    vez, en esta respuesta, y no vuelve a salir por ningún GET. */
 export type AdminClientWithCredentials = AdminClient & { credentials: { username: string; temporaryPassword: string } };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const apiUrl = "/api/v1";
 
 async function request<T>(path: string, init?: RequestInit) {
   const response = await authenticatedFetch(`${apiUrl}${path}`, init);
