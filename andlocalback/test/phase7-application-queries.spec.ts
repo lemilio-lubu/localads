@@ -24,9 +24,9 @@ import {
 import { AccountType, AdvertisingPlatform, VerificationStatus } from "../src/modules/recharges/domain/recharge.types";
 
 const pautas = [
-  { id: "p1", platform: AdvertisingPlatform.META, externalAccountId: "meta", status: PautaStatus.ACTIVE, currentBalance: 0.1, activatedAt: null, lastRechargeAt: null },
-  { id: "p2", platform: AdvertisingPlatform.GOOGLE, externalAccountId: null, status: PautaStatus.INACTIVE, currentBalance: 0.2, activatedAt: null, lastRechargeAt: null },
-  { id: "p3", platform: AdvertisingPlatform.TIKTOK, externalAccountId: null, status: PautaStatus.SUSPENDED, currentBalance: 100, activatedAt: null, lastRechargeAt: null },
+  { id: "p1", platform: AdvertisingPlatform.META, externalAccountId: "meta", status: PautaStatus.ACTIVE, currentBalance: 0.1, pendingAmount: 0.1, activatedAt: null, lastRechargeAt: null },
+  { id: "p2", platform: AdvertisingPlatform.GOOGLE, externalAccountId: null, status: PautaStatus.INACTIVE, currentBalance: 0.2, pendingAmount: 0.2, activatedAt: null, lastRechargeAt: null },
+  { id: "p3", platform: AdvertisingPlatform.TIKTOK, externalAccountId: null, status: PautaStatus.SUSPENDED, currentBalance: 100, pendingAmount: 0, activatedAt: null, lastRechargeAt: null },
 ] as const;
 
 const listItem: TransactionListItemView = {
@@ -84,6 +84,7 @@ describe("Fase 7 - consultas de aplicacion", () => {
   it("proyecta billetera sin entidad Wallet y suma en centavos sin deriva decimal", async () => {
     const result = await new GetWalletOverview(port()).execute({ clientId: "c1" });
     expect(result.balanceTotal).toBe(100.3);
+    expect(result.pendingTotal).toBe(0.3);
     expect(result.pautas).toHaveLength(3);
   });
 

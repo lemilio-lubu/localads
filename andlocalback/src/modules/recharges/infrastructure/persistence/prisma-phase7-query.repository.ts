@@ -152,6 +152,19 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
       },
       orderBy: [{ platform: "asc" }, { id: "asc" }],
     });
+    // En camino: recarga aprobada o en proceso cuyo detalle aún no llegó a la
+    // plataforma. Lo pausado espera una decisión del equipo y no se promete.
+    const pending = await this.prisma.transactionDetail.groupBy({
+      by: ["pautaId"],
+      where: {
+        pautaId: { in: records.map((record) => record.id) },
+        status: { notIn: [TransactionDetailStatus.COMPLETED, TransactionDetailStatus.REJECTED] },
+        pausedAt: null,
+        transaction: { rechargeStatus: { in: [TransactionRechargeStatus.APPROVED, TransactionRechargeStatus.PROCESSING] } },
+      },
+      _sum: { requestedAmount: true },
+    });
+    const pendingByPauta = new Map(pending.map((row) => [row.pautaId, row._sum.requestedAmount]));
 
     return records.map((record) => ({
       id: record.id,
@@ -159,6 +172,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
       externalAccountId: record.externalAccountId,
       status: record.status as PautaStatus,
       currentBalance: money(record.currentBalance),
+      pendingAmount: money(pendingByPauta.get(record.id) ?? new Prisma.Decimal(0)),
       activatedAt: iso(record.activatedAt),
       lastRechargeAt: iso(record.transactionDetails[0]?.effectiveRechargeDate ?? record.transactionDetails[0]?.completedAt),
     }));
