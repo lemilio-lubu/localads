@@ -41,7 +41,7 @@ export type DuplicatePaymentEvidence = Readonly<{
 }>;
 
 export type ReceiptProcessingContext = Readonly<{
-  transaction: Readonly<{ id: string; accountId: string; status: string; version: number }>;
+  transaction: Readonly<{ id: string; code: string; accountId: string; status: string; version: number }>;
   payment: Readonly<{ id: string; transactionId: string; status: string; expectedAmount: number; version: number }>;
   receipt: TransactionReceiptSnapshot;
   existingVerification: TransactionVerificationView | null;

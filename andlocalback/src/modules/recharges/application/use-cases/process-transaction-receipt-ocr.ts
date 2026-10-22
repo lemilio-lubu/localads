@@ -65,6 +65,7 @@ export class ProcessTransactionReceiptOcr {
       ocr: analysis,
       receiptAlreadyConfirmed: duplicates.checksumUsed,
       bankReferenceAlreadyConfirmed: duplicates.transactionCodeUsed,
+      transactionCode: context.transaction.code,
       evaluatedAt,
     });
 
@@ -115,6 +116,7 @@ export class ProcessTransactionReceiptOcr {
       [VerificationIssue.DATE_OUT_OF_RANGE]: "La fecha detectada requiere revisión",
       [VerificationIssue.DUPLICATE_RECEIPT]: "El comprobante podría estar duplicado",
       [VerificationIssue.DUPLICATE_BANK_REFERENCE]: "La referencia bancaria podría estar duplicada",
+      [VerificationIssue.TRANSACTION_CODE_NOT_FOUND]: "El comprobante no menciona el código de la transacción",
     };
     return issues.map((issue) => labels[issue]).join(". ");
   }

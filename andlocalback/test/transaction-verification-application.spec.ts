@@ -28,7 +28,7 @@ function verification(overrides: Partial<TransactionVerificationView> = {}): Tra
 
 function receiptContext(existingVerification: TransactionVerificationView | null = null): ReceiptProcessingContext {
   return {
-    transaction: { id: "transaction-1", accountId: "account-1", status: "UNDER_REVIEW", version: 2 },
+    transaction: { id: "transaction-1", code: "TX-a1b2c3d4-0000-4000-8000-000000000001", accountId: "account-1", status: "UNDER_REVIEW", version: 2 },
     payment: { id: "payment-1", transactionId: "transaction-1", status: "UNDER_REVIEW", expectedAmount: 1058, version: 3 },
     receipt: {
       id: "receipt-1", paymentId: "payment-1", originalName: "transfer.png", mimeType: "image/png",
@@ -109,7 +109,7 @@ describe("ProcessTransactionReceiptOcr", () => {
   it("guarda OCR enriquecido y crea una verificacion automatica sin confirmar el pago", async () => {
     const persistence = new MemoryVerificationPersistence();
     const process = vi.fn().mockResolvedValue({
-      originalText: "Banco Local 1058.00 BANK-123", confidence: 98,
+      originalText: "Banco Local 1058.00 BANK-123 Referencia TX-a1b2c3d4", confidence: 98,
       detectedAmounts: [MonetaryAmount.fromMajorUnits(1058)], bank: "Banco Local",
       transactionDate: fixedDate, bankReference: "BANK-123", orderingParty: "Cliente",
     });
@@ -134,6 +134,24 @@ describe("ProcessTransactionReceiptOcr", () => {
       paymentStatus: "UNDER_REVIEW", rechargeStatus: "UNDER_REVIEW", reason: null, version: 0,
       occurredAt: fixedDate.toISOString(),
     });
+  });
+
+  it("señala el comprobante que no menciona el código de esta transacción", async () => {
+    const persistence = new MemoryVerificationPersistence();
+    const process = vi.fn().mockResolvedValue({
+      originalText: "Banco Local 1058.00 BANK-123", confidence: 98,
+      detectedAmounts: [MonetaryAmount.fromMajorUnits(1058)], bank: "Banco Local",
+      transactionDate: fixedDate, bankReference: "BANK-123", orderingParty: "Cliente",
+    });
+    const ids = ["ocr-new", "verification-new"];
+    const realtime = { publishVerification: vi.fn() };
+    const result = await new ProcessTransactionReceiptOcr(
+      persistence, { process }, { generate: () => ids.shift()! }, undefined, () => fixedDate, realtime,
+    ).execute({ receiptId: "receipt-1" });
+
+    expect(result.status).toBe(VerificationStatus.UNDER_REVIEW);
+    expect(persistence.savedEvaluation?.evaluation.issues).toEqual([VerificationIssue.TRANSACTION_CODE_NOT_FOUND]);
+    expect(realtime.publishVerification).toHaveBeenCalledWith(expect.objectContaining({ reason: "El comprobante no menciona el código de la transacción" }));
   });
 
   it("envia a revision cuando checksum o codigo ya confirmaron otro pago", async () => {

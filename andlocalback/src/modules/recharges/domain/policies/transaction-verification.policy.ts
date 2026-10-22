@@ -1,4 +1,5 @@
 import { OcrAnalysis, OcrFailure } from "../ocr/ocr-analysis";
+import { plainText } from "../ocr/receipt-text-interpreter";
 import { VerificationIssue, VerificationStatus } from "../recharge.types";
 import { MonetaryAmount } from "../value-objects/monetary-amount";
 
@@ -8,6 +9,8 @@ export type VerificationEvaluationInput = {
   ocrFailure?: OcrFailure | null;
   receiptAlreadyConfirmed?: boolean;
   bankReferenceAlreadyConfirmed?: boolean;
+  /** Nuestro código (TX-…): el cliente lo pone como referencia de la transferencia. */
+  transactionCode?: string;
   evaluatedAt?: Date;
 };
 
@@ -28,6 +31,17 @@ export type VerificationEvaluation = {
   rejectsPayment: false;
   failureReason: string | null;
 };
+
+/* El código liga la transferencia a esta recarga. Basta su primer tramo
+   (TX-f6789e61): los bancos cortan la descripción y esos 8 caracteres ya son
+   únicos en la práctica. Se toleran las confusiones típicas del OCR (O por 0,
+   I o L por 1), que no son ambiguas porque el código es hexadecimal. */
+function mentionsTransactionCode(text: string, code: string): boolean {
+  const ocrSafe = (value: string) => plainText(value).replace(/O/g, "0").replace(/[IL]/g, "1").replace(/[^A-Z0-9]/g, "");
+  const firstBlock = code.replace(/^TX-/i, "").split("-")[0];
+  const key = ocrSafe(firstBlock.length >= 6 ? firstBlock : code);
+  return key.length > 0 && ocrSafe(text).includes(key);
+}
 
 export class TransactionVerificationPolicy {
   private readonly minimumConfidence: number;
@@ -58,6 +72,9 @@ export class TransactionVerificationPolicy {
     if (ocr && !ocr.bankReference) issues.push(VerificationIssue.BANK_REFERENCE_NOT_IDENTIFIED);
     if (ocr && !this.isDateReasonable(ocr.transactionDate, input.evaluatedAt ?? new Date())) {
       issues.push(VerificationIssue.DATE_OUT_OF_RANGE);
+    }
+    if (ocr && input.transactionCode && !mentionsTransactionCode(ocr.originalText, input.transactionCode)) {
+      issues.push(VerificationIssue.TRANSACTION_CODE_NOT_FOUND);
     }
     if (input.receiptAlreadyConfirmed) issues.push(VerificationIssue.DUPLICATE_RECEIPT);
     if (input.bankReferenceAlreadyConfirmed) issues.push(VerificationIssue.DUPLICATE_BANK_REFERENCE);
