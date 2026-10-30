@@ -29,6 +29,7 @@ function verification(overrides: Partial<TransactionVerificationView> = {}): Tra
 function receiptContext(existingVerification: TransactionVerificationView | null = null): ReceiptProcessingContext {
   return {
     transaction: { id: "transaction-1", code: "TX-a1b2c3d4-0000-4000-8000-000000000001", accountId: "account-1", status: "UNDER_REVIEW", version: 2 },
+    clientReference: "AND-3F9A1C7B",
     payment: { id: "payment-1", transactionId: "transaction-1", status: "UNDER_REVIEW", expectedAmount: 1058, version: 3 },
     receipt: {
       id: "receipt-1", paymentId: "payment-1", originalName: "transfer.png", mimeType: "image/png",
@@ -157,7 +158,7 @@ describe("ProcessTransactionReceiptOcr", () => {
 
     expect(result.status).toBe(VerificationStatus.UNDER_REVIEW);
     expect(persistence.savedEvaluation?.evaluation.issues).toEqual([VerificationIssue.TRANSACTION_CODE_NOT_FOUND]);
-    expect(realtime.publishVerification).toHaveBeenCalledWith(expect.objectContaining({ reason: "El comprobante no menciona el código de la transacción" }));
+    expect(realtime.publishVerification).toHaveBeenCalledWith(expect.objectContaining({ reason: "El comprobante no menciona la referencia de pago ni el código de la transacción" }));
   });
 
   it("envia a revision cuando checksum o codigo ya confirmaron otro pago", async () => {

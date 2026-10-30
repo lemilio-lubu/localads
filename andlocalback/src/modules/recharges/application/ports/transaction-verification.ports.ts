@@ -42,6 +42,8 @@ export type DuplicatePaymentEvidence = Readonly<{
 
 export type ReceiptProcessingContext = Readonly<{
   transaction: Readonly<{ id: string; code: string; accountId: string; status: string; version: number }>;
+  /* Referencia estable del cliente (AND-…): el cliente puede ponerla en la transferencia en vez del código de la recarga. */
+  clientReference: string | null;
   payment: Readonly<{ id: string; transactionId: string; status: string; expectedAmount: number; version: number }>;
   receipt: TransactionReceiptSnapshot;
   existingVerification: TransactionVerificationView | null;

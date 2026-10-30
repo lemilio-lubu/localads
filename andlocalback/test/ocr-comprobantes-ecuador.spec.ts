@@ -136,6 +136,24 @@ describe("código de nuestra transacción en el comprobante", () => {
     expect(result.status).toBe(VerificationStatus.UNDER_REVIEW);
   });
 
+  it("vale la referencia estable del cliente en lugar del código de la recarga", () => {
+    const sinCodigo = tesseractMovil.replace("Descripción: TX-f6789e61", "Descripción: AND-3F9A1C7B pauta");
+    const withReference = (text: string, acceptedReferences: string[]) => policy.evaluate({
+      expectedAmount: MonetaryAmount.fromMajorUnits("33.06"),
+      ocr: interpreter.interpret(`Banco Pichincha\n${text}`, 95),
+      transactionCode: code,
+      acceptedReferences,
+      evaluatedAt,
+    });
+
+    expect(withReference(sinCodigo, ["AND-3F9A1C7B"]).issues).toEqual([]);
+    expect(withReference(sinCodigo, ["AND-3F9A1C7B"]).status).toBe(VerificationStatus.AUTOMATICALLY_VERIFIED);
+    // Sin la referencia aceptada, el mismo comprobante sigue yendo a revision.
+    expect(withReference(sinCodigo, []).issues).toContain(VerificationIssue.TRANSACTION_CODE_NOT_FOUND);
+    // Una referencia ajena no sirve.
+    expect(withReference(sinCodigo, ["AND-00000000"]).issues).toContain(VerificationIssue.TRANSACTION_CODE_NOT_FOUND);
+  });
+
   it("sin código esperado (comprobantes antiguos) no exige nada nuevo", () => {
     const result = policy.evaluate({ expectedAmount: MonetaryAmount.fromMajorUnits("33.06"), ocr: interpreter.interpret(`Banco Pichincha\n${tesseractMovil}`, 95), evaluatedAt });
     expect(result.issues).not.toContain(VerificationIssue.TRANSACTION_CODE_NOT_FOUND);

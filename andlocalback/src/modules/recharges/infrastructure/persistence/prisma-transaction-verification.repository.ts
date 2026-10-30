@@ -20,7 +20,7 @@ import {
 } from "../../application/ports/transaction-verification.ports";
 
 const receiptContextInclude = {
-  payment: { include: { transaction: true } },
+  payment: { include: { transaction: { include: { client: { select: { paymentReference: true } } } } } },
   verification: true,
 } satisfies Prisma.PaymentReceiptInclude;
 
@@ -50,6 +50,7 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
         status: record.payment.transaction.rechargeStatus,
         version: record.payment.transaction.version,
       },
+      clientReference: record.payment.transaction.client.paymentReference,
       payment: {
         id: record.payment.id,
         transactionId: record.payment.transactionId,

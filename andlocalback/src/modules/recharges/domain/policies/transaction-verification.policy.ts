@@ -11,6 +11,8 @@ export type VerificationEvaluationInput = {
   bankReferenceAlreadyConfirmed?: boolean;
   /** Nuestro código (TX-…): el cliente lo pone como referencia de la transferencia. */
   transactionCode?: string;
+  /* Otras referencias que también valen (la del cliente, AND-…): basta con que el comprobante mencione una. */
+  acceptedReferences?: readonly string[];
   evaluatedAt?: Date;
 };
 
@@ -73,7 +75,8 @@ export class TransactionVerificationPolicy {
     if (ocr && !this.isDateReasonable(ocr.transactionDate, input.evaluatedAt ?? new Date())) {
       issues.push(VerificationIssue.DATE_OUT_OF_RANGE);
     }
-    if (ocr && input.transactionCode && !mentionsTransactionCode(ocr.originalText, input.transactionCode)) {
+    const references = [input.transactionCode, ...(input.acceptedReferences ?? [])].filter((reference): reference is string => Boolean(reference));
+    if (ocr && references.length > 0 && !references.some((reference) => mentionsTransactionCode(ocr.originalText, reference))) {
       issues.push(VerificationIssue.TRANSACTION_CODE_NOT_FOUND);
     }
     if (input.receiptAlreadyConfirmed) issues.push(VerificationIssue.DUPLICATE_RECEIPT);
