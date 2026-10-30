@@ -26,15 +26,15 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
   const [error, setError] = useState("");
   /* Igual que en el formulario de cliente: el error del campo aparece al salir
      de él o al intentar crear, no mientras se escribe. */
-  const [touched, setTouched] = useState(false);
+  const [touched, setTouched] = useState({ name: false, username: false });
   const nameError = validateTeamName(name);
-  const shownNameError = touched ? nameError : "";
+  const shownNameError = touched.name ? nameError : "";
   const usernameError = validateTeamEmail(username);
-  const shownUsernameError = touched ? usernameError : "";
+  const shownUsernameError = touched.username ? usernameError : "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setTouched(true);
+    setTouched({ name: true, username: true });
     if (nameError || usernameError) {
       const formElement = event.currentTarget;
       requestAnimationFrame(() => (formElement.querySelector("[aria-invalid='true']") as HTMLElement | null)?.focus());
@@ -43,7 +43,7 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
     setPending(true); setError("");
     try {
       const member = await createTeamMember({ username, name: name.trim(), role });
-      setName(""); setUsername(""); setRole("GESTOR"); setTouched(false);
+      setName(""); setUsername(""); setRole("GESTOR"); setTouched({ name: false, username: false });
       onCreated(member);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No fue posible crear la cuenta");
@@ -58,12 +58,12 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
       <form className={`${form.form} ${styles.layout}`} onSubmit={submit} noValidate>
         <FormSection title="Acceso">
           <FormField label="Nombre" Icon={UserRound} error={shownNameError}>
-            {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={() => setTouched(true)} maxLength={80} autoComplete="off" autoFocus placeholder="Marta Pérez" aria-invalid={invalid} aria-describedby={describedBy} />}
+            {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={() => setTouched((state) => ({ ...state, name: true }))} maxLength={80} autoComplete="off" placeholder="Marta Pérez" aria-invalid={invalid} aria-describedby={describedBy} />}
           </FormField>
           {/* Se escribe libre y se guarda en minúscula: rechazar «Gestor» por
               llevar mayúscula sería hostil sin motivo. */}
           <FormField label="Correo" Icon={AtSign} error={shownUsernameError}>
-            {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} onBlur={() => setTouched(true)} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" placeholder="gestor@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
+            {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} onBlur={() => setTouched((state) => ({ ...state, username: true }))} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" placeholder="gestor@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
           </FormField>
         </FormSection>
 
