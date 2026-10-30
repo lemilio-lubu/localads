@@ -34,7 +34,7 @@ const platformOptions: { value: AdminPlatform; label: string; logo: string; widt
    decide cuándo paga, y eso es lo que cambia entre uno y otro. */
 const accountOptions: { value: SaveAdminClient["accountType"]; label: string; detail: string; Icon: LucideIcon }[] = [
   { value: "PREPAGO", label: "Prepago", detail: "Paga antes de cada recarga", Icon: Wallet },
-  { value: "POSTPAGO", label: "Postpago", detail: "Recarga ahora, paga a crédito", Icon: CalendarClock },
+  { value: "POSTPAGO", label: "Pospago", detail: "Recarga ahora, paga a crédito", Icon: CalendarClock },
 ];
 
 const creditPresets = [15, 30, 45, 60];
@@ -46,7 +46,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
   const [ruc, setRuc] = useState(client?.ruc ?? "");
   const [accountType, setAccountType] = useState<SaveAdminClient["accountType"]>(client?.account.type ?? "PREPAGO");
   const [platforms, setPlatforms] = useState<AdminPlatform[]>(client?.account.platforms ?? ["META"]);
-  // Una cuenta postpago necesita al menos un dia de credito (BR-029), asi que
+  // Una cuenta pospago necesita al menos un dia de credito (BR-029), asi que
   // el valor inicial es valido y el campo no admite cero.
   const [creditDays, setCreditDays] = useState(client?.account.creditDays || 30);
   const [creditLimit, setCreditLimit] = useState(client?.account.creditLimit?.toString() ?? "");

@@ -125,7 +125,7 @@
   .documentCircle { transition-duration: 0ms; }
 }
 
-/* Fase 3: cerrar el ciclo del pago postpago desde el propio detalle. */
+/* Fase 3: cerrar el ciclo del pago pospago desde el propio detalle. */
 /* La primera fila mide lo mismo que los círculos de factura y transferencia y el botón se centra en ella. Sin esto el botón se estiraba hasta la altura de toda la fila (≈70px) y pesaba más que los documentos que acompaña. */
 .uploadReceipt { display: grid; grid-template-rows: var(--icon-size-lg) auto; align-content: start; align-items: center; justify-items: center; gap: var(--space-1); text-align: center; }
 .uploadButton { composes: hitArea from "../design-system/hit-area.module.css"; border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: var(--space-1) var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }

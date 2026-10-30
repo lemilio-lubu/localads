@@ -37,7 +37,7 @@ export class StartTransactionRecharge {
         TransactionPaymentStatus.PAID,
       ]);
       if (!allowed.has(context.paymentStatus)) {
-        throw new ApplicationError("POSTPAID_OBLIGATION_NOT_VALID", "La obligacion postpago no permite iniciar la recarga", 409);
+        throw new ApplicationError("POSTPAID_OBLIGATION_NOT_VALID", "La obligacion pospago no permite iniciar la recarga", 409);
       }
     }
 

@@ -14,7 +14,9 @@ import LoginWalletDeck, { type DeckState } from "./login-wallet-deck";
 import styles from "./login-form.module.css";
 
 type Field = "username" | "password";
-const demoAccounts = ["prepago", "flex", "gestor", "admin"] as const;
+const demoAccounts = ["prepago", "pospago", "gestor", "admin"] as const;
+/* Los clientes entran con su correo; gestor y admin, con su usuario. */
+const demoLogins: Record<(typeof demoAccounts)[number], string> = { prepago: "prepago@andlocal.test", pospago: "pospago@andlocal.test", gestor: "gestor", admin: "admin" };
 
 export default function LoginForm() {
   const router = useRouter();
@@ -60,7 +62,7 @@ export default function LoginForm() {
     }
   }
 
-  function fillDemoAccount(account: (typeof demoAccounts)[number]) { setUsername(account); setPassword("1234"); setError(""); }
+  function fillDemoAccount(account: (typeof demoAccounts)[number]) { setUsername(demoLogins[account]); setPassword("1234"); setError(""); }
 
   /* Los textos entran desenfocados y se enfocan en cascada. */
   /* Con movimiento reducido el destino se declara igual y solo se anula la

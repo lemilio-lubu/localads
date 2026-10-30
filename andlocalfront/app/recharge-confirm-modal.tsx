@@ -19,7 +19,7 @@ type Props = {
   prepaid: boolean;
   /* «Produbanco ••••5407»: a dónde debió ir la transferencia, para confirmarlo antes de enviar. */
   destination?: string | null;
-  /* Dónde están los datos para pagar; solo se ofrece al postpago, que paga después. */
+  /* Dónde están los datos para pagar; solo se ofrece al pospago, que paga después. */
   payHref?: string;
   error: string;
   onConfirm: () => void;

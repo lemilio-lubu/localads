@@ -17,11 +17,11 @@ import styles from "./clients-dashboard.module.css";
 
 /* Los iconos son de lucide y no SVG de marca a propósito: pintan con
    `currentColor`, así que se vuelven blancos al activarse el segmento. Un
-   asset de color fijo no podría. Postpago paga después (calendario), prepago
+   asset de color fijo no podría. Pospago paga después (calendario), prepago
    paga por adelantado (billetera). */
 const accountTypeSegments: SegmentOption<AdminAccountType | null>[] = [
   { value: null, label: "todos", Icon: Layers, tone: "neutral" },
-  { value: "POSTPAGO", label: "postpago", Icon: CalendarClock, tone: "teal" },
+  { value: "POSTPAGO", label: "pospago", Icon: CalendarClock, tone: "teal" },
   { value: "PREPAGO", label: "prepago", Icon: Wallet, tone: "brand" },
 ];
 
@@ -126,7 +126,7 @@ export default function ClientsDashboard() {
         {visibleClients.map((client) => (
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
             <button type="button" className={styles.openDetailButton} onClick={() => setSelectedClient(client)} aria-label={`Ver detalle de ${client.name}`} aria-haspopup="dialog" />
-            <div className={styles.clientIdentity}><small>clientes</small><strong>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>post</b>pago</> : <><b>pre</b>pago</>}</span></div>
+            <div className={styles.clientIdentity}><small>clientes</small><strong>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
             <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="correo" valueSize="small">{client.email}</MetricCard>

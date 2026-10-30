@@ -328,7 +328,7 @@ function assertStartPreconditions(record: ExecutionRecord, expectedVersion: numb
     TransactionPaymentStatus.OVERDUE,
     TransactionPaymentStatus.PAID,
   ].includes(record.payment.status as TransactionPaymentStatus)) {
-    throw conflict("CREDIT_NOT_AUTHORIZED", "La obligacion postpago no esta autorizada");
+    throw conflict("CREDIT_NOT_AUTHORIZED", "La obligacion pospago no esta autorizada");
   }
   if (record.details.length === 0 || record.details.some((detail) => detail.status !== TransactionDetailStatus.APPROVED)) {
     throw conflict("TRANSACTION_DETAILS_NOT_APPROVED", "Todos los detalles deben estar aprobados");

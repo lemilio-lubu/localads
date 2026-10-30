@@ -12,7 +12,7 @@ import { AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.ty
 import { RequestPostpaidTransactionDto } from "../src/modules/recharges/presentation/dto/request-postpaid-transaction.dto";
 import { TransactionsController } from "../src/modules/recharges/presentation/transactions.controller";
 
-describe("Fase 4 - DTO JSON postpago", () => {
+describe("Fase 4 - DTO JSON pospago", () => {
   it("valida una distribucion de varias pautas y elimina campos no publicos", async () => {
     const dto = plainToInstance(RequestPostpaidTransactionDto, {
       clientId: "client-forged",
@@ -40,7 +40,7 @@ describe("Fase 4 - DTO JSON postpago", () => {
   });
 });
 
-describe("Fase 4 - endpoint postpago", () => {
+describe("Fase 4 - endpoint pospago", () => {
   function setup() {
     let received: RequestPostpaidTransactionCommand | undefined;
     const postpaid = {

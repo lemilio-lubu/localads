@@ -9,8 +9,8 @@ export type PaymentAccountState =
   | { status: "ready"; data: PaymentAccountResponse };
 
 /* La carga de la cuenta de cobro con sus estados: la usan la página de pago,
-   la recarga prepago y el detalle de una recarga postpago. */
-/* `enabled` evita la petición donde no se va a mostrar (el postpago no la usa al recargar). */
+   la recarga prepago y el detalle de una recarga pospago. */
+/* `enabled` evita la petición donde no se va a mostrar (el pospago no la usa al recargar). */
 export function usePaymentAccount(enabled = true): [PaymentAccountState, () => void] {
   const [state, setState] = useState<PaymentAccountState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);

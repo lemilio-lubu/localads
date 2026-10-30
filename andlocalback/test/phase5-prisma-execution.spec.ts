@@ -69,7 +69,7 @@ describe("persistencia de ejecucion de recarga fase 5", () => {
       .rejects.toMatchObject({ code: "DETAIL_ALREADY_COMPLETED" });
   });
 
-  it("completa y factura atomicamente desde snapshots sin modificar el pago postpago", async () => {
+  it("completa y factura atomicamente desde snapshots sin modificar el pago pospago", async () => {
     await createApprovedTransaction("final", ["p5-google"]);
     const context = (await repository.loadExecutionContext("p5-tx-final"))!;
     await repository.startTransaction(context.id, context.version, at("12:00"));

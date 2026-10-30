@@ -187,7 +187,7 @@ describe("RequestPrepaidTransaction", () => {
     ["cuenta inexistente", { ...activeContext(), account: null }, "ACCOUNT_NOT_FOUND"],
     ["contexto de cuenta inconsistente", { ...activeContext(), account: { ...activeContext().account!, clientId: "client-2" } }, "INVALID_ACCOUNT_CONTEXT"],
     ["cuenta inactiva", { ...activeContext(), account: { ...activeContext().account!, status: AccountStatus.INACTIVE } }, "ACCOUNT_INACTIVE"],
-    ["cuenta postpago", { ...activeContext(), account: { ...activeContext().account!, type: AccountType.POSTPAID } }, "ACCOUNT_TYPE_MISMATCH"],
+    ["cuenta pospago", { ...activeContext(), account: { ...activeContext().account!, type: AccountType.POSTPAID } }, "ACCOUNT_TYPE_MISMATCH"],
   ])("rechaza %s", async (_name, context, code) => {
     const { useCase, receiptCalls } = setup(context as MultiRechargeContext);
     await expect(useCase.execute(command)).rejects.toMatchObject({ code });

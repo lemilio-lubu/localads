@@ -16,7 +16,7 @@ export function validateClientProfile(input: ClientProfileInput, options: { requ
     throw new ApplicationError("INVALID_CREDIT_DAYS", "Una cuenta prepago no puede tener días de crédito");
   }
   if (input.accountType === AccountType.POSTPAID && input.creditDays <= 0) {
-    throw new ApplicationError("INVALID_CREDIT_DAYS", "Una cuenta postpago requiere al menos un día de crédito");
+    throw new ApplicationError("INVALID_CREDIT_DAYS", "Una cuenta pospago requiere al menos un día de crédito");
   }
   const creditLimit = input.creditLimit ?? 0;
   const cents = Math.round(creditLimit * 100);
@@ -27,7 +27,7 @@ export function validateClientProfile(input: ClientProfileInput, options: { requ
     throw new ApplicationError("INVALID_CREDIT_LIMIT", "Una cuenta prepago no puede tener línea de crédito");
   }
   if (options.requirePostpaidLimit && input.accountType === AccountType.POSTPAID && cents <= 0) {
-    throw new ApplicationError("INVALID_CREDIT_LIMIT", "Una cuenta postpago requiere una línea de crédito mayor que cero");
+    throw new ApplicationError("INVALID_CREDIT_LIMIT", "Una cuenta pospago requiere una línea de crédito mayor que cero");
   }
   if (new Set(input.platforms).size !== input.platforms.length) {
     throw new ApplicationError("DUPLICATED_PLATFORM", "Una plataforma no puede repetirse");

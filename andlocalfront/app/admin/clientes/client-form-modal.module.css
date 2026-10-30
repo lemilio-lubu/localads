@@ -11,7 +11,7 @@
 .wide { grid-column: 1 / -1; }
 /* En media columna, nombre, RUC y correo van uno debajo de otro. */
 .identity > div { grid-template-columns: 1fr; }
-/* Y prepago/postpago, uno sobre otro: lado a lado su descripción se partía en
+/* Y prepago/pospago, uno sobre otro: lado a lado su descripción se partía en
    tres líneas. */
 .layout [role="radiogroup"] { grid-template-columns: 1fr; }
 /* Una columna con mínimo cero: con 1fr las secciones no bajaban de su

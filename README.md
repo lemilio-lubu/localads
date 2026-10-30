@@ -53,9 +53,12 @@ Abre <http://localhost:3000> en el navegador.
 
 | Perfil | Usuario | Contraseña | Sección inicial |
 |---|---|---|---|
-| Cliente prepago | `prepago` | `1234` | `/prepago` |
-| Cliente postpago | `flex` | `1234` | `/flex` |
+| Cliente prepago | `prepago@andlocal.test` | `1234` | `/prepago` |
+| Cliente pospago | `pospago@andlocal.test` | `1234` | `/flex` |
+| Gestor | `gestor` | `1234` | `/admin/clientes` |
 | Administrador | `admin` | `1234` | `/admin/clientes` |
+
+Los clientes entran con su correo; el gestor y el administrador, con su usuario. En la pantalla de inicio de sesión, los accesos rápidos (`prepago`, `pospago`, `gestor`, `admin`) rellenan estos datos.
 
 El módulo administrativo de transacciones se encuentra en <http://localhost:3000/admin/transacciones>.
 

@@ -4,7 +4,7 @@ const { scryptSync } = require("node:crypto");
 const database = new PrismaClient();
 const accounts = [
   { id: "account-prepaid-001", clientId: "client-001", type: "PREPAGO", name: "Migo Prepago", email: "prepago@andlocal.test", ruc: "1712345675001", creditDays: 0, creditLimit: 0 },
-  { id: "account-postpaid-001", clientId: "client-002", type: "POSTPAGO", name: "Migo Postpago", email: "postpago@andlocal.test", ruc: "0912345675001", creditDays: 5, creditLimit: 10000 },
+  { id: "account-postpaid-001", clientId: "client-002", type: "POSTPAGO", name: "Migo Pospago", email: "pospago@andlocal.test", ruc: "0912345675001", creditDays: 5, creditLimit: 10000 },
 ];
 
 async function seed() {
@@ -33,8 +33,8 @@ async function seed() {
     }
   }
   for (const user of [
-    { id: "auth-prepago", username: "prepago", role: "CLIENT", clientId: "client-001", accountId: "account-prepaid-001", accountType: "PREPAGO", salt: "andlocal-prepago" },
-    { id: "auth-flex", username: "flex", role: "CLIENT", clientId: "client-002", accountId: "account-postpaid-001", accountType: "POSTPAGO", salt: "andlocal-flex" },
+    { id: "auth-prepago", username: "prepago@andlocal.test", role: "CLIENT", clientId: "client-001", accountId: "account-prepaid-001", accountType: "PREPAGO", salt: "andlocal-prepago" },
+    { id: "auth-flex", username: "pospago@andlocal.test", role: "CLIENT", clientId: "client-002", accountId: "account-postpaid-001", accountType: "POSTPAGO", salt: "andlocal-flex" },
     { id: "auth-admin", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null, salt: "andlocal-admin" },
     { id: "auth-gestor", username: "gestor", role: "GESTOR", clientId: null, accountId: null, accountType: null, salt: "andlocal-gestor" },
   ]) {

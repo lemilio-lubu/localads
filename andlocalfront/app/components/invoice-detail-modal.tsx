@@ -122,7 +122,7 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
       <div className={styles.summary}>
         <h2 id="invoice-detail-title">Detalle de transacción</h2>
         {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
-        <div className={styles.accountLabel}><Image src="/figma/pay.svg" alt="" width={24} height={24} /><strong>{postpaid ? "postpago" : "prepago"}</strong></div>
+        <div className={styles.accountLabel}><Image src="/figma/pay.svg" alt="" width={24} height={24} /><strong>{postpaid ? "pospago" : "prepago"}</strong></div>
         <dl className={styles.transactionData}>
           <div><dt>Código</dt><dd><button type="button" className={styles.copyCode} data-state={copyState} title={transaction.code} onClick={(event) => void copyCode(transaction.code, event.currentTarget.querySelector("span"))}><span>{transaction.code}</span><small>{copyState === "done" ? "copiado" : copyState === "failed" ? "no se pudo" : "copiar"}</small></button></dd></div><div><dt>Fecha</dt><dd>{formatDateTimeOr(transaction.createdAt)}</dd></div>
           <div><dt>Estado de recarga</dt><dd><StatusPill tone={rechargeStatusTone(transaction.rechargeStatus)}>{rechargeStatusLabel(transaction.rechargeStatus)}</StatusPill></dd></div><div><dt>Estado de pago</dt><dd><StatusPill tone={paymentStatusTone(transaction.payment?.status)}>{paymentStatusLabel(transaction.payment?.status)}</StatusPill></dd></div>

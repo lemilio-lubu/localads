@@ -69,7 +69,7 @@ export class RequestPostpaidTransaction {
       throw new ApplicationError("PAYMENTS_OVERDUE", "Tienes pagos vencidos. Regulariza tu pago para solicitar una nueva recarga", 409);
     }
     if (!Number.isSafeInteger(context.account.creditDays) || context.account.creditDays <= 0) {
-      throw new ApplicationError("INVALID_CREDIT_DAYS", "La cuenta postpago requiere dias de credito mayores que cero", 409);
+      throw new ApplicationError("INVALID_CREDIT_DAYS", "La cuenta pospago requiere dias de credito mayores que cero", 409);
     }
     if (!Array.isArray(command.details) || command.details.length === 0) {
       throw new ApplicationError("TRANSACTION_DETAILS_REQUIRED", "La recarga requiere al menos un detalle");

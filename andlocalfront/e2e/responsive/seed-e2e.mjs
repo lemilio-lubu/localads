@@ -32,7 +32,7 @@ async function activePautas(token) {
 
 /* Prepago: cada recarga lleva comprobante y genera su verificación. Importes
    variados, de una a siete cifras, para ver cómo se parten. */
-const prepago = await login("prepago");
+const prepago = await login("prepago@andlocal.test");
 const prepagoPautas = await activePautas(prepago.token);
 for (const amounts of [[3], [158, 42.5], [890], [12], [1234567.89], [200, 15]]) {
   const body = new FormData();
@@ -45,7 +45,7 @@ for (const amounts of [[3], [158, 42.5], [890], [12], [1234567.89], [200, 15]]) 
 /* Flex: recargas a crédito, sin comprobante. Si el backend no puede
    reservar el crédito, se avisa y se sigue: la suite mide igual el resto, y
    las facturas de Flex quedan en su estado vacío. */
-const flex = await login("flex");
+const flex = await login("pospago@andlocal.test");
 const flexPautas = await activePautas(flex.token);
 let flexCreated = 0;
 for (const amounts of [[150], [800, 60]]) {

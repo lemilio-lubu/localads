@@ -223,7 +223,7 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
 }
 
 function creditDaysBetween(createdAt: Date, dueDate: Date | null): number {
-  if (!dueDate) throw new Error("El pago postpago requiere fecha de vencimiento");
+  if (!dueDate) throw new Error("El pago pospago requiere fecha de vencimiento");
   return Math.round((dueDate.getTime() - createdAt.getTime()) / 86_400_000);
 }
 
@@ -232,7 +232,7 @@ function decimalToSafeNumber(amount: Prisma.Decimal): number {
 }
 
 function toPostpaidTransactionView(record: PostpaidTransactionRecordFromPrisma): PostpaidTransactionView {
-  if (!record.payment) throw new Error(`La transaccion postpago ${record.id} no contiene pago`);
+  if (!record.payment) throw new Error(`La transaccion pospago ${record.id} no contiene pago`);
   return {
     id: record.id,
     code: record.code,

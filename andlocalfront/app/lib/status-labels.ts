@@ -70,4 +70,6 @@ export const paymentStatusLabel = (value: string | null | undefined) => translat
 export const verificationStatusLabel = (value: string | null | undefined) => translate(value, verificationLabels, "Sin verificación");
 export const invoiceStatusLabel = (value: string | null | undefined) => translate(value, invoiceLabels, "Sin factura");
 export const activationStatusLabel = (value: string | null | undefined) => translate(value, activationLabels, "Sin estado");
+/* El tipo de cuenta viaja como PREPAGO/POSTPAGO (valor interno del backend); a la pantalla llega como se escribe en español. */
+export const accountTypeLabel = (value: string | null | undefined) => (value === "POSTPAGO" ? "pospago" : "prepago");
 export const verificationIssueLabel = (value: string) => verificationIssueLabels[value] ?? "Requiere revisión manual";

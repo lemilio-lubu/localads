@@ -32,7 +32,7 @@ export class Payment {
     }
     if (props.expectedAmount.isZero) throw new DomainError("INVALID_AMOUNT", "El pago debe ser mayor que cero");
     if (props.accountTypeSnapshot === AccountType.POSTPAID && !props.dueDate) {
-      throw new DomainError("PAYMENT_DUE_DATE_REQUIRED", "El pago postpago requiere fecha de vencimiento");
+      throw new DomainError("PAYMENT_DUE_DATE_REQUIRED", "El pago pospago requiere fecha de vencimiento");
     }
     if (props.accountTypeSnapshot === AccountType.PREPAID && props.dueDate) {
       throw new DomainError("UNEXPECTED_PAYMENT_DUE_DATE", "El pago prepago no utiliza fecha de vencimiento");
