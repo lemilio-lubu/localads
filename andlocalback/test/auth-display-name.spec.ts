@@ -57,3 +57,14 @@ describe("nombre que se muestra al entrar", () => {
     expect(auth.displayName).toHaveBeenCalledWith(client);
   });
 });
+
+describe("mensaje de credenciales incorrectas", () => {
+  it("habla de correo, no de usuario, y es el mismo si el correo no existe o la clave falla", async () => {
+    const { auth, database } = service();
+    database.authUser.findUnique.mockResolvedValueOnce(null);
+    await expect(auth.login("nadie@example.test", "1234")).rejects.toMatchObject({ message: "Correo o contraseña incorrectos" });
+    const { auth: conClaveMala } = service();
+    (conClaveMala as unknown as { passwords: { verify: (...a: unknown[]) => unknown } }).passwords.verify = vi.fn().mockResolvedValue(false);
+    await expect(conClaveMala.login(client.username, "mala")).rejects.toMatchObject({ message: "Correo o contraseña incorrectos" });
+  });
+});

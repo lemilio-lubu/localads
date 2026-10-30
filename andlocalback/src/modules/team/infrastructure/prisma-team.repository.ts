@@ -178,7 +178,7 @@ export class PrismaTeamRepository implements TeamRepository {
 
 function usernameConflict(error: unknown): unknown {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-    return new ApplicationError("USERNAME_TAKEN", "Ya existe un usuario con ese nombre", 409);
+    return new ApplicationError("USERNAME_TAKEN", "Ya existe un acceso con este correo", 409);
   }
   return error;
 }

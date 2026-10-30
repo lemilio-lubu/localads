@@ -29,8 +29,8 @@ export async function seedBackendData(database: PrismaClient) {
   const demoUsers = [
     { id: "auth-prepago", username: "prepago@andlocal.test", role: "CLIENT", clientId: "client-001", accountId: "account-prepaid-001", accountType: "PREPAGO", salt: "andlocal-prepago" },
     { id: "auth-flex", username: "pospago@andlocal.test", role: "CLIENT", clientId: "client-002", accountId: "account-postpaid-001", accountType: "POSTPAGO", salt: "andlocal-flex" },
-    { id: "auth-admin", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null, salt: "andlocal-admin" },
-    { id: "auth-gestor", username: "gestor", role: "GESTOR", clientId: null, accountId: null, accountType: null, salt: "andlocal-gestor" },
+    { id: "auth-admin", username: "admin@andlocal.test", role: "ADMIN", clientId: null, accountId: null, accountType: null, salt: "andlocal-admin" },
+    { id: "auth-gestor", username: "gestor@andlocal.test", role: "GESTOR", clientId: null, accountId: null, accountType: null, salt: "andlocal-gestor" },
   ] as const;
   for (const user of demoUsers) {
     const salt = Buffer.from(user.salt); const passwordHash = `scrypt$${salt.toString("base64url")}$${scryptSync("1234", salt, 64).toString("base64url")}`;

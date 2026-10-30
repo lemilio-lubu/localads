@@ -1,5 +1,5 @@
 import { ApplicationError } from "../../../../common/errors/application.error";
-import { normalizeUsername, TeamMemberInput, validateTeamMember } from "../../domain/team-member";
+import { normalizeUsername, TeamMemberInput, validateTeamEmail, validateTeamMember, validateTeamRole } from "../../domain/team-member";
 import { TeamCredentialsIssuer } from "../ports/team-credentials.port";
 import { PortfolioDestination, TeamFilters, TeamRepository, UpdateTeamMemberInput } from "../ports/team.repository";
 
@@ -10,7 +10,7 @@ export class ManageTeam {
 
   async get(id: string) {
     const member = await this.team.findById(id);
-    if (!member) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El usuario no existe", 404);
+    if (!member) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
     return member;
   }
 
@@ -26,12 +26,16 @@ export class ManageTeam {
 
   async update(id: string, input: UpdateTeamMemberInput) {
     const current = await this.get(id);
-    validateTeamMember({ username: input.username ?? current.username, role: input.role ?? current.role });
+    /* El correo solo se valida si de verdad cambia: una cuenta anterior, con un
+       usuario que no es un correo, tiene que poder cambiar de rol o darse de
+       baja sin que se le exija un correo que nadie ha escrito todavía. */
+    if (input.username !== undefined && normalizeUsername(input.username) !== current.username) validateTeamEmail(input.username);
+    validateTeamRole(input.role ?? current.role);
     /* Desactivar pasa por su propio camino porque arrastra la cartera: un
      PATCH con status INACTIVE dejaria clientes apuntando a un gestor de baja. */
     if (input.status === "INACTIVE") return this.deactivate(id, input.portfolio);
     const updated = await this.team.update(id, { ...input, ...(input.username ? { username: normalizeUsername(input.username) } : {}) });
-    if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El usuario no existe", 404);
+    if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
     return updated;
   }
 
@@ -54,7 +58,7 @@ export class ManageTeam {
       );
     }
     const result = await this.team.deactivate(id, destination ?? { kind: "release" });
-    if (!result) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El usuario no existe", 404);
+    if (!result) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
     return { ...result.member, movedClients: result.movedClients, portfolioDestination: destination?.kind ?? "release" };
   }
 
@@ -62,7 +66,7 @@ export class ManageTeam {
     const member = await this.get(id);
     const issued = await this.credentials.issue(member.username);
     const updated = await this.team.resetPassword(id, issued.passwordHash);
-    if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El usuario no existe", 404);
+    if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
     return { ...updated, credentials: { username: member.username, temporaryPassword: issued.temporaryPassword } };
   }
 }

@@ -6,7 +6,7 @@ import ActionButton from "../../components/action-button";
 import { ChoiceCheck, FormError, FormField, FormHeader, FormSection, formStyles as form } from "../../components/form-modal";
 import ModalShell from "../../components/modal-shell";
 import { createTeamMember, type TeamMemberWithCredentials, type TeamRole } from "../../lib/team-api";
-import { validateTeamUsername } from "../../lib/form-validation";
+import { validateTeamEmail } from "../../lib/form-validation";
 import styles from "./team-form-modal.module.css";
 
 type Props = { open: boolean; onClose: () => void; onCreated: (member: TeamMemberWithCredentials) => void };
@@ -26,7 +26,7 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
   /* Igual que en el formulario de cliente: el error del campo aparece al salir
      de él o al intentar crear, no mientras se escribe. */
   const [touched, setTouched] = useState(false);
-  const usernameError = validateTeamUsername(username);
+  const usernameError = validateTeamEmail(username);
   const shownUsernameError = touched ? usernameError : "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -56,8 +56,8 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
         <FormSection title="Acceso">
           {/* Se escribe libre y se guarda en minúscula: rechazar «Gestor» por
               llevar mayúscula sería hostil sin motivo. */}
-          <FormField label="Usuario" Icon={AtSign} error={shownUsernameError} hint="Con este nombre entrará al portal. Se guarda en minúscula.">
-            {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} onBlur={() => setTouched(true)} maxLength={24} autoComplete="off" placeholder="gestor.norte" aria-invalid={invalid} aria-describedby={describedBy} />}
+          <FormField label="Correo" Icon={AtSign} error={shownUsernameError} hint="Con este correo entrará al portal. Se guarda en minúscula.">
+            {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} onBlur={() => setTouched(true)} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" placeholder="gestor@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
           </FormField>
         </FormSection>
 

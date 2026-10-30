@@ -9,7 +9,7 @@ import { FormError, FormField, SelectChevron, formStyles as form } from "../../c
 import { formatAmount, formatDateTime } from "../../lib/format";
 import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeamMember, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";
-import { validateTeamUsername } from "../../lib/form-validation";
+import { validateTeamEmail } from "../../lib/form-validation";
 import styles from "./team-member-modal.module.css";
 
 type Props = {
@@ -62,7 +62,11 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
   }, [linking, reloadToken]);
 
   const dirty = useMemo(() => Boolean(member) && (username.trim().toLowerCase() !== member?.username || role !== member?.role), [member, role, username]);
-  const usernameError = dirty ? validateTeamUsername(username) : "";
+  /* El correo solo se valida si cambia: una cuenta anterior, con un usuario que
+     no es un correo, tiene que poder cambiar de rol sin que se le exija uno. */
+  const emailChanged = Boolean(member) && username.trim().toLowerCase() !== member?.username;
+  const usernameError = emailChanged ? validateTeamEmail(username) : "";
+  const legacyAccount = Boolean(member) && !member?.username.includes("@");
 
   function reload() { setReloadToken((token) => token + 1); onChanged(); }
 
@@ -103,8 +107,8 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
           <section className={`${styles.panel} ${styles.accountPanel}`} aria-labelledby="team-member-data">
             <h3 id="team-member-data">Datos de la cuenta</h3>
             <div className={styles.fields}>
-              <FormField label="Usuario" Icon={AtSign} error={usernameError}>
-                {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setNotice(""); }} maxLength={24} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} />}
+              <FormField label="Correo" Icon={AtSign} error={usernameError} hint={legacyAccount ? "Esta cuenta aún entra con un usuario. Ponle un correo para que entre con él." : undefined}>
+                {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setNotice(""); }} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" aria-invalid={invalid} aria-describedby={describedBy} />}
               </FormField>
               <FormField label="Rol" Icon={UserCog}>
                 {({ id, describedBy }) => <>

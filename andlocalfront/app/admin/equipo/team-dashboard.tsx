@@ -119,7 +119,7 @@ export default function TeamDashboard() {
   return (
     <div className={styles.module}>
       <div className={styles.toolbar}>
-        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por usuario" /></label>
+        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por correo" /></label>
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
             <span>rol</span>
@@ -140,7 +140,7 @@ export default function TeamDashboard() {
           <article key={member.id} className={`${styles.row} ${member.status === "INACTIVE" ? styles.inactive : ""}`}>
             <button type="button" className={styles.openDetail} onClick={() => openMember(member.id)} aria-label={`Ver detalle de ${member.username}`} aria-haspopup="dialog" />
             <div className={styles.identity}>
-              <small>usuario</small>
+              <small>correo</small>
               <strong>{member.username}</strong>
               <span data-role={member.role}>{roleLabel(member.role)}</span>
             </div>

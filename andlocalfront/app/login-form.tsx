@@ -21,8 +21,8 @@ type Field = "username" | "password";
    así que cambiar la variable después no tiene efecto sin volver a compilar. */
 const showDemoAccounts = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true";
 const demoAccounts = ["prepago", "pospago", "gestor", "admin"] as const;
-/* Los clientes entran con su correo; gestor y admin, con su usuario. */
-const demoLogins: Record<(typeof demoAccounts)[number], string> = { prepago: "prepago@andlocal.test", pospago: "pospago@andlocal.test", gestor: "gestor", admin: "admin" };
+/* Todos entran con su correo. */
+const demoLogins: Record<(typeof demoAccounts)[number], string> = { prepago: "prepago@andlocal.test", pospago: "pospago@andlocal.test", gestor: "gestor@andlocal.test", admin: "admin@andlocal.test" };
 
 export default function LoginForm() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function LoginForm() {
      navegador y tapaba el campo. Los mensajes los escribe el producto, junto
      a cada campo, y solo tras intentar entrar. */
   const fieldErrors: Partial<Record<Field, string>> = {
-    ...(username.trim() ? {} : { username: "Escribe tu correo o usuario." }),
+    ...(username.trim() ? {} : { username: "Escribe tu correo." }),
     ...(password ? {} : { password: "Escribe tu contraseña." }),
   };
   const shown = (field: Field) => (submitted ? fieldErrors[field] : undefined);
@@ -63,7 +63,7 @@ export default function LoginForm() {
       setDeck("launching");
       window.setTimeout(() => router.push(destination), reduceMotion ? 0 : 380);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Usuario o contraseña incorrectos");
+      setError(reason instanceof Error ? reason.message : "Correo o contraseña incorrectos");
       setDeck("idle");
     }
   }
@@ -111,8 +111,8 @@ export default function LoginForm() {
         </header>
 
         <form className={`${form.form} ${styles.form}`} onSubmit={submitLogin} noValidate>
-          <FormField label="Correo o usuario" Icon={UserRound} error={shown("username")}>
-            {({ id, describedBy, invalid }) => <input id={id} name="username" autoComplete="username" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu correo o usuario" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
+          <FormField label="Correo" Icon={UserRound} error={shown("username")}>
+            {({ id, describedBy, invalid }) => <input id={id} name="username" autoComplete="username" inputMode="email" autoCapitalize="none" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu correo" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
           </FormField>
           <FormField label="Contraseña" Icon={LockKeyhole} error={shown("password")}>
             {({ id, describedBy, invalid }) => <>

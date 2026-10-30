@@ -13,7 +13,7 @@ export class AuthService {
   constructor(private readonly database: PrismaService, private readonly passwords: PasswordService, private readonly accessTokens: AccessTokenService) {}
   async login(username: string, password: string) {
     const user = await this.database.authUser.findUnique({ where: { username: username.trim().toLowerCase() } });
-    if (!user || user.status !== "ACTIVE" || !(await this.passwords.verify(password, user.passwordHash))) throw new UnauthorizedException("Usuario o contraseña incorrectos");
+    if (!user || user.status !== "ACTIVE" || !(await this.passwords.verify(password, user.passwordHash))) throw new UnauthorizedException("Correo o contraseña incorrectos");
     await this.assertCommercialAccess(user.clientId, user.accountId);
     return this.issue(this.principal(user), randomUUID());
   }

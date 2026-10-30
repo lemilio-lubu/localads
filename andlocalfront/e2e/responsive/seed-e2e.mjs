@@ -63,7 +63,7 @@ for (const amounts of [[150], [800, 60]]) {
 await call("/campaign-activation-requests", { token: flex.token, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: flex.user.accountId, platform: "TIKTOK", requesterName: "María Fernanda Villacís Andrade", externalAccountId: "7398126450918273645", phone: "+593987654321", firstRechargeAmount: "250.00" }) });
 
 /* Un segundo gestor: la suite lo usa para abrir el modal de credenciales. */
-const admin = await login("admin");
+const admin = await login("admin@andlocal.test");
 await call("/admin/team", { token: admin.token, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: "miguel", role: "GESTOR" }) });
 
 console.log(`Datos de la suite responsive creados: 6 recargas prepago, ${flexCreated} flex, 1 solicitud de activación y el gestor «miguel».`);

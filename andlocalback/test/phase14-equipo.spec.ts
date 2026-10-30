@@ -36,27 +36,51 @@ describe("Fase 14 - reglas del equipo", () => {
     expect(normalizeUsername(input)).toBe(expected);
   });
 
-  it.each(["ab", "con espacio", "a".repeat(25), "-empieza-con-guion", "acentós"])("rechaza el usuario %s", (username) => {
+  it.each(["ab", "con espacio@example.test", "sin-arroba", "a@b", "@example.test", "a@@example.test", `${"a".repeat(110)}@example.test`])("rechaza el correo %s", (username) => {
     expect(() => validateTeamMember({ username, role: "GESTOR" })).toThrowError(expect.objectContaining({ code: "INVALID_USERNAME" }));
   });
 
-  /* Las mayusculas no se rechazan, se normalizan: escribir «Gestor» y que la
-     pantalla conteste «usuario invalido» seria hostil sin motivo. */
+  /* Las mayusculas no se rechazan, se normalizan: escribir «Gestor@…» y que la
+     pantalla conteste «correo invalido» seria hostil sin motivo. */
   it("las mayusculas se aceptan y se guardan en minuscula", () => {
-    expect(() => validateTeamMember({ username: "Gestor.Uno", role: "GESTOR" })).not.toThrow();
+    expect(() => validateTeamMember({ username: "Gestor.Uno@Example.test", role: "GESTOR" })).not.toThrow();
   });
 
   /* El equipo son usuarios internos: un cliente se administra en su propia
      pantalla, con plataformas, credito y recargas. */
   it("no admite el rol de cliente", () => {
-    expect(() => validateTeamMember({ username: "alguien", role: "CLIENT" as never })).toThrowError(expect.objectContaining({ code: "INVALID_TEAM_ROLE" }));
+    expect(() => validateTeamMember({ username: "alguien@example.test", role: "CLIENT" as never })).toThrowError(expect.objectContaining({ code: "INVALID_TEAM_ROLE" }));
   });
 
   it("crear devuelve la clave temporal una vez y guarda quien lo creo", async () => {
     const team = repository();
-    const result = await new ManageTeam(team, issuer()).create({ username: "Gestor", role: "GESTOR" }, "admin-1");
-    expect(result.credentials).toEqual({ username: "gestor", temporaryPassword: "Abcd2345Wxyz" });
-    expect(team.create).toHaveBeenCalledWith({ username: "gestor", role: "GESTOR" }, { username: "gestor", passwordHash: "scrypt$s$h" }, "admin-1");
+    const result = await new ManageTeam(team, issuer()).create({ username: "Gestor@Example.Test", role: "GESTOR" }, "admin-1");
+    expect(result.credentials).toEqual({ username: "gestor@example.test", temporaryPassword: "Abcd2345Wxyz" });
+    expect(team.create).toHaveBeenCalledWith({ username: "gestor@example.test", role: "GESTOR" }, { username: "gestor@example.test", passwordHash: "scrypt$s$h" }, "admin-1");
+  });
+
+  it("crear rechaza un usuario que no es un correo y no guarda nada", async () => {
+    const team = repository();
+    await expect(new ManageTeam(team, issuer()).create({ username: "gestor", role: "GESTOR" }, "admin-1")).rejects.toMatchObject({ code: "INVALID_USERNAME" });
+    expect(team.create).not.toHaveBeenCalled();
+  });
+
+  /* Las cuentas anteriores tienen un usuario que no es un correo («gestor»).
+     Cambiarles el rol o darlas de baja no puede exigirles un correo que nadie
+     ha escrito: solo se valida cuando el correo cambia. */
+  it("una cuenta con usuario antiguo cambia de rol sin que se le exija un correo", async () => {
+    const team = repository();
+    await new ManageTeam(team, issuer()).update("t1", { username: "gestor", role: "ADMIN" });
+    expect(team.update).toHaveBeenCalledWith("t1", expect.objectContaining({ username: "gestor", role: "ADMIN" }));
+  });
+
+  it("al ponerle correo a una cuenta antigua, lo valida y lo guarda en minuscula", async () => {
+    const team = repository();
+    const manage = new ManageTeam(team, issuer());
+    await expect(manage.update("t1", { username: "sin-correo" })).rejects.toMatchObject({ code: "INVALID_USERNAME" });
+    expect(team.update).not.toHaveBeenCalled();
+    await manage.update("t1", { username: "Nuevo@Example.Test" });
+    expect(team.update).toHaveBeenCalledWith("t1", expect.objectContaining({ username: "nuevo@example.test" }));
   });
 
   /* Un PATCH con status INACTIVE dejaria clientes apuntando a un gestor de
