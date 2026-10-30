@@ -73,7 +73,7 @@ export default function TeamDashboard() {
      día crece lo bastante para necesitarlo. */
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return members.filter((member) => (!normalized || member.username.toLowerCase().includes(normalized)) && (!role || member.role === role));
+    return members.filter((member) => (!normalized || member.username.toLowerCase().includes(normalized) || (member.name ?? "").toLowerCase().includes(normalized)) && (!role || member.role === role));
   }, [members, query, role]);
 
   function save(member: TeamMember) {
@@ -119,7 +119,7 @@ export default function TeamDashboard() {
   return (
     <div className={styles.module}>
       <div className={styles.toolbar}>
-        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por usuario" /></label>
+        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o correo" /></label>
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
             <span>rol</span>
@@ -138,11 +138,15 @@ export default function TeamDashboard() {
       <div className={styles.list} aria-live="polite" aria-busy={loading}>
         {!loading && !error && visible.map((member) => (
           <article key={member.id} className={`${styles.row} ${member.status === "INACTIVE" ? styles.inactive : ""}`}>
-            <button type="button" className={styles.openDetail} onClick={() => openMember(member.id)} aria-label={`Ver detalle de ${member.username}`} aria-haspopup="dialog" />
+            <button type="button" className={styles.openDetail} onClick={() => openMember(member.id)} aria-label={`Ver detalle de ${member.name || member.username}`} aria-haspopup="dialog" />
             <div className={styles.identity}>
-              <small>usuario</small>
-              <strong>{member.username}</strong>
-              <span data-role={member.role}>{roleLabel(member.role)}</span>
+              <small>equipo</small>
+              <strong>{member.name || member.username}</strong>
+              {/* El correo solo se repite aquí si hay nombre: sin él, el título ya es el correo. */}
+              <div className={styles.identityMeta}>
+                <span data-role={member.role}>{roleLabel(member.role)}</span>
+                {member.name && <em>{member.username}</em>}
+              </div>
             </div>
             {/* «no aplica» en tamaño pequeño, como en Clientes: es una ausencia,
                 no una cifra, y en grande competía con los números de al lado. */}

@@ -3,13 +3,22 @@
    forma de darle estilo; los formularios llevan `noValidate` y validan aquí.
    Devuelven el mensaje del primer problema, o cadena vacía si todo está bien. */
 
-const usernamePattern = /^[a-z0-9][a-z0-9._-]{2,23}$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function validateTeamUsername(value: string): string {
+/* El miembro del equipo entra con su correo, como los clientes. Espejo de la
+   regla del backend (domain/team-member.ts); la que manda es la del servidor. */
+export function validateTeamEmail(value: string): string {
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return "Escribe un nombre de usuario.";
-  if (normalized.length < 3) return "El usuario necesita al menos 3 caracteres.";
-  if (!usernamePattern.test(normalized)) return "El usuario admite letras, números, punto, guion y guion bajo, y empieza por letra o número.";
+  if (!normalized) return "Escribe el correo.";
+  if (normalized.length > 120 || !emailPattern.test(normalized)) return "El correo no es válido.";
+  return "";
+}
+
+/* Nombre de la persona del equipo (domain/team-member.ts). */
+export function validateTeamName(value: string): string {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (!normalized) return "Escribe el nombre.";
+  if (normalized.length < 2 || normalized.length > 80) return "El nombre debe tener entre 2 y 80 caracteres.";
   return "";
 }
 

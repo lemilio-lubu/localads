@@ -51,14 +51,16 @@ Abre <http://localhost:3000> en el navegador.
 
 ## Accesos de demostración
 
-| Perfil | Usuario | Contraseña | Sección inicial |
+| Perfil | Correo | Contraseña | Sección inicial |
 |---|---|---|---|
 | Cliente prepago | `prepago@andlocal.test` | `1234` | `/prepago` |
 | Cliente pospago | `pospago@andlocal.test` | `1234` | `/flex` |
-| Gestor | `gestor` | `1234` | `/admin/clientes` |
-| Administrador | `admin` | `1234` | `/admin/clientes` |
+| Gestor | `gestor@andlocal.test` | `1234` | `/admin/clientes` |
+| Administrador | `admin@andlocal.test` | `1234` | `/admin/clientes` |
 
-Los clientes entran con su correo; el gestor y el administrador, con su usuario. En la pantalla de inicio de sesión, los accesos rápidos (`prepago`, `pospago`, `gestor`, `admin`) rellenan estos datos.
+Todos entran con su correo. En la pantalla de inicio de sesión, los accesos rápidos (`prepago`, `pospago`, `gestor`, `admin`) rellenan estos datos.
+
+Las cuentas del equipo creadas antes de este cambio tienen un usuario que no es un correo (por ejemplo `admin`). Siguen entrando con él hasta que se les ponga un correo desde **Equipo**; en esa ficha aparece una pista en las cuentas que aún no lo tienen. El administrador inicial (`prisma/bootstrap-admin.cjs`) se crea ahora con un correo en `BOOTSTRAP_ADMIN_USERNAME`.
 
 **Solo para desarrollo.** Esos accesos se ven con `npm run dev` y no existen en ninguna compilación de producción (`npm run build`): ni el apartado, ni los correos de prueba, ni la clave `1234` llegan al navegador. Para mostrarlos en un entorno compilado (una demo o un staging) hay que compilar con `NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS=true`; Next fija esa variable al compilar, así que cambiarla después no tiene efecto sin volver a compilar. Ocultar los accesos no protege nada por sí solo: en producción no se debe ejecutar el seed, y las cuentas demo (con clave `1234`) no deben existir en su base.
 

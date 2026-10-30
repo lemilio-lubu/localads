@@ -152,6 +152,12 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
             ...(input.status !== undefined && { status: input.status }),
           },
         });
+        /* El correo es el usuario de acceso del cliente: si cambia, el
+           usuario lo sigue en la misma transaccion para que el cliente entre
+           con su correo actual y no con uno que ya no es suyo. */
+        if (input.email !== undefined) {
+          await database.authUser.updateMany({ where: { clientId: id, role: "CLIENT" }, data: { username: input.email.trim().toLowerCase() } });
+        }
         await database.account.update({
           where: { id: account.id },
           data: {
@@ -271,7 +277,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
       /* El mismo codigo cubre dos UNIQUE distintos. Distinguirlos importa: el
          correo lo corrige quien crea el cliente, el usuario no. */
       const target = Array.isArray(error.meta?.target) ? (error.meta.target as string[]).join(",") : String(error.meta?.target ?? "");
-      if (target.includes("username")) throw new ApplicationError("USERNAME_TAKEN", "El usuario derivado del correo ya existe", 409);
+      if (target.includes("username")) throw new ApplicationError("USERNAME_TAKEN", "Ya existe un acceso con este correo", 409);
       if (target.includes("ruc")) throw new ApplicationError("CLIENT_RUC_EXISTS", "Ya existe un cliente con este RUC", 409);
       throw new ApplicationError("CLIENT_EMAIL_EXISTS", "Ya existe un cliente con este correo", 409);
     }

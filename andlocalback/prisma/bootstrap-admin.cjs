@@ -4,9 +4,10 @@ const { PrismaClient } = require("@prisma/client");
 const database = new PrismaClient();
 
 async function bootstrapAdmin() {
-  const username = process.env.BOOTSTRAP_ADMIN_USERNAME?.trim();
+  /* El administrador entra con su correo, como todos. La variable conserva su nombre para no romper los despliegues que ya la tienen. */
+  const username = process.env.BOOTSTRAP_ADMIN_USERNAME?.trim().toLowerCase();
   const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
-  if (!username || username.length < 3) throw new Error("BOOTSTRAP_ADMIN_USERNAME debe tener al menos 3 caracteres");
+  if (!username || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) throw new Error("BOOTSTRAP_ADMIN_USERNAME debe ser un correo válido");
   if (!password || password.length < 12) throw new Error("BOOTSTRAP_ADMIN_PASSWORD debe tener al menos 12 caracteres");
 
   const existingUsers = await database.authUser.count();

@@ -8,12 +8,14 @@ export class ListTeamQueryDto {
 }
 
 export class CreateTeamMemberDto {
-  @IsString() @MinLength(3) @MaxLength(24) username!: string;
+  @IsString() @MinLength(3) @MaxLength(120) username!: string;
+  @IsString() @MinLength(2) @MaxLength(80) name!: string;
   @IsIn([...TEAM_ROLES]) role!: "ADMIN" | "GESTOR";
 }
 
 export class UpdateTeamMemberDto {
-  @IsOptional() @IsString() @MinLength(3) @MaxLength(24) username?: string;
+  @IsOptional() @IsString() @MinLength(3) @MaxLength(120) username?: string;
+  @IsOptional() @IsString() @MinLength(2) @MaxLength(80) name?: string;
   @IsOptional() @IsIn([...TEAM_ROLES]) role?: "ADMIN" | "GESTOR";
   @IsOptional() @IsIn(["ACTIVE", "INACTIVE"]) status?: "ACTIVE" | "INACTIVE";
   /* Solo se miran al pasar a INACTIVE, y solo si el gestor tiene cartera.

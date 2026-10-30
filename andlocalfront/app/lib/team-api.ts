@@ -5,6 +5,8 @@ export type TeamRole = "ADMIN" | "GESTOR";
 export type TeamMember = {
   id: string;
   username: string;
+  /* Nulo en las cuentas anteriores: la pantalla cae al correo/usuario. */
+  name: string | null;
   role: TeamRole;
   status: "ACTIVE" | "INACTIVE";
   mustChangePassword: boolean;
@@ -52,7 +54,7 @@ export function getTeamMember(id: string) {
   return request<TeamMemberDetail>(`/admin/team/${id}`, { cache: "no-store" });
 }
 
-export function createTeamMember(input: { username: string; role: TeamRole }) {
+export function createTeamMember(input: { username: string; name: string; role: TeamRole }) {
   return request<TeamMemberWithCredentials>("/admin/team", { method: "POST", ...json(input) });
 }
 
@@ -61,7 +63,7 @@ export function createTeamMember(input: { username: string; role: TeamRole }) {
    ninguno de los dos el backend responde PORTFOLIO_DESTINATION_REQUIRED. */
 export type PortfolioHandover = { reassignTo?: string; leaveUnassigned?: boolean };
 
-export function updateTeamMember(id: string, input: { username?: string; role?: TeamRole; status?: "ACTIVE" | "INACTIVE" } & PortfolioHandover) {
+export function updateTeamMember(id: string, input: { username?: string; name?: string; role?: TeamRole; status?: "ACTIVE" | "INACTIVE" } & PortfolioHandover) {
   return request<TeamMember & { releasedClients?: number }>(`/admin/team/${id}`, { method: "PATCH", ...json(input) });
 }
 

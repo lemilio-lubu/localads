@@ -4,7 +4,7 @@ import { TemporaryPasswordGuard } from "../src/modules/auth/auth.guards";
 import { AuthService } from "../src/modules/auth/auth.service";
 import { CredentialsService } from "../src/modules/auth/credentials.service";
 import { PasswordService } from "../src/modules/auth/password.service";
-import { deriveUsername, generateTemporaryPassword } from "../src/modules/auth/temporary-password";
+import { generateTemporaryPassword } from "../src/modules/auth/temporary-password";
 import { ManageClients } from "../src/modules/clients/application/use-cases/manage-clients";
 import { AdminClientView, ClientAdminRepository } from "../src/modules/clients/application/ports/client-admin.repository";
 import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domain/recharge.types";
@@ -50,18 +50,16 @@ describe("Fase 12 - clave temporal", () => {
     expect(new Set(values).size).toBe(values.length);
   });
 
-  it("deriva el usuario del correo, sin acentos ni simbolos, y esquiva los ocupados", async () => {
-    expect(await deriveUsername("Andrés.Pérez+ads@example.test", async () => false)).toBe("andresperezads");
-    const ocupados = new Set(["ana", "ana2"]);
-    expect(await deriveUsername("ana@example.test", async (candidate) => ocupados.has(candidate))).toBe("ana3");
+  it("el correo, normalizado, es el usuario del cliente", async () => {
+    const database = { authUser: { findUnique: vi.fn().mockResolvedValue(null) } };
+    const credentials = await new CredentialsService(database as never, { hash: vi.fn().mockResolvedValue("scrypt$s$h") } as never).prepare("  Ana.Perez@Example.TEST ");
+    expect(credentials.username).toBe("ana.perez@example.test");
+    expect(database.authUser.findUnique).toHaveBeenCalledWith({ where: { username: "ana.perez@example.test" }, select: { id: true } });
   });
 
-  it("devuelve null en vez de reventar el UNIQUE cuando no queda ninguno libre", async () => {
-    expect(await deriveUsername("ana@example.test", async () => true, 3)).toBeNull();
-  });
-
-  it("un correo sin parte util sigue dando un usuario valido", async () => {
-    expect(await deriveUsername("!!!@example.test", async () => false)).toBe("usuario");
+  it("rechaza un correo que ya es el usuario de otra cuenta", async () => {
+    const database = { authUser: { findUnique: vi.fn().mockResolvedValue({ id: "u1" }) } };
+    await expect(new CredentialsService(database as never, { hash: vi.fn() } as never).prepare("ana@example.test")).rejects.toMatchObject({ code: "USERNAME_TAKEN" });
   });
 
   it("crear un cliente devuelve la clave en claro una vez y persiste solo el hash", async () => {

@@ -11,7 +11,7 @@ import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domai
 import { validRuc } from "./ruc-fixture";
 import { createTestDatabase } from "./support/postgres-test-database";
 
-const member = { id: "t1", username: "gestor", role: "GESTOR", status: "ACTIVE", mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
+const member = { id: "t1", username: "gestor", name: "Gestor Uno", role: "GESTOR", status: "ACTIVE", mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
 const issuer = () => ({ issue: vi.fn().mockResolvedValue({ username: "gestor", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
 /* El stub base no tiene cartera; los casos de baja necesitan uno que si. */
 const conCartera = { ...member, metrics: { clients: 2, sales: 0 } } as TeamMemberDetailView;
@@ -36,27 +36,67 @@ describe("Fase 14 - reglas del equipo", () => {
     expect(normalizeUsername(input)).toBe(expected);
   });
 
-  it.each(["ab", "con espacio", "a".repeat(25), "-empieza-con-guion", "acentós"])("rechaza el usuario %s", (username) => {
-    expect(() => validateTeamMember({ username, role: "GESTOR" })).toThrowError(expect.objectContaining({ code: "INVALID_USERNAME" }));
+  it.each(["", " ", "a", "x".repeat(81)])("rechaza el nombre «%s»", (name) => {
+    expect(() => validateTeamMember({ username: "alguien@example.test", name, role: "GESTOR" })).toThrowError(expect.objectContaining({ code: "INVALID_TEAM_NAME" }));
   });
 
-  /* Las mayusculas no se rechazan, se normalizan: escribir «Gestor» y que la
-     pantalla conteste «usuario invalido» seria hostil sin motivo. */
+  it("el nombre se guarda sin espacios sobrantes", async () => {
+    const team = { create: vi.fn().mockResolvedValue(member) } as unknown as TeamRepository;
+    await new ManageTeam(team, issuer()).create({ username: "a@example.test", name: "  Marta   Pérez ", role: "GESTOR" }, "admin-1");
+    expect(team.create).toHaveBeenCalledWith(expect.objectContaining({ name: "Marta Pérez" }), expect.anything(), "admin-1");
+  });
+
+  it("una cuenta sin nombre puede cambiar de rol sin que se le pida", async () => {
+    const team = { findById: vi.fn().mockResolvedValue({ ...member, name: null }), update: vi.fn().mockResolvedValue(member) } as unknown as TeamRepository;
+    await new ManageTeam(team, issuer()).update("t1", { role: "ADMIN" });
+    expect(team.update).toHaveBeenCalled();
+  });
+
+  it.each(["ab", "con espacio@example.test", "sin-arroba", "a@b", "@example.test", "a@@example.test", `${"a".repeat(110)}@example.test`])("rechaza el correo %s", (username) => {
+    expect(() => validateTeamMember({ username, name: "Gestor Uno", role: "GESTOR" })).toThrowError(expect.objectContaining({ code: "INVALID_USERNAME" }));
+  });
+
+  /* Las mayusculas no se rechazan, se normalizan: escribir «Gestor@…» y que la
+     pantalla conteste «correo invalido» seria hostil sin motivo. */
   it("las mayusculas se aceptan y se guardan en minuscula", () => {
-    expect(() => validateTeamMember({ username: "Gestor.Uno", role: "GESTOR" })).not.toThrow();
+    expect(() => validateTeamMember({ username: "Gestor.Uno@Example.test", name: "Gestor Uno", role: "GESTOR" })).not.toThrow();
   });
 
   /* El equipo son usuarios internos: un cliente se administra en su propia
      pantalla, con plataformas, credito y recargas. */
   it("no admite el rol de cliente", () => {
-    expect(() => validateTeamMember({ username: "alguien", role: "CLIENT" as never })).toThrowError(expect.objectContaining({ code: "INVALID_TEAM_ROLE" }));
+    expect(() => validateTeamMember({ username: "alguien@example.test", name: "Gestor Uno", role: "CLIENT" as never })).toThrowError(expect.objectContaining({ code: "INVALID_TEAM_ROLE" }));
   });
 
   it("crear devuelve la clave temporal una vez y guarda quien lo creo", async () => {
     const team = repository();
-    const result = await new ManageTeam(team, issuer()).create({ username: "Gestor", role: "GESTOR" }, "admin-1");
-    expect(result.credentials).toEqual({ username: "gestor", temporaryPassword: "Abcd2345Wxyz" });
-    expect(team.create).toHaveBeenCalledWith({ username: "gestor", role: "GESTOR" }, { username: "gestor", passwordHash: "scrypt$s$h" }, "admin-1");
+    const result = await new ManageTeam(team, issuer()).create({ username: "Gestor@Example.Test", name: "Gestor Uno", role: "GESTOR" }, "admin-1");
+    expect(result.credentials).toEqual({ username: "gestor@example.test", temporaryPassword: "Abcd2345Wxyz" });
+    expect(team.create).toHaveBeenCalledWith({ username: "gestor@example.test", name: "Gestor Uno", role: "GESTOR" }, { username: "gestor@example.test", passwordHash: "scrypt$s$h" }, "admin-1");
+  });
+
+  it("crear rechaza un usuario que no es un correo y no guarda nada", async () => {
+    const team = repository();
+    await expect(new ManageTeam(team, issuer()).create({ username: "gestor", name: "Gestor Uno", role: "GESTOR" }, "admin-1")).rejects.toMatchObject({ code: "INVALID_USERNAME" });
+    expect(team.create).not.toHaveBeenCalled();
+  });
+
+  /* Las cuentas anteriores tienen un usuario que no es un correo («gestor»).
+     Cambiarles el rol o darlas de baja no puede exigirles un correo que nadie
+     ha escrito: solo se valida cuando el correo cambia. */
+  it("una cuenta con usuario antiguo cambia de rol sin que se le exija un correo", async () => {
+    const team = repository();
+    await new ManageTeam(team, issuer()).update("t1", { username: "gestor", name: "Gestor Uno", role: "ADMIN" });
+    expect(team.update).toHaveBeenCalledWith("t1", expect.objectContaining({ username: "gestor", name: "Gestor Uno", role: "ADMIN" }));
+  });
+
+  it("al ponerle correo a una cuenta antigua, lo valida y lo guarda en minuscula", async () => {
+    const team = repository();
+    const manage = new ManageTeam(team, issuer());
+    await expect(manage.update("t1", { username: "sin-correo" })).rejects.toMatchObject({ code: "INVALID_USERNAME" });
+    expect(team.update).not.toHaveBeenCalled();
+    await manage.update("t1", { username: "Nuevo@Example.Test" });
+    expect(team.update).toHaveBeenCalledWith("t1", expect.objectContaining({ username: "nuevo@example.test" }));
   });
 
   /* Un PATCH con status INACTIVE dejaria clientes apuntando a un gestor de
@@ -125,7 +165,7 @@ describe("Fase 14 - equipo contra la base", () => {
     team = new PrismaTeamRepository(prisma as PrismaService);
     clients = new PrismaClientAdminRepository(prisma as PrismaService);
 
-    const created = await team.create({ username: `gestor-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `gestor-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const created = await team.create({ username: `gestor-${randomUUID().slice(0, 8)}`, name: "Gestor Uno", role: "GESTOR" }, { username: `gestor-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     gestor = created.id;
     for (let index = 0; index < 2; index += 1) {
       const client = await clients.create(
@@ -195,7 +235,7 @@ describe("Fase 14 - equipo contra la base", () => {
   });
 
   it("asignar y desvincular mueven al cliente entre carteras", async () => {
-    const active = await team.create({ username: `gestor-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `gestor-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const active = await team.create({ username: `gestor-${randomUUID().slice(0, 8)}`, name: "Gestor Uno", role: "GESTOR" }, { username: `gestor-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     const orphan = await prisma.client.findFirstOrThrow({ where: { managerId: null } });
     await expect(clients.assignManager(orphan.id, active.id)).resolves.toMatchObject({ manager: { id: active.id } });
     await expect(clients.assignManager(orphan.id, null)).resolves.toMatchObject({ manager: null });
@@ -203,16 +243,16 @@ describe("Fase 14 - equipo contra la base", () => {
 
   it("el nombre de usuario repetido responde 409 y no crea nada", async () => {
     const username = `gestor-${randomUUID().slice(0, 8)}`;
-    await team.create({ username, role: "GESTOR" }, { username, passwordHash: "scrypt$s$h" }, "auth-admin");
-    await expect(team.create({ username, role: "ADMIN" }, { username, passwordHash: "scrypt$s$h" }, "auth-admin"))
+    await team.create({ username, name: "Gestor Uno", role: "GESTOR" }, { username, passwordHash: "scrypt$s$h" }, "auth-admin");
+    await expect(team.create({ username, name: "Gestor Uno", role: "ADMIN" }, { username, passwordHash: "scrypt$s$h" }, "auth-admin"))
       .rejects.toMatchObject({ code: "USERNAME_TAKEN", status: 409 });
   });
 
   /* El camino nuevo: en vez de soltar la cartera, pasarla entera a otro gestor
      en la misma transaccion que la baja. */
   it("la baja puede traspasar la cartera entera a otro gestor", async () => {
-    const saliente = await team.create({ username: `sale-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `sale-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
-    const entrante = await team.create({ username: `entra-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `entra-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const saliente = await team.create({ username: `sale-${randomUUID().slice(0, 8)}`, name: "Gestor Uno", role: "GESTOR" }, { username: `sale-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const entrante = await team.create({ username: `entra-${randomUUID().slice(0, 8)}`, name: "Gestor Uno", role: "GESTOR" }, { username: `entra-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     const client = await clients.create(
       { name: "Traspasado", email: `${randomUUID()}@example.test`, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
       { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
@@ -235,7 +275,7 @@ describe("Fase 14 - equipo contra la base", () => {
     ["el mismo que se da de baja", "self"],
     ["alguien que no existe", "fantasma"],
   ])("rechaza traspasar a %s sin tocar la cartera", async (_label, kind) => {
-    const saliente = await team.create({ username: `s-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `s-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+    const saliente = await team.create({ username: `s-${randomUUID().slice(0, 8)}`, name: "Gestor Uno", role: "GESTOR" }, { username: `s-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
     const client = await clients.create(
       { name: "Intacto", email: `${randomUUID()}@example.test`, ruc: validRuc(), accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0 },
       { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" },
@@ -244,9 +284,9 @@ describe("Fase 14 - equipo contra la base", () => {
 
     let target = "no-existe";
     if (kind === "self") target = saliente.id;
-    if (kind === "admin") target = (await team.create({ username: `a-${randomUUID().slice(0, 8)}`, role: "ADMIN" }, { username: `a-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin")).id;
+    if (kind === "admin") target = (await team.create({ username: `a-${randomUUID().slice(0, 8)}`, name: "Gestor Uno", role: "ADMIN" }, { username: `a-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin")).id;
     if (kind === "inactivo") {
-      const otro = await team.create({ username: `i-${randomUUID().slice(0, 8)}`, role: "GESTOR" }, { username: `i-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
+      const otro = await team.create({ username: `i-${randomUUID().slice(0, 8)}`, name: "Gestor Uno", role: "GESTOR" }, { username: `i-${randomUUID().slice(0, 8)}`, passwordHash: "scrypt$s$h" }, "auth-admin");
       await team.deactivate(otro.id, { kind: "release" });
       target = otro.id;
     }

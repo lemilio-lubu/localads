@@ -12,8 +12,8 @@ export type PreparedCredentials = {
 
 export interface ClientCredentialsIssuer {
   prepare(email: string): Promise<PreparedCredentials>;
-  /* Restablecer: otra clave temporal para el mismo usuario, sin derivarlo de
-     nuevo del correo, que pudo haber cambiado desde el alta. */
+  /* Restablecer: otra clave temporal para el usuario que ya tiene el cliente,
+     sin volver a leerlo del correo. */
   issue(username: string): Promise<PreparedCredentials>;
 }
 

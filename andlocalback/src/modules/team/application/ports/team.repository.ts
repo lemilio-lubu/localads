@@ -3,6 +3,8 @@ import { TeamMemberInput, TeamRole } from "../../domain/team-member";
 export type TeamMemberView = Readonly<{
   id: string;
   username: string;
+  /* Nulo en las cuentas anteriores, que nunca tuvieron nombre. */
+  name: string | null;
   role: TeamRole;
   status: "ACTIVE" | "INACTIVE";
   mustChangePassword: boolean;

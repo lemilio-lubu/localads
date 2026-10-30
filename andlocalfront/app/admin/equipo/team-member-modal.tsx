@@ -1,6 +1,6 @@
 "use client";
 
-import { AtSign, KeyRound, Link2, Power, RotateCw, Save, Unlink, UserCog } from "lucide-react";
+import { AtSign, UserRound, KeyRound, Link2, Power, RotateCw, Save, Unlink, UserCog } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import MetricCard from "../../components/metric-card";
@@ -9,7 +9,7 @@ import { FormError, FormField, SelectChevron, formStyles as form } from "../../c
 import { formatAmount, formatDateTime } from "../../lib/format";
 import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeamMember, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";
-import { validateTeamUsername } from "../../lib/form-validation";
+import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-member-modal.module.css";
 
 type Props = {
@@ -33,6 +33,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<TeamRole>("GESTOR");
   const [busy, setBusy] = useState("");
@@ -46,7 +47,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
     if (!memberId) return;
     let active = true;
     getTeamMember(memberId)
-      .then((data) => { if (!active) return; setError(""); setMember(data); setUsername(data.username); setRole(data.role); })
+      .then((data) => { if (!active) return; setError(""); setMember(data); setName(data.name ?? ""); setUsername(data.username); setRole(data.role); })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar la cuenta"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -61,8 +62,14 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
     return () => { active = false; };
   }, [linking, reloadToken]);
 
-  const dirty = useMemo(() => Boolean(member) && (username.trim().toLowerCase() !== member?.username || role !== member?.role), [member, role, username]);
-  const usernameError = dirty ? validateTeamUsername(username) : "";
+  const dirty = useMemo(() => Boolean(member) && (username.trim().toLowerCase() !== member?.username || name.trim() !== (member?.name ?? "") || role !== member?.role), [member, name, role, username]);
+  /* El correo solo se valida si cambia: una cuenta anterior, con un usuario que
+     no es un correo, tiene que poder cambiar de rol sin que se le exija uno. */
+  /* Una cuenta anterior no tiene nombre: solo se valida si se escribe uno. */
+  const nameError = name.trim() !== (member?.name ?? "") ? validateTeamName(name) : "";
+  const emailChanged = Boolean(member) && username.trim().toLowerCase() !== member?.username;
+  const usernameError = emailChanged ? validateTeamEmail(username) : "";
+  const legacyAccount = Boolean(member) && !member?.username.includes("@");
 
   function reload() { setReloadToken((token) => token + 1); onChanged(); }
 
@@ -88,7 +95,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
         <header className={styles.summary}>
           <div className={styles.identity}>
             <span className={styles.accountBadge}>cuenta <b>{isManager ? "gestor" : "administrador"}</b></span>
-            <h2 id="team-member-title">{member.username}</h2>
+            <h2 id="team-member-title">{member.name || member.username}</h2>
           </div>
           <div className={styles.metrics}>
             <MetricCard className={isManager ? styles.metric : styles.metricText} label="cuentas" valueSize={isManager ? "regular" : "small"}>{isManager ? String(member.metrics.clients) : "no aplica"}</MetricCard>
@@ -103,8 +110,11 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
           <section className={`${styles.panel} ${styles.accountPanel}`} aria-labelledby="team-member-data">
             <h3 id="team-member-data">Datos de la cuenta</h3>
             <div className={styles.fields}>
-              <FormField label="Usuario" Icon={AtSign} error={usernameError}>
-                {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setNotice(""); }} maxLength={24} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} />}
+              <FormField label="Nombre" Icon={UserRound} error={nameError} hint={member.name ? undefined : "Esta cuenta aún no tiene nombre. Se verá su correo hasta que se lo pongas."}>
+                {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setNotice(""); }} maxLength={80} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} />}
+              </FormField>
+              <FormField label="Correo" Icon={AtSign} error={usernameError} hint={legacyAccount ? "Esta cuenta aún entra con un usuario. Ponle un correo para que entre con él." : undefined}>
+                {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setNotice(""); }} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" aria-invalid={invalid} aria-describedby={describedBy} />}
               </FormField>
               <FormField label="Rol" Icon={UserCog}>
                 {({ id, describedBy }) => <>
@@ -116,8 +126,8 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
                 </>}
               </FormField>
             </div>
-            <button type="button" className={styles.primary} disabled={!dirty || Boolean(usernameError) || Boolean(busy)} onClick={() => void run("save", async () => {
-              await updateTeamMember(member.id, { username, role });
+            <button type="button" className={styles.primary} disabled={!dirty || Boolean(nameError) || Boolean(usernameError) || Boolean(busy)} onClick={() => void run("save", async () => {
+              await updateTeamMember(member.id, { username, ...(name.trim() !== (member.name ?? "") ? { name: name.trim() } : {}), role });
               setNotice("Cambios guardados."); reload();
             })}><Save size={16} aria-hidden="true" />{busy === "save" ? "guardando…" : "guardar cambios"}</button>
 

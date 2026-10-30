@@ -28,9 +28,11 @@
 .identity small { color: var(--color-text); font-size: var(--font-size-micro); }
 .identity > strong { max-width: 100%; overflow: hidden; color: var(--color-text); font-size: var(--font-size-nav); text-overflow: ellipsis; white-space: nowrap; }
 /* El rol se lee de un vistazo y hay solo dos: color en vez de otra columna. */
-.identity > span { border-radius: var(--radius-pill); margin-top: var(--space-half); padding: 0 var(--space-1); font-size: var(--font-size-micro); }
-.identity > span[data-role="ADMIN"] { background: var(--color-teal-surface); color: var(--color-teal-text); }
-.identity > span[data-role="GESTOR"] { background: var(--color-brand-surface); color: var(--color-brand); }
+.identityMeta { display: flex; max-width: 100%; min-width: 0; align-items: center; gap: var(--space-1); margin-top: var(--space-half); }
+.identityMeta > span { flex: none; border-radius: var(--radius-pill); padding: 0 var(--space-1); font-size: var(--font-size-micro); }
+.identityMeta > em { overflow: hidden; color: var(--color-text-muted); font-size: var(--font-size-caption); font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.identityMeta > span[data-role="ADMIN"] { background: var(--color-teal-surface); color: var(--color-teal-text); }
+.identityMeta > span[data-role="GESTOR"] { background: var(--color-brand-surface); color: var(--color-brand); }
 
 .rowActions { position: relative; z-index: 2; display: grid; align-content: stretch; gap: var(--space-1); }
 .rowActions button { display: flex; align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-menu); background: var(--color-surface-muted); color: var(--color-text-muted); cursor: pointer; font-size: var(--font-size-caption); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }

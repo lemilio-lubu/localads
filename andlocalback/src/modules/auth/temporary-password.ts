@@ -13,17 +13,3 @@ export function generateTemporaryPassword(): string {
   for (let index = 0; index < length; index += 1) value += alphabet[randomInt(alphabet.length)];
   return value;
 }
-
-/* El nombre de usuario sale de la parte anterior a la arroba, normalizada.
-   `taken` responde si un candidato ya existe; se prueban sufijos hasta que
-   uno queda libre. Devuelve null si ninguno lo esta: el caso de uso lo
-   traduce a USERNAME_TAKEN en vez de dejar que reviente el UNIQUE. */
-export async function deriveUsername(email: string, taken: (candidate: string) => Promise<boolean>, attempts = 20): Promise<string | null> {
-  const local = email.trim().toLowerCase().split("@")[0] ?? "";
-  const base = local.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "").slice(0, 24) || "usuario";
-  for (let suffix = 0; suffix < attempts; suffix += 1) {
-    const candidate = suffix === 0 ? base : `${base}${suffix + 1}`;
-    if (!(await taken(candidate))) return candidate;
-  }
-  return null;
-}

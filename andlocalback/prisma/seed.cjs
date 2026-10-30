@@ -33,13 +33,13 @@ async function seed() {
     }
   }
   for (const user of [
-    { id: "auth-prepago", username: "prepago@andlocal.test", role: "CLIENT", clientId: "client-001", accountId: "account-prepaid-001", accountType: "PREPAGO", salt: "andlocal-prepago" },
-    { id: "auth-flex", username: "pospago@andlocal.test", role: "CLIENT", clientId: "client-002", accountId: "account-postpaid-001", accountType: "POSTPAGO", salt: "andlocal-flex" },
-    { id: "auth-admin", username: "admin", role: "ADMIN", clientId: null, accountId: null, accountType: null, salt: "andlocal-admin" },
-    { id: "auth-gestor", username: "gestor", role: "GESTOR", clientId: null, accountId: null, accountType: null, salt: "andlocal-gestor" },
+    { id: "auth-prepago", username: "prepago@andlocal.test", name: null, role: "CLIENT", clientId: "client-001", accountId: "account-prepaid-001", accountType: "PREPAGO", salt: "andlocal-prepago" },
+    { id: "auth-flex", username: "pospago@andlocal.test", name: null, role: "CLIENT", clientId: "client-002", accountId: "account-postpaid-001", accountType: "POSTPAGO", salt: "andlocal-flex" },
+    { id: "auth-admin", username: "admin@andlocal.test", name: "Administrador", role: "ADMIN", clientId: null, accountId: null, accountType: null, salt: "andlocal-admin" },
+    { id: "auth-gestor", username: "gestor@andlocal.test", name: "Gestor de prueba", role: "GESTOR", clientId: null, accountId: null, accountType: null, salt: "andlocal-gestor" },
   ]) {
     const salt = Buffer.from(user.salt); const passwordHash = `scrypt$${salt.toString("base64url")}$${scryptSync("1234", salt, 64).toString("base64url")}`;
-    await database.authUser.upsert({ where: { username: user.username }, update: { role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" }, create: { id: user.id, username: user.username, passwordHash, role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" } });
+    await database.authUser.upsert({ where: { username: user.username }, update: { name: user.name, role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" }, create: { id: user.id, username: user.username, name: user.name, passwordHash, role: user.role, clientId: user.clientId, accountId: user.accountId, accountType: user.accountType, status: "ACTIVE" } });
   }
   // Un cliente con gestor y otro sin el: la demo muestra a la vez el alcance
   // del gestor y la bandeja de clientes sin asignar del admin.

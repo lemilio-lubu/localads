@@ -127,4 +127,19 @@ describe("Fase 16 - RUC contra la base", () => {
     const other = await clients.create(profile(validRuc()), credentials(), null);
     await expect(clients.update(other.id, { ruc })).rejects.toMatchObject({ code: "CLIENT_RUC_EXISTS", status: 409 });
   });
+
+  it("al cambiar el correo, el usuario de acceso lo sigue; si ya es de otro, responde USERNAME_TAKEN", async () => {
+    const input = profile(validRuc());
+    const created = await clients.create(input, { username: input.email, passwordHash: "scrypt$s$h" }, null);
+    const next = `${randomUUID()}@example.test`;
+    await clients.update(created.id, { email: ` ${next.toUpperCase()} ` });
+    expect(await clients.findLoginUsername(created.id)).toBe(next);
+
+    const otherInput = profile(validRuc());
+    const other = await clients.create(otherInput, { username: otherInput.email, passwordHash: "scrypt$s$h" }, null);
+    await prisma.authUser.create({ data: { username: "ocupado@example.test", passwordHash: "scrypt$s$h", role: "GESTOR" } });
+    await expect(clients.update(other.id, { email: "otro@example.test" })).resolves.toBeTruthy();
+    await expect(clients.update(other.id, { email: "ocupado@example.test" })).rejects.toMatchObject({ code: "USERNAME_TAKEN", status: 409 });
+    expect(await clients.findLoginUsername(other.id)).toBe("otro@example.test");
+  });
 });

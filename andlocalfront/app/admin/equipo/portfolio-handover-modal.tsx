@@ -39,7 +39,7 @@ export default function PortfolioHandoverModal({ member, candidates, pending, er
 
   return (
     <ModalShell open labelledBy="handover-title" className={styles.modal} onClose={onClose}>
-      <h2 id="handover-title">dar de baja a {member.username}</h2>
+      <h2 id="handover-title">dar de baja a {member.name || member.username}</h2>
       <p className={styles.lead}>
         Tiene <strong>{clients} {clients === 1 ? "cliente asignado" : "clientes asignados"}</strong>. Los clientes
         siguen activos: lo que cambia es quien responde por ellos.
@@ -51,7 +51,7 @@ export default function PortfolioHandoverModal({ member, candidates, pending, er
           {candidates.map((candidate) => (
             <label key={candidate.id}>
               <input type="radio" name="handover" value={candidate.id} checked={choice === candidate.id} onChange={() => setChoice(candidate.id)} />
-              <span>pasarla a <strong>{candidate.username}</strong></span>
+              <span>pasarla a <strong>{candidate.name || candidate.username}</strong></span>
             </label>
           ))}
           {/* Soltarla es una eleccion mas, no el camino por defecto: va al

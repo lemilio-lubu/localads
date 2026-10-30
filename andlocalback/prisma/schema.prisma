@@ -10,6 +10,9 @@ datasource db {
 model AuthUser {
   id           String           @id @default(cuid())
   username     String           @unique
+  // Como se llama la persona del equipo. El usuario es su correo y solo sirve
+  // para entrar; en pantalla se ve el nombre. Nulo en las cuentas anteriores.
+  name         String?
   passwordHash String
   role         String
   clientId     String?

@@ -74,9 +74,9 @@ export class ManageClients {
   async resetPassword(id: string, scope: ManagerScope) {
     const client = await this.get(id, scope);
     const username = await this.clients.findLoginUsername(id);
-    if (!username) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene usuario de acceso", 409);
+    if (!username) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene acceso al portal", 409);
     const { temporaryPassword, passwordHash } = await this.credentials.issue(username);
-    if (!(await this.clients.resetPassword(id, username, passwordHash))) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene usuario de acceso", 409);
+    if (!(await this.clients.resetPassword(id, username, passwordHash))) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene acceso al portal", 409);
     return { ...client, credentials: { username, temporaryPassword } };
   }
 

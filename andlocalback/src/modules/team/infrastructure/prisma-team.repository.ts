@@ -27,7 +27,7 @@ export class PrismaTeamRepository implements TeamRepository {
       where: {
         role: filters.role ?? { in: [...TEAM_ROLES] },
         status: filters.status,
-        ...(filters.search ? { username: { contains: filters.search } } : {}),
+        ...(filters.search ? { OR: [{ username: { contains: filters.search, mode: "insensitive" as const } }, { name: { contains: filters.search, mode: "insensitive" as const } }] } : {}),
       },
       orderBy: [{ role: "asc" }, { username: "asc" }],
     });
@@ -81,6 +81,7 @@ export class PrismaTeamRepository implements TeamRepository {
       const record = await this.prisma.authUser.create({
         data: {
           username: credentials.username,
+          name: input.name,
           passwordHash: credentials.passwordHash,
           role: input.role,
           createdById,
@@ -100,6 +101,7 @@ export class PrismaTeamRepository implements TeamRepository {
         where: { id },
         data: {
           ...(input.username !== undefined && { username: input.username }),
+          ...(input.name !== undefined && { name: input.name }),
           ...(input.role !== undefined && { role: input.role }),
           ...(input.status !== undefined && { status: input.status }),
         },
@@ -167,6 +169,7 @@ export class PrismaTeamRepository implements TeamRepository {
     return {
       id: record.id,
       username: record.username,
+      name: record.name,
       role: record.role as TeamRole,
       status: record.status as "ACTIVE" | "INACTIVE",
       mustChangePassword: record.mustChangePassword,
@@ -178,7 +181,7 @@ export class PrismaTeamRepository implements TeamRepository {
 
 function usernameConflict(error: unknown): unknown {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-    return new ApplicationError("USERNAME_TAKEN", "Ya existe un usuario con ese nombre", 409);
+    return new ApplicationError("USERNAME_TAKEN", "Ya existe un acceso con este correo", 409);
   }
   return error;
 }

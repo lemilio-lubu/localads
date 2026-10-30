@@ -15,11 +15,13 @@ type Props = { credentials: IssuedCredentials | null; title: string; onClose: ()
 export default function CredentialsModal({ credentials, title, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
+  /* Los clientes entran con su correo; gestor y admin, con un usuario. */
+  const loginLabel = credentials?.username.includes("@") ? "correo" : "usuario";
 
   async function copy() {
     if (!credentials) return;
     try {
-      await navigator.clipboard.writeText(`usuario: ${credentials.username}\ncontraseña temporal: ${credentials.temporaryPassword}`);
+      await navigator.clipboard.writeText(`${loginLabel}: ${credentials.username}\ncontraseña temporal: ${credentials.temporaryPassword}`);
       setCopied(true);
     } catch {
       /* Sin permiso de portapapeles el usuario todavía puede leerla en
@@ -36,7 +38,7 @@ export default function CredentialsModal({ credentials, title, onClose }: Props)
       <p className={styles.warning} role="alert"><TriangleAlert size={16} aria-hidden="true" />Esta contraseña no se vuelve a mostrar. Cópiala y entrégasela ahora.</p>
 
       <dl className={styles.credentials}>
-        <div><dt>usuario</dt><dd>{credentials?.username}</dd></div>
+        <div><dt>{loginLabel}</dt><dd>{credentials?.username}</dd></div>
         <div><dt>contraseña temporal</dt><dd className={styles.secret}>{credentials?.temporaryPassword}</dd></div>
       </dl>
 
