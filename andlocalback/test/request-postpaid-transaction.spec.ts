@@ -54,6 +54,7 @@ function activeContext(): Mutable<PostpaidRechargeContext> {
       creditDays: 30,
       creditLimit: MonetaryAmount.fromMajorUnits("2000.00"),
       creditUsed: MonetaryAmount.fromMajorUnits("500.00"),
+      overduePayments: 0,
     },
     pautas: [
       pauta("pauta-meta", AdvertisingPlatform.META),
@@ -173,6 +174,15 @@ describe("RequestPostpaidTransaction", () => {
     const { useCase, persistence } = setup(context);
 
     await expect(useCase.execute(command)).rejects.toMatchObject({ code: "CREDIT_INSUFFICIENT" });
+    expect(persistence.saved).toBeNull();
+  });
+
+  it("no concede una recarga nueva mientras haya pagos vencidos, aunque quede credito", async () => {
+    const context = activeContext();
+    context.account = { ...context.account!, overduePayments: 1 };
+    const { useCase, persistence } = setup(context);
+
+    await expect(useCase.execute(command)).rejects.toMatchObject({ code: "PAYMENTS_OVERDUE", status: 409 });
     expect(persistence.saved).toBeNull();
   });
 

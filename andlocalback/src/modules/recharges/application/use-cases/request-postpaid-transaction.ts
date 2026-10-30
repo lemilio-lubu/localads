@@ -65,6 +65,9 @@ export class RequestPostpaidTransaction {
     if (context.account.type !== AccountType.POSTPAID) {
       throw new ApplicationError("ACCOUNT_TYPE_MISMATCH", "La cuenta no es de tipo POSTPAGO", 409);
     }
+    if (context.account.overduePayments > 0) {
+      throw new ApplicationError("PAYMENTS_OVERDUE", "Tienes pagos vencidos. Regulariza tu pago para solicitar una nueva recarga", 409);
+    }
     if (!Number.isSafeInteger(context.account.creditDays) || context.account.creditDays <= 0) {
       throw new ApplicationError("INVALID_CREDIT_DAYS", "La cuenta postpago requiere dias de credito mayores que cero", 409);
     }

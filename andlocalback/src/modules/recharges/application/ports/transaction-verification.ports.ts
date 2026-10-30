@@ -116,6 +116,14 @@ export interface TransactionVerificationPersistencePort {
     failureReason: string;
   }>): Promise<TransactionVerificationView>;
 
+  /**
+   * Deshace una lectura que fallo para poder repetirla: borra la verificacion y
+   * el resultado vacio y devuelve el comprobante a LOADED. Solo lo hace si el
+   * fallo sigue sin resolver (verificacion en revision, comprobante FAILED y
+   * ninguna decision firmada); en cualquier otro caso devuelve false y no toca nada.
+   */
+  discardFailedOcr(receiptId: string): Promise<boolean>;
+
   /** Rechecks expected versions/states and commits verification, payment, transaction and all details. */
   approveAtomically(input: Readonly<{
     context: VerificationDecisionContext;

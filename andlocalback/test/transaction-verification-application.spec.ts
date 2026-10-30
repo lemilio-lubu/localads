@@ -84,6 +84,12 @@ class MemoryVerificationPersistence implements TransactionVerificationPersistenc
     return verification({ id: input.verificationId, ocrResultId: input.ocrResultId, detectedAmount: null, amountMatches: null,
       issues: [VerificationIssue.OCR_FAILURE], status: VerificationStatus.UNDER_REVIEW });
   }
+  discardResult = false;
+  discarded: string | null = null;
+  async discardFailedOcr(receiptId: string) {
+    this.discarded = receiptId;
+    return this.discardResult;
+  }
   async approveAtomically(input: Parameters<TransactionVerificationPersistencePort["approveAtomically"]>[0]) {
     this.approved = input;
     return verification({ status: VerificationStatus.APPROVED, decidedBy: input.administratorId, decidedAt: input.decidedAt.toISOString() });
@@ -198,6 +204,29 @@ describe("ProcessTransactionReceiptOcr", () => {
       .execute({ receiptId: "receipt-1" });
     expect(result).toBe(existing);
     expect(process).not.toHaveBeenCalled();
+    expect(persistence.discarded).toBe("receipt-1");
+  });
+
+  it("repite la lectura cuando la anterior fallo y sigue sin resolver", async () => {
+    const failed = verification({ id: "failed", status: VerificationStatus.UNDER_REVIEW, issues: [VerificationIssue.OCR_FAILURE] });
+    const persistence = new MemoryVerificationPersistence();
+    persistence.receipt = receiptContext(failed);
+    persistence.discardResult = true;
+    const discard = persistence.discardFailedOcr.bind(persistence);
+    persistence.discardFailedOcr = async (receiptId: string) => { persistence.receipt = receiptContext(null); return discard(receiptId); };
+    const process = vi.fn().mockResolvedValue({
+      originalText: "ok", confidence: 99, detectedAmounts: [MonetaryAmount.fromMajorUnits(1058)],
+      bank: "Banco", transactionDate: fixedDate, bankReference: "BANK-123", orderingParty: null,
+    });
+    const ids = ["ocr-retry", "verification-retry"];
+
+    const result = await new ProcessTransactionReceiptOcr(persistence, { process }, { generate: () => ids.shift()! }, undefined, () => fixedDate)
+      .execute({ receiptId: "receipt-1" });
+
+    expect(persistence.discarded).toBe("receipt-1");
+    expect(process).toHaveBeenCalledTimes(1);
+    expect(result.id).toBe("verification-retry");
+    expect(persistence.savedEvaluation).not.toBeNull();
   });
 });
 

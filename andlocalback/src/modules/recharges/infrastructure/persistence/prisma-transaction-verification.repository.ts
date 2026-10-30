@@ -180,6 +180,24 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
     }
   }
 
+  async discardFailedOcr(receiptId: string) {
+    return this.prisma.$transaction(async (database) => {
+      const verification = await database.transactionVerification.findUnique({
+        where: { receiptId },
+        include: { receipt: { select: { status: true, version: true } }, _count: { select: { decisionAudits: true } } },
+      });
+      if (!verification || verification.status !== VerificationStatus.UNDER_REVIEW || verification.receipt.status !== "FAILED" || verification._count.decisionAudits > 0) return false;
+      await database.transactionVerification.delete({ where: { id: verification.id } });
+      if (verification.ocrResultId) await database.ocrResult.delete({ where: { id: verification.ocrResultId } });
+      const reset = await database.paymentReceipt.updateMany({
+        where: { id: receiptId, status: "FAILED", version: verification.receipt.version },
+        data: { status: "LOADED", version: { increment: 1 } },
+      });
+      if (reset.count !== 1) throw conflict("RECEIPT_ALREADY_PROCESSED", "El comprobante cambio concurrentemente");
+      return true;
+    });
+  }
+
   async approveAtomically(input: Parameters<TransactionVerificationPersistencePort["approveAtomically"]>[0]) {
     return this.decide(input.context, async (database) => {
       // Re-check inside the same financial transaction. The application check

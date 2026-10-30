@@ -57,7 +57,7 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
     });
     if (!account) return { client: null, account: null, pautas: [] };
 
-    const [client, pautas] = await Promise.all([
+    const [client, pautas, overduePayments] = await Promise.all([
       this.prisma.client.findUnique({
         where: { id: account.clientId },
         select: { id: true, status: true },
@@ -67,6 +67,7 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
         orderBy: { createdAt: "asc" },
         include: { balanceMovements: { select: { transactionDetailId: true } } },
       }),
+      this.prisma.payment.count({ where: { status: "OVERDUE", transaction: { accountId } } }),
     ]);
 
     return {
@@ -79,6 +80,7 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
         creditDays: account.creditDays,
         creditLimit: decimalToMonetaryAmount(account.creditLimit),
         creditUsed: decimalToMonetaryAmount(account.creditUsed),
+        overduePayments,
       },
       pautas: pautas.map((record) => new Pauta({
         id: record.id,

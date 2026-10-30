@@ -15,6 +15,7 @@ import {
   getAdminTransactionDetail,
   getAdminVerifications,
   markVerificationUnderReview,
+  retryReceiptOcr,
   type AdminVerification,
   type PendingVerification,
   type VerificationStatus,
@@ -147,6 +148,9 @@ export default function VerificationsDashboard() {
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [selected]);
 
+  /* Solo un fallo de lectura sin ninguna decisión firmada se puede repetir:
+     el backend lo vuelve a comprobar, esto solo decide si ofrecer el botón. */
+  const canRetryOcr = selected !== null && selected.detail.status === "EN_REVISION" && selected.detail.receipt.status === "FAILED" && selected.detail.decisionAudit === null;
   const hardBlocked = selected?.detail.issues.some((issue) => ["COMPROBANTE_DUPLICADO", "REFERENCIA_BANCARIA_DUPLICADA"].includes(issue)) ?? false;
 
   async function open(item: PendingVerification) {
@@ -187,6 +191,27 @@ export default function VerificationsDashboard() {
       setReason("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible resolver la verificación");
+    } finally { setBusy(false); }
+  }
+
+  async function retryOcr() {
+    if (!selected) return;
+    const current = selected;
+    setBusy(true);
+    setError("");
+    try {
+      await retryReceiptOcr(current.detail.receipt.id);
+      const [page, transaction] = await Promise.all([
+        fetchVerifications(filter, search, pageNumber, unassignedOnly),
+        getAdminTransactionDetail(current.item.transactionId),
+      ]);
+      setItems(page.items);
+      setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages });
+      /* La lectura nueva crea otra verificación para el mismo comprobante. */
+      const detail = transaction.verifications.find((verification) => verification.receipt.id === current.detail.receipt.id);
+      if (detail) setSelected((value) => value ? { item: { ...value.item, id: detail.id }, detail } : value);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No fue posible repetir la lectura del comprobante");
     } finally { setBusy(false); }
   }
 
@@ -290,6 +315,7 @@ export default function VerificationsDashboard() {
             <span>Actualizado {formatDateTime(selected.detail.updatedAt ?? selected.detail.decisionAudit?.createdAt ?? selected.detail.createdAt)}</span>
           </div>}
           {selected.detail.issues.length > 0 && <div className={styles.issues}><strong>Señales de revisión</strong><ul>{selected.detail.issues.map((issue) => <li key={issue}>{verificationIssueLabel(issue)}</li>)}</ul></div>}
+          {canRetryOcr && <div className={styles.actions}><button type="button" disabled={busy} onClick={() => void retryOcr()}><RotateCw size={17} />{busy ? "Leyendo…" : "Reintentar lectura"}</button></div>}
           {reviewStatuses.includes(selected.detail.status) && <div className={styles.actions}>{reviewing ? <div className={styles.reviewForm}><label>Motivo de revisión<textarea autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label><div><button type="button" onClick={() => { setReviewing(false); setReason(""); }}>Cancelar</button><button type="button" disabled={!reason.trim() || busy} onClick={() => void decide("review")}><CircleAlert size={16} />Enviar a revisión</button></div></div> : <><button type="button" disabled={busy} onClick={() => { setReason(selected.detail.reviewReason ?? ""); setReviewing(true); }}><CircleAlert size={17} />En revisión</button><button type="button" disabled={busy || hardBlocked} title={hardBlocked ? "La evidencia duplicada no puede aprobarse" : undefined} onClick={() => void decide("approve")}><Check size={17} />Aprobar transferencia</button></>}</div>}
           {hardBlocked && !reviewing && <p className={styles.error}>La aprobación está bloqueada: el comprobante o código bancario ya fue utilizado.</p>}
           {error && <p className={styles.error} role="alert">{error}</p>}

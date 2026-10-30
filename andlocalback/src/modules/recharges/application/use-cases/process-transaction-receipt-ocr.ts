@@ -28,9 +28,15 @@ export class ProcessTransactionReceiptOcr {
 
   async execute(command: ProcessTransactionReceiptOcrCommand): Promise<TransactionVerificationView> {
     this.assertRequired(command.receiptId, "RECEIPT_REQUIRED", "El comprobante es obligatorio");
-    const context = await this.persistence.loadReceiptContext(command.receiptId);
+    let context = await this.persistence.loadReceiptContext(command.receiptId);
     if (!context) throw new ApplicationError("RECEIPT_NOT_FOUND", "El comprobante no existe", 404);
-    if (context.existingVerification) return context.existingVerification;
+    if (context.existingVerification) {
+      /* Una lectura fallida y sin resolver se puede repetir; cualquier otra
+         verificacion ya existente es el resultado y no se vuelve a calcular. */
+      if (!(await this.persistence.discardFailedOcr(command.receiptId))) return context.existingVerification;
+      context = await this.persistence.loadReceiptContext(command.receiptId);
+      if (!context) throw new ApplicationError("RECEIPT_NOT_FOUND", "El comprobante no existe", 404);
+    }
     if (context.payment.status !== "UNDER_REVIEW") {
       throw new ApplicationError("PAYMENT_NOT_UNDER_REVIEW", "El pago debe estar en revision", 409);
     }
