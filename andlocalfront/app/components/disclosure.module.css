@@ -1,0 +1,12 @@
+.summary { display: flex; width: fit-content; align-items: center; gap: var(--space-half); list-style: none; cursor: pointer; border-radius: var(--radius-small); }
+.summary::-webkit-details-marker { display: none; }
+.summary::marker { content: ""; }
+.summary:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.chevron { flex: none; color: var(--color-text-subtle); transition: transform var(--duration-ui) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+/* Abierto: el chevron apunta hacia abajo, hacia el contenido que se descubre. */
+.disclosure[open] > .summary .chevron { transform: rotate(90deg); color: var(--color-brand); }
+.disclosure[open] > .summary { margin-bottom: var(--space-1); }
+@media (hover: hover) and (pointer: fine) { .summary:hover .chevron { color: var(--color-text); } }
+/* Con el dedo, la fila entera mide lo que un botón. */
+@media (pointer: coarse) { .summary { min-height: var(--hit-target); } }
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }

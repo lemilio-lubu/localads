@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import MetricCard from "../../components/metric-card";
 import ModalShell from "../../components/modal-shell";
-import { FormError, FormField, formStyles as form } from "../../components/form-modal";
+import { FormError, FormField, SelectChevron, formStyles as form } from "../../components/form-modal";
 import { formatAmount, formatDateTime } from "../../lib/format";
 import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeamMember, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";
@@ -107,10 +107,13 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
                 {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setNotice(""); }} maxLength={24} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} />}
               </FormField>
               <FormField label="Rol" Icon={UserCog}>
-                {({ id, describedBy }) => <select id={id} value={role} onChange={(event) => { setRole(event.target.value as TeamRole); setNotice(""); }} aria-describedby={describedBy}>
-                  <option value="GESTOR">Gestor</option>
-                  <option value="ADMIN">Administrador</option>
-                </select>}
+                {({ id, describedBy }) => <>
+                  <select id={id} value={role} onChange={(event) => { setRole(event.target.value as TeamRole); setNotice(""); }} aria-describedby={describedBy}>
+                    <option value="GESTOR">Gestor</option>
+                    <option value="ADMIN">Administrador</option>
+                  </select>
+                  <SelectChevron />
+                </>}
               </FormField>
             </div>
             <button type="button" className={styles.primary} disabled={!dirty || Boolean(usernameError) || Boolean(busy)} onClick={() => void run("save", async () => {

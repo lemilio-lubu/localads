@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleAlert, type LucideIcon } from "lucide-react";
+import { Check, ChevronDown, CircleAlert, type LucideIcon } from "lucide-react";
 import { ReactNode, useId } from "react";
 import styles from "./form-modal.module.css";
 
@@ -53,6 +53,11 @@ export function FormField({ label, hint, error, Icon, children, className = "" }
 
 /* Marca redonda de las tarjetas de elección; se rellena cuando el input de la
    tarjeta está marcado. */
+/* La flecha de un selector: el mismo chevron que los desplegables, en lugar del triángulo dibujado con CSS. Va justo después del <select>, dentro de su campo. */
+export function SelectChevron() {
+  return <ChevronDown className={styles.selectChevron} size={16} strokeWidth={2.25} aria-hidden="true" />;
+}
+
 export function ChoiceCheck() {
   return <span className={styles.choiceCheck} aria-hidden="true"><Check size={14} strokeWidth={3} /></span>;
 }

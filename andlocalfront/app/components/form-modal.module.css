@@ -32,7 +32,9 @@
 .control input, .control select, .control textarea { width: 100%; border: 1px solid var(--color-border-strong); border-radius: var(--radius-menu); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-2) 0 calc(var(--space-2) + 18px + var(--space-1)); color: var(--color-text); font: inherit; font-size: var(--font-size-body); transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
 .control input, .control select { height: var(--control-height); }
 .control textarea { min-height: calc(var(--control-height) * 2); padding-block: 13px; line-height: 1.45; resize: vertical; }
-.control select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%), linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%); background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; background-size: 6px 6px; background-repeat: no-repeat; cursor: pointer; }
+.control select { appearance: none; padding-right: var(--space-5); cursor: pointer; }
+/* La flecha del selector es el mismo chevron de los desplegables (antes, un triángulo dibujado con degradados). Hereda el color gris/verde/rojo de los iconos del campo. */
+.control > .selectChevron { left: auto; right: var(--space-2); }
 .control input::placeholder, .control textarea::placeholder { color: var(--color-text-subtle); }
 .control input:focus, .control select:focus, .control textarea:focus { border-color: var(--color-brand); box-shadow: var(--focus-ring); }
 .field[data-invalid="true"] .control input { border-color: var(--color-danger); }

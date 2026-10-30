@@ -5,7 +5,7 @@ import { BadgeCheck, CalendarClock, CircleAlert, IdCard, KeyRound, Mail, UserCog
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import ActionButton from "../../components/action-button";
-import { ChoiceCheck, FormError, FormField as Field, FormHeader, FormSection as Section, formStyles as form } from "../../components/form-modal";
+import { ChoiceCheck, FormError, FormField as Field, FormHeader, FormSection as Section, SelectChevron, formStyles as form } from "../../components/form-modal";
 import ModalShell from "../../components/modal-shell";
 import { createAdminClient, resetAdminClientPassword, updateAdminClient, type AdminClient, type AdminClientWithCredentials, type AdminPlatform, type SaveAdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeam, type TeamMember } from "../../lib/team-api";
@@ -185,10 +185,13 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
           {isAdmin && (
             <Field label="Gestor responsable" Icon={UserCog}>
               {({ id, describedBy }) => (
-                <select id={id} value={managerId} onChange={(event) => setManagerId(event.target.value)} aria-describedby={describedBy}>
-                  <option value="">Sin asignar</option>
-                  {managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.username}</option>)}
-                </select>
+                <>
+                  <select id={id} value={managerId} onChange={(event) => setManagerId(event.target.value)} aria-describedby={describedBy}>
+                    <option value="">Sin asignar</option>
+                    {managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.username}</option>)}
+                  </select>
+                  <SelectChevron />
+                </>
               )}
             </Field>
           )}
