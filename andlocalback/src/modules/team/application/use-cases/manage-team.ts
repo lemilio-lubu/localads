@@ -1,5 +1,5 @@
 import { ApplicationError } from "../../../../common/errors/application.error";
-import { normalizeUsername, TeamMemberInput, validateTeamEmail, validateTeamMember, validateTeamRole } from "../../domain/team-member";
+import { normalizeName, normalizeUsername, TeamMemberInput, validateTeamEmail, validateTeamMember, validateTeamName, validateTeamRole } from "../../domain/team-member";
 import { TeamCredentialsIssuer } from "../ports/team-credentials.port";
 import { PortfolioDestination, TeamFilters, TeamRepository, UpdateTeamMemberInput } from "../ports/team.repository";
 
@@ -20,7 +20,7 @@ export class ManageTeam {
     validateTeamMember(input);
     const username = normalizeUsername(input.username);
     const issued = await this.credentials.issue(username);
-    const member = await this.team.create({ ...input, username }, { username, passwordHash: issued.passwordHash }, createdById);
+    const member = await this.team.create({ ...input, username, name: normalizeName(input.name) }, { username, passwordHash: issued.passwordHash }, createdById);
     return { ...member, credentials: { username, temporaryPassword: issued.temporaryPassword } };
   }
 
@@ -30,11 +30,12 @@ export class ManageTeam {
        usuario que no es un correo, tiene que poder cambiar de rol o darse de
        baja sin que se le exija un correo que nadie ha escrito todavía. */
     if (input.username !== undefined && normalizeUsername(input.username) !== current.username) validateTeamEmail(input.username);
+    if (input.name !== undefined) validateTeamName(input.name);
     validateTeamRole(input.role ?? current.role);
     /* Desactivar pasa por su propio camino porque arrastra la cartera: un
      PATCH con status INACTIVE dejaria clientes apuntando a un gestor de baja. */
     if (input.status === "INACTIVE") return this.deactivate(id, input.portfolio);
-    const updated = await this.team.update(id, { ...input, ...(input.username ? { username: normalizeUsername(input.username) } : {}) });
+    const updated = await this.team.update(id, { ...input, ...(input.username ? { username: normalizeUsername(input.username) } : {}), ...(input.name !== undefined ? { name: normalizeName(input.name) } : {}) });
     if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
     return updated;
   }

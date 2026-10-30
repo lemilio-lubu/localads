@@ -25,10 +25,18 @@ describe("nombre que se muestra al entrar", () => {
     expect(await auth.displayName(client)).toBe("Comercial Andina S.A.");
   });
 
-  it("al equipo se le muestra su usuario, que es lo único que tiene, sin consultar clientes", async () => {
+  it("al equipo se le muestra su nombre, sin consultar clientes", async () => {
     const { auth, database } = service();
-    expect(await auth.displayName(staff)).toBe("gestor");
+    database.authUser.findUnique.mockResolvedValueOnce({ name: "  Marta Pérez " });
+    expect(await auth.displayName(staff)).toBe("Marta Pérez");
+    expect(database.authUser.findUnique).toHaveBeenCalledWith({ where: { id: "u2" }, select: { name: true } });
     expect(database.client.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("si la cuenta del equipo no tiene nombre (cuenta anterior), cae al usuario", async () => {
+    const { auth, database } = service();
+    database.authUser.findUnique.mockResolvedValueOnce({ name: null });
+    expect(await auth.displayName(staff)).toBe("gestor");
   });
 
   it("si el cliente ya no existe o su nombre está vacío, cae al usuario en lugar de mostrar nada", async () => {

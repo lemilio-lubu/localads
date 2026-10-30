@@ -36,10 +36,13 @@ export class AuthService {
      tres roles no puede firmarse en un token: antes se colaba con un `as` y el
      guard lo comparaba contra una lista que nunca iba a coincidir. */
   /* Cómo se ve a quien entró. El correo (o el usuario) es solo la credencial: a
-     un cliente se le muestra su nombre o razón social, y al equipo su usuario,
-     que es lo único que tiene. Si el cliente ya no existe, cae al usuario. */
+     un cliente se le muestra su nombre o razón social, y al equipo su nombre.
+     Si no hay (cuenta anterior, cliente borrado), cae al usuario. */
   async displayName(principal: AuthPrincipal): Promise<string> {
-    if (principal.role !== "CLIENT" || !principal.clientId) return principal.username;
+    if (principal.role !== "CLIENT" || !principal.clientId) {
+      const user = await this.database.authUser.findUnique({ where: { id: principal.userId }, select: { name: true } });
+      return user?.name?.trim() || principal.username;
+    }
     const client = await this.database.client.findUnique({ where: { id: principal.clientId }, select: { name: true } });
     return client?.name.trim() || principal.username;
   }

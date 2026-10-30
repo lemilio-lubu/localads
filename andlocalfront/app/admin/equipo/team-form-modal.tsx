@@ -1,12 +1,12 @@
 "use client";
 
-import { AtSign, Briefcase, KeyRound, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
+import { AtSign, Briefcase, UserRound, KeyRound, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
 import ActionButton from "../../components/action-button";
 import { ChoiceCheck, FormError, FormField, FormHeader, FormSection, formStyles as form } from "../../components/form-modal";
 import ModalShell from "../../components/modal-shell";
 import { createTeamMember, type TeamMemberWithCredentials, type TeamRole } from "../../lib/team-api";
-import { validateTeamEmail } from "../../lib/form-validation";
+import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-form-modal.module.css";
 
 type Props = { open: boolean; onClose: () => void; onCreated: (member: TeamMemberWithCredentials) => void };
@@ -19,6 +19,7 @@ const roleOptions: { value: TeamRole; label: string; detail: string; Icon: Lucid
 ];
 
 export default function TeamFormModal({ open, onClose, onCreated }: Props) {
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<TeamRole>("GESTOR");
   const [pending, setPending] = useState(false);
@@ -26,21 +27,23 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
   /* Igual que en el formulario de cliente: el error del campo aparece al salir
      de él o al intentar crear, no mientras se escribe. */
   const [touched, setTouched] = useState(false);
+  const nameError = validateTeamName(name);
+  const shownNameError = touched ? nameError : "";
   const usernameError = validateTeamEmail(username);
   const shownUsernameError = touched ? usernameError : "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTouched(true);
-    if (usernameError) {
+    if (nameError || usernameError) {
       const formElement = event.currentTarget;
       requestAnimationFrame(() => (formElement.querySelector("[aria-invalid='true']") as HTMLElement | null)?.focus());
       return;
     }
     setPending(true); setError("");
     try {
-      const member = await createTeamMember({ username, role });
-      setUsername(""); setRole("GESTOR"); setTouched(false);
+      const member = await createTeamMember({ username, name: name.trim(), role });
+      setName(""); setUsername(""); setRole("GESTOR"); setTouched(false);
       onCreated(member);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No fue posible crear la cuenta");
@@ -54,9 +57,12 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
           sin poder darle estilo. El mensaje lo escribe el producto. */}
       <form className={`${form.form} ${styles.layout}`} onSubmit={submit} noValidate>
         <FormSection title="Acceso">
+          <FormField label="Nombre" Icon={UserRound} error={shownNameError}>
+            {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={() => setTouched(true)} maxLength={80} autoComplete="off" autoFocus placeholder="Marta Pérez" aria-invalid={invalid} aria-describedby={describedBy} />}
+          </FormField>
           {/* Se escribe libre y se guarda en minúscula: rechazar «Gestor» por
               llevar mayúscula sería hostil sin motivo. */}
-          <FormField label="Correo" Icon={AtSign} error={shownUsernameError} hint="Con este correo entrará al portal. Se guarda en minúscula.">
+          <FormField label="Correo" Icon={AtSign} error={shownUsernameError}>
             {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} onBlur={() => setTouched(true)} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" placeholder="gestor@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
           </FormField>
         </FormSection>

@@ -14,6 +14,14 @@ export function validateTeamEmail(value: string): string {
   return "";
 }
 
+/* Nombre de la persona del equipo (domain/team-member.ts). */
+export function validateTeamName(value: string): string {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (!normalized) return "Escribe el nombre.";
+  if (normalized.length < 2 || normalized.length > 80) return "El nombre debe tener entre 2 y 80 caracteres.";
+  return "";
+}
+
 /* Espejo de la regla del backend (domain/ruc.ts), para avisar antes de
    enviar; la que manda es la del servidor. El dígito verificador solo se
    exige a personas naturales: el SRI emite RUC de sociedades que no cumplen

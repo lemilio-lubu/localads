@@ -6,7 +6,7 @@ export const TEAM_ROLES = ["ADMIN", "GESTOR"] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number];
 export const isTeamRole = (value: string): value is TeamRole => (TEAM_ROLES as readonly string[]).includes(value);
 
-export type TeamMemberInput = Readonly<{ username: string; role: TeamRole }>;
+export type TeamMemberInput = Readonly<{ username: string; name: string; role: TeamRole }>;
 
 /* El usuario del equipo es su correo, igual que el de los clientes: un solo dato
    para entrar. El campo se sigue llamando `username` (es la columna y el nombre
@@ -26,6 +26,17 @@ export function validateTeamEmail(value: string): void {
   }
 }
 
+export function normalizeName(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+export function validateTeamName(value: string): void {
+  const name = normalizeName(value);
+  if (name.length < 2 || name.length > 80) {
+    throw new ApplicationError("INVALID_TEAM_NAME", "El nombre debe tener entre 2 y 80 caracteres");
+  }
+}
+
 export function validateTeamRole(role: string): void {
   if (!isTeamRole(role)) {
     throw new ApplicationError("INVALID_TEAM_ROLE", "El rol del equipo solo puede ser administrador o gestor");
@@ -34,5 +45,6 @@ export function validateTeamRole(role: string): void {
 
 export function validateTeamMember(input: TeamMemberInput): void {
   validateTeamEmail(input.username);
+  validateTeamName(input.name);
   validateTeamRole(input.role);
 }
