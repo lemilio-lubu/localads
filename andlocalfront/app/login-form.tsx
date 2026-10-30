@@ -39,7 +39,7 @@ export default function LoginForm() {
      navegador y tapaba el campo. Los mensajes los escribe el producto, junto
      a cada campo, y solo tras intentar entrar. */
   const fieldErrors: Partial<Record<Field, string>> = {
-    ...(username.trim() ? {} : { username: "Escribe tu usuario." }),
+    ...(username.trim() ? {} : { username: "Escribe tu correo o usuario." }),
     ...(password ? {} : { password: "Escribe tu contraseña." }),
   };
   const shown = (field: Field) => (submitted ? fieldErrors[field] : undefined);
@@ -111,8 +111,8 @@ export default function LoginForm() {
         </header>
 
         <form className={`${form.form} ${styles.form}`} onSubmit={submitLogin} noValidate>
-          <FormField label="Usuario" Icon={UserRound} error={shown("username")}>
-            {({ id, describedBy, invalid }) => <input id={id} name="username" autoComplete="username" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu usuario" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
+          <FormField label="Correo o usuario" Icon={UserRound} error={shown("username")}>
+            {({ id, describedBy, invalid }) => <input id={id} name="username" autoComplete="username" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu correo o usuario" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
           </FormField>
           <FormField label="Contraseña" Icon={LockKeyhole} error={shown("password")}>
             {({ id, describedBy, invalid }) => <>

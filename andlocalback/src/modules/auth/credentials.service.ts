@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ApplicationError } from "../../common/errors/application.error";
 import { PrismaService } from "../../database/prisma.service";
 import { PasswordService } from "./password.service";
-import { deriveUsername, generateTemporaryPassword } from "./temporary-password";
+import { generateTemporaryPassword } from "./temporary-password";
 
 export type PreparedCredentials = { username: string; temporaryPassword: string; passwordHash: string };
 
@@ -13,9 +13,11 @@ export type PreparedCredentials = { username: string; temporaryPassword: string;
 export class CredentialsService {
   constructor(private readonly database: PrismaService, private readonly passwords: PasswordService) {}
 
+  /* El correo es el usuario del cliente: un solo dato para entrar, sin
+     derivar nada. Va en minusculas porque el login normaliza igual. */
   async prepare(email: string): Promise<PreparedCredentials> {
-    const username = await deriveUsername(email, async (candidate) => Boolean(await this.database.authUser.findUnique({ where: { username: candidate }, select: { id: true } })));
-    if (!username) throw new ApplicationError("USERNAME_TAKEN", "No fue posible derivar un usuario libre a partir del correo", 409);
+    const username = email.trim().toLowerCase();
+    if (await this.database.authUser.findUnique({ where: { username }, select: { id: true } })) throw new ApplicationError("USERNAME_TAKEN", "Ya existe un acceso con este correo", 409);
     return this.issue(username);
   }
 
