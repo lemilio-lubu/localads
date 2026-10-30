@@ -28,13 +28,22 @@ export class AuthService {
       this.database.refreshSession.update({ where: { id: session.id }, data: { revokedAt: now, lastUsedAt: now, replacedById: nextId } }),
       this.database.refreshSession.create({ data: { id: nextId, userId: session.userId, familyId: session.familyId, tokenHash: hashToken(nextRaw), expiresAt: new Date(Date.now() + refreshTtlMs) } }),
     ]);
-    const principal = this.principal(session.user); const access = this.accessTokens.sign(principal); return { principal, accessToken: access.token, expiresIn: access.expiresIn, refreshToken: nextRaw };
+    const principal = this.principal(session.user); const access = this.accessTokens.sign(principal); return { principal, displayName: await this.displayName(principal), accessToken: access.token, expiresIn: access.expiresIn, refreshToken: nextRaw };
   }
   async revoke(rawToken: string | undefined) { if (!rawToken) return; await this.database.refreshSession.updateMany({ where: { tokenHash: hashToken(rawToken), revokedAt: null }, data: { revokedAt: new Date() } }); }
-  private async issue(principal: AuthPrincipal, familyId: string) { const raw = randomBytes(48).toString("base64url"); await this.database.refreshSession.create({ data: { userId: principal.userId, familyId, tokenHash: hashToken(raw), expiresAt: new Date(Date.now() + refreshTtlMs) } }); const access = this.accessTokens.sign(principal); return { principal, accessToken: access.token, expiresIn: access.expiresIn, refreshToken: raw }; }
+  private async issue(principal: AuthPrincipal, familyId: string) { const raw = randomBytes(48).toString("base64url"); await this.database.refreshSession.create({ data: { userId: principal.userId, familyId, tokenHash: hashToken(raw), expiresAt: new Date(Date.now() + refreshTtlMs) } }); const access = this.accessTokens.sign(principal); return { principal, displayName: await this.displayName(principal), accessToken: access.token, expiresIn: access.expiresIn, refreshToken: raw }; }
   /* El rol llega de la base como texto libre. Un valor que no sea uno de los
      tres roles no puede firmarse en un token: antes se colaba con un `as` y el
      guard lo comparaba contra una lista que nunca iba a coincidir. */
+  /* Cómo se ve a quien entró. El correo (o el usuario) es solo la credencial: a
+     un cliente se le muestra su nombre o razón social, y al equipo su usuario,
+     que es lo único que tiene. Si el cliente ya no existe, cae al usuario. */
+  async displayName(principal: AuthPrincipal): Promise<string> {
+    if (principal.role !== "CLIENT" || !principal.clientId) return principal.username;
+    const client = await this.database.client.findUnique({ where: { id: principal.clientId }, select: { name: true } });
+    return client?.name.trim() || principal.username;
+  }
+
   /* Cambiar la contrasena revoca todas las sesiones abiertas: si la temporal
      circulo por otro canal, cualquier sesion que la use muere aqui. */
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
