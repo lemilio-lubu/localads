@@ -15,6 +15,10 @@
 .person { position: absolute; width: 39px; height: 39px; }
 .menu { position: absolute; z-index: 20; top: calc(100% + var(--space-1)); right: 0; min-width: 168px; padding: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: rgb(255 255 255 / 96%); box-shadow: var(--shadow-popover); transform-origin: top right; backdrop-filter: blur(12px); }
 .menu button { width: 100%; border: 0; border-radius: var(--space-1); background: transparent; padding: var(--space-1) 12px; color: var(--color-text-muted); text-align: left; cursor: pointer; transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease; }
+/* Las entradas con enlace (p. ej. «cómo pagar») se ven igual que «cerrar sesión». */
+.menu a { display: block; width: 100%; border-radius: var(--space-1); padding: var(--space-1) 12px; color: var(--color-text-muted); text-align: left; text-decoration: none; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out); }
+.menu a:focus-visible { outline: 2px solid rgb(11 89 1 / 20%); }
+.menu a:active { background: #edf4ec; color: var(--color-text); }
 .menu button:focus-visible { outline: 2px solid rgb(11 89 1 / 20%); }
 .menu button:active { background: #edf4ec; color: var(--color-text); }
 
@@ -23,7 +27,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .trigger:hover { color: var(--color-text); }
-  .menu button:hover { background: var(--color-surface); }
+  .menu button:hover, .menu a:hover { background: var(--color-surface); }
 }
 
 @media (max-width: 880px) {
@@ -33,5 +37,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trigger, .menu button { transition-duration: 0ms; }
+  .trigger, .menu button, .menu a { transition-duration: 0ms; }
 }

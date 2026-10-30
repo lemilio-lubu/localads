@@ -21,6 +21,8 @@ import {
   type VerificationStatus,
 } from "../../lib/admin-recharges-api";
 import { formatAmount, formatClock, formatDateTime } from "../../lib/format";
+import { paymentDestinationLabel } from "../../components/payment-account-panel";
+import { usePaymentAccount } from "../../lib/use-payment-account";
 import { resolveApiAssetUrl, transactionsRealtimeUrl } from "../../lib/recharges-api";
 import { verificationIssueLabel, verificationStatusLabel } from "../../lib/status-labels";
 import type { VerificationRealtimeEvent } from "../../lib/transaction-realtime";
@@ -45,6 +47,7 @@ function fetchVerifications(filter: VerificationFilter, search: string, pageNumb
 }
 
 export default function VerificationsDashboard() {
+  const [paymentAccount] = usePaymentAccount();
   const [items, setItems] = useState<PendingVerification[]>([]);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
@@ -299,6 +302,7 @@ export default function VerificationsDashboard() {
             <div><dt>Valor esperado</dt><dd>{formatAmount(selected.detail.expectedAmount)}</dd></div>
             <div><dt>Valor detectado</dt><dd data-match={selected.detail.amountMatches}>{selected.detail.detectedAmount == null ? "No detectado" : formatAmount(selected.detail.detectedAmount)}</dd></div>
             <div><dt>Banco</dt><dd>{selected.detail.ocr?.bank ?? "No identificado"}</dd></div>
+            <div><dt>Cuenta de cobro</dt><dd>{paymentAccount.status === "ready" ? paymentDestinationLabel(paymentAccount.data.account) ?? "No configurada" : "—"}</dd></div>
             <div><dt>Código bancario</dt><dd>{selected.detail.ocr?.transactionCode ?? "No identificado"}</dd></div>
             <div><dt>Fecha detectada</dt><dd>{selected.detail.ocr?.detectedDate ?? "No detectada"}</dd></div>
             <div><dt>Confianza OCR</dt><dd>{selected.detail.ocr?.confidence == null ? "—" : `${Math.round(selected.detail.ocr.confidence)}%`}</dd></div>

@@ -104,6 +104,7 @@
     gap: var(--space-3);
   }
   .withFooter { grid-template-rows: auto auto auto auto; grid-template-areas: "documents" "summary" "platforms" "footer"; }
+  .withPayment { grid-template-rows: auto auto auto auto; grid-template-areas: "documents" "pay" "summary" "platforms"; }
   /* Factura, transferencia y el botón de subirla no caben en fila a 320px:
      el botón baja a la línea siguiente en vez de salirse de la pantalla. */
   .documentActions { flex-wrap: wrap; justify-self: start; max-width: 100%; gap: var(--space-2); padding-right: 0; }
@@ -131,3 +132,9 @@
 .uploadButton:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .uploadReceipt small { color: var(--color-text-muted); font-size: var(--font-size-micro); }
 .uploadError { color: var(--color-danger); font-weight: var(--font-weight-bold); }
+
+/* Los datos para pagar van en la columna de la derecha, justo bajo el botón de
+   subir la transferencia: es donde el cliente actúa y la columna estaba vacía. */
+.withPayment { grid-template-rows: auto auto 1fr; grid-template-areas: "summary documents" "summary pay" "summary platforms"; }
+.payDetails { grid-area: pay; min-width: 0; align-self: start; }
+.paySummary { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }

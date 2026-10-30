@@ -104,3 +104,9 @@
   .uploadArea span { max-width: calc(100% - 36px - var(--space-2)); overflow-wrap: anywhere; white-space: normal; }
   .uploadHint { flex-basis: 100%; margin-top: 0; text-align: center; }
 }
+/* El resumen de importes termina pegado a lo que sigue: la tarjeta de pago pide su propio respiro. */
+.paymentCard { margin-top: var(--space-2); }
+/* Salida discreta a «cómo pagar» cuando la tarjeta de pago todavía no está a la vista (prepago sin total) o no va aquí (postpago). */
+.payLink { composes: hitArea from "./design-system/hit-area.module.css"; justify-self: center; margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); text-decoration: underline; }
+.payLink:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; border-radius: var(--radius-small); }
+@media (hover: hover) and (pointer: fine) { .payLink:hover { color: var(--color-brand); } }
