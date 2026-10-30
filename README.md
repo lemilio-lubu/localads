@@ -60,6 +60,8 @@ Abre <http://localhost:3000> en el navegador.
 
 Los clientes entran con su correo; el gestor y el administrador, con su usuario. En la pantalla de inicio de sesión, los accesos rápidos (`prepago`, `pospago`, `gestor`, `admin`) rellenan estos datos.
 
+**Solo para desarrollo.** Esos accesos se ven con `npm run dev` y no existen en ninguna compilación de producción (`npm run build`): ni el apartado, ni los correos de prueba, ni la clave `1234` llegan al navegador. Para mostrarlos en un entorno compilado (una demo o un staging) hay que compilar con `NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS=true`; Next fija esa variable al compilar, así que cambiarla después no tiene efecto sin volver a compilar. Ocultar los accesos no protege nada por sí solo: en producción no se debe ejecutar el seed, y las cuentas demo (con clave `1234`) no deben existir en su base.
+
 El módulo administrativo de transacciones se encuentra en <http://localhost:3000/admin/transacciones>.
 
 > Las credenciales anteriores son exclusivamente de demostracion. Deben sustituirse antes de publicar el sistema.
@@ -93,6 +95,8 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 NEXT_PUBLIC_WS_URL=http://localhost:3001/transactions
 NEXT_PUBLIC_PREPAID_ACCOUNT_ID=account-prepaid-001
 NEXT_PUBLIC_POSTPAID_ACCOUNT_ID=account-postpaid-001
+# Opcional: mostrar los accesos de prueba del login en una compilación (en desarrollo ya se ven)
+# NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS=true
 ```
 
 Si cambias un puerto, actualiza también `FRONTEND_ORIGIN` o `NEXT_PUBLIC_API_URL` según corresponda.

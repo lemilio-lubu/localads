@@ -14,6 +14,12 @@ import LoginWalletDeck, { type DeckState } from "./login-wallet-deck";
 import styles from "./login-form.module.css";
 
 type Field = "username" | "password";
+/* Los accesos de prueba (todos con la clave 1234) son solo para desarrollo: se
+   ven con `next dev` y quedan fuera de cualquier compilación de producción. Para
+   mostrarlos en un entorno compilado (una demo, un staging) se compila con
+   NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS=true. Next fija estas dos lecturas al compilar,
+   así que cambiar la variable después no tiene efecto sin volver a compilar. */
+const showDemoAccounts = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true";
 const demoAccounts = ["prepago", "pospago", "gestor", "admin"] as const;
 /* Los clientes entran con su correo; gestor y admin, con su usuario. */
 const demoLogins: Record<(typeof demoAccounts)[number], string> = { prepago: "prepago@andlocal.test", pospago: "pospago@andlocal.test", gestor: "gestor", admin: "admin" };
@@ -121,11 +127,11 @@ export default function LoginForm() {
         </form>
 
         {/* Solo para probar: una línea discreta, no un bloque que compita con
-            el acceso real. */}
-        <p className={styles.demo}>
+            el acceso real. Fuera de desarrollo no se pinta (ver showDemoAccounts). */}
+        {showDemoAccounts && <p className={styles.demo}>
           Probar con una cuenta demo:{" "}
           {demoAccounts.map((account, index) => <span key={account}>{index > 0 && " · "}<button type="button" onClick={() => fillDemoAccount(account)} disabled={pending}>{account}</button></span>)}
-        </p>
+        </p>}
       </motion.section>
     </main>
   );
