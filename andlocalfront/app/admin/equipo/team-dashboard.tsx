@@ -140,9 +140,13 @@ export default function TeamDashboard() {
           <article key={member.id} className={`${styles.row} ${member.status === "INACTIVE" ? styles.inactive : ""}`}>
             <button type="button" className={styles.openDetail} onClick={() => openMember(member.id)} aria-label={`Ver detalle de ${member.name || member.username}`} aria-haspopup="dialog" />
             <div className={styles.identity}>
-              <small>{member.name ? member.username : "correo"}</small>
+              <small>equipo</small>
               <strong>{member.name || member.username}</strong>
-              <span data-role={member.role}>{roleLabel(member.role)}</span>
+              {/* El correo solo se repite aquí si hay nombre: sin él, el título ya es el correo. */}
+              <div className={styles.identityMeta}>
+                <span data-role={member.role}>{roleLabel(member.role)}</span>
+                {member.name && <em>{member.username}</em>}
+              </div>
             </div>
             {/* «no aplica» en tamaño pequeño, como en Clientes: es una ausencia,
                 no una cifra, y en grande competía con los números de al lado. */}
