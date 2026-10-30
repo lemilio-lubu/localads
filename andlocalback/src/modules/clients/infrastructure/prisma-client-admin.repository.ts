@@ -7,6 +7,7 @@ import { PrismaService } from "../../../database/prisma.service";
 import { AdminClientDetailView, ClientAdminRepository, ClientPlatformSummary, UpdateClientInput } from "../application/ports/client-admin.repository";
 import { PreparedCredentials } from "../application/ports/client-credentials.port";
 import { ClientProfileInput } from "../domain/client-profile";
+import { generatePaymentReference } from "../domain/payment-reference";
 import { AccountType, AdvertisingPlatform } from "../../recharges/domain/recharge.types";
 import { pausePlatformDetails } from "../../recharges/infrastructure/persistence/platform-lifecycle";
 
@@ -58,6 +59,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
             id: clientId,
             name: input.name.trim(),
             ruc: input.ruc,
+            paymentReference: generatePaymentReference(),
             email: input.email.trim().toLowerCase(),
             status: "ACTIVE",
             managerId,

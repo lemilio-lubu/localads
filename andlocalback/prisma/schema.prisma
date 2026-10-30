@@ -55,6 +55,10 @@ model Client {
   // RUC del SRI, normalizado a 13 digitos. Nullable solo por la columna: el
   // dominio lo exige al crear y no deja vaciarlo al editar.
   ruc                  String?                     @unique
+  // Referencia estable que el cliente pone en el concepto de sus transferencias
+  // (AND-3F9A1C7B). No es unica a proposito: solo sirve para reconocer el pago,
+  // y una coincidencia improbable no debe poder tumbar un alta ni un despliegue.
+  paymentReference     String?
   status               String
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt
@@ -382,4 +386,40 @@ model PautaBalanceMovement {
   transactionDetail   TransactionDetail @relation(fields: [transactionDetailId], references: [id], onDelete: Restrict)
 
   @@index([pautaId, createdAt])
+}
+
+// Cuenta a la que los clientes transfieren sus pagos. Hoy hay una sola activa;
+// `position` y `active` dejan el modelo listo para ofrecer varias sin migrar.
+model PaymentAccount {
+  id            String                @id @default(cuid())
+  bankName      String
+  accountType   String
+  accountNumber String
+  holderName    String
+  holderTaxId   String
+  email         String?
+  phone         String?
+  active        Boolean               @default(true)
+  position      Int                   @default(0)
+  updatedById   String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  audits        PaymentAccountAudit[]
+
+  @@index([active, position])
+}
+
+// Quien cambio a donde se paga y que habia antes: cambiar la cuenta de destino
+// es la forma tipica de desviar pagos, asi que cada cambio deja rastro.
+model PaymentAccountAudit {
+  id          String         @id @default(cuid())
+  accountId   String
+  changedById String
+  action      String
+  before      String?
+  after       String
+  createdAt   DateTime       @default(now())
+  account     PaymentAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([accountId, createdAt])
 }
