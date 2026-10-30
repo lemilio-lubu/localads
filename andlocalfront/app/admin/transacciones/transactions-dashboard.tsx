@@ -15,7 +15,7 @@ import type { AdvertisingPlatform } from "../../design-system/types";
 import { completeTransaction, completeTransactionDetail, getAdminTransactionDetail, getAdminTransactionsPage, resumeTransactionDetail, startTransactionRecharge, type AdminTransactionDetail } from "../../lib/admin-recharges-api";
 import type { TransactionListItem } from "../../lib/recharges-api";
 import { dueLabel, formatAmount, formatClock } from "../../lib/format";
-import { invoiceStatusLabel, paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
+import { accountTypeLabel, invoiceStatusLabel, paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
 import styles from "./transactions-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "../../lib/status-tone";
 
@@ -25,7 +25,7 @@ const PAGE_SIZE = 20;
    «todos» tiene que verse, no deducirse apagando el filtro encendido. */
 const accountSegments: SegmentOption<"PREPAGO" | "POSTPAGO" | null>[] = [
   { value: null, label: "todos", Icon: Layers, tone: "neutral" },
-  { value: "POSTPAGO", label: "postpago", Icon: CalendarClock, tone: "teal" },
+  { value: "POSTPAGO", label: "pospago", Icon: CalendarClock, tone: "teal" },
   { value: "PREPAGO", label: "prepago", Icon: Wallet, tone: "brand" },
 ];
 
@@ -129,7 +129,7 @@ export default function TransactionsDashboard() {
       {transactions.map((item) => <article key={item.id} className={styles.row}>
         <div className={styles.cell}><strong>cliente</strong><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></div>
         <DateCell value={item.createdAt} />
-        <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {item.accountTypeSnapshot.toLowerCase()}</strong>
+        <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {accountTypeLabel(item.accountTypeSnapshot)}</strong>
           <button type="button" className={styles.copyCode} data-state={copied?.code === item.code ? (copied.ok ? "done" : "failed") : undefined} title={item.code} onClick={(event) => void copyCode(item.code, event.currentTarget.querySelector("span"))}>
             <span>{item.code}</span><small>{copyLabel(item.code)}</small>
           </button>

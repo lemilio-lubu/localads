@@ -28,10 +28,10 @@ function setRefreshCookie(response: Response, token: string) {
 @Controller("auth")
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
-  @Public() @Post("login") async login(@Req() request: Request, @Body() body: LoginDto, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const result = await this.auth.login(body.username, body.password); setRefreshCookie(response, result.refreshToken); return { accessToken: result.accessToken, expiresIn: result.expiresIn, user: result.principal }; }
-  @Public() @Post("refresh") async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const token = readCookie(request); if (!token) return this.auth.refresh(""); const result = await this.auth.refresh(token); setRefreshCookie(response, result.refreshToken); return { accessToken: result.accessToken, expiresIn: result.expiresIn, user: result.principal }; }
+  @Public() @Post("login") async login(@Req() request: Request, @Body() body: LoginDto, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const result = await this.auth.login(body.username, body.password); setRefreshCookie(response, result.refreshToken); return { accessToken: result.accessToken, expiresIn: result.expiresIn, user: { ...result.principal, displayName: result.displayName } }; }
+  @Public() @Post("refresh") async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const token = readCookie(request); if (!token) return this.auth.refresh(""); const result = await this.auth.refresh(token); setRefreshCookie(response, result.refreshToken); return { accessToken: result.accessToken, expiresIn: result.expiresIn, user: { ...result.principal, displayName: result.displayName } }; }
   @Public() @Post("logout") async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); await this.auth.revoke(readCookie(request)); response.clearCookie(cookieName, { path: cookiePath }); return { success: true }; }
-  @AllowsTemporaryPassword() @Get("me") me(@CurrentUser() user: AuthPrincipal) { return { user }; }
+  @AllowsTemporaryPassword() @Get("me") async me(@CurrentUser() user: AuthPrincipal) { return { user: { ...user, displayName: await this.auth.displayName(user) } }; }
   /* Unica ruta que una cuenta con clave temporal puede usar ademas de /me.
      Cierra la sesion despues de cambiarla: los refresh quedan revocados. */
   @AllowsTemporaryPassword() @Post("password") async changePassword(@CurrentUser() user: AuthPrincipal, @Body() body: ChangePasswordDto, @Res({ passthrough: true }) response: Response) {

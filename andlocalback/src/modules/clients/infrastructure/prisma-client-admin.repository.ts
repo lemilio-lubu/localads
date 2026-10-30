@@ -7,6 +7,7 @@ import { PrismaService } from "../../../database/prisma.service";
 import { AdminClientDetailView, ClientAdminRepository, ClientPlatformSummary, UpdateClientInput } from "../application/ports/client-admin.repository";
 import { PreparedCredentials } from "../application/ports/client-credentials.port";
 import { ClientProfileInput } from "../domain/client-profile";
+import { generatePaymentReference } from "../domain/payment-reference";
 import { AccountType, AdvertisingPlatform } from "../../recharges/domain/recharge.types";
 import { pausePlatformDetails } from "../../recharges/infrastructure/persistence/platform-lifecycle";
 
@@ -17,12 +18,16 @@ const clientInclude = {
   // como quien lo lee, no el registro entero.
   manager: { select: { id: true, username: true } },
   // "Recargado" = lo que efectivamente llegó a las pautas: monto de pauta de
-  // las transacciones completadas, sin comisiones ni impuestos.
+  // las transacciones completadas, sin comisiones ni impuestos. El pago abierto
+  // de las no rechazadas da el vencimiento que alimenta la cuenta atrás del plazo.
   rechargeTransactions: {
-    where: { rechargeStatus: "COMPLETED" },
-    select: { pautaAmount: true },
+    where: { rechargeStatus: { not: "REJECTED" } },
+    select: { pautaAmount: true, rechargeStatus: true, payment: { select: { status: true, dueDate: true } } },
   },
 };
+
+/* Mismos estados de pago abierto que usa el detalle del cliente. */
+const OPEN_PAYMENT_STATUSES = ["PENDING", "IN_CREDIT", "OVERDUE", "UNDER_REVIEW"];
 
 type ClientRecord = Prisma.ClientGetPayload<{ include: typeof clientInclude }>;
 
@@ -54,6 +59,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
             id: clientId,
             name: input.name.trim(),
             ruc: input.ruc,
+            paymentReference: generatePaymentReference(),
             email: input.email.trim().toLowerCase(),
             status: "ACTIVE",
             managerId,
@@ -249,7 +255,12 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
         creditLimit: account.creditLimit.toNumber(),
         platforms: record.pautas.filter((pauta) => pauta.status === "ACTIVE").map((pauta) => pauta.platform as AdvertisingPlatform),
       },
+      /* El pago abierto más antiguo, no el de la última recarga. */
+      nextDueDate: record.rechargeTransactions
+        .flatMap((transaction) => (transaction.payment?.dueDate && OPEN_PAYMENT_STATUSES.includes(transaction.payment.status) ? [transaction.payment.dueDate] : []))
+        .sort((a, b) => a.getTime() - b.getTime())[0]?.toISOString() ?? null,
       totalRecharged: record.rechargeTransactions
+        .filter((transaction) => transaction.rechargeStatus === "COMPLETED")
         .reduce((total, transaction) => total.add(transaction.pautaAmount), new Prisma.Decimal(0))
         .toNumber(),
     };

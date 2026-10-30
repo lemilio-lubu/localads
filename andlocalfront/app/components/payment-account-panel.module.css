@@ -1,0 +1,3 @@
+.skeleton { composes: base from "../design-system/skeleton.module.css"; min-height: 240px; border-radius: var(--radius-menu); }
+.message { margin: 0; border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-2) var(--space-3); color: var(--color-text); font-size: var(--font-size-body-sm); line-height: 1.4; }
+.message button { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }

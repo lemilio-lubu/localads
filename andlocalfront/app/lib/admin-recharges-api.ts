@@ -33,6 +33,8 @@ export const completeTransaction = (transactionId: string) => request<unknown>(`
 export const resumeTransactionDetail = (transactionId: string, detailId: string, expectedVersion: number) => request<unknown>(`/transactions/${encodeURIComponent(transactionId)}/details/${encodeURIComponent(detailId)}/resume`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expectedVersion }) });
 export const getAdminVerifications = (filters: { owner?: "unassigned"; page?: number; limit?: number; scope?: VerificationScope; status?: VerificationStatus; search?: string; clientId?: string; bank?: string; from?: string; to?: string } = {}) => request<PageResponse<PendingVerification>>(`/admin/verifications${queryString(filters)}`);
 export const approveVerification = (id: string, notes?: string) => request<unknown>(`/transaction-verifications/${encodeURIComponent(id)}/approve`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(notes?.trim() ? { notes: notes.trim() } : {}) }) });
+/* Repite la lectura de un comprobante cuyo OCR falló y sigue sin resolver. */
+export const retryReceiptOcr = (receiptId: string) => request<unknown>(`/transaction-receipts/${encodeURIComponent(receiptId)}/ocr`, { method: "POST" });
 export const markVerificationUnderReview = (id: string, reason: string) => request<unknown>(`/transaction-verifications/${encodeURIComponent(id)}/review`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: reason.trim() }) });
 
 export async function getAdminActivationRequests(status?: ActivationRequest["status"], owner?: "unassigned"): Promise<ActivationRequest[]> {

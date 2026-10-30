@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { popoverExitTransition, popoverTransition } from "../design-system/motion";
@@ -8,9 +9,10 @@ import styles from "./profile-menu.module.css";
 
 /** `placement` decide hacia dónde abre el menú: al pie de una barra lateral
  *  tiene que subir, o se saldría de la pantalla. */
-type ProfileMenuProps = { onLogout: () => void; userName?: string; role?: string; compact?: boolean; placement?: "down" | "up" };
+type ProfileMenuLink = { label: string; href: string };
+type ProfileMenuProps = { onLogout: () => void; userName?: string; role?: string; compact?: boolean; placement?: "down" | "up"; links?: readonly ProfileMenuLink[] };
 
-export default function ProfileMenu({ onLogout, userName = "user name", role, compact = false, placement = "down" }: ProfileMenuProps) {
+export default function ProfileMenu({ onLogout, userName = "user name", role, compact = false, placement = "down", links = [] }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
@@ -33,6 +35,7 @@ export default function ProfileMenu({ onLogout, userName = "user name", role, co
             exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, transform: "translateY(-4px)", transition: popoverExitTransition }}
             transition={popoverTransition}
           >
+            {links.map((link) => <Link key={link.href} role="menuitem" href={link.href} onClick={() => setOpen(false)}>{link.label}</Link>)}
             <button type="button" role="menuitem" onClick={onLogout}>cerrar sesión</button>
           </motion.div>
         )}

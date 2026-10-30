@@ -63,6 +63,27 @@ describe("PrismaTransactionVerificationRepository", () => {
     expect((await prisma.paymentReceipt.findUnique({ where: { id: "receipt-failure" } }))?.status).toBe("FAILED");
   });
 
+  it("una lectura fallida se descarta para repetirla y una ya evaluada no", async () => {
+    await createPending("retry", "hash-retry");
+    const context = (await repository.loadReceiptContext("receipt-retry"))!;
+    await repository.saveOcrFailure({ context, ocrResultId: "ocr-retry", verificationId: "verification-retry", failureReason: "imagen ilegible" });
+
+    expect(await repository.discardFailedOcr("receipt-retry")).toBe(true);
+    expect(await prisma.transactionVerification.count({ where: { receiptId: "receipt-retry" } })).toBe(0);
+    expect(await prisma.ocrResult.count({ where: { receiptId: "receipt-retry" } })).toBe(0);
+    expect((await prisma.paymentReceipt.findUnique({ where: { id: "receipt-retry" } }))?.status).toBe("LOADED");
+    expect(await repository.discardFailedOcr("receipt-retry")).toBe(false);
+
+    const fresh = (await repository.loadReceiptContext("receipt-retry"))!;
+    expect(fresh.existingVerification).toBeNull();
+    await repository.saveOcrEvaluation({
+      context: fresh, ocrResultId: "ocr-retry-2", verificationId: "verification-retry-2", extracted: extracted("BANK-RETRY"),
+      evaluation: { status: VerificationStatus.AUTOMATICALLY_VERIFIED, amountMatches: true, issues: [], requiresManualReview: false },
+    });
+    expect(await repository.discardFailedOcr("receipt-retry")).toBe(false);
+    expect((await prisma.paymentReceipt.findUnique({ where: { id: "receipt-retry" } }))?.status).toBe("PROCESSED");
+  });
+
   it("carga un comprobante adicional con compare-and-swap sobre el pago", async () => {
     await createPending("upload", "hash-original");
     const payment = (await repository.loadPaymentForReceipt("payment-upload"))!;

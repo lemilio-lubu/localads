@@ -1,12 +1,15 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AccountShell from "./account-shell";
 import ActionButton from "./components/action-button";
 import ModalShell from "./components/modal-shell";
+import { PaymentAccountView, paymentDestinationLabel } from "./components/payment-account-panel";
 import RechargeConfirmModal from "./recharge-confirm-modal";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
+import { usePaymentAccount } from "./lib/use-payment-account";
 import type { AccountType } from "./design-system/types";
 import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getRechargeContext, getMyPautas, type ActivationRequest, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
 import { formatAmount, formatPercent } from "./lib/format";
@@ -25,6 +28,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
   const mode = accountType === "prepago" ? "prepago" : "flex";
   const { clientId, accountId } = accountContext(mode);
   const isPrepaid = mode === "prepago";
+  const [paymentAccount, retryPaymentAccount] = usePaymentAccount(isPrepaid);
   const [pautas, setPautas] = useState<PautaResponse[]>([]);
   const [requests, setRequests] = useState<ActivationRequest[]>([]);
   const [context, setContext] = useState<RechargeContext | null>(null);
@@ -182,6 +186,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
               <strong>Total a pagar {formatAmount(breakdown.total)}</strong>
             </> : ratesFailed ? <span className={styles.ratesError}>No pudimos calcular el total. <button type="button" onClick={retry}>reintentar</button></span> : <strong>Calculando total…</strong>}
           </div>}
+          {isPrepaid && breakdown && <div className={styles.paymentCard}><PaymentAccountView state={paymentAccount} retry={retryPaymentAccount} amount={breakdown.total} /></div>}
           {isPrepaid && <button type="button" className={`${styles.uploadArea} ${receipt ? styles.hasReceipt : ""}`} onClick={() => fileInput.current?.click()}>
             <input ref={fileInput} type="file" accept="image/*,.pdf" onChange={selectReceipt} tabIndex={-1} />
             <Image src="/figma/attachment.svg" alt="" width={36} height={36} /><span>{receipt?.name ?? "adjuntar comprobante"}</span><small className={styles.uploadHint}>JPG, PNG o PDF · hasta 5 MB</small>
@@ -195,11 +200,12 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
             : !acceptedTerms ? "Acepta los términos y condiciones para continuar."
             : ""
           }</p>}
+          {!(isPrepaid && breakdown) && <Link className={styles.payLink} href={`/${accountType}/pagar`}>ver datos de pago</Link>}
           <p className={styles.formStatus} role="status" aria-live="polite">{loading ? "Cargando pautas…" : message}</p>
           {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <button type="button" onClick={retry}>reintentar</button></p>}
         </form>
 
-        <RechargeConfirmModal step={confirmStep} lines={lines} prepaid={isPrepaid} error={confirmError} onConfirm={() => void confirmRecharge()} onClose={() => { setConfirmStep(null); setConfirmError(""); }} />
+        <RechargeConfirmModal step={confirmStep} lines={lines} prepaid={isPrepaid} destination={paymentAccount.status === "ready" ? paymentDestinationLabel(paymentAccount.data.account) : null} payHref={`/${accountType}/pagar`} error={confirmError} onConfirm={() => void confirmRecharge()} onClose={() => { setConfirmStep(null); setConfirmError(""); }} />
         <ModalShell open={Boolean(activationPlatform)} labelledBy="activation-title" className={`${styles.activationModal} ${activationPlatform ? styles[activationPlatform.toLowerCase()] : ""}`} onClose={closeActivation}>
           {selectedPlatform && <form className={styles.activationPanel} onSubmit={submitActivation} aria-busy={submitting}>
             <header className={styles.activationHeading}>

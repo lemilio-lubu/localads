@@ -1,6 +1,6 @@
 /* Lo que el cliente necesita leer para entender en qué punto está su recarga.
    Aprobar no es acreditar: el saldo de cada plataforma y la factura llegan
-   cuando el equipo la acredita, y sin esta explicación un postpago aprobado
+   cuando el equipo la acredita, y sin esta explicación un pospago aprobado
    con saldo en cero parecía un error. */
 
 const platformNames: Record<string, string> = { META: "Meta", GOOGLE: "Google", TIKTOK: "TikTok" };
@@ -12,7 +12,7 @@ export function platformList(platforms: readonly string[]): string {
 
 export type ProgressStep = { label: string; reached: boolean };
 
-/* El postpago nace aprobado; el prepago pasa antes por la verificación del pago. */
+/* El pospago nace aprobado; el prepago pasa antes por la verificación del pago. */
 export function rechargeSteps(postpaid: boolean, rechargeStatus: string): ProgressStep[] | null {
   if (rechargeStatus === "REJECTED") return null;
   const labels = postpaid ? ["Aprobada", "Acreditando", "Completada"] : ["Pago en revisión", "Aprobada", "Acreditando", "Completada"];
@@ -33,7 +33,7 @@ export function rechargeMessage(rechargeStatus: string, platforms: string, hasIn
   }
 }
 
-/* La verificación es del pago, no de la recarga: el postpago ya puede estar
+/* La verificación es del pago, no de la recarga: el pospago ya puede estar
    acreditándose mientras se valida la transferencia. */
 export function paymentVerificationMessage(verificationStatus: string, postpaid: boolean): string {
   switch (verificationStatus) {

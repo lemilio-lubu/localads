@@ -1,0 +1,56 @@
+/* La cuenta de cobro. Tarjeta blanca con un borde fino: vive dentro de paneles y
+   modales grises (recargar, detalle de una recarga) y en gris se fundía con
+   ellos. Filas planas: es lo que el cliente lee con la app del banco en la otra
+   mano, así que manda la legibilidad sobre el adorno. */
+.card { display: grid; gap: var(--space-2); border-radius: var(--radius-menu); background: var(--color-surface-raised); box-shadow: inset 0 0 0 1px var(--color-border); padding: var(--space-3); color: var(--color-text); animation: card-in var(--duration-ui) var(--ease-out); }
+.header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-1) var(--space-2); }
+/* En una columna estrecha «copiar todo» baja debajo del título en vez de partirlo. */
+.header > div { flex: 1 1 220px; min-width: 0; }
+.header small, .reference small { color: var(--color-text-muted); font-size: var(--font-size-micro); font-weight: var(--font-weight-bold); letter-spacing: .06em; text-transform: uppercase; }
+.header h3 { margin: 0; color: var(--color-text); font-size: var(--font-size-title); line-height: 1.2; }
+.type { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+
+.fields { display: grid; margin: 0; }
+.row { display: grid; grid-template-columns: minmax(96px, 148px) minmax(0, 1fr); align-items: center; gap: var(--space-1); border-top: 1px solid var(--color-border); padding-block: var(--space-1); }
+.row dt { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+.row dd { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-1); margin: 0; }
+.row dd > span:first-child { min-width: 0; overflow-wrap: anywhere; color: var(--color-text); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; }
+
+/* Copiar es un icono: la palabra aparece solo al pulsar («copiado»), que es
+   cuando informa. Con el dedo el área llega a 40px por hitArea. */
+.copy, .copyAll { composes: hitArea from "../design-system/hit-area.module.css"; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); white-space: nowrap; cursor: pointer; transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
+.copy { min-width: var(--icon-size-md); min-height: var(--icon-size-md); padding: var(--space-half) var(--space-1); }
+.copyAll { background: var(--color-surface-muted); padding: var(--space-half) var(--space-1); }
+.copy[data-state="failed"], .copyAll[data-state="failed"] { color: var(--color-danger); }
+.copy:active, .copyAll:active { transform: scale(0.97); }
+.copy:focus-visible, .copyAll:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
+@media (hover: hover) and (pointer: fine) { .copy:hover, .copyAll:hover { background: var(--color-surface-hover); } }
+
+/* La referencia es lo único que el cliente tiene que escribir a mano en su
+   banco, así que va resaltada, pero en una sola fila: la etiqueta, el código y
+   su razón. La explicación larga vive en «cómo pagar». */
+.reference { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); border-radius: var(--radius-small); background: var(--color-brand-surface); padding: var(--space-1) var(--space-2); }
+.reference > div { display: flex; min-width: 0; flex-wrap: wrap; align-items: baseline; gap: var(--space-half) var(--space-2); }
+.reference strong { color: var(--color-brand); font-size: var(--font-size-card-title); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.reference span { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.referenceNote { margin: calc(var(--space-1) * -1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.4; }
+
+.optionalSummary { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+.note { color: var(--color-text); font-size: var(--font-size-body-sm); line-height: 1.4; }
+.updated { margin: 0; color: var(--color-text-subtle); font-size: var(--font-size-caption); }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; margin: 0; }
+
+/* Aparece con un fundido corto: sin desplazamiento, para no mover lo que hay debajo. */
+@keyframes card-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } .copy, .copyAll { transition: none; } .copy:active, .copyAll:active { transform: none; } }
+
+@media (max-width: 560px) {
+  .card { padding: var(--space-2); }
+  .row { grid-template-columns: 1fr; gap: 0; }
+}
+.compact { padding: var(--space-2); }
+.compact .header { flex-direction: column; align-items: flex-start; }
+.compact .header h3 { font-size: var(--font-size-card-title); }
+.compact .row { grid-template-columns: 1fr; gap: 0; }
+/* Vista previa del admin: sin botones, así que el valor no necesita separarse a la derecha. */
+.quiet .row dd { justify-content: flex-start; }

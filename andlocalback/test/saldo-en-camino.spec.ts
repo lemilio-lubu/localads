@@ -7,7 +7,7 @@ import { PrismaPhase7QueryRepository } from "../src/modules/recharges/infrastruc
 import { createTestDatabase } from "./support/postgres-test-database";
 
 /* «En camino» es lo aprobado que todavía no llegó a la plataforma: el cliente
-   postpago lo ve aprobado y el saldo sigue en cero hasta que el equipo lo
+   pospago lo ve aprobado y el saldo sigue en cero hasta que el equipo lo
    acredita. Lo ya acreditado ya está en currentBalance y no se suma dos veces. */
 describe("saldo en camino por pauta", () => {
   let testDatabase: Awaited<ReturnType<typeof createTestDatabase>>;

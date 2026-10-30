@@ -3,6 +3,7 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 import { Check, CircleCheck, LoaderCircle, SquareExclamationPoint } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { KeyboardEvent, PointerEvent, useEffect, useRef, useState } from "react";
 import ModalShell from "./components/modal-shell";
 import { formatAmount } from "./lib/format";
@@ -16,6 +17,10 @@ type Props = {
   step: "confirm" | "sending" | "done" | null;
   lines: readonly RechargeLine[];
   prepaid: boolean;
+  /* «Produbanco ••••5407»: a dónde debió ir la transferencia, para confirmarlo antes de enviar. */
+  destination?: string | null;
+  /* Dónde están los datos para pagar; solo se ofrece al pospago, que paga después. */
+  payHref?: string;
   error: string;
   onConfirm: () => void;
   onClose: () => void;
@@ -108,7 +113,7 @@ function SlideToConfirm({ disabled, sending, onConfirm }: { disabled: boolean; s
   );
 }
 
-export default function RechargeConfirmModal({ step, lines, prepaid, error, onConfirm, onClose }: Props) {
+export default function RechargeConfirmModal({ step, lines, prepaid, destination, payHref, error, onConfirm, onClose }: Props) {
   const sending = step === "sending";
   // Mientras la recarga viaja no se puede cerrar: quedaría sin saber si entró.
   const close = () => { if (!sending) onClose(); };
@@ -123,6 +128,7 @@ export default function RechargeConfirmModal({ step, lines, prepaid, error, onCo
               <ul className={styles.notes}>
                 <li><SquareExclamationPoint size={24} strokeWidth={1.75} aria-hidden="true" />Tu factura te llegará de manera automática al correo o la podrás encontrar en tus transacciones en máximo 3 horas.</li>
                 <li><SquareExclamationPoint size={24} strokeWidth={1.75} aria-hidden="true" />Tu dinero será agregado en máximo 5 horas.</li>
+                {!prepaid && payHref && <li><SquareExclamationPoint size={24} strokeWidth={1.75} aria-hidden="true" /><span>Paga antes del vencimiento. Los datos de la cuenta están en <Link href={payHref} className={styles.payLink}>cómo pagar</Link>.</span></li>}
               </ul>
             </div>
           </div>
@@ -136,6 +142,7 @@ export default function RechargeConfirmModal({ step, lines, prepaid, error, onCo
                   return <li key={platform}><span className={styles.logo}><Image src={logo.src} alt={platform === "TIKTOK" ? "TikTok" : platform === "META" ? "Meta" : "Google"} width={logo.width} height={logo.height} /></span><strong>{formatAmount(amount)}</strong></li>;
                 })}
               </ul>
+              {prepaid && destination && <p className={styles.destination}>Comprueba que transferiste a <strong>{destination}</strong>.</p>}
               <SlideToConfirm disabled={sending} sending={sending} onConfirm={onConfirm} />
               {error && <p className={styles.error} role="alert">{error}</p>}
             </div>

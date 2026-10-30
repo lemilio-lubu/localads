@@ -104,6 +104,7 @@
     gap: var(--space-3);
   }
   .withFooter { grid-template-rows: auto auto auto auto; grid-template-areas: "documents" "summary" "platforms" "footer"; }
+  .withPayment { grid-template-rows: auto auto auto auto; grid-template-areas: "documents" "pay" "summary" "platforms"; }
   /* Factura, transferencia y el botón de subirla no caben en fila a 320px:
      el botón baja a la línea siguiente en vez de salirse de la pantalla. */
   .documentActions { flex-wrap: wrap; justify-self: start; max-width: 100%; gap: var(--space-2); padding-right: 0; }
@@ -124,10 +125,17 @@
   .documentCircle { transition-duration: 0ms; }
 }
 
-/* Fase 3: cerrar el ciclo del pago postpago desde el propio detalle. */
-.uploadReceipt { display: grid; justify-items: center; gap: var(--space-half); text-align: center; }
+/* Fase 3: cerrar el ciclo del pago pospago desde el propio detalle. */
+/* La primera fila mide lo mismo que los círculos de factura y transferencia y el botón se centra en ella. Sin esto el botón se estiraba hasta la altura de toda la fila (≈70px) y pesaba más que los documentos que acompaña. */
+.uploadReceipt { display: grid; grid-template-rows: var(--icon-size-lg) auto; align-content: start; align-items: center; justify-items: center; gap: var(--space-1); text-align: center; }
 .uploadButton { composes: hitArea from "../design-system/hit-area.module.css"; border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: var(--space-1) var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
 .uploadButton:disabled { opacity: .7; cursor: progress; }
 .uploadButton:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .uploadReceipt small { color: var(--color-text-muted); font-size: var(--font-size-micro); }
 .uploadError { color: var(--color-danger); font-weight: var(--font-weight-bold); }
+
+/* Los datos para pagar van en la columna de la derecha, justo bajo el botón de
+   subir la transferencia: es donde el cliente actúa y la columna estaba vacía. */
+.withPayment { grid-template-rows: auto auto 1fr; grid-template-areas: "summary documents" "summary pay" "summary platforms"; }
+.payDetails { grid-area: pay; min-width: 0; align-self: start; }
+.paySummary { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }

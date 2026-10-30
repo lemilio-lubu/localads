@@ -28,6 +28,16 @@ export function daysUntil(value: string) {
   return Math.round((end.getTime() - start.getTime()) / 86_400_000);
 }
 
+/* El plazo es una cuenta atrás hasta el pago abierto más antiguo; sin deuda
+   abierta no hay nada que descontar y se muestra el plazo acordado. */
+export function remainingLabel(days: number) {
+  if (days > 1) return `${days} días`;
+  if (days === 1) return "1 día";
+  if (days === 0) return "vence hoy";
+  const late = Math.abs(days);
+  return `vencido hace ${late} ${late === 1 ? "día" : "días"}`;
+}
+
 /** El backend da la fecha; el texto en días es cálculo de presentación, no de negocio. */
 export function dueLabel(dueDate: string) {
   const days = daysUntil(dueDate);

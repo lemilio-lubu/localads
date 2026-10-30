@@ -20,6 +20,8 @@ export type AdminClientView = {
     creditLimit: number;
     platforms: AdvertisingPlatform[];
   };
+  /* Vencimiento del pago abierto más antiguo; null si no debe nada. */
+  nextDueDate: string | null;
   totalRecharged: number;
 };
 

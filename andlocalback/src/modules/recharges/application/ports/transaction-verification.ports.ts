@@ -42,6 +42,8 @@ export type DuplicatePaymentEvidence = Readonly<{
 
 export type ReceiptProcessingContext = Readonly<{
   transaction: Readonly<{ id: string; code: string; accountId: string; status: string; version: number }>;
+  /* Referencia estable del cliente (AND-…): el cliente puede ponerla en la transferencia en vez del código de la recarga. */
+  clientReference: string | null;
   payment: Readonly<{ id: string; transactionId: string; status: string; expectedAmount: number; version: number }>;
   receipt: TransactionReceiptSnapshot;
   existingVerification: TransactionVerificationView | null;
@@ -115,6 +117,14 @@ export interface TransactionVerificationPersistencePort {
     verificationId: string;
     failureReason: string;
   }>): Promise<TransactionVerificationView>;
+
+  /**
+   * Deshace una lectura que fallo para poder repetirla: borra la verificacion y
+   * el resultado vacio y devuelve el comprobante a LOADED. Solo lo hace si el
+   * fallo sigue sin resolver (verificacion en revision, comprobante FAILED y
+   * ninguna decision firmada); en cualquier otro caso devuelve false y no toca nada.
+   */
+  discardFailedOcr(receiptId: string): Promise<boolean>;
 
   /** Rechecks expected versions/states and commits verification, payment, transaction and all details. */
   approveAtomically(input: Readonly<{

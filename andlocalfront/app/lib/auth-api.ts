@@ -2,7 +2,8 @@
    separa es el alcance de los datos, que decide el backend.
    `mustChangePassword` viene del login: con una clave temporal sin cambiar, el
    backend responde PASSWORD_CHANGE_REQUIRED en todo lo demás. */
-export type AuthUser = { userId: string; username: string; role: "CLIENT" | "GESTOR" | "ADMIN"; clientId: string | null; accountId: string | null; accountType: "PREPAGO" | "POSTPAGO" | null; mustChangePassword?: boolean };
+/* `username` es la credencial (el correo de un cliente); `displayName` es lo que se muestra: su nombre o razón social, o el usuario del equipo. */
+export type AuthUser = { userId: string; username: string; displayName: string; role: "CLIENT" | "GESTOR" | "ADMIN"; clientId: string | null; accountId: string | null; accountType: "PREPAGO" | "POSTPAGO" | null; mustChangePassword?: boolean };
 type AuthResponse = { accessToken: string; expiresIn: number; user: AuthUser };
 
 const apiUrl = "/api/v1";

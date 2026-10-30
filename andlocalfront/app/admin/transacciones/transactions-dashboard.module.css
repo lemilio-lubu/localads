@@ -106,7 +106,7 @@
 /* A 400 o menos, cada cifra del resumen tiene un tercio del ancho y «US$
    3.109,23» a 20px no cabía: sobresalía y desplazaba la página. Baja un
    paso, como el valor de las tarjetas de Clientes. El nombre del cliente se
-   parte en vez de recortarse: en dos columnas no cabía ni «Migo Postpago». */
+   parte en vez de recortarse: en dos columnas no cabía ni «Migo Pospago». */
 @media (max-width: 400px) { .overview strong { font-size: var(--font-size-body); } }
 /* A 520 o menos, el resumen va en dos filas: recuento e inversión arriba,
    total facturable debajo a todo el ancho. En tres tercios, un total de siete

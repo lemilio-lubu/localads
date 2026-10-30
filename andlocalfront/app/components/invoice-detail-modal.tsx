@@ -7,6 +7,8 @@ import { resolveApiAssetUrl, uploadPaymentReceipt, type ClientTransactionDetail,
 import { formatAmountOr, formatDateTimeOr } from "../lib/format";
 import { paymentStatusLabel, rechargeStatusLabel, transactionDetailStatusLabel, verificationStatusLabel } from "../lib/status-labels";
 import ModalShell from "./modal-shell";
+import Disclosure from "./disclosure";
+import PaymentAccountPanel from "./payment-account-panel";
 import PlatformPill from "./platform-pill";
 import StatusPill from "./status-pill";
 import styles from "./invoice-detail-modal.module.css";
@@ -94,6 +96,7 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
   // tambien lo admite: el cliente puede regularizar con una nueva evidencia.
   const payment = transaction?.payment ?? null;
   const acceptsReceipt = allowReceiptUpload && Boolean(payment) && ["IN_CREDIT", "OVERDUE", "REJECTED", "PENDING"].includes(payment!.status);
+  const showPaymentData = acceptsReceipt;
   const postpaid = accountType ? accountType === "flex" : transaction?.accountTypeSnapshot === "POSTPAGO";
 
   async function sendReceipt(file: File | null | undefined) {
@@ -114,12 +117,12 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
   const forClient = audience === "client";
   const steps = transaction && forClient ? rechargeSteps(postpaid, transaction.rechargeStatus) : null;
   const progressMessage = transaction && forClient ? rechargeMessage(transaction.rechargeStatus, platformList(transaction.details.map((detail) => detail.platform)), Boolean(transaction.invoice?.documentUrl)) : "";
-  return <ModalShell open={Boolean(transaction)} labelledBy="invoice-detail-title" className={`${styles.modal} ${footer ? styles.withFooter : ""}`} onClose={onClose}>
+  return <ModalShell open={Boolean(transaction)} labelledBy="invoice-detail-title" className={`${styles.modal} ${footer ? styles.withFooter : ""} ${showPaymentData ? styles.withPayment : ""}`} onClose={onClose}>
     {transaction && <>
       <div className={styles.summary}>
         <h2 id="invoice-detail-title">Detalle de transacción</h2>
         {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
-        <div className={styles.accountLabel}><Image src="/figma/pay.svg" alt="" width={24} height={24} /><strong>{postpaid ? "postpago" : "prepago"}</strong></div>
+        <div className={styles.accountLabel}><Image src="/figma/pay.svg" alt="" width={24} height={24} /><strong>{postpaid ? "pospago" : "prepago"}</strong></div>
         <dl className={styles.transactionData}>
           <div><dt>Código</dt><dd><button type="button" className={styles.copyCode} data-state={copyState} title={transaction.code} onClick={(event) => void copyCode(transaction.code, event.currentTarget.querySelector("span"))}><span>{transaction.code}</span><small>{copyState === "done" ? "copiado" : copyState === "failed" ? "no se pudo" : "copiar"}</small></button></dd></div><div><dt>Fecha</dt><dd>{formatDateTimeOr(transaction.createdAt)}</dd></div>
           <div><dt>Estado de recarga</dt><dd><StatusPill tone={rechargeStatusTone(transaction.rechargeStatus)}>{rechargeStatusLabel(transaction.rechargeStatus)}</StatusPill></dd></div><div><dt>Estado de pago</dt><dd><StatusPill tone={paymentStatusTone(transaction.payment?.status)}>{paymentStatusLabel(transaction.payment?.status)}</StatusPill></dd></div>
@@ -149,6 +152,9 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
           {uploadError && <small role="alert" className={styles.uploadError}>{uploadError}</small>}
         </div>}
       </div>
+      {showPaymentData && payment && <Disclosure defaultOpen className={styles.payDetails} summaryClassName={styles.paySummary} summary="datos para pagar">
+        <PaymentAccountPanel amount={payment.expectedAmount} />
+      </Disclosure>}
       <div className={styles.platformGrid}>{transaction.details.map((detail) => <DetailCard key={detail.id} detail={detail} actions={detailActions?.(detail)} />)}</div>
       {footer && <div className={styles.footer}>{footer}</div>}
       <FileViewer file={viewing} onClose={() => setViewing(null)} />

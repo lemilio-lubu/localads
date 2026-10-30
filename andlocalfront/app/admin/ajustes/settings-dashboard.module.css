@@ -1,0 +1,29 @@
+.page { display: grid; width: 100%; gap: var(--space-4); }
+
+.intro { max-width: 68ch; margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body); line-height: 1.5; }
+/* Mismo ancho que la tarjeta que ve el gestor y que el historial: la pantalla se lee como una sola columna, no como un formulario pegado a un lado. */
+.form { min-width: 0; }
+/* Los dígitos con la letra del resto de campos y ancho fijo: Courier, además de ser el único campo distinto, se leía como texto de ejemplo. */
+.digits { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+/* Contacto: lo opcional un nivel por debajo, sin tarjeta propia. */
+.optional { display: grid; gap: var(--space-1); min-width: 0; border: 0; border-top: 1px solid var(--color-border); margin: var(--space-2) 0 0; padding: var(--space-2) 0 0; }
+.optional legend { padding: 0 var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+
+.success { margin: 0; color: var(--color-brand); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
+.confirm { display: grid; gap: var(--space-2); border-radius: var(--radius-small); background: var(--color-danger-surface); padding: var(--space-2); }
+.confirm p { display: flex; align-items: flex-start; gap: var(--space-1); margin: 0; color: var(--color-text); font-size: var(--font-size-body-sm); line-height: 1.4; }
+.confirm p svg { flex: none; margin-top: 2px; color: var(--color-danger); }
+.confirm > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.cancel { composes: hitArea from "../../design-system/hit-area.module.css"; border: 0; background: transparent; padding: var(--space-1); color: var(--color-text); font: inherit; font-weight: var(--font-weight-bold); cursor: pointer; }
+
+.history { display: grid; gap: var(--space-1); }
+.history h3 { margin: 0; color: var(--color-text); font-size: var(--font-size-card-title); }
+.history ol { display: grid; margin: 0; padding: 0; list-style: none; }
+.history li { display: grid; gap: var(--space-half); border-top: 1px solid var(--color-border); padding-block: var(--space-1); }
+.history li strong { color: var(--color-text); font-size: var(--font-size-body-sm); }
+.history li span, .empty { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.empty { margin: 0; }
+
+.skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 320px; }
+.message { margin: 0; border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-2) var(--space-3); color: var(--color-text); font-size: var(--font-size-body-sm); }
+.message button { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }

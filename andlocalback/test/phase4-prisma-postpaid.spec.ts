@@ -89,6 +89,10 @@ describe("persistencia POSTPAGO fase 4", () => {
     expect((await prisma.rechargeTransaction.findUnique({ where: { id: "transaction-first" } }))?.rechargeStatus).toBe("COMPLETED");
   });
 
+  it("el contexto cuenta los pagos vencidos de la cuenta", async () => {
+    expect((await postpaid.loadPostpaidContext(accountId)).account?.overduePayments).toBe(1);
+  });
+
   it("aprobar el comprobante POSTPAGO libera credito una vez sin regresar la recarga", async () => {
     await addReceiptAndVerification("first", "approve", "PROCESSED", new Date("2026-09-01T00:00:00.000Z"));
     const context = (await verification.loadVerificationContext("verification-approve"))!;

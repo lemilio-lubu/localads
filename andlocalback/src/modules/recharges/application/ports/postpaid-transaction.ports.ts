@@ -19,6 +19,8 @@ export type PostpaidRechargeContext = Readonly<{
     creditDays: number;
     creditLimit: MonetaryAmount;
     creditUsed: MonetaryAmount;
+    /* Pagos propios ya vencidos: mientras haya alguno no se concede más crédito. */
+    overduePayments: number;
   }> | null;
   pautas: readonly Pauta[];
 }>;

@@ -61,7 +61,7 @@ const verificationIssueLabels: Labels = {
   FECHA_FUERA_DE_RANGO: "La fecha está fuera del rango esperado",
   COMPROBANTE_DUPLICADO: "El comprobante ya fue utilizado",
   REFERENCIA_BANCARIA_DUPLICADA: "La referencia bancaria ya fue utilizada",
-  CODIGO_TRANSACCION_NO_ENCONTRADO: "El comprobante no menciona el código de la transacción",
+  CODIGO_TRANSACCION_NO_ENCONTRADO: "El comprobante no menciona la referencia de pago ni el código de la transacción",
 };
 
 export const rechargeStatusLabel = (value: string | null | undefined) => translate(value, rechargeLabels, "Sin estado");
@@ -70,4 +70,6 @@ export const paymentStatusLabel = (value: string | null | undefined) => translat
 export const verificationStatusLabel = (value: string | null | undefined) => translate(value, verificationLabels, "Sin verificación");
 export const invoiceStatusLabel = (value: string | null | undefined) => translate(value, invoiceLabels, "Sin factura");
 export const activationStatusLabel = (value: string | null | undefined) => translate(value, activationLabels, "Sin estado");
+/* El tipo de cuenta viaja como PREPAGO/POSTPAGO (valor interno del backend); a la pantalla llega como se escribe en español. */
+export const accountTypeLabel = (value: string | null | undefined) => (value === "POSTPAGO" ? "pospago" : "prepago");
 export const verificationIssueLabel = (value: string) => verificationIssueLabels[value] ?? "Requiere revisión manual";

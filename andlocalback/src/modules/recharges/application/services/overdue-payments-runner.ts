@@ -33,7 +33,7 @@ export class OverduePaymentsRunner implements OnModuleInit, OnModuleDestroy {
     try {
       const result = await this.markOverduePayments.execute();
       if (result.markedCount > 0) {
-        this.logger.log(`${result.markedCount} pago(s) postpago marcado(s) como vencido(s)`);
+        this.logger.log(`${result.markedCount} pago(s) pospago marcado(s) como vencido(s)`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

@@ -28,9 +28,15 @@ export class ProcessTransactionReceiptOcr {
 
   async execute(command: ProcessTransactionReceiptOcrCommand): Promise<TransactionVerificationView> {
     this.assertRequired(command.receiptId, "RECEIPT_REQUIRED", "El comprobante es obligatorio");
-    const context = await this.persistence.loadReceiptContext(command.receiptId);
+    let context = await this.persistence.loadReceiptContext(command.receiptId);
     if (!context) throw new ApplicationError("RECEIPT_NOT_FOUND", "El comprobante no existe", 404);
-    if (context.existingVerification) return context.existingVerification;
+    if (context.existingVerification) {
+      /* Una lectura fallida y sin resolver se puede repetir; cualquier otra
+         verificacion ya existente es el resultado y no se vuelve a calcular. */
+      if (!(await this.persistence.discardFailedOcr(command.receiptId))) return context.existingVerification;
+      context = await this.persistence.loadReceiptContext(command.receiptId);
+      if (!context) throw new ApplicationError("RECEIPT_NOT_FOUND", "El comprobante no existe", 404);
+    }
     if (context.payment.status !== "UNDER_REVIEW") {
       throw new ApplicationError("PAYMENT_NOT_UNDER_REVIEW", "El pago debe estar en revision", 409);
     }
@@ -66,6 +72,7 @@ export class ProcessTransactionReceiptOcr {
       receiptAlreadyConfirmed: duplicates.checksumUsed,
       bankReferenceAlreadyConfirmed: duplicates.transactionCodeUsed,
       transactionCode: context.transaction.code,
+      acceptedReferences: context.clientReference ? [context.clientReference] : [],
       evaluatedAt,
     });
 
@@ -116,7 +123,7 @@ export class ProcessTransactionReceiptOcr {
       [VerificationIssue.DATE_OUT_OF_RANGE]: "La fecha detectada requiere revisión",
       [VerificationIssue.DUPLICATE_RECEIPT]: "El comprobante podría estar duplicado",
       [VerificationIssue.DUPLICATE_BANK_REFERENCE]: "La referencia bancaria podría estar duplicada",
-      [VerificationIssue.TRANSACTION_CODE_NOT_FOUND]: "El comprobante no menciona el código de la transacción",
+      [VerificationIssue.TRANSACTION_CODE_NOT_FOUND]: "El comprobante no menciona la referencia de pago ni el código de la transacción",
     };
     return issues.map((issue) => labels[issue]).join(". ");
   }

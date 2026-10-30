@@ -5,7 +5,7 @@
 .summary { display: grid; grid-template-columns: minmax(var(--space-20), 1fr) minmax(0, 2.2fr); align-items: center; gap: var(--space-4); }
 .identity { min-width: 0; }
 /* inline-flex con gap: en un contenedor flex el espacio de «cliente » se
-   descartaba y se leía «clientepostpago». */
+   descartaba y se leía «clientepospago». */
 .accountBadge { display: inline-flex; align-items: center; gap: .3em; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
 /* overflow: hidden es para los puntos suspensivos de nombres largos. Con
    line-height 1 la caja medía justo la fuente y recortaba las letras que bajan

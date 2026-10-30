@@ -22,6 +22,8 @@ export type AdminClient = {
     creditLimit: number;
     platforms: AdminPlatform[];
   };
+  /* Vencimiento del pago abierto más antiguo; null si no debe nada. */
+  nextDueDate: string | null;
   totalRecharged: number;
 };
 

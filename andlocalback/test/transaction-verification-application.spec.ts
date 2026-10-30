@@ -29,6 +29,7 @@ function verification(overrides: Partial<TransactionVerificationView> = {}): Tra
 function receiptContext(existingVerification: TransactionVerificationView | null = null): ReceiptProcessingContext {
   return {
     transaction: { id: "transaction-1", code: "TX-a1b2c3d4-0000-4000-8000-000000000001", accountId: "account-1", status: "UNDER_REVIEW", version: 2 },
+    clientReference: "AND-3F9A1C7B",
     payment: { id: "payment-1", transactionId: "transaction-1", status: "UNDER_REVIEW", expectedAmount: 1058, version: 3 },
     receipt: {
       id: "receipt-1", paymentId: "payment-1", originalName: "transfer.png", mimeType: "image/png",
@@ -83,6 +84,12 @@ class MemoryVerificationPersistence implements TransactionVerificationPersistenc
     this.savedFailure = input;
     return verification({ id: input.verificationId, ocrResultId: input.ocrResultId, detectedAmount: null, amountMatches: null,
       issues: [VerificationIssue.OCR_FAILURE], status: VerificationStatus.UNDER_REVIEW });
+  }
+  discardResult = false;
+  discarded: string | null = null;
+  async discardFailedOcr(receiptId: string) {
+    this.discarded = receiptId;
+    return this.discardResult;
   }
   async approveAtomically(input: Parameters<TransactionVerificationPersistencePort["approveAtomically"]>[0]) {
     this.approved = input;
@@ -151,7 +158,7 @@ describe("ProcessTransactionReceiptOcr", () => {
 
     expect(result.status).toBe(VerificationStatus.UNDER_REVIEW);
     expect(persistence.savedEvaluation?.evaluation.issues).toEqual([VerificationIssue.TRANSACTION_CODE_NOT_FOUND]);
-    expect(realtime.publishVerification).toHaveBeenCalledWith(expect.objectContaining({ reason: "El comprobante no menciona el código de la transacción" }));
+    expect(realtime.publishVerification).toHaveBeenCalledWith(expect.objectContaining({ reason: "El comprobante no menciona la referencia de pago ni el código de la transacción" }));
   });
 
   it("envia a revision cuando checksum o codigo ya confirmaron otro pago", async () => {
@@ -198,6 +205,29 @@ describe("ProcessTransactionReceiptOcr", () => {
       .execute({ receiptId: "receipt-1" });
     expect(result).toBe(existing);
     expect(process).not.toHaveBeenCalled();
+    expect(persistence.discarded).toBe("receipt-1");
+  });
+
+  it("repite la lectura cuando la anterior fallo y sigue sin resolver", async () => {
+    const failed = verification({ id: "failed", status: VerificationStatus.UNDER_REVIEW, issues: [VerificationIssue.OCR_FAILURE] });
+    const persistence = new MemoryVerificationPersistence();
+    persistence.receipt = receiptContext(failed);
+    persistence.discardResult = true;
+    const discard = persistence.discardFailedOcr.bind(persistence);
+    persistence.discardFailedOcr = async (receiptId: string) => { persistence.receipt = receiptContext(null); return discard(receiptId); };
+    const process = vi.fn().mockResolvedValue({
+      originalText: "ok", confidence: 99, detectedAmounts: [MonetaryAmount.fromMajorUnits(1058)],
+      bank: "Banco", transactionDate: fixedDate, bankReference: "BANK-123", orderingParty: null,
+    });
+    const ids = ["ocr-retry", "verification-retry"];
+
+    const result = await new ProcessTransactionReceiptOcr(persistence, { process }, { generate: () => ids.shift()! }, undefined, () => fixedDate)
+      .execute({ receiptId: "receipt-1" });
+
+    expect(persistence.discarded).toBe("receipt-1");
+    expect(process).toHaveBeenCalledTimes(1);
+    expect(result.id).toBe("verification-retry");
+    expect(persistence.savedEvaluation).not.toBeNull();
   });
 });
 
