@@ -12,7 +12,7 @@ import ClientDetailModal from "./client-detail-modal";
 import ClientFormModal from "./client-form-modal";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import { getCurrentUser } from "../../lib/auth-api";
-import { formatAmount } from "../../lib/format";
+import { daysUntil, formatAmount, remainingLabel } from "../../lib/format";
 import styles from "./clients-dashboard.module.css";
 
 /* Los iconos son de lucide y no SVG de marca a propósito: pintan con
@@ -130,7 +130,7 @@ export default function ClientsDashboard() {
             <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="correo" valueSize="small">{client.email}</MetricCard>
-            <MetricCard label="plazo" valueSize="small">{client.account.type === "POSTPAGO" ? `${client.account.creditDays} días` : "no aplica"}</MetricCard>
+            <MetricCard label="plazo" valueSize="small" tone={client.nextDueDate && daysUntil(client.nextDueDate) < 0 ? "danger" : "default"}>{client.account.type !== "POSTPAGO" ? "no aplica" : client.nextDueDate ? remainingLabel(daysUntil(client.nextDueDate)) : `${client.account.creditDays} días`}</MetricCard>
             <MetricCard label="gestor" valueSize="small">{client.manager?.username ?? "sin asignar"}</MetricCard>
             <div className={styles.rowActions}>
               <button type="button" disabled={busyClientId === client.id} onClick={() => { setEditing(client); setFormOpen(true); }}><Pencil size={16} aria-hidden="true" />editar</button>
