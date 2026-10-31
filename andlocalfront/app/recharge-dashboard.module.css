@@ -6,7 +6,7 @@
 .summary strong { display: flex; justify-content: space-between; gap: var(--space-2); color: var(--color-text); font-size: var(--font-size-body); }
 .form { display: flex; flex-direction: column; align-items: center; }
 .fields { display: grid; width: 100%; gap: var(--space-1); }
-.platformField, .activationButton { display: grid; min-height: 58px; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: #fff; padding: 8px 16px; color: var(--color-text); }
+.platformField, .activationButton { display: grid; min-height: 58px; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--color-surface-raised); padding: 8px 16px; color: var(--color-text); }
 .platformField img, .activationButton img { object-fit: contain; }
 .platformField { grid-template-columns: 44px 12px minmax(0, 1fr) auto; cursor: text; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out); }
 .platformField:focus-within { border-color: rgb(11 89 1 / 34%); box-shadow: var(--focus-ring); }
@@ -14,14 +14,14 @@
 .platformField input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
 .platformField input::placeholder { color: var(--color-text-muted); opacity: 1; }
 .platformField input::-webkit-inner-spin-button, .platformField input::-webkit-outer-spin-button { appearance: none; }
-.meta { --activation-surface: var(--color-meta-strong); --activation-text: #fff; --activation-ink: var(--color-meta-strong); }
+.meta { --activation-surface: var(--color-meta-strong); --activation-text: var(--color-text-on-fill); --activation-ink: var(--color-meta-strong); }
 .google { --activation-surface: var(--color-google); --activation-text: var(--color-google-text); --activation-ink: var(--color-google-strong); }
-.tiktok { --activation-surface: var(--color-tiktok-strong); --activation-text: #fff; --activation-ink: var(--color-tiktok-strong); }
+.tiktok { --activation-surface: var(--color-tiktok-strong); --activation-text: var(--color-text-on-fill); --activation-ink: var(--color-tiktok-strong); }
 .activationButton { grid-template-columns: 44px 1fr; background: var(--activation-surface); color: var(--activation-text); cursor: pointer; font: inherit; font-size: var(--font-size-body-sm); font-weight: 700; text-align: left; transition: transform 160ms var(--ease-out), opacity 160ms ease; }
 .activationButton:disabled { cursor: default; opacity: .6; }
 .activationButton:not(:disabled):active, .uploadArea:active { transform: scale(.97); }
 .activationButton:focus-visible, .uploadArea:focus-visible { outline: 3px solid var(--color-text-muted); outline-offset: 4px; }
-.uploadArea { display: flex; width: 100%; min-height: 96px; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-card); background: #fff; color: var(--color-text-muted); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
+.uploadArea { display: flex; width: 100%; min-height: 96px; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-card); background: var(--color-surface-raised); color: var(--color-text-muted); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
 .uploadArea.hasReceipt { border-style: solid; border-color: rgb(11 89 1 / 30%); background: #fbfffb; color: var(--color-brand); }
 .uploadArea input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .uploadArea span { max-width: min(420px, 70vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

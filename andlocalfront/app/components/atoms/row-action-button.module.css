@@ -1,0 +1,12 @@
+.button { display: flex; align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-menu); background: var(--color-surface-muted); color: var(--color-text-muted); cursor: pointer; font-size: var(--font-size-caption); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.button:active { transform: scale(.97); }
+.button:disabled { opacity: .55; cursor: wait; }
+.button:focus-visible { outline: 3px solid rgb(11 89 1 / 14%); outline-offset: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .button:hover { background: var(--color-surface-hover); color: var(--color-text); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition-duration: 0ms; }
+}

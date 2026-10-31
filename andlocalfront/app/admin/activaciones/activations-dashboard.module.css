@@ -15,23 +15,20 @@
 .claim:focus-visible { border-radius: 4px; outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .holder { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
 .managerFilter { display: inline-flex; min-height: var(--hit-target); align-items: center; gap: var(--space-half); padding-inline: var(--space-2); font-size: var(--font-size-body-sm); }
-.search { display: flex; width: min(100%, 672px); height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); color: var(--color-text); }
-.search:focus-within { box-shadow: var(--focus-ring); }
-.search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); }
-.search input::placeholder { color: var(--color-text-muted); }
+.search { width: min(100%, 672px); }
 .listMeta { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 
 /* Patrón de lista: fila plana, la agrupa la separación de 32. Antes eran
    tarjetas con borde propio y una rejilla de tres datos. */
-.list { composes: list from "../../components/list-row.module.css"; }
+.list { composes: list from "../../components/atoms/list-row.module.css"; }
 /* Cliente, plataforma, cuenta externa, primera recarga, estado y, al final,
    las acciones en su propia columna, como en Clientes. */
-.row { composes: row from "../../components/list-row.module.css"; grid-template-columns: minmax(180px, 1.4fr) minmax(120px, .8fr) minmax(110px, .8fr) minmax(120px, .8fr) minmax(150px, 1fr) minmax(168px, auto); }
-.cell { composes: cell from "../../components/list-row.module.css"; }
+.row { composes: row from "../../components/atoms/list-row.module.css"; grid-template-columns: minmax(180px, 1.4fr) minmax(120px, .8fr) minmax(110px, .8fr) minmax(120px, .8fr) minmax(150px, 1fr) minmax(168px, auto); }
+.cell { composes: cell from "../../components/atoms/list-row.module.css"; }
 /* Segunda línea de cada celda (teléfono, tipo, cliente, nota, fecha): más
    pequeña y en gris, como en Transacciones. Sin ella todo pesaba igual que
    el dato principal y la fila se leía como un bloque. */
-.subtle { composes: subtle from "../../components/list-row.module.css"; }
+.subtle { composes: subtle from "../../components/atoms/list-row.module.css"; }
 .requester { color: var(--color-text); font-size: var(--font-size-body); }
 .amount { color: var(--color-brand); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; }
 .platformLine { display: flex; flex-wrap: wrap; gap: var(--space-half); }
@@ -42,7 +39,7 @@
 .actions { display: grid; align-self: center; align-content: center; gap: var(--space-1); }
 .actions button, .reject button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-3); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out); }
 .rejectButton { background: #fbecec !important; color: var(--color-danger) !important; }
-.approveButton, .dangerButton { color: #fff !important; }
+.approveButton, .dangerButton { color: var(--color-text-on-fill) !important; }
 .approveButton { background: var(--color-brand) !important; }
 .dangerButton { background: var(--color-danger) !important; }
 .actions button:disabled, .reject button:disabled { opacity: .45; cursor: not-allowed; }
@@ -62,10 +59,6 @@
 .message { display: grid; justify-items: center; gap: var(--space-1); border-radius: var(--radius-control); margin: 0; background: var(--color-surface-muted); padding: var(--space-5) var(--space-3); color: var(--color-text-muted); text-align: center; }
 .message p { margin: 0; max-width: 46ch; }
 .message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
-.errorMessage { background: var(--color-danger-surface); color: var(--color-danger); }
-.errorMessage strong { color: var(--color-danger); }
-.retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
-.retry:focus-visible { outline: 3px solid rgb(157 0 3 / 22%); outline-offset: 3px; }
 
 @media (hover: hover) and (pointer: fine) {
   .actions button:not(:disabled):hover, .reject button:not(:disabled):hover { background: var(--color-surface-hover); }
@@ -96,5 +89,5 @@
 /* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
    Solo en táctil: con ratón el campo conserva sus 13px. */
 @media (pointer: coarse) {
-  .search input, .reject textarea { font-size: var(--font-size-body); }
+  .reject textarea { font-size: var(--font-size-body); }
 }

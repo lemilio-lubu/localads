@@ -15,7 +15,7 @@
 .steps p { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-half); margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body); line-height: 1.5; }
 .steps b { color: var(--color-text); }
 .steps svg { color: var(--color-brand); }
-.done { display: flex; min-height: var(--button-height); align-items: center; justify-content: center; margin-left: auto; border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out); }
+.done { display: flex; min-height: var(--button-height); align-items: center; justify-content: center; margin-left: auto; border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out); }
 .dialogActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); margin-top: var(--space-3); }
 .dialogActions .done:first-child { border: 1px solid var(--color-border); background: var(--color-surface-raised); color: var(--color-text); }
 .dialogActions .done { margin-left: 0; }

@@ -2,9 +2,9 @@
 
 import { Banknote, CreditCard, Hash, IdCard, Landmark, Mail, Phone, UserRound } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import ActionButton from "../../components/action-button";
-import { FormError, FormField as Field, formStyles as form } from "../../components/form-modal";
-import PaymentAccountCard from "../../components/payment-account-card";
+import ActionButton from "../../components/atoms/action-button";
+import { FormError, FormField as Field, formStyles as form } from "../../components/molecules/form-modal";
+import PaymentAccountCard from "../../components/organisms/payment-account-card";
 import { getCurrentUser } from "../../lib/auth-api";
 import { formatDateTime } from "../../lib/format";
 import {

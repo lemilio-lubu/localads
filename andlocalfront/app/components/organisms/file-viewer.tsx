@@ -3,7 +3,6 @@
 import { Download, Maximize, RotateCw, X, ZoomIn, ZoomOut } from "lucide-react";
 import { PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { fetchAuthenticatedFile } from "../lib/auth-api";
 import styles from "./file-viewer.module.css";
 
 /* Visor de comprobantes y facturas dentro de la aplicación, en vez de una
@@ -15,6 +14,8 @@ import styles from "./file-viewer.module.css";
    position: fixed dentro de él quedaría anclado al modal, no a la ventana. */
 
 export type ViewerFile = { url: string; name: string };
+/* Cómo se obtiene el archivo lo decide quien lo abre (con sesión, por ejemplo): el visor solo lo muestra. */
+type LoadFile = (url: string) => Promise<Blob>;
 type View = { scale: number; x: number; y: number; rotation: number };
 
 const MIN_SCALE = 1;
@@ -22,12 +23,12 @@ const MAX_SCALE = 8;
 const STEP = 1.5;
 const FIT: View = { scale: 1, x: 0, y: 0, rotation: 0 };
 
-export default function FileViewer({ file, onClose }: { file: ViewerFile | null; onClose: () => void }) {
+export default function FileViewer({ file, loadFile, onClose }: { file: ViewerFile | null; loadFile: LoadFile; onClose: () => void }) {
   if (!file || typeof document === "undefined") return null;
-  return createPortal(<Viewer key={file.url} file={file} onClose={onClose} />, document.body);
+  return createPortal(<Viewer key={file.url} file={file} loadFile={loadFile} onClose={onClose} />, document.body);
 }
 
-function Viewer({ file, onClose }: { file: ViewerFile; onClose: () => void }) {
+function Viewer({ file, loadFile, onClose }: { file: ViewerFile; loadFile: LoadFile; onClose: () => void }) {
   const [blob, setBlob] = useState<{ url: string; type: string } | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -40,11 +41,13 @@ function Viewer({ file, onClose }: { file: ViewerFile; onClose: () => void }) {
   const gesture = useRef<{ distance: number; scale: number } | null>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; });
+  const loadFileRef = useRef(loadFile);
+  useEffect(() => { loadFileRef.current = loadFile; });
 
   useEffect(() => {
     let active = true;
     let objectUrl = "";
-    fetchAuthenticatedFile(file.url)
+    loadFileRef.current(file.url)
       .then((content) => { if (!active) return; objectUrl = URL.createObjectURL(content); setBlob({ url: objectUrl, type: content.type }); })
       .catch(() => { if (active) setError("No pudimos abrir el archivo."); });
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };

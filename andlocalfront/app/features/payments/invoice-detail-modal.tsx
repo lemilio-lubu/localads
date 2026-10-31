@@ -2,19 +2,20 @@
 
 import Image from "next/image";
 import { ReactNode, useRef, useState } from "react";
-import type { AccountType, AdvertisingPlatform } from "../design-system/types";
-import { resolveApiAssetUrl, uploadPaymentReceipt, type ClientTransactionDetail, type TransactionDetail } from "../lib/recharges-api";
-import { formatAmountOr, formatDateTimeOr } from "../lib/format";
-import { paymentStatusLabel, rechargeStatusLabel, transactionDetailStatusLabel, verificationStatusLabel } from "../lib/status-labels";
-import ModalShell from "./modal-shell";
-import Disclosure from "./disclosure";
+import type { AccountType, AdvertisingPlatform } from "../../design-system/types";
+import { resolveApiAssetUrl, uploadPaymentReceipt, type ClientTransactionDetail, type TransactionDetail } from "../../lib/recharges-api";
+import { fetchAuthenticatedFile } from "../../lib/auth-api";
+import { formatAmountOr, formatDateTimeOr } from "../../lib/format";
+import { paymentStatusLabel, rechargeStatusLabel, transactionDetailStatusLabel, verificationStatusLabel } from "../../lib/status-labels";
+import ModalShell from "../../components/organisms/modal-shell";
+import Disclosure from "../../components/molecules/disclosure";
 import PaymentAccountPanel from "./payment-account-panel";
-import PlatformPill from "./platform-pill";
-import StatusPill from "./status-pill";
+import PlatformPill from "../../components/atoms/platform-pill";
+import StatusPill from "../../components/atoms/status-pill";
 import styles from "./invoice-detail-modal.module.css";
-import FileViewer, { type ViewerFile } from "./file-viewer";
-import { paymentStatusTone, rechargeStatusTone, verificationStatusTone } from "../lib/status-tone";
-import { paymentVerificationMessage, pendingInvoiceLabel, platformList, rechargeMessage, rechargeSteps } from "../lib/transaction-progress";
+import FileViewer, { type ViewerFile } from "../../components/organisms/file-viewer";
+import { paymentStatusTone, rechargeStatusTone, verificationStatusTone } from "../../lib/status-tone";
+import { paymentVerificationMessage, pendingInvoiceLabel, platformList, rechargeMessage, rechargeSteps } from "../../lib/transaction-progress";
 
 /* El anillo dice si hay documento que abrir: verde si lo hay, gris si no.
    Antes cada documento tenía su color fijo -factura siempre gris, transferencia
@@ -157,7 +158,7 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
       </Disclosure>}
       <div className={styles.platformGrid}>{transaction.details.map((detail) => <DetailCard key={detail.id} detail={detail} actions={detailActions?.(detail)} />)}</div>
       {footer && <div className={styles.footer}>{footer}</div>}
-      <FileViewer file={viewing} onClose={() => setViewing(null)} />
+      <FileViewer file={viewing} loadFile={fetchAuthenticatedFile} onClose={() => setViewing(null)} />
     </>}
   </ModalShell>;
 }

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
-import { popoverExitTransition, popoverTransition } from "../design-system/motion";
+import { popoverExitTransition, popoverTransition } from "../../design-system/motion";
 import styles from "./profile-menu.module.css";
 
 /** `placement` decide hacia dónde abre el menú: al pie de una barra lateral

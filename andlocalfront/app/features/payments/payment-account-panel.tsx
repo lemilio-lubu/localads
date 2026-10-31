@@ -1,9 +1,9 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { maskedAccountNumber, paymentAccountText } from "../lib/payment-account-api";
-import { usePaymentAccount, type PaymentAccountState } from "../lib/use-payment-account";
-import PaymentAccountCard from "./payment-account-card";
+import { maskedAccountNumber, paymentAccountText } from "../../lib/payment-account-api";
+import { usePaymentAccount, type PaymentAccountState } from "../../lib/use-payment-account";
+import PaymentAccountCard from "../../components/organisms/payment-account-card";
 import styles from "./payment-account-panel.module.css";
 
 /* La cuenta de cobro con sus cuatro estados: cargando, error, sin configurar y

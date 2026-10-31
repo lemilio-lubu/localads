@@ -2,8 +2,8 @@
 
 import { Check, Copy } from "lucide-react";
 import { MouseEvent, ReactNode, useEffect, useState } from "react";
-import { formatAmount, formatDay } from "../lib/format";
-import Disclosure from "./disclosure";
+import { formatAmount, formatDay } from "../../lib/format";
+import Disclosure from "../molecules/disclosure";
 import styles from "./payment-account-card.module.css";
 
 type Account = { bankName: string; accountType: string; accountNumber: string; holderName: string; holderTaxId: string; email: string | null; phone: string | null; updatedAt?: string };

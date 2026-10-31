@@ -1,22 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { RotateCw } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import AccountShell from "./account-shell";
+import AssetCard from "./components/organisms/asset-card";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
-import type { AccountType } from "./design-system/types";
+import type { AccountType, AdvertisingPlatform } from "./design-system/types";
 import { accountContext, getMyWallet, getRechargeContext, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
-import { formatAmount, formatDay } from "./lib/format";
+import { formatAmount } from "./lib/format";
 import styles from "./assets-dashboard.module.css";
 
-const config: Record<RechargePlatform, { label: string; icon: string; card: string; iconClass: string }> = {
-  TIKTOK: { label: "TikTok", icon: "/figma/tiktok.svg", card: styles.tiktokCard, iconClass: styles.tiktokIcon },
-  META: { label: "Meta", icon: "/figma/meta.svg", card: styles.metaCard, iconClass: styles.metaIcon },
-  GOOGLE: { label: "Google", icon: "/figma/google.svg", card: styles.googleCard, iconClass: styles.googleIcon },
-};
+const platformKey: Record<RechargePlatform, AdvertisingPlatform> = { TIKTOK: "tiktok", META: "meta", GOOGLE: "google" };
 /* Alto de cada franja cuando hay una tarjeta abierta. */
 const STRIP = 40;
 /* La abierta no sube hasta el borde del mazo: la base arranca 24px más abajo y
@@ -30,17 +26,6 @@ const readMetrics = (element: HTMLElement) => {
   const read = (name: string, fallback: number) => parseFloat(computed.getPropertyValue(name)) || fallback;
   return { stride: read("--card-stride", 112), cardHeight: read("--card-height", 304) };
 };
-
-function AssetCard({ pauta, selected, position, layer, reduceMotion, onSelect }: { pauta: PautaResponse; selected: boolean; position: number; layer: number; reduceMotion: boolean | null; onSelect: () => void }) {
-  const item = config[pauta.platform];
-  return <motion.button type="button" className={`${styles.assetCard} ${styles.platformCard} ${item.card}`} data-selected={selected} aria-expanded={selected} aria-label={`Ver detalle de ${item.label}`} style={{ zIndex: layer }} initial={false} animate={{ transform: `translate3d(0, ${position}px, 0)` }} transition={reduceMotion ? { duration: 0 } : { duration: .22, ease: [.23, 1, .32, 1] }} onClick={onSelect}>
-    <span className={styles.cardContent}>
-      <span className={`${styles.assetIcon} ${item.iconClass}`}><Image src={item.icon} alt="" fill sizes="64px" /></span>
-      <span className={styles.lastRecharge}><small>última recarga</small><strong>{pauta.lastRechargeAt ? formatDay(pauta.lastRechargeAt) : "Sin recargas"}</strong></span>
-      <span className={styles.balance}><small>saldo en plataforma</small><strong>{formatAmount(pauta.currentBalance)}</strong>{pauta.pendingAmount > 0 && <small className={styles.pending}>+ {formatAmount(pauta.pendingAmount)} en camino</small>}</span>
-    </span>
-  </motion.button>;
-}
 
 export default function AssetsDashboard({ accountType }: { accountType: AccountType }) {
   const revision = usePlatformUpdates();
@@ -82,7 +67,7 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
   return <AccountShell accountType={accountType} activePage="assets"><>
     <section className={styles.assetDeck} ref={deckRef} style={{ "--card-count": Math.max(visible.length, 1), ...(totalTop === null ? {} : { "--total-top": `${totalTop}px` }) } as CSSProperties} data-has-selection={selected !== null} aria-label="Balance de activos publicitarios" aria-busy={loading}>
       <div className={styles.deckBase} aria-hidden="true" />
-      {visible.map((pauta, index) => <AssetCard key={pauta.id} pauta={pauta} selected={selected === pauta.id} position={positionFor(pauta, index)} layer={layerFor(pauta, index)} reduceMotion={reduceMotion} onSelect={() => setSelected((current) => current === pauta.id ? null : pauta.id)} />)}
+      {visible.map((pauta, index) => <AssetCard key={pauta.id} className={styles.deckSlot} platform={platformKey[pauta.platform]} balance={pauta.currentBalance} pending={pauta.pendingAmount} lastRechargeAt={pauta.lastRechargeAt} selected={selected === pauta.id} offsetY={positionFor(pauta, index)} layer={layerFor(pauta, index)} reduceMotion={reduceMotion} onSelect={() => setSelected((current) => current === pauta.id ? null : pauta.id)} />)}
       <article className={`${styles.assetCard} ${styles.totalCard}`}><span className={styles.cardContent}><span className={styles.totalBalance}><span>{loading ? "consultando balance…" : error ? "balance no disponible" : visible.length ? "saldo total en plataformas" : "sin pautas activas"}</span><strong>{error ? "—" : formatAmount(total)}</strong>{!error && pendingTotal > 0 && <small className={styles.pendingTotal}>+ {formatAmount(pendingTotal)} en camino</small>}</span><Link href={`/${accountType}`}>{visible.length ? "recarga ahora" : "activar pauta"}</Link>
         {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de <span>{formatAmount(credit.creditLimit)}</span> <span>· {credit.creditDays} días</span><small>{pendingTotal > 0 ? "Lo que está en camino se suma al saldo cuando lo acreditamos." : "El saldo de plataforma aumenta al completar una recarga."}</small></span>}
       </span></article>

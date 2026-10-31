@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import MetricCard from "../../components/metric-card";
-import ModalShell from "../../components/modal-shell";
-import PlatformPill from "../../components/platform-pill";
+import MetricCard from "../../components/molecules/metric-card";
+import ModalShell from "../../components/organisms/modal-shell";
+import PlatformPill from "../../components/atoms/platform-pill";
 import { daysUntil, formatAmount, formatDateTime, formatDay, remainingLabel } from "../../lib/format";
 import { paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
 import type { AdvertisingPlatform } from "../../design-system/types";

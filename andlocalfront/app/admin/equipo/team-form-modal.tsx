@@ -2,9 +2,9 @@
 
 import { AtSign, Briefcase, UserRound, KeyRound, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
-import ActionButton from "../../components/action-button";
-import { ChoiceCheck, FormError, FormField, FormHeader, FormSection, formStyles as form } from "../../components/form-modal";
-import ModalShell from "../../components/modal-shell";
+import ActionButton from "../../components/atoms/action-button";
+import { ChoiceCheck, FormError, FormField, FormHeader, FormSection, formStyles as form } from "../../components/molecules/form-modal";
+import ModalShell from "../../components/organisms/modal-shell";
 import { createTeamMember, type TeamMemberWithCredentials, type TeamRole } from "../../lib/team-api";
 import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-form-modal.module.css";

@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import ActionButton from "../../components/action-button";
-import ModalShell from "../../components/modal-shell";
+import ActionButton from "../../components/atoms/action-button";
+import ModalShell from "../../components/organisms/modal-shell";
 import type { TeamMember } from "../../lib/team-api";
 import styles from "./portfolio-handover-modal.module.css";
 

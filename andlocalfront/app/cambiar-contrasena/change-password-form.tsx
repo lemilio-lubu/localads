@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { FormEvent, useEffect, useState } from "react";
-import ActionButton from "../components/action-button";
-import BrandLogo from "../components/brand-logo";
+import ActionButton from "../components/atoms/action-button";
+import BrandLogo from "../components/atoms/brand-logo";
 import { enterTransition } from "../design-system/motion";
 import { changePassword, getCurrentUser, refreshSession } from "../lib/auth-api";
 import styles from "./change-password-form.module.css";

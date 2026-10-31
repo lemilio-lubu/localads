@@ -1,15 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, RotateCw, Search } from "lucide-react";
+
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import AccountShell from "./account-shell";
-import DateCell from "./components/date-cell";
-import InvoiceDetailModal from "./components/invoice-detail-modal";
-import PlatformPill from "./components/platform-pill";
-import StatusPill from "./components/status-pill";
+import DateCell from "./components/atoms/date-cell";
+import InvoiceDetailModal from "./features/payments/invoice-detail-modal";
+import PlatformPill from "./components/atoms/platform-pill";
+import StatusPill from "./components/atoms/status-pill";
 import type { AccountType, AdvertisingPlatform } from "./design-system/types";
 import { getAccessToken, refreshSession } from "./lib/auth-api";
 import { accountContext, getMyTransactionDetail, getMyTransactions, transactionsRealtimeUrl, type ClientTransactionDetail, type TransactionListItem } from "./lib/recharges-api";
@@ -19,6 +19,10 @@ import type { VerificationRealtimeEvent } from "./lib/transaction-realtime";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
 import styles from "./invoices-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "./lib/status-tone";
+import SearchField from "./components/molecules/search-field";
+import Pagination from "./components/molecules/pagination";
+import LoadError from "./components/molecules/load-error";
+import TextButton from "./components/atoms/text-button";
 
 const formatDate = formatDateTime;
 /** Traduce el fallo a algo accionable: el texto crudo del navegador no ayuda. */
@@ -137,7 +141,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
     <section className={styles.invoiceModule} aria-labelledby="transactions-heading">
       <h1 id="transactions-heading" className={styles.srOnly}>Mis transacciones</h1>
       <div className={styles.toolbar}>
-        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por código" /></label>
+        <SearchField value={query} onChange={changeQuery} placeholder="Buscar por código" placeholderTone="muted" />
         <div className={styles.filters}>
           {/* Un rango, no dos campos sueltos: el guion dice lo que decían «desde» y
               «hasta», que costaban 90px de los 117 que sobraban. Los nombres siguen
@@ -151,7 +155,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
         </div>
       </div>
       <div className={styles.listMeta}>
-        <span className={styles.metaRange}>{rangeLabel}{hasFilters && <button type="button" className={styles.clearFilters} onClick={clearFilters}>limpiar filtros</button>}</span>
+        <span className={styles.metaRange}>{rangeLabel}{hasFilters && <TextButton onClick={clearFilters}>limpiar filtros</TextButton>}</span>
         <span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span>
       </div>
       <div className={styles.invoiceList} aria-live="polite" aria-busy={loading || detailLoading}>
@@ -171,11 +175,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
           <button type="button" className={styles.detailsLink} aria-haspopup="dialog" disabled={detailLoading} onClick={() => void openDetail(item.id)}>ver detalles</button>
         </article>)}
         {loading && <p className={styles.emptyState}>Cargando transacciones…</p>}
-        {!loading && error && <div className={`${styles.emptyState} ${styles.errorState}`} role="alert">
-          <p><strong>No pudimos cargar tus recargas</strong></p>
-          <p>{error}</p>
-          <button type="button" className={styles.retry} onClick={() => setReloads((value) => value + 1)}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-        </div>}
+        {!loading && error && <LoadError title="No pudimos cargar tus recargas" message={error} frame="bare" text="neutral" onRetry={() => setReloads((value) => value + 1)} />}
         {!loading && !error && visible.length === 0 && (
           transactions.length === 0
             ? <div className={styles.emptyState}>
@@ -191,11 +191,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
         )}
       </div>
 
-      {pageInfo.totalPages > 1 && <nav className={styles.pagination} aria-label="Paginación de recargas">
-        <button type="button" disabled={pageNumber <= 1 || loading} onClick={() => setPageNumber((value) => Math.max(1, value - 1))}><ChevronLeft size={16} aria-hidden="true" />anterior</button>
-        <span aria-live="polite">página {pageNumber} de {pageInfo.totalPages}</span>
-        <button type="button" disabled={pageNumber >= pageInfo.totalPages || loading} onClick={() => setPageNumber((value) => Math.min(pageInfo.totalPages, value + 1))}>siguiente<ChevronRight size={16} aria-hidden="true" /></button>
-      </nav>}
+      <Pagination page={pageNumber} totalPages={pageInfo.totalPages} disabled={loading} label="Paginación de recargas" onChange={setPageNumber} />
     </section>
     <InvoiceDetailModal accountType={accountType} transaction={detail} onClose={() => setDetail(null)} onReceiptUploaded={() => { setDetail(null); setReloads((value) => value + 1); }} />
   </></AccountShell>;

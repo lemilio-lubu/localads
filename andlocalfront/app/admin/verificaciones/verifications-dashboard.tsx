@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { Check, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Layers, RotateCw, Search, ShieldAlert, UserMinus } from "lucide-react";
+import { Check, CircleAlert, ExternalLink, Layers, RotateCw, ShieldAlert, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
-import ToggleChip from "../../components/toggle-chip";
-import DateCell from "../../components/date-cell";
-import ModalShell from "../../components/modal-shell";
-import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
-import StatusPill from "../../components/status-pill";
+import ToggleChip from "../../components/atoms/toggle-chip";
+import DateCell from "../../components/atoms/date-cell";
+import ModalShell from "../../components/organisms/modal-shell";
+import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
+import StatusPill from "../../components/atoms/status-pill";
 import { authenticatedFetch, getAccessToken, getCurrentUser, openAuthenticatedFile, refreshSession } from "../../lib/auth-api";
 import {
   approveVerification,
@@ -21,13 +21,16 @@ import {
   type VerificationStatus,
 } from "../../lib/admin-recharges-api";
 import { formatAmount, formatClock, formatDateTime } from "../../lib/format";
-import { paymentDestinationLabel } from "../../components/payment-account-panel";
+import { paymentDestinationLabel } from "../../features/payments/payment-account-panel";
 import { usePaymentAccount } from "../../lib/use-payment-account";
 import { resolveApiAssetUrl, transactionsRealtimeUrl } from "../../lib/recharges-api";
 import { verificationIssueLabel, verificationStatusLabel } from "../../lib/status-labels";
 import type { VerificationRealtimeEvent } from "../../lib/transaction-realtime";
 import styles from "./verifications-dashboard.module.css";
 import { verificationStatusTone } from "../../lib/status-tone";
+import SearchField from "../../components/molecules/search-field";
+import Pagination from "../../components/molecules/pagination";
+import LoadError from "../../components/molecules/load-error";
 
 type VerificationFilter = "ALL" | "APPROVED" | "REVIEW";
 
@@ -247,7 +250,7 @@ export default function VerificationsDashboard() {
 
   return <div className={styles.module}>
     <header className={styles.toolbar}>
-      <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente, código o banco" /></label>
+      <SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente, código o banco" placeholderTone="muted" className={styles.search} />
       <div className={styles.filters}><div className={styles.filterGroup}><span>estado</span>
         <SegmentedFilter label="Estado de la verificación" options={scopeSegments} value={filter} onChange={selectFilter} />
       </div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
@@ -270,19 +273,11 @@ export default function VerificationsDashboard() {
         <button type="button" className={styles.reviewButton} aria-haspopup="dialog" disabled={busy} onClick={() => void open(item)}>revisar</button>
       </article>)}
       {loading && <><div className={styles.skeleton} /><div className={styles.skeleton} /></>}
-      {!loading && error && <div className={`${styles.message} ${styles.errorMessage}`} role="alert">
-        <p><strong>No se pudieron cargar las verificaciones</strong></p>
-        <p>{error}</p>
-        <button type="button" className={styles.retry} onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-      </div>}
+      {!loading && error && <LoadError title="No se pudieron cargar las verificaciones" message={error} frame="control" onRetry={retry} />}
       {!loading && !error && !items.length && <p className={styles.message}>No hay verificaciones para este filtro.</p>}
     </div>
 
-    {pageInfo.totalPages > 1 && <nav className={styles.pagination} aria-label="Paginación de verificaciones">
-      <button type="button" disabled={pageNumber <= 1 || loading} onClick={() => setPageNumber((value) => Math.max(1, value - 1))}><ChevronLeft size={16} aria-hidden="true" />anterior</button>
-      <span aria-live="polite">página {pageNumber} de {pageInfo.totalPages}</span>
-      <button type="button" disabled={pageNumber >= pageInfo.totalPages || loading} onClick={() => setPageNumber((value) => Math.min(pageInfo.totalPages, value + 1))}>siguiente<ChevronRight size={16} aria-hidden="true" /></button>
-    </nav>}
+    <Pagination page={pageNumber} totalPages={pageInfo.totalPages} disabled={loading} label="Paginación de verificaciones" onChange={setPageNumber} />
 
     <ModalShell open={Boolean(selected)} labelledBy="verification-title" onClose={() => setSelected(null)} className={styles.modal}>{selected && <>
       <header className={styles.modalHeader}><div><small>verificación de transferencia</small><h2 id="verification-title">{selected.item.clientName}</h2><p>{selected.item.transactionCode}</p></div><StatusPill tone={verificationStatusTone(selected.detail.status)}>{verificationStatusLabel(selected.detail.status)}</StatusPill></header>

@@ -1,9 +1,5 @@
 .module { width: min(100%, var(--layout-admin-content)); margin-top: var(--space-3); }
 .toolbar { display: grid; grid-template-columns: minmax(320px, 1fr) auto; align-items: center; gap: var(--space-4); }
-.search { display: flex; height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); }
-.search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: var(--font-size-body-sm); }
-.search input::placeholder { color: var(--color-text); }
-.search:focus-within { box-shadow: var(--focus-ring); }
 /* Etiqueta y control forman un grupo y wrappean juntos: sueltos, el «tipo de
    cuenta» se quedaba en una línea y su segmentado caía a la siguiente.
    8 de hueco + 8 de margen = 16 entre el texto y su control. */
@@ -26,7 +22,7 @@
 .listMeta span:last-child { color: var(--color-text-muted); }
 /* Lista plana, como Clientes: la fila no se dibuja en reposo y lo que agrupa
    es la separación, no un borde. La sombra aparece solo al pasar por encima. */
-.list { composes: list from "../../components/list-row.module.css"; }
+.list { composes: list from "../../components/atoms/list-row.module.css"; }
 /* Patrón de lista del producto, el mismo que «tus facturas» del portal de
    cliente: tarjeta de 112px con borde y sombra, y cada celda con su etiqueta
    siempre a la vista. Aquí se antepone la columna «cliente», que en el portal
@@ -34,8 +30,8 @@
 /* Alineadas arriba, no centradas: las celdas no miden lo mismo (la de cliente
    lleva una línea más) y centrarlas desalineaba las etiquetas, que es lo que
    hace legible una rejilla. Las piezas sin etiqueta sí se centran. */
-.row { composes: row from "../../components/list-row.module.css"; grid-template-columns: minmax(150px, 1.1fr) 150px minmax(160px, 1fr) 164px minmax(180px, 1fr) 104px 116px; }
-.cell { composes: cell from "../../components/list-row.module.css"; }
+.row { composes: row from "../../components/atoms/list-row.module.css"; grid-template-columns: minmax(150px, 1.1fr) 150px minmax(160px, 1fr) 164px minmax(180px, 1fr) 104px 116px; }
+.cell { composes: cell from "../../components/atoms/list-row.module.css"; }
 .clientName { color: var(--color-text); font-size: var(--font-size-body); }
 /* La etiqueta carga el tipo de cuenta con su icono y su color: ahorra la línea
    que lo repetía bajo el nombre y ata el código a la cuenta que lo generó.
@@ -72,10 +68,6 @@
 .message { border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-3); color: var(--color-text-muted); text-align: center; }
 .errorMessage { background: var(--color-danger-surface); color: var(--color-danger); }
 /* «N páginas» era un dato sin salida: ahora hay por dónde avanzar. */
-.pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.pagination button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out); }
-.pagination button:disabled { opacity: .45; cursor: not-allowed; }
-.pagination button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
 /* Barra de ejecución: dice en qué punto está la recarga y ofrece el paso que
    toca. Solo aparece cuando el backend aceptaría esa transición. */
 .executeBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); border-radius: var(--radius-control); margin-top: 0; background: var(--color-brand-surface); padding: var(--space-2) var(--space-3); }
@@ -84,13 +76,13 @@
 .executeDetail label { color: var(--color-text-muted); font-size: var(--font-size-micro); }
 .executeDetail input { width: 104px; height: var(--control-height-compact); border: 1px solid var(--color-border); border-radius: var(--radius-menu); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-1); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
 .executeDetail input:focus-visible { box-shadow: var(--focus-ring); }
-.executeDetail button { min-height: var(--control-height-compact); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding-inline: var(--space-2); color: #fff; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
+.executeDetail button { min-height: var(--control-height-compact); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding-inline: var(--space-2); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
 .executeDetail button:disabled { opacity: .5; cursor: not-allowed; }
 .executeDetail button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
 .auditFooter { display: flex; justify-content: space-between; gap: var(--space-2); margin: var(--space-3) 0 0; border-top: 1px solid var(--color-border); padding-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 /* La tarifa aplicada se dice al lado del importe: antes el ISD aparecía cobrado
    sin que nada explicara de dónde salía. */
-@media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .pagination button:not(:disabled):hover { background: var(--color-surface-hover); } .detailsButton:not(:disabled):hover { color: var(--color-brand); } }
+@media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .detailsButton:not(:disabled):hover { color: var(--color-brand); } }
 /* Escritorio medio: los mínimos fijos (150, 164, 180…) sumaban 1168px de fila
    y la columna de trabajo solo tiene 1096 a 1440, así que la fila se salía
    por la derecha hasta ~1520 y «ver detalles» quedaba cortado. Aquí los
@@ -120,10 +112,10 @@
    recortaba y el title que lo completa no aparece con el dedo. */
 @media (max-width: 520px), (pointer: coarse) { .cell > .clientName { overflow-wrap: anywhere; white-space: normal; } }
 @media (max-width: 520px) { .filters > span { flex-basis: 100%; } .auditFooter { flex-direction: column; } }
-@media (prefers-reduced-motion: reduce) { .row, .pagination button, .detailsButton { transition-duration: 0ms; } .detailsButton:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .row, .detailsButton { transition-duration: 0ms; } .detailsButton:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
 
 /* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
    Solo en táctil: con ratón el campo conserva sus 13px. */
 @media (pointer: coarse) {
-  .search input, .executeDetail input { font-size: var(--font-size-body); }
+  .executeDetail input { font-size: var(--font-size-body); }
 }

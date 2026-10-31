@@ -3,9 +3,9 @@
 import { AtSign, UserRound, KeyRound, Link2, Power, RotateCw, Save, Unlink, UserCog } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import MetricCard from "../../components/metric-card";
-import ModalShell from "../../components/modal-shell";
-import { FormError, FormField, SelectChevron, formStyles as form } from "../../components/form-modal";
+import MetricCard from "../../components/molecules/metric-card";
+import ModalShell from "../../components/organisms/modal-shell";
+import { FormError, FormField, SelectChevron, formStyles as form } from "../../components/molecules/form-modal";
 import { formatAmount, formatDateTime } from "../../lib/format";
 import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeamMember, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";

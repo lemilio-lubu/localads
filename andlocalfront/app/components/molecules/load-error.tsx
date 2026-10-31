@@ -1,0 +1,16 @@
+import { RotateCw } from "lucide-react";
+import styles from "./load-error.module.css";
+
+/* «No se pudo cargar X» con el motivo y «reintentar». Es un error, no un estado
+   vacío: va en rojo y siempre ofrece salida. `frame` conserva los tres marcos
+   que ya usaban los listados: tarjeta, control o sin marco (facturas).
+   `text` conserva cómo se veía el texto donde no salía en rojo: en clientes el
+   título quedaba gris y en facturas todo el texto, porque una regla de estado
+   vacío pisaba el color de error. Pendiente de decidir si pasan a rojo. */
+export default function LoadError({ title, message, frame = "card", text = "danger", onRetry }: { title: string; message: string; frame?: "card" | "control" | "bare"; text?: "danger" | "neutral-title" | "neutral"; onRetry: () => void }) {
+  return <div className={styles.error} data-frame={frame} data-text={text} role="alert">
+    <p><strong>{title}</strong></p>
+    <p>{message}</p>
+    <button type="button" className={styles.retry} onClick={onRetry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
+  </div>;
+}

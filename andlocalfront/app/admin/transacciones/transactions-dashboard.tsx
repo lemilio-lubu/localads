@@ -1,16 +1,16 @@
 "use client";
 
-import { CalendarClock, ChevronLeft, ChevronRight, Layers, Search, Wallet, UserMinus } from "lucide-react";
+import { CalendarClock, Layers, Wallet, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import ToggleChip from "../../components/toggle-chip";
-import DateCell from "../../components/date-cell";
-import InvoiceDetailModal from "../../components/invoice-detail-modal";
-import ActionButton from "../../components/action-button";
+import ToggleChip from "../../components/atoms/toggle-chip";
+import DateCell from "../../components/atoms/date-cell";
+import InvoiceDetailModal from "../../features/payments/invoice-detail-modal";
+import ActionButton from "../../components/atoms/action-button";
 import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
-import PlatformPill from "../../components/platform-pill";
-import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
-import StatusPill from "../../components/status-pill";
+import PlatformPill from "../../components/atoms/platform-pill";
+import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
+import StatusPill from "../../components/atoms/status-pill";
 import type { AdvertisingPlatform } from "../../design-system/types";
 import { completeTransaction, completeTransactionDetail, getAdminTransactionDetail, getAdminTransactionsPage, resumeTransactionDetail, startTransactionRecharge, type AdminTransactionDetail } from "../../lib/admin-recharges-api";
 import type { TransactionListItem } from "../../lib/recharges-api";
@@ -18,6 +18,8 @@ import { dueLabel, formatAmount, formatClock } from "../../lib/format";
 import { accountTypeLabel, invoiceStatusLabel, paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
 import styles from "./transactions-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "../../lib/status-tone";
+import SearchField from "../../components/molecules/search-field";
+import Pagination from "../../components/molecules/pagination";
 
 const PAGE_SIZE = 20;
 
@@ -122,7 +124,7 @@ export default function TransactionsDashboard() {
   async function open(id: string) { setDetailLoading(true); setError(""); setResumeError(""); try { setSelected(await getAdminTransactionDetail(id)); } catch (reason) { setError(reason instanceof Error ? reason.message : "No fue posible cargar el detalle"); } finally { setDetailLoading(false); } }
 
   return <div className={styles.module}>
-    <div className={styles.toolbar}><label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente o código" /></label><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div></div>
+    <div className={styles.toolbar}><SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente o código" placeholderTone="strong" /><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div></div>
     <div className={styles.overview}><div><small>transacciones</small><strong>{pageInfo.totalItems}</strong></div><div><small>inversión en pauta</small><strong>{formatAmount(pageInfo.totals.pautaAmount)}</strong></div><div><small>total facturable</small><strong>{formatAmount(pageInfo.totals.totalAmount)}</strong></div></div>
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>
@@ -146,11 +148,7 @@ export default function TransactionsDashboard() {
       {!loading && !error && !transactions.length && <p className={styles.message}>No hay transacciones para los filtros seleccionados.</p>}
     </div>
 
-    {pageInfo.totalPages > 1 && <nav className={styles.pagination} aria-label="Paginación de transacciones">
-      <button type="button" disabled={pageNumber <= 1 || loading} onClick={() => setPageNumber((value) => Math.max(1, value - 1))}><ChevronLeft size={16} aria-hidden="true" />anterior</button>
-      <span aria-live="polite">página {pageNumber} de {pageInfo.totalPages}</span>
-      <button type="button" disabled={pageNumber >= pageInfo.totalPages || loading} onClick={() => setPageNumber((value) => Math.min(pageInfo.totalPages, value + 1))}>siguiente<ChevronRight size={16} aria-hidden="true" /></button>
-    </nav>}
+    <Pagination page={pageNumber} totalPages={pageInfo.totalPages} disabled={loading} label="Paginación de transacciones" onChange={setPageNumber} />
 
     {/* El mismo detalle que ve el cliente en «tus facturas». Lo que solo hace
         el equipo -ejecutar la recarga- va dentro de cada tarjeta y en el pie. */}

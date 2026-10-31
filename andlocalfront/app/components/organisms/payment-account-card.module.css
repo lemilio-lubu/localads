@@ -18,7 +18,7 @@
 
 /* Copiar es un icono: la palabra aparece solo al pulsar («copiado»), que es
    cuando informa. Con el dedo el área llega a 40px por hitArea. */
-.copy, .copyAll { composes: hitArea from "../design-system/hit-area.module.css"; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); white-space: nowrap; cursor: pointer; transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
+.copy, .copyAll { composes: hitArea from "../../design-system/hit-area.module.css"; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); white-space: nowrap; cursor: pointer; transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
 .copy { min-width: var(--icon-size-md); min-height: var(--icon-size-md); padding: var(--space-half) var(--space-1); }
 .copyAll { background: var(--color-surface-muted); padding: var(--space-half) var(--space-1); }
 .copy[data-state="failed"], .copyAll[data-state="failed"] { color: var(--color-danger); }

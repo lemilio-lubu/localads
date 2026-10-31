@@ -1,4 +1,4 @@
-import { formatClock, formatDay } from "../lib/format";
+import { formatClock, formatDay } from "../../lib/format";
 import styles from "./list-row.module.css";
 
 /**

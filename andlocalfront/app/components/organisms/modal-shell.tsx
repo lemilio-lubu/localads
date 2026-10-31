@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ReactNode, useEffect, useRef } from "react";
-import { backdropEnterTransition, backdropExitTransition, modalEnterTransition, modalExitTransition } from "../design-system/motion";
+import { backdropEnterTransition, backdropExitTransition, modalEnterTransition, modalExitTransition } from "../../design-system/motion";
 import styles from "./modal-shell.module.css";
 
 type ModalShellProps = {

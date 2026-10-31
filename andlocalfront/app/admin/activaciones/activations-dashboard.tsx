@@ -1,10 +1,10 @@
 "use client";
 
-import { Check, RotateCw, Search, X, UserMinus } from "lucide-react";
+import { Check, X, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import ToggleChip from "../../components/toggle-chip";
-import PlatformPill from "../../components/platform-pill";
-import StatusPill from "../../components/status-pill";
+import ToggleChip from "../../components/atoms/toggle-chip";
+import PlatformPill from "../../components/atoms/platform-pill";
+import StatusPill from "../../components/atoms/status-pill";
 import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import type { AdvertisingPlatform } from "../../design-system/types";
@@ -14,6 +14,8 @@ import { activationStatusLabel } from "../../lib/status-labels";
 import type { ActivationRequest } from "../../lib/recharges-api";
 import styles from "./activations-dashboard.module.css";
 import { activationStatusTone } from "../../lib/status-tone";
+import SearchField from "../../components/molecules/search-field";
+import LoadError from "../../components/molecules/load-error";
 
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
@@ -66,7 +68,7 @@ export default function ActivationsDashboard() {
 
   return <div className={styles.module}>
     <header className={styles.toolbar}>
-      <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por cliente, RUC, solicitante o ID externo" /></label>
+      <SearchField value={query} onChange={setQuery} placeholder="Buscar por cliente, RUC, solicitante o ID externo" placeholderTone="muted" className={styles.search} />
       <div className={styles.filters}>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
     </header>
 
@@ -105,11 +107,7 @@ export default function ActivationsDashboard() {
       </article>)}
 
       {loading && <><div className={styles.skeleton} aria-hidden="true" /><div className={styles.skeleton} aria-hidden="true" /></>}
-      {!loading && error && <div className={`${styles.message} ${styles.errorMessage}`} role="alert">
-        <p><strong>No se pudieron cargar las solicitudes</strong></p>
-        <p>{error}</p>
-        <button type="button" className={styles.retry} onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-      </div>}
+      {!loading && error && <LoadError title="No se pudieron cargar las solicitudes" message={error} frame="control" onRetry={retry} />}
       {!loading && !error && !visible.length && (
         items.length === 0
           ? <p className={styles.message}>No hay solicitudes de activación pendientes.</p>

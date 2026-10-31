@@ -1,6 +1,6 @@
 /* Solo lo propio del formulario de cliente: crédito, plataformas y acceso al
    portal. Cabecera, secciones, campos, tarjetas de elección y pie vienen de
-   components/form-modal, que comparte con el formulario de equipo. */
+   components/molecules/form-modal, que comparte con el formulario de equipo. */
 /* Mismo lenguaje que el detalle de cliente: modal blanco y paneles grises en
    dos columnas. Identidad a la izquierda, cuenta a la derecha; plataformas y,
    al editar, acceso al portal debajo a todo el ancho (las tres tarjetas de

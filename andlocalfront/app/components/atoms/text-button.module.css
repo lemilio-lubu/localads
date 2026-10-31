@@ -1,0 +1,2 @@
+.button { composes: hitArea from "../../design-system/hit-area.module.css"; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
+.button:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }

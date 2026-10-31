@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { AdvertisingPlatform } from "../design-system/types";
+import type { AdvertisingPlatform } from "../../design-system/types";
 import styles from "./platform-pill.module.css";
 
 type PlatformPillProps = {

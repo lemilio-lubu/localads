@@ -1,6 +1,6 @@
 import styles from "./status-pill.module.css";
 
-import type { StatusTone } from "../lib/status-tone";
+import type { StatusTone } from "../../lib/status-tone";
 
 type StatusPillProps = {
   children: string;

@@ -5,10 +5,6 @@
    cabían junto al buscador: «plataforma» caía a una segunda línea y el
    buscador quedaba flotando entre las dos. */
 .toolbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
-.search { display: flex; height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); color: var(--color-text); }
-.search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); }
-.search input::placeholder { color: var(--color-text-muted); }
-.search:focus-within { box-shadow: var(--focus-ring); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: var(--space-2) var(--space-4); }
 .filterGroup { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: var(--space-1); border: 0; margin: 0; padding: 0; }
 .filterGroup legend { float: left; margin-right: var(--space-1); padding: 0; color: var(--color-text); font-size: var(--font-size-body-sm); }
@@ -26,22 +22,12 @@
 /* La salida está siempre que haya filtro, no solo cuando no devuelve nada:
    con resultados había que recordar qué se activó para deshacerlo. */
 .metaRange { display: inline-flex; align-items: baseline; gap: var(--space-2); }
-.clearFilters { composes: hitArea from "./design-system/hit-area.module.css"; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
-.clearFilters:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
-.pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.pagination button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-half); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
-.pagination button:disabled { opacity: .45; cursor: not-allowed; }
-.pagination button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
-.errorState { background: var(--color-danger-surface); color: var(--color-danger); }
-.errorState strong { color: var(--color-danger); }
-.retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
-.retry:focus-visible { outline: 3px solid rgb(157 0 3 / 22%); outline-offset: 3px; }
 /* Sin seleccion, todas valen igual. Con una activa, el resto se atenua
    para que el filtro aplicado se lea de un vistazo. */
 .platformFilter:focus-visible, .detailsLink:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
-.invoiceList { composes: list from "./components/list-row.module.css"; padding-top: var(--space-3); }
-.invoiceRow { composes: row from "./components/list-row.module.css"; grid-template-columns: 100px minmax(140px, 1fr) 148px 168px 104px 80px; }
-.cell { composes: cell from "./components/list-row.module.css"; }
+.invoiceList { composes: list from "./components/atoms/list-row.module.css"; padding-top: var(--space-3); }
+.invoiceRow { composes: row from "./components/atoms/list-row.module.css"; grid-template-columns: 100px minmax(140px, 1fr) 148px 168px 104px 80px; }
+.cell { composes: cell from "./components/atoms/list-row.module.css"; }
 .cell span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .codeCell strong { display: flex; align-items: center; color: var(--color-brand); }
 .codeCell strong img { width: var(--icon-size-xs); height: var(--icon-size-xs); margin-right: var(--space-1); transform: rotate(180deg); }
@@ -62,7 +48,6 @@
 
 @media (hover: hover) and (pointer: fine) {
   .filterGroup input[type="date"]:hover { box-shadow: 0 0 0 2px rgb(67 67 67 / 8%); }
-  .pagination button:not(:disabled):hover { background: var(--color-surface-hover); }
   .detailsLink:hover { color: var(--color-brand); }
   .platformFilter:hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 9%); }
 }
@@ -108,11 +93,11 @@
 .copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
 @media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } }
 
-.emptyAction { display: inline-grid; min-height: var(--button-height); align-content: center; margin-top: var(--space-1); border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: none; cursor: pointer; }
+.emptyAction { display: inline-grid; min-height: var(--button-height); align-content: center; margin-top: var(--space-1); border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: none; cursor: pointer; }
 .emptyAction:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 
 /* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
    Solo en táctil: con ratón el campo conserva sus 13px. */
 @media (pointer: coarse) {
-  .search input, .filterGroup input[type="date"] { font-size: var(--font-size-body); }
+  .filterGroup input[type="date"] { font-size: var(--font-size-body); }
 }

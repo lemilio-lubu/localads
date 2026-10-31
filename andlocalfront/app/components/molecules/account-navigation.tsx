@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { AccountPage, AccountType } from "../design-system/types";
+import type { AccountPage, AccountType } from "../../design-system/types";
 import styles from "./account-navigation.module.css";
 
 type AccountNavigationProps = {
