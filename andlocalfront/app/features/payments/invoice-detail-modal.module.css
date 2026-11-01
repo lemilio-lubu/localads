@@ -27,6 +27,11 @@
     "summary footer";
 }
 .footer { grid-area: footer; align-self: start; min-width: 0; }
+/* Los datos para pagar van en la columna de la derecha, justo bajo el botón de
+   subir la transferencia: es donde el cliente actúa y la columna estaba vacía.
+   Va antes de los media queries: al final del archivo pisaba la versión de una
+   columna y en móvil la tarjeta de pago tapaba el resumen. */
+.withPayment { grid-template-rows: auto auto 1fr; grid-template-areas: "summary documents" "summary pay" "summary platforms"; }
 .withFooter .platformGrid { align-self: start; }
 .subtitle { margin: calc(var(--space-1) * -1) 0 var(--space-2); color: var(--color-text); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); }
 /* Acciones del equipo dentro de la tarjeta de cada plataforma. */
@@ -134,8 +139,5 @@
 .uploadReceipt small { color: var(--color-text-muted); font-size: var(--font-size-micro); }
 .uploadError { color: var(--color-danger); font-weight: var(--font-weight-bold); }
 
-/* Los datos para pagar van en la columna de la derecha, justo bajo el botón de
-   subir la transferencia: es donde el cliente actúa y la columna estaba vacía. */
-.withPayment { grid-template-rows: auto auto 1fr; grid-template-areas: "summary documents" "summary pay" "summary platforms"; }
 .payDetails { grid-area: pay; min-width: 0; align-self: start; }
 .paySummary { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
