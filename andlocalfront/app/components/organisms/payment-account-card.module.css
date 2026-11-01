@@ -2,7 +2,8 @@
    modales grises (recargar, detalle de una recarga) y en gris se fundía con
    ellos. Filas planas: es lo que el cliente lee con la app del banco en la otra
    mano, así que manda la legibilidad sobre el adorno. */
-.card { display: grid; gap: var(--space-2); border-radius: var(--radius-menu); background: var(--color-surface-raised); box-shadow: inset 0 0 0 1px var(--color-border); padding: var(--space-3); color: var(--color-text); animation: card-in var(--duration-ui) var(--ease-out); }
+/* Mismo radio que las tarjetas hermanas (la de plataforma del detalle de factura): con 13px el salto se notaba. */
+.card { display: grid; gap: var(--space-2); border-radius: var(--radius-card); background: var(--color-surface-raised); box-shadow: inset 0 0 0 1px var(--color-border); padding: var(--space-3); color: var(--color-text); animation: card-in var(--duration-ui) var(--ease-out); }
 .header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-1) var(--space-2); }
 /* En una columna estrecha «copiar todo» baja debajo del título en vez de partirlo. */
 .header > div { flex: 1 1 220px; min-width: 0; }
