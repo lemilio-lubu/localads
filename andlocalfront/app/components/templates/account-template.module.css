@@ -36,6 +36,13 @@
   .navFooter { position: absolute; top: var(--space-4); right: var(--space-3); display: flex; height: var(--layout-header-height); align-items: center; margin-top: 0; border-top: 0; padding-top: 0; }
   /* Arriba de la página el menú no puede subir: abre hacia abajo. */
   .pageShell .navFooter [role="menu"] { top: calc(100% + var(--space-1)); right: 0; bottom: auto; left: auto; transform-origin: top right; }
+  /* Apilado, un contenido corto (el mazo de activos) quedaba pegado a la
+     navegación con toda la pantalla vacía debajo: la página que lo pide lo
+     centra en el alto que sobra. Si no cabe, crece y se desplaza como siempre.
+     Sin gap: el de la rejilla de escritorio (48) se sumaba arriba y descentraba. */
+  .pageShell[data-content-align="center"] { display: flex; flex-direction: column; }
+  .pageShell[data-content-align="center"] .workspace { display: flex; flex: 1; flex-direction: column; align-items: stretch; gap: 0; width: 100%; }
+  .pageShell[data-content-align="center"] .content { display: flex; flex: 1; flex-direction: column; justify-content: center; }
 }
 
 @media (max-width: 480px) {

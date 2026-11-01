@@ -170,6 +170,16 @@
   --shadow-card: 0 8px 24px rgb(42 54 39 / 6%);
   --shadow-popover: 0 16px 40px rgb(0 0 0 / 10%);
   --shadow-modal: 0 24px 64px rgb(42 54 39 / 16%);
+  /* Mazo de activos. Las tarjetas se apilan y cada una proyecta hacia arriba
+     sobre la de atrás: un filo corto y nítido más una caída con spread
+     negativo, que se queda pegada al borde en vez de ensuciar la tarjeta de
+     detrás (antes 16px al 22 %, que en el amarillo de Google se veía marrón).
+     El brillo interior marca el canto superior como en un naipe. */
+  --shadow-deck-card: inset 0 1px 0 rgb(255 255 255 / 14%), 0 -1px 2px rgb(0 0 0 / 10%), 0 -6px 12px -6px rgb(0 0 0 / 24%);
+  /* La del total va encima de todas: algo más marcada, no el 45 % de antes. */
+  --shadow-deck-total: inset 0 1px 0 rgb(255 255 255 / 10%), 0 -2px 4px rgb(0 0 0 / 14%), 0 -10px 20px -8px rgb(0 0 0 / 32%);
+  /* La base del mazo: sombra baja y corta, sin el halo que asomaba por las esquinas. */
+  --shadow-deck-base: 0 6px 16px -4px rgb(0 0 0 / 22%);
   --focus-ring: 0 0 0 4px rgb(11 89 1 / 10%);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --duration-fast: 140ms;

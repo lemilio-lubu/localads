@@ -1,13 +1,14 @@
 /* Forma y aspecto de la tarjeta. La posición dentro del mazo (absolute, top,
    left, right y ancho) la pone el mazo con su className: aquí no se fija nada
    de eso, para no depender del orden en que se cargan las hojas. */
-.card { display: block; height: 304px; overflow: hidden; border: 0; border-radius: var(--radius-card); padding: 0; color: inherit; font: inherit; text-align: left; box-shadow: 0 -8px 16px rgb(0 0 0 / 22%); isolation: isolate; cursor: pointer; transition: box-shadow var(--duration-fast) ease; will-change: transform; }
+/* El alto lo marca el mazo con --card-height (304, y 208 en móvil); sin mazo, 304. */
+.card { display: block; height: var(--card-height, 304px); overflow: hidden; border: 0; border-radius: var(--radius-card); padding: 0; color: inherit; font: inherit; text-align: left; box-shadow: var(--shadow-deck-card); isolation: isolate; cursor: pointer; transition: box-shadow var(--duration-fast) ease; will-change: transform; }
 .tiktokCard { background: var(--color-tiktok-strong); }
 .metaCard { background: var(--color-meta-strong); }
 .googleCard { background: var(--color-google); }
 .googleCard .balance, .googleCard .lastRecharge { color: var(--color-google-text); }
 .card:focus-visible { outline: 4px solid rgb(255 255 255 / 72%); outline-offset: -6px; }
-.card:not([data-selected="true"]):active { box-shadow: 0 -8px 16px rgb(0 0 0 / 22%), inset 0 0 0 3px rgb(255 255 255 / 38%); }
+.card:not([data-selected="true"]):active { box-shadow: var(--shadow-deck-card), inset 0 0 0 3px rgb(255 255 255 / 38%); }
 /* Abierta: sin sombra; las demás la recortan por abajo. */
 .card[data-selected="true"] { box-shadow: none; }
 .content { display: block; height: 100%; }
@@ -28,7 +29,7 @@
 .card[data-selected="true"] .balance { top: auto; right: auto; bottom: var(--space-5); left: var(--space-6); }
 
 @media (hover: hover) and (pointer: fine) {
-  .card:not([data-selected="true"]):hover { box-shadow: 0 -8px 16px rgb(0 0 0 / 22%), inset 0 0 0 2px rgb(255 255 255 / 30%); }
+  .card:not([data-selected="true"]):hover { box-shadow: var(--shadow-deck-card), inset 0 0 0 2px rgb(255 255 255 / 30%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
