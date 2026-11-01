@@ -5,7 +5,12 @@ import { BadgeCheck, CalendarClock, CircleAlert, IdCard, KeyRound, Mail, UserCog
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import ActionButton from "../../components/atoms/action-button";
-import { ChoiceCheck, FormError, FormField as Field, FormHeader, FormSection as Section, SelectChevron, formStyles as form } from "../../components/molecules/form-modal";
+import FormError from "../../components/atoms/form-error";
+import ChoiceCard, { ChoiceGroup } from "../../components/molecules/choice-card";
+import Field, { SelectChevron, fieldStyles } from "../../components/molecules/form-field";
+import FormHeader from "../../components/molecules/form-header";
+import Section from "../../components/molecules/form-section";
+import form from "../../components/molecules/form-layout.module.css";
 import ModalShell from "../../components/organisms/modal-shell";
 import { createAdminClient, resetAdminClientPassword, updateAdminClient, type AdminClient, type AdminClientWithCredentials, type AdminPlatform, type SaveAdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeam, type TeamMember } from "../../lib/team-api";
@@ -135,9 +140,9 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
               {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={touch("name")} maxLength={80} autoComplete="organization" placeholder="Ej. Comercial Andina S.A." aria-invalid={invalid} aria-describedby={describedBy} />}
             </Field>
             <Field label="RUC" Icon={IdCard} error={shown("ruc")} hint={kind
-              ? <span className={form.valid}><BadgeCheck size={14} aria-hidden="true" />RUC válido · {kind}</span>
+              ? <span className={fieldStyles.valid}><BadgeCheck size={14} aria-hidden="true" />RUC válido · {kind}</span>
               : `${rucDigits}/13 dígitos`}>
-              {({ id, describedBy, invalid }) => <input id={id} className={form.mono} value={ruc} onChange={(event) => { setRuc(event.target.value); setError(""); }} onBlur={touch("ruc")} inputMode="numeric" autoComplete="off" maxLength={17} placeholder="1790011674001" aria-invalid={invalid} aria-describedby={describedBy} />}
+              {({ id, describedBy, invalid }) => <input id={id} className={fieldStyles.mono} value={ruc} onChange={(event) => { setRuc(event.target.value); setError(""); }} onBlur={touch("ruc")} inputMode="numeric" autoComplete="off" maxLength={17} placeholder="1790011674001" aria-invalid={invalid} aria-describedby={describedBy} />}
             </Field>
             <Field label="Correo" Icon={Mail} error={shown("email")}>
               {({ id, describedBy, invalid }) => <input id={id} type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} onBlur={touch("email")} autoComplete="email" placeholder="facturacion@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
@@ -146,16 +151,11 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
         </Section>
 
         <Section title="Cuenta">
-          <div className={form.choices} role="radiogroup" aria-label="Tipo de cuenta">
+          <ChoiceGroup label="Tipo de cuenta">
             {accountOptions.map(({ value, label, detail, Icon }) => (
-              <label key={value} className={form.choice}>
-                <input type="radio" name="accountType" value={value} checked={accountType === value} onChange={() => setAccountType(value)} />
-                <Icon className={form.choiceIcon} size={20} strokeWidth={1.75} aria-hidden="true" />
-                <span className={form.choiceText}><strong>{label}</strong><small>{detail}</small></span>
-                <ChoiceCheck />
-              </label>
+              <ChoiceCard key={value} name="accountType" value={value} checked={accountType === value} onChange={() => setAccountType(value)} Icon={Icon} title={label} detail={detail} />
             ))}
-          </div>
+          </ChoiceGroup>
 
           <AnimatePresence initial={false}>
             {accountType === "POSTPAGO" && (
@@ -200,12 +200,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
         <Section title="Plataformas" className={styles.wide}>
           <div className={styles.platforms}>
             {platformOptions.map(({ value, label, logo, width, height }) => (
-              <label key={value} className={`${form.choice} ${styles.platform}`} data-platform={value.toLowerCase()}>
-                <input type="checkbox" checked={platforms.includes(value)} onChange={() => togglePlatform(value)} />
-                <span className={styles.platformLogo} aria-hidden="true"><Image src={logo} alt="" width={width} height={height} /></span>
-                <strong>{label}</strong>
-                <ChoiceCheck />
-              </label>
+              <ChoiceCard key={value} type="checkbox" className={styles.platform} platform={value.toLowerCase()} checked={platforms.includes(value)} onChange={() => togglePlatform(value)} leading={<span className={styles.platformLogo} aria-hidden="true"><Image src={logo} alt="" width={width} height={height} /></span>} title={label} />
             ))}
           </div>
           {/* Solo se habla cuando hay algo que advertir. */}
@@ -220,7 +215,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
               ? <div className={styles.accessRow}><p><KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />Genera una contraseña temporal nueva.</p><button type="button" className={form.secondary} onClick={() => setResetStep("confirm")}>Restablecer contraseña</button></div>
               : <div className={styles.resetConfirm}>
                   <p>La contraseña actual de <strong>{client.name}</strong> dejará de servir y se cerrarán sus sesiones. Los cambios sin guardar de este formulario se descartan.</p>
-                  {resetError && <p className={form.fieldError} role="alert"><CircleAlert size={14} aria-hidden="true" />{resetError}</p>}
+                  {resetError && <p className={fieldStyles.fieldError} role="alert"><CircleAlert size={14} aria-hidden="true" />{resetError}</p>}
                   <div>
                     <button type="button" className={form.ghost} disabled={resetStep === "pending"} onClick={() => { setResetStep("idle"); setResetError(""); }}>Cancelar</button>
                     <button type="button" className={form.secondary} disabled={resetStep === "pending"} onClick={() => void resetPassword()}>{resetStep === "pending" ? "Restableciendo…" : "Sí, restablecer"}</button>

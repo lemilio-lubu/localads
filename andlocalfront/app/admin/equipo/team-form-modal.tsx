@@ -3,7 +3,12 @@
 import { AtSign, Briefcase, UserRound, KeyRound, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
 import ActionButton from "../../components/atoms/action-button";
-import { ChoiceCheck, FormError, FormField, FormHeader, FormSection, formStyles as form } from "../../components/molecules/form-modal";
+import FormError from "../../components/atoms/form-error";
+import ChoiceCard, { ChoiceGroup } from "../../components/molecules/choice-card";
+import FormField from "../../components/molecules/form-field";
+import FormHeader from "../../components/molecules/form-header";
+import FormSection from "../../components/molecules/form-section";
+import form from "../../components/molecules/form-layout.module.css";
 import ModalShell from "../../components/organisms/modal-shell";
 import { createTeamMember, type TeamMemberWithCredentials, type TeamRole } from "../../lib/team-api";
 import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
@@ -68,16 +73,11 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
         </FormSection>
 
         <FormSection title="Rol">
-          <div className={form.choices} role="radiogroup" aria-label="Rol">
+          <ChoiceGroup label="Rol">
             {roleOptions.map(({ value, label, detail, Icon }) => (
-              <label key={value} className={form.choice}>
-                <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} />
-                <Icon className={form.choiceIcon} size={20} strokeWidth={1.75} aria-hidden="true" />
-                <span className={form.choiceText}><strong>{label}</strong><small>{detail}</small></span>
-                <ChoiceCheck />
-              </label>
+              <ChoiceCard key={value} name="role" value={value} checked={role === value} onChange={() => setRole(value)} Icon={Icon} title={label} detail={detail} />
             ))}
-          </div>
+          </ChoiceGroup>
         </FormSection>
 
         <FormError message={error} />

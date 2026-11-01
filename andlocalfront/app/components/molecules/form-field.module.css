@@ -1,0 +1,27 @@
+.field { display: grid; align-content: start; gap: var(--space-1); min-width: 0; }
+.field > label { color: var(--color-text); font-size: var(--font-size-body-sm); }
+.control { position: relative; display: flex; align-items: center; }
+/* Icono dentro del campo: gris en reposo, verde al enfocar, rojo con error. */
+.control > svg { position: absolute; left: var(--space-2); color: var(--color-text-subtle); pointer-events: none; transition: color var(--duration-fast) var(--ease-out); }
+.control:has(textarea) > svg { top: 15px; }
+.control:focus-within > svg { color: var(--color-brand); }
+.field[data-invalid="true"] .control > svg { color: var(--color-danger); }
+.control input, .control select, .control textarea { width: 100%; border: 1px solid var(--color-border-strong); border-radius: var(--radius-menu); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-2) 0 calc(var(--space-2) + 18px + var(--space-1)); color: var(--color-text); font: inherit; font-size: var(--font-size-body); transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.control input, .control select { height: var(--control-height); }
+.control textarea { min-height: calc(var(--control-height) * 2); padding-block: 13px; line-height: 1.45; resize: vertical; }
+.control select { appearance: none; padding-right: var(--space-5); cursor: pointer; }
+/* La flecha del selector es el mismo chevron de los desplegables (antes, un triángulo dibujado con degradados). Hereda el color gris/verde/rojo de los iconos del campo. */
+.control > .selectChevron { left: auto; right: var(--space-2); }
+.control input::placeholder, .control textarea::placeholder { color: var(--color-text-subtle); }
+.control input:focus, .control select:focus, .control textarea:focus { border-color: var(--color-brand); box-shadow: var(--focus-ring); }
+.field[data-invalid="true"] .control input { border-color: var(--color-danger); }
+.mono { font-family: var(--font-family-mono) !important; letter-spacing: .06em; }
+.fieldHint, .fieldError { display: flex; align-items: center; gap: var(--space-half); margin: 0; font-size: var(--font-size-caption); line-height: 1.4; }
+.fieldHint { color: var(--color-text-muted); }
+.fieldError { color: var(--color-danger); }
+.fieldError svg { flex: none; }
+.valid { display: inline-flex; align-items: center; gap: var(--space-half); color: var(--color-brand); }
+
+@media (prefers-reduced-motion: reduce) {
+  .control > svg, .control input, .control select, .control textarea { transition-duration: 0ms; }
+}

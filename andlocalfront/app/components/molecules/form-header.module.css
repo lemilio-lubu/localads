@@ -1,0 +1,6 @@
+.header { display: grid; justify-items: start; gap: var(--space-1); margin-bottom: var(--space-4); }
+/* La misma pastilla que «cliente post pago» del detalle. */
+.eyebrow { display: inline-flex; align-items: center; gap: var(--space-half); border-radius: var(--radius-pill); background: var(--color-surface-muted); padding: 2px var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
+.eyebrow svg { color: var(--color-text-muted); }
+.header h2 { margin: 0; color: var(--color-text); font-size: var(--font-size-title); font-weight: var(--font-weight-regular); line-height: 1.2; }
+.header p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
