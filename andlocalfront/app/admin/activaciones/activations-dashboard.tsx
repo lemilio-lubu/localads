@@ -19,6 +19,7 @@ import LoadError from "../../components/molecules/load-error";
 import { TextArea } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
 import ListCell from "../../components/atoms/list-cell";
+import TextButton from "../../components/atoms/text-button";
 
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
@@ -93,7 +94,7 @@ export default function ActivationsDashboard() {
               estado, donde luego aparece «por …», y no entre los botones de
               decisión, donde parecía un paso obligatorio. Activar o rechazar
               funcionan igual sin tomarlo. */}
-          {item.status === "PENDING" && <button type="button" className={styles.claim} disabled={busy === item.id} title="Marca la solicitud como tuya para que el equipo sepa que la estás revisando" onClick={() => void act(item, "review")}>tomar el caso</button>}<span className={styles.subtle}>{formatDateTime(item.createdAt)}</span></ListCell>
+          {item.status === "PENDING" && <TextButton size="body-sm" className={styles.claim} disabled={busy === item.id} title="Marca la solicitud como tuya para que el equipo sepa que la estás revisando" onClick={() => void act(item, "review")}>tomar el caso</TextButton>}<span className={styles.subtle}>{formatDateTime(item.createdAt)}</span></ListCell>
 
         {rejecting === item.id
           ? <div className={styles.reject}>

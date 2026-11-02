@@ -41,13 +41,9 @@
 .reveal:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 0; }
 
 .demo { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.6; text-align: center; }
-.demo button { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-weight: var(--font-weight-bold); cursor: pointer; }
-.demo button:disabled { opacity: .5; cursor: wait; }
-.demo button:focus-visible { border-radius: 4px; outline: 2px solid var(--color-brand); outline-offset: 2px; }
 
 @media (hover: hover) and (pointer: fine) {
   .reveal:hover { background: var(--color-surface-hover); color: var(--color-text); }
-  .demo button:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
 }
 
 /* Pantallas estrechas: la historia arriba, más corta, y el acceso debajo. */

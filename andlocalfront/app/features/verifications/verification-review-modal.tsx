@@ -16,6 +16,7 @@ import { verificationStatusTone } from "../../lib/status-tone";
 import styles from "./verification-review-modal.module.css";
 import { TextArea } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
+import TextButton from "../../components/atoms/text-button";
 
 export type VerificationSelection = { item: PendingVerification; detail: AdminVerification };
 
@@ -78,7 +79,7 @@ function ReviewContent({ selected, destination, busy, error, onApprove, onReview
     <header className={styles.modalHeader}><div><small>verificación de transferencia</small><h2 id="verification-title">{selected.item.clientName}</h2><p>{selected.item.transactionCode}</p></div><StatusPill tone={verificationStatusTone(selected.detail.status)}>{verificationStatusLabel(selected.detail.status)}</StatusPill></header>
     <div className={styles.reviewGrid}>
       <section className={styles.previewPanel}>
-        <div className={styles.previewHeader}><div><small>evidencia original</small><strong>{selected.detail.receipt.originalName}</strong></div><button type="button" onClick={() => void openAuthenticatedFile(resolveApiAssetUrl(selected.item.receiptContentUrl))}>Abrir <ExternalLink size={15} /></button></div>
+        <div className={styles.previewHeader}><div><small>evidencia original</small><strong>{selected.detail.receipt.originalName}</strong></div><TextButton underline="hover" onClick={() => void openAuthenticatedFile(resolveApiAssetUrl(selected.item.receiptContentUrl))}>Abrir <ExternalLink size={15} /></TextButton></div>
         <div className={styles.preview}>
           {previewLoading && <span>Cargando comprobante…</span>}
           {previewError && <span className={styles.previewFailure}><ShieldAlert size={24} />{previewError}</span>}

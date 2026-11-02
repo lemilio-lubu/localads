@@ -10,9 +10,8 @@
    de entrar: «En revision» sin nombre no distingue «la tengo yo» de «la tiene
    otro», y con dos administradores eso son dos personas en el mismo caso. */
 /* Enlace discreto bajo el estado para quedarse el caso. */
-.claim { composes: hitArea from "../../design-system/hit-area.module.css"; align-self: flex-start; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.claim:disabled { opacity: .5; cursor: wait; }
-.claim:focus-visible { border-radius: 4px; outline: 2px solid var(--color-brand); outline-offset: 2px; }
+/* El aspecto es de TextButton; aquí solo su sitio. */
+.claim { align-self: flex-start; }
 .holder { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
 .managerFilter { display: inline-flex; min-height: var(--hit-target); align-items: center; gap: var(--space-half); padding-inline: var(--space-2); font-size: var(--font-size-body-sm); }
 .search { width: min(100%, 672px); }

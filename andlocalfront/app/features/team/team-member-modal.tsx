@@ -14,6 +14,7 @@ import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-member-modal.module.css";
 import { TextInput, Select } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
+import TextButton from "../../components/atoms/text-button";
 
 type Props = {
   memberId: string | null;
@@ -158,7 +159,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
           <section className={styles.panel} aria-labelledby="team-member-clients">
             <div className={styles.panelHead}>
               <h3 id="team-member-clients">Cartera</h3>
-              {isManager && member.status === "ACTIVE" && <button type="button" className={styles.link} onClick={() => setLinking((open) => !open)} aria-expanded={linking}><Link2 size={16} aria-hidden="true" />vincular cliente</button>}
+              {isManager && member.status === "ACTIVE" && <TextButton size="body-sm" underline="hover" className={styles.link} onClick={() => setLinking((open) => !open)} aria-expanded={linking}><Link2 size={16} aria-hidden="true" />vincular cliente</TextButton>}
             </div>
             {linking && <div className={styles.picker}>
               {unassigned.length === 0

@@ -12,7 +12,6 @@
 .previewHeader > div { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
 .previewHeader small { color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .previewHeader strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.previewHeader button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
 .preview { position: relative; display: grid; min-height: 500px; place-items: center; overflow: hidden; border-radius: var(--radius-menu); background: var(--color-preview-surface); color: var(--color-text-muted); }
 .preview img { display: block; width: 100%; height: 500px; object-fit: contain; }
 .preview iframe { width: 100%; height: 500px; border: 0; background: var(--color-surface-raised); }
@@ -54,11 +53,4 @@
      nombre largo la empujaba fuera de la pantalla. */
   .modalHeader > :first-child { min-width: 0; flex: 1; }
   .modalHeader h2 { overflow-wrap: anywhere; }
-}
-
-/* Área táctil de 40px en «Abrir», sin cambiar el aspecto (patrón de
-   design-system/hit-area.module.css). */
-@media (pointer: coarse) {
-  .previewHeader button { position: relative; }
-  .previewHeader button::after { position: absolute; inset: min(0px, calc((100% - var(--hit-target)) / 2)); content: ""; }
 }

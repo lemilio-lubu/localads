@@ -15,6 +15,7 @@ import { landingFor } from "./lib/recharges-api";
 import LoginWalletDeck, { type DeckState } from "./components/organisms/login-wallet-deck";
 import styles from "./login-form.module.css";
 import { TextInput } from "./components/atoms/text-field";
+import TextButton from "./components/atoms/text-button";
 
 type Field = "username" | "password";
 /* Los accesos de prueba (todos con la clave 1234) son solo para desarrollo: se
@@ -133,7 +134,7 @@ export default function LoginForm() {
             el acceso real. Fuera de desarrollo no se pinta (ver showDemoAccounts). */}
         {showDemoAccounts && <p className={styles.demo}>
           Probar con una cuenta demo:{" "}
-          {demoAccounts.map((account, index) => <span key={account}>{index > 0 && " · "}<button type="button" onClick={() => fillDemoAccount(account)} disabled={pending}>{account}</button></span>)}
+          {demoAccounts.map((account, index) => <span key={account}>{index > 0 && " · "}<TextButton size="inherit" underline="hover" onClick={() => fillDemoAccount(account)} disabled={pending}>{account}</TextButton></span>)}
         </p>}
       </motion.section>
     </main>

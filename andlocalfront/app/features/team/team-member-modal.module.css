@@ -41,7 +41,7 @@
 
 .notice { margin: 0; color: var(--color-brand); font-size: var(--font-size-body-sm); }
 
-.link { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
+.link { min-height: var(--button-height); }
 .picker { display: flex; flex-wrap: wrap; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-raised); padding: var(--space-2); }
 .picker p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .picker button { min-height: var(--hit-target); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); cursor: pointer; }
@@ -70,11 +70,10 @@
 .errorPanel p { margin: 0; max-width: 46ch; }
 .errorPanel button { margin-top: var(--space-1); }
 
-.link:focus-visible, .picker button:focus-visible, .chips a:focus-visible, .chips button:focus-visible, .sale:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
+.picker button:focus-visible, .chips a:focus-visible, .chips button:focus-visible, .sale:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
 
 @media (hover: hover) and (pointer: fine) {
   .picker button:hover { border-color: var(--color-text-subtle); }
-  .link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .chips li:hover, .sale:hover { background: var(--color-surface-hover); }
 }
 
