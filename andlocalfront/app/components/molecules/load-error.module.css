@@ -6,5 +6,5 @@
 .error strong { color: var(--color-danger); font-size: var(--font-size-card-title); }
 .error[data-text="neutral-title"] strong, .error[data-text="neutral"] strong { color: var(--color-text); }
 .error[data-text="neutral"] { color: var(--color-text-muted); }
-.retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
-.retry:focus-visible { outline: 3px solid rgb(157 0 3 / 22%); outline-offset: 3px; }
+/* Aspecto en Button (danger), como el reintentar de la ficha del equipo. */
+.retry { margin-top: var(--space-1); }

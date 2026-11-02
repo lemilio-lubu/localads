@@ -1,4 +1,5 @@
 import { RotateCw } from "lucide-react";
+import Button from "../atoms/button";
 import styles from "./load-error.module.css";
 
 /* «No se pudo cargar X» con el motivo y «reintentar». Es un error, no un estado
@@ -12,6 +13,6 @@ export default function LoadError({ title, message, frame = "card", text = "dang
   return <div className={`${styles.error} ${className}`} data-frame={frame} data-text={text} role="alert">
     <p><strong>{title}</strong></p>
     <p>{message}</p>
-    <button type="button" className={styles.retry} onClick={onRetry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
+    <Button variant="danger" className={styles.retry} onClick={onRetry}><RotateCw size={16} aria-hidden="true" />reintentar</Button>
   </div>;
 }

@@ -24,6 +24,8 @@
 :where(.button):disabled { opacity: .45; cursor: not-allowed; }
 :where(.button):not(:disabled):active { transform: scale(.97); }
 :where(.button):focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+/* En rojo el halo verde de marca chocaba: los de peligro lo llevan rojo. */
+:where(.button:is([data-variant="danger"], [data-variant="danger-soft"])):focus-visible { outline-color: rgb(157 0 3 / 22%); }
 
 :where(.button[data-size="compact"]) { min-height: var(--control-height-compact); padding-inline: var(--space-2); }
 
