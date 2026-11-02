@@ -13,7 +13,7 @@
   color: var(--color-text-on-fill);
   font: inherit;
   cursor: pointer;
-  transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
 /* La letra va fuera de :where(): globals.css hace `button { font: inherit }` y,
    sin especificidad, esa regla de elemento la pisaba. Una clase de la pantalla
@@ -28,6 +28,9 @@
 :where(.button:is([data-variant="danger"], [data-variant="danger-soft"])):focus-visible { outline-color: rgb(157 0 3 / 22%); }
 
 :where(.button[data-size="compact"]) { min-height: var(--control-height-compact); padding-inline: var(--space-2); }
+:where(.button[data-size="cta"]) { width: 176px; padding-inline: var(--space-2); }
+:where(.button[data-size="block"]) { width: 100%; min-height: var(--control-height); }
+:where(.button[data-variant="elevated"]):not(:disabled):active { background: var(--color-brand-active); box-shadow: 0 2px 8px rgb(11 89 1 / 18%); }
 
 :where(.button[data-variant="secondary"]) { border: 1px solid var(--color-border-strong); background: var(--color-surface-raised); color: var(--color-text); }
 :where(.button[data-variant="ghost"]) { background: transparent; color: var(--color-text-muted); }
@@ -38,6 +41,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   :where(.button[data-variant="primary"]):not(:disabled):hover { background: var(--color-brand-hover); }
+  :where(.button[data-variant="elevated"]):not(:disabled):hover { background: var(--color-brand-hover); box-shadow: 0 8px 18px rgb(11 89 1 / 16%); }
   :where(.button[data-variant="secondary"]):not(:disabled):hover { border-color: var(--color-text-subtle); }
   :where(.button[data-variant="ghost"]):not(:disabled):hover { color: var(--color-text); }
   :where(.button[data-variant="neutral"]):not(:disabled):hover { background: var(--color-surface-hover); }

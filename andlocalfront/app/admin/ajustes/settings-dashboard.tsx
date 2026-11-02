@@ -2,7 +2,6 @@
 
 import { Banknote, CreditCard, Hash, IdCard, Landmark, Mail, Phone, UserRound } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import ActionButton from "../../components/atoms/action-button";
 import FormError from "../../components/atoms/form-error";
 import Field from "../../components/molecules/form-field";
 import form from "../../components/molecules/form-layout.module.css";
@@ -15,7 +14,7 @@ import {
 } from "../../lib/payment-account-api";
 import styles from "./settings-dashboard.module.css";
 import { TextInput } from "../../components/atoms/text-field";
-import TextButton from "../../components/atoms/text-button";
+import InlineNotice from "../../components/molecules/inline-notice";
 import Button from "../../components/atoms/button";
 
 const emptyForm: PaymentAccountInput = { bankName: "", accountType: "", accountNumber: "", holderName: "", holderTaxId: "", email: "", phone: "" };
@@ -92,7 +91,7 @@ export default function SettingsDashboard() {
   }
 
   if (loading) return <div className={styles.skeleton} role="status" aria-label="Cargando la cuenta de cobro" />;
-  if (loadError) return <p className={styles.message} role="alert">{loadError} <TextButton size="inherit" onClick={retry}>reintentar</TextButton></p>;
+  if (loadError) return <InlineNotice onRetry={retry}>{loadError}</InlineNotice>;
 
   const preview = {
     bankName: values.bankName.trim() || "Banco", accountType: values.accountType.trim() || "Tipo de cuenta",
@@ -108,7 +107,7 @@ export default function SettingsDashboard() {
 
       {!isAdmin && (account
         ? <PaymentAccountCard detailed account={account} copyAllText={paymentAccountText(account, null)} note="Cada cliente ve además su propia referencia, que escribe en el concepto de la transferencia." />
-        : <p className={styles.message} role="status">Aún no hay una cuenta de cobro configurada.</p>)}
+        : <InlineNotice>Aún no hay una cuenta de cobro configurada.</InlineNotice>)}
 
       {isAdmin && (
         <form className={`${form.form} ${styles.form}`} onSubmit={review} noValidate aria-label="Cuenta de cobro">
@@ -136,9 +135,9 @@ export default function SettingsDashboard() {
             ? <div className={styles.confirm} role="alertdialog" aria-labelledby="confirm-payment-account">
                 <p id="confirm-payment-account"><Banknote size={18} aria-hidden="true" /><span><strong>Esto es lo que verán los clientes, de inmediato.</strong> Comprueba el número y el titular: un dato mal puesto desvía pagos reales.</span></p>
                 <PaymentAccountCard quiet account={preview} />
-                <div><Button variant="ghost" onClick={() => setConfirming(false)} disabled={saving}>Revisar de nuevo</Button><ActionButton type="button" disabled={saving} onClick={() => void save()}>{saving ? "Guardando…" : "Sí, guardar"}</ActionButton></div>
+                <div><Button variant="ghost" onClick={() => setConfirming(false)} disabled={saving}>Revisar de nuevo</Button><Button variant="elevated" size="cta" type="button" disabled={saving} onClick={() => void save()}>{saving ? "Guardando…" : "Sí, guardar"}</Button></div>
               </div>
-            : <ActionButton type="submit" disabled={!complete || unchanged}>{account ? "Guardar cambios" : "Guardar cuenta"}</ActionButton>}
+            : <Button variant="elevated" size="cta" type="submit" disabled={!complete || unchanged}>{account ? "Guardar cambios" : "Guardar cuenta"}</Button>}
         </form>
       )}
 

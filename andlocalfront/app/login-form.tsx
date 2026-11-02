@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
-import ActionButton from "./components/atoms/action-button";
+import Button from "./components/atoms/button";
 import BrandLogo from "./components/atoms/brand-logo";
 import PwaInstallButton from "./components/molecules/pwa-install-button";
 import FormError from "./components/atoms/form-error";
@@ -127,7 +127,7 @@ export default function LoginForm() {
             </>}
           </FormField>
           <FormError message={error} />
-          <ActionButton type="submit" className={styles.submit} disabled={pending} stretch>{deck === "launching" ? "Entrando…" : pending ? "Verificando…" : "Continuar"}</ActionButton>
+          <Button variant="elevated" size="block" type="submit" className={styles.submit} disabled={pending}>{deck === "launching" ? "Entrando…" : pending ? "Verificando…" : "Continuar"}</Button>
         </form>
 
         {/* Solo para probar: una línea discreta, no un bloque que compita con

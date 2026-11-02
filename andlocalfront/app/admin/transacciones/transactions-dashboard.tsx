@@ -6,7 +6,6 @@ import ToggleChip from "../../components/atoms/toggle-chip";
 import DateCell from "../../components/atoms/date-cell";
 import RowDetailLink from "../../components/atoms/row-detail-link";
 import InvoiceDetailModal from "../../features/payments/invoice-detail-modal";
-import ActionButton from "../../components/atoms/action-button";
 import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import PlatformPill from "../../components/atoms/platform-pill";
@@ -150,7 +149,7 @@ export default function TransactionsDashboard() {
       detailActions={(detail) => selected && (detail.pausedAt || (selected.rechargeStatus === "PROCESSING" && detail.status !== "COMPLETED")) ? <>
         {detail.pausedAt && <>
           <p className={styles.executionNote}>{detail.pautaStatus !== "ACTIVE" ? "Reactiva la plataforma antes de reanudar." : "Reanudación manual; se validará el pago."}</p>
-          <ActionButton type="button" disabled={Boolean(resuming) || detail.pautaStatus !== "ACTIVE"} onClick={() => void resume(detail.id)}>{resuming === detail.id ? "Reanudando…" : "Reanudar recarga"}</ActionButton>
+          <Button variant="elevated" size="cta" type="button" disabled={Boolean(resuming) || detail.pautaStatus !== "ACTIVE"} onClick={() => void resume(detail.id)}>{resuming === detail.id ? "Reanudando…" : "Reanudar recarga"}</Button>
         </>}
         {selected.rechargeStatus === "PROCESSING" && !detail.pausedAt && detail.status !== "COMPLETED" && <div className={styles.executeDetail}>
           <label htmlFor={`effective-${detail.id}`}>monto recargado</label>
@@ -161,9 +160,9 @@ export default function TransactionsDashboard() {
       footer={selected && <>
         {(selected.rechargeStatus === "APPROVED" || selected.rechargeStatus === "PROCESSING") && <div className={styles.executeBar}>
           {selected.rechargeStatus === "APPROVED"
-            ? <><p>Aprobada: el saldo del cliente no se mueve hasta ejecutar la recarga.</p><ActionButton type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("start", () => startTransactionRecharge(selected.id))}>{resuming === "start" ? "Iniciando…" : "Iniciar recarga"}</ActionButton></>
+            ? <><p>Aprobada: el saldo del cliente no se mueve hasta ejecutar la recarga.</p><Button variant="elevated" size="cta" type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("start", () => startTransactionRecharge(selected.id))}>{resuming === "start" ? "Iniciando…" : "Iniciar recarga"}</Button></>
             : selected.details.every((detail) => detail.status === "COMPLETED")
-              ? <><p>Todas las plataformas acreditadas. Al completar se emite la factura.</p><ActionButton type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("complete", () => completeTransaction(selected.id))}>{resuming === "complete" ? "Completando…" : "Completar recarga"}</ActionButton></>
+              ? <><p>Todas las plataformas acreditadas. Al completar se emite la factura.</p><Button variant="elevated" size="cta" type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("complete", () => completeTransaction(selected.id))}>{resuming === "complete" ? "Completando…" : "Completar recarga"}</Button></>
               : <p>En proceso: registra en cada plataforma el monto recargado.</p>}
         </div>}
         {resumeError && <p className={`${styles.message} ${styles.errorMessage}`} role="alert">{resumeError}</p>}

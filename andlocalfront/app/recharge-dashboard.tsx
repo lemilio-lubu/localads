@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AccountShell from "./account-shell";
-import ActionButton from "./components/atoms/action-button";
+import Button from "./components/atoms/button";
 import ModalShell from "./components/organisms/modal-shell";
 import { PaymentAccountView, paymentDestinationLabel } from "./features/payments/payment-account-panel";
 import RechargeConfirmModal from "./recharge-confirm-modal";
@@ -196,7 +196,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
           </button>}
 
           <Checkbox className={styles.terms} checked={acceptedTerms} onChange={setAcceptedTerms}>He leído términos y condiciones</Checkbox>
-          <ActionButton className={styles.submitButton} type="submit" disabled={!canSubmit}>{submitting ? "Procesando…" : "recargar"}</ActionButton>
+          <Button variant="elevated" size="cta" className={styles.submitButton} type="submit" disabled={!canSubmit}>{submitting ? "Procesando…" : "recargar"}</Button>
           {!canSubmit && !submitting && !loading && <p className={styles.submitHint}>{
             lines.length === 0 ? "Escribe un monto mayor que cero en al menos una plataforma."
             : isPrepaid && !receipt ? "Adjunta el comprobante de tu transferencia."
@@ -220,7 +220,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
             <label><TextInput surface="elevated" shape="pill" size="auto" required disabled={submitting} readOnly={reactivating && Boolean(pautas.find((pauta) => pauta.platform === activationPlatform)?.externalAccountId)} value={activation.externalAccountId} onChange={(e) => setActivation((v) => ({ ...v, externalAccountId: e.target.value }))} /><span>ID de la cuenta de {selectedPlatform.label}</span></label>
             <label><TextInput surface="elevated" shape="pill" size="auto" required type="number" inputMode="decimal" min="0.01" step="0.01" disabled={submitting} value={activation.firstRechargeAmount} onChange={(e) => setActivation((v) => ({ ...v, firstRechargeAmount: e.target.value }))} /><span>{reactivating ? "monto de referencia para la próxima recarga" : "monto de la primera recarga"}</span></label>
             <label><TextInput surface="elevated" shape="pill" size="auto" required type="tel" autoComplete="tel" disabled={submitting} value={activation.phone} onChange={(e) => setActivation((v) => ({ ...v, phone: e.target.value }))} /><span>número de teléfono</span></label>
-            <div className={styles.activationActions}><ActionButton className={styles.activationSubmit} type="submit" disabled={submitting}>{submitting ? "Enviando…" : reactivating ? "solicitar reactivación" : "solicitar la cuenta"}</ActionButton></div>
+            <div className={styles.activationActions}><Button variant="elevated" size="cta" className={styles.activationSubmit} type="submit" disabled={submitting}>{submitting ? "Enviando…" : reactivating ? "solicitar reactivación" : "solicitar la cuenta"}</Button></div>
             {activationError && <p className={styles.activationError} role="alert">{activationError}</p>}
           </form>}
         </ModalShell>

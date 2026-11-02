@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { KeyRound, LockKeyhole } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { FormEvent, useEffect, useState } from "react";
-import ActionButton from "../components/atoms/action-button";
+import Button from "../components/atoms/button";
 import BrandLogo from "../components/atoms/brand-logo";
 import { enterTransition } from "../design-system/motion";
 import { changePassword, getCurrentUser, refreshSession } from "../lib/auth-api";
@@ -63,7 +63,7 @@ export default function ChangePasswordForm() {
   if (done) return <main className={styles.page}><section className={styles.card}>
     <div className={styles.logo}><BrandLogo /></div>
     <div className={styles.heading}><p>listo</p><h1>contraseña actualizada</h1><span>Se cerraron las sesiones abiertas. Entra de nuevo con tu contraseña.</span></div>
-    <ActionButton stretch onClick={() => router.replace("/")}>ir a iniciar sesión</ActionButton>
+    <Button variant="elevated" size="block" onClick={() => router.replace("/")}>ir a iniciar sesión</Button>
   </section></main>;
 
   return <main className={styles.page}>
@@ -93,7 +93,7 @@ export default function ChangePasswordForm() {
         </div>
         <p className={styles.hint}>Al menos {minimum} caracteres, distinta de la {forced ? "temporal" : "actual"}.</p>
         <p id="change-error" className={styles.error} role="alert" aria-live="polite">{error}</p>
-        <ActionButton type="submit" disabled={pending} stretch>{pending ? "guardando…" : "cambiar contraseña"}</ActionButton>
+        <Button variant="elevated" size="block" type="submit" disabled={pending}>{pending ? "guardando…" : "cambiar contraseña"}</Button>
       </form>
     </motion.section>
   </main>;

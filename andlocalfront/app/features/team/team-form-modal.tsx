@@ -2,7 +2,6 @@
 
 import { AtSign, Briefcase, UserRound, KeyRound, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
-import ActionButton from "../../components/atoms/action-button";
 import FormError from "../../components/atoms/form-error";
 import ChoiceCard, { ChoiceGroup } from "../../components/molecules/choice-card";
 import FormField from "../../components/molecules/form-field";
@@ -88,7 +87,7 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
           <p><KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />Se generará una contraseña temporal que verás una sola vez.</p>
           <div>
             <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-            <ActionButton type="submit" disabled={pending}>{pending ? "Creando…" : "Crear cuenta"}</ActionButton>
+            <Button variant="elevated" size="cta" type="submit" disabled={pending}>{pending ? "Creando…" : "Crear cuenta"}</Button>
           </div>
         </footer>
       </form>

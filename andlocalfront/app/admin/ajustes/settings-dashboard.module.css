@@ -24,4 +24,3 @@
 .empty { margin: 0; }
 
 .skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 320px; }
-.message { margin: 0; border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-2) var(--space-3); color: var(--color-text); font-size: var(--font-size-body-sm); }
