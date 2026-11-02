@@ -9,14 +9,14 @@ const staff: AuthPrincipal = { userId: "u2", username: "gestor", role: "GESTOR",
 /* El correo es solo la credencial; en pantalla se ve el nombre o la razón social. */
 function service(clientRecord: { id: string; name: string; status: string } | null = { id: "client-1", name: "Comercial Andina S.A.", status: "ACTIVE" }) {
   const database = {
-    authUser: { findUnique: vi.fn().mockResolvedValue({ id: "u1", username: client.username, passwordHash: "hash", role: "CLIENT", status: "ACTIVE", clientId: "client-1", accountId: "account-1", accountType: "PREPAGO", mustChangePassword: false }) },
+    authUser: { findUnique: vi.fn().mockResolvedValue({ id: "u1", username: client.username, passwordHash: "hash", role: "CLIENT", status: "ACTIVE", clientId: "client-1", accountId: "account-1", accountType: "PREPAGO", mustChangePassword: false, tokenVersion: 0, failedLoginCount: 0, lockedUntil: null, mfaSecret: null, mfaEnabledAt: null, mfaLastStep: null, mfaRecoveryCodes: [] }), update: vi.fn().mockResolvedValue({}) },
     client: { findUnique: vi.fn().mockResolvedValue(clientRecord) },
     account: { findUnique: vi.fn().mockResolvedValue({ id: "account-1", clientId: "client-1", status: "ACTIVE" }) },
     refreshSession: { create: vi.fn().mockResolvedValue({}) },
   };
-  const passwords = { verify: vi.fn().mockResolvedValue(true) };
+  const passwords = { verify: vi.fn().mockResolvedValue(true), hash: vi.fn().mockResolvedValue("dummy") };
   const accessTokens = { sign: vi.fn().mockReturnValue({ token: "token", expiresIn: 900 }) };
-  return { database, auth: new AuthService(database as never, passwords as never, accessTokens as never) };
+  return { database, auth: new AuthService(database as never, passwords as never, accessTokens as never, {} as never, { invalidate: vi.fn() } as never) };
 }
 
 describe("nombre que se muestra al entrar", () => {
@@ -53,6 +53,7 @@ describe("nombre que se muestra al entrar", () => {
   it("al abrir sesión, la respuesta lleva el nombre aparte del principal firmado", async () => {
     const { auth } = service();
     const result = await auth.login(client.username, "1234");
+    if (result.kind !== "session") throw new Error("se esperaba una sesión");
     expect(result.displayName).toBe("Comercial Andina S.A.");
     // El token firma el principal tal cual: el nombre no es de seguridad y no entra en él.
     expect(result.principal).not.toHaveProperty("displayName");
@@ -70,9 +71,9 @@ describe("mensaje de credenciales incorrectas", () => {
   it("habla de correo, no de usuario, y es el mismo si el correo no existe o la clave falla", async () => {
     const { auth, database } = service();
     database.authUser.findUnique.mockResolvedValueOnce(null);
-    await expect(auth.login("nadie@example.test", "1234")).rejects.toMatchObject({ message: "Correo o contraseña incorrectos" });
+    await expect(auth.login("nadie@example.test", "1234")).rejects.toMatchObject({ message: expect.stringMatching(/^Correo o contraseña incorrectos/) });
     const { auth: conClaveMala } = service();
     (conClaveMala as unknown as { passwords: { verify: (...a: unknown[]) => unknown } }).passwords.verify = vi.fn().mockResolvedValue(false);
-    await expect(conClaveMala.login(client.username, "mala")).rejects.toMatchObject({ message: "Correo o contraseña incorrectos" });
+    await expect(conClaveMala.login(client.username, "mala")).rejects.toMatchObject({ message: expect.stringMatching(/^Correo o contraseña incorrectos/) });
   });
 });

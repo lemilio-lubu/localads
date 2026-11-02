@@ -9,7 +9,7 @@ import { RateLimitGuard, loginRateLimit, passwordChangeRateLimit, rateLimitOptio
 import type { AuthPrincipal } from "../src/modules/auth/auth.types";
 
 const secret = "s".repeat(40);
-const deployed = { NODE_ENV: "production", JWT_ACCESS_SECRET: secret, FRONTEND_ORIGIN: "https://portal.andlocal.ec", DATABASE_URL: "postgresql://u:p@db/x" };
+const deployed = { NODE_ENV: "production", JWT_ACCESS_SECRET: secret, FRONTEND_ORIGIN: "https://portal.andlocal.ec", DATABASE_URL: "postgresql://u:p@db/x", MFA_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64") };
 
 describe("configuración de un despliegue", () => {
   it("cuenta Railway como despliegue aunque falte NODE_ENV=production", () => {

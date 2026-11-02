@@ -1,7 +1,10 @@
 .profileArea { position: relative; }
 .trigger { display: flex; align-items: center; gap: var(--space-2); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body); font-weight: var(--font-weight-bold); cursor: pointer; transition: color var(--duration-ui) ease; }
-.identity { display: flex; flex-direction: column; align-items: flex-end; }
-.identity strong { color: inherit; font-size: var(--font-size-body); }
+/* Un nombre largo se parte en dos líneas: todas alineadas a la derecha, como
+   el rol, y no centradas (lo que hacía el botón por defecto). Más de dos
+   líneas se cortan con «…»; el nombre completo va en el title del botón. */
+.identity { display: flex; min-width: 0; flex-direction: column; align-items: flex-end; text-align: right; }
+.identity strong { display: -webkit-box; overflow: hidden; color: inherit; font-size: var(--font-size-body); line-height: 1.25; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .identity small { font-size: var(--font-size-caption); font-weight: var(--font-weight-regular); }
 .compact .trigger { gap: var(--space-1); }
 .compact .avatar, .compact .avatar > img:first-child { width: var(--space-6); height: var(--space-6); }
@@ -13,7 +16,7 @@
 .avatar { position: relative; display: grid; width: 72px; height: 72px; place-items: center; }
 .avatar > img:first-child { width: 72px; height: 72px; }
 .person { position: absolute; width: 39px; height: 39px; }
-.menu { position: absolute; z-index: 20; top: calc(100% + var(--space-1)); right: 0; min-width: 168px; padding: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: rgb(255 255 255 / 96%); box-shadow: var(--shadow-popover); transform-origin: top right; backdrop-filter: blur(12px); }
+.menu { position: absolute; z-index: 20; top: calc(100% + var(--space-1)); right: 0; width: max-content; min-width: 168px; padding: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: rgb(255 255 255 / 96%); box-shadow: var(--shadow-popover); transform-origin: top right; backdrop-filter: blur(12px); }
 .menu button { width: 100%; border: 0; border-radius: var(--space-1); background: transparent; padding: var(--space-1) 12px; color: var(--color-text-muted); text-align: left; cursor: pointer; transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease; }
 /* Las entradas con enlace (p. ej. «cómo pagar») se ven igual que «cerrar sesión». */
 .menu a { display: block; width: 100%; border-radius: var(--space-1); padding: var(--space-1) 12px; color: var(--color-text-muted); text-align: left; text-decoration: none; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out); }

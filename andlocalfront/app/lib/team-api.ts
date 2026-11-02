@@ -10,11 +10,18 @@ export type TeamMember = {
   role: TeamRole;
   status: "ACTIVE" | "INACTIVE";
   mustChangePassword: boolean;
+  /* El doble factor es opcional; al equipo se le sugiere al entrar. */
+  mfaEnabled: boolean;
   createdAt: string;
   /* Las dos cajas de la fila: cartera asignada y recargas completadas. En un
      admin salen en cero porque no lleva cartera propia. */
   metrics: { clients: number; sales: number };
 };
+
+/* Lo que dice la caja «acceso»: la clave temporal pesa más (sin cambiarla no
+   entra a nada), y después si ya configuró el doble factor. */
+export const accessLabel = (member: Pick<TeamMember, "mustChangePassword" | "mfaEnabled">) =>
+  member.mustChangePassword ? "clave temporal" : member.mfaEnabled ? "doble factor" : "sin doble factor";
 
 export type TeamMemberDetail = TeamMember & {
   clients: { id: string; name: string; status: "ACTIVE" | "INACTIVE" }[];
@@ -69,6 +76,12 @@ export function updateTeamMember(id: string, input: { username?: string; name?: 
 
 export function resetTeamMemberPassword(id: string) {
   return request<TeamMemberWithCredentials>(`/admin/team/${id}/password-reset`, { method: "POST" });
+}
+
+/* Para quien perdió el móvil y los códigos: borra su doble factor y cierra
+   sus sesiones. Puede volver a activarlo desde su cuenta. */
+export function resetTeamMemberMfa(id: string) {
+  return request<TeamMember>(`/admin/team/${id}/mfa-reset`, { method: "POST" });
 }
 
 /* Vive aquí y no en admin-clients-api porque es la operación de la pantalla de

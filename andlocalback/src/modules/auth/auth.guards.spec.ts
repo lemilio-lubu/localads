@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { JwtAuthGuard, RolesGuard } from "./auth.guards";
 import { AUTH_ROLES, isAuthRole } from "./auth.types";
 
+const liveSessions = { isCurrent: vi.fn().mockResolvedValue(true) };
 const principal = { userId: "user-1", role: "CLIENT" as const, clientId: "client-1", accountId: "account-1" };
 
 function wsContext(client: object) {
@@ -15,29 +16,36 @@ function wsContext(client: object) {
 }
 
 describe("guards de autenticación WebSocket", () => {
-  it("reutiliza el principal validado durante el handshake", () => {
+  it("reutiliza el principal validado durante el handshake", async () => {
     const reflector = { getAllAndOverride: vi.fn().mockReturnValue(false) };
     const tokens = { verify: vi.fn() };
-    const guard = new JwtAuthGuard(reflector as never, tokens as never);
+    const guard = new JwtAuthGuard(reflector as never, tokens as never, liveSessions as never);
 
-    expect(guard.canActivate(wsContext({ data: { user: principal } }))).toBe(true);
+    await expect(guard.canActivate(wsContext({ data: { user: principal } }))).resolves.toBe(true);
     expect(tokens.verify).not.toHaveBeenCalled();
   });
 
-  it("valida el access token del handshake cuando aún no existe principal", () => {
+  it("valida el access token del handshake cuando aún no existe principal", async () => {
     const reflector = { getAllAndOverride: vi.fn().mockReturnValue(false) };
     const tokens = { verify: vi.fn().mockReturnValue(principal) };
     const client: { data: { user?: typeof principal }; handshake: { auth: { accessToken: string } } } = { data: {}, handshake: { auth: { accessToken: "token" } } };
-    const guard = new JwtAuthGuard(reflector as never, tokens as never);
+    const guard = new JwtAuthGuard(reflector as never, tokens as never, liveSessions as never);
 
-    expect(guard.canActivate(wsContext(client))).toBe(true);
+    await expect(guard.canActivate(wsContext(client))).resolves.toBe(true);
     expect(client.data).toEqual({ user: principal });
   });
 
-  it("rechaza un socket sin token ni principal", () => {
+  it("rechaza un socket sin token ni principal", async () => {
     const reflector = { getAllAndOverride: vi.fn().mockReturnValue(false) };
-    const guard = new JwtAuthGuard(reflector as never, { verify: vi.fn() } as never);
-    expect(() => guard.canActivate(wsContext({ data: {}, handshake: { auth: {} } }))).toThrow(UnauthorizedException);
+    const guard = new JwtAuthGuard(reflector as never, { verify: vi.fn() } as never, liveSessions as never);
+    await expect(guard.canActivate(wsContext({ data: {}, handshake: { auth: {} } }))).rejects.toThrow(UnauthorizedException);
+  });
+
+  it("rechaza un token válido cuya sesión ya no vale (baja, rol o clave cambiados)", async () => {
+    const reflector = { getAllAndOverride: vi.fn().mockReturnValue(false) };
+    const tokens = { verify: vi.fn().mockReturnValue(principal) };
+    const guard = new JwtAuthGuard(reflector as never, tokens as never, { isCurrent: vi.fn().mockResolvedValue(false) } as never);
+    await expect(guard.canActivate(wsContext({ data: {}, handshake: { auth: { accessToken: "token" } } }))).rejects.toThrow(UnauthorizedException);
   });
 
   it("evalúa roles usando el principal del socket", () => {

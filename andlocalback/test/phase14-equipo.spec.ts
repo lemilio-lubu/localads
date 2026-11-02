@@ -11,7 +11,7 @@ import { AccountType, AdvertisingPlatform } from "../src/modules/recharges/domai
 import { validRuc } from "./ruc-fixture";
 import { createTestDatabase } from "./support/postgres-test-database";
 
-const member = { id: "t1", username: "gestor", name: "Gestor Uno", role: "GESTOR", status: "ACTIVE", mustChangePassword: true, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
+const member = { id: "t1", username: "gestor", name: "Gestor Uno", role: "GESTOR", status: "ACTIVE", mustChangePassword: true, mfaEnabled: false, createdAt: "2026-09-20T00:00:00.000Z", metrics: { clients: 0, sales: 0 } } as TeamMemberDetailView;
 const issuer = () => ({ issue: vi.fn().mockResolvedValue({ username: "gestor", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }) });
 /* El stub base no tiene cartera; los casos de baja necesitan uno que si. */
 const conCartera = { ...member, metrics: { clients: 2, sales: 0 } } as TeamMemberDetailView;
@@ -25,6 +25,7 @@ const repository = (overrides: Partial<TeamRepository> = {}): TeamRepository => 
   update: vi.fn().mockResolvedValue(member),
   deactivate: vi.fn().mockResolvedValue({ member, movedClients: 2 }),
   resetPassword: vi.fn().mockResolvedValue(member),
+  resetMfa: vi.fn().mockResolvedValue(member),
   ...overrides,
 });
 

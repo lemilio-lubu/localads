@@ -47,6 +47,7 @@ Añade un servicio PostgreSQL al proyecto y crea en el servicio backend estas va
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 NODE_ENV=production
 JWT_ACCESS_SECRET=<secreto aleatorio de al menos 32 caracteres>
+MFA_ENCRYPTION_KEY=<openssl rand -base64 32>
 FRONTEND_ORIGIN=https://<dominio-del-frontend>
 R2_ACCOUNT_ID=<account-id>
 R2_ACCESS_KEY_ID=<access-key-id>
@@ -55,7 +56,18 @@ R2_BUCKET=<nombre-del-bucket>
 R2_REGION=auto
 ```
 
-La API no arranca en un despliegue (`NODE_ENV=production` o cualquier entorno de Railway) si `JWT_ACCESS_SECRET` tiene menos de 32 caracteres o es el de ejemplo, si falta `DATABASE_URL` o si `FRONTEND_ORIGIN` no es un único origen `https`. Variables opcionales de seguridad:
+La API no arranca en un despliegue (`NODE_ENV=production` o cualquier entorno de Railway) si `JWT_ACCESS_SECRET` tiene menos de 32 caracteres o es el de ejemplo, si falta `DATABASE_URL`, si `FRONTEND_ORIGIN` no es un único origen `https` o si `MFA_ENCRYPTION_KEY` no es una clave de 32 bytes en base64.
+
+`MFA_ENCRYPTION_KEY` cifra los secretos del doble factor guardados en la base. Va aparte de `JWT_ACCESS_SECRET` a propósito: rotar el secreto JWT solo cierra sesiones, mientras que perder o cambiar esta clave deja inservible el doble factor de quien lo tenga activo (un admin se lo restablece desde Equipo y la persona lo activa de nuevo). Guárdala también fuera de Railway.
+
+## Sesiones y doble factor
+
+- El doble factor (TOTP: Google Authenticator, Microsoft Authenticator, 1Password…) es opcional para todos. Cada persona lo activa o lo quita desde «Cambiar contraseña»; al activarlo recibe 10 códigos de recuperación de un solo uso. Al equipo (admin y gestor) se le sugiere al entrar mientras no lo tenga. Con él activo, la contraseña sola no abre sesión.
+- Sesión del equipo: 12 h como máximo y 30 min de inactividad. Clientes: 7 días y 1 día.
+- Cinco intentos fallidos (clave o código) bloquean la cuenta 15 min, el doble con cada fallo posterior hasta un día. Restablecer la clave desde Equipo o Clientes la desbloquea.
+- Dar de baja, cambiar el rol o restablecer la clave corta el acceso en menos de 30 s, también en el tiempo real.
+
+Variables opcionales de seguridad:
 
 ```dotenv
 # Proxies delante de la API; por defecto 1 en un despliegue (el borde de Railway) y 0 en local

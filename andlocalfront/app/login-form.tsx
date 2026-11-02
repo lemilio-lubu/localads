@@ -10,7 +10,8 @@ import PwaInstallButton from "./components/molecules/pwa-install-button";
 import FormError from "./components/atoms/form-error";
 import FormField from "./components/molecules/form-field";
 import form from "./components/molecules/form-layout.module.css";
-import { login } from "./lib/auth-api";
+import { login, type AuthUser, type MfaStep } from "./lib/auth-api";
+import { MfaVerify } from "./features/auth/mfa-panel";
 import { landingFor } from "./lib/recharges-api";
 import LoginWalletDeck, { type DeckState } from "./components/organisms/login-wallet-deck";
 import styles from "./login-form.module.css";
@@ -37,6 +38,9 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [deck, setDeck] = useState<DeckState>("idle");
+  /* Con doble factor, el login se queda a medio camino: este reto lleva al
+     paso del código en el mismo panel. */
+  const [mfa, setMfa] = useState<MfaStep | null>(null);
   const pending = deck !== "idle";
 
   /* noValidate: el globo nativo («Completa este campo») habla con la voz del
@@ -59,18 +63,27 @@ export default function LoginForm() {
     // Mientras se verifica, las tarjetas se juntan en un mazo.
     setDeck("gathering");
     try {
-      const user = await login(username.trim().toLowerCase(), password);
-      // El destino depende del historial del cliente: se decide mientras el
-      // mazo sigue reunido, antes de despegar.
-      const destination = await landingFor(user);
-      // Al entrar, el mazo despega antes de cambiar de pantalla.
-      setDeck("launching");
-      window.setTimeout(() => router.push(destination), reduceMotion ? 0 : 380);
+      const result = await login(username.trim().toLowerCase(), password);
+      if (result.kind === "mfa") { setPassword(""); setMfa(result); setDeck("idle"); return; }
+      await enter(result.user);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Correo o contraseña incorrectos");
       setDeck("idle");
     }
   }
+
+  async function enter(user: AuthUser) {
+    setDeck("gathering");
+    // El destino depende del historial del cliente: se decide mientras el
+    // mazo sigue reunido, antes de despegar.
+    const destination = await landingFor(user);
+    // Al entrar, el mazo despega antes de cambiar de pantalla.
+    setDeck("launching");
+    window.setTimeout(() => router.push(destination), reduceMotion ? 0 : 380);
+  }
+
+  /* Volver del paso del código: el reto se descarta y se pide la clave otra vez. */
+  function cancelMfa() { setMfa(null); setError(""); setSubmitted(false); }
 
   function fillDemoAccount(account: (typeof demoAccounts)[number]) { setUsername(demoLogins[account]); setPassword("1234"); setError(""); }
 
@@ -109,6 +122,9 @@ export default function LoginForm() {
         transition={reduceMotion ? { duration: 0 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
       >
         <div className={styles.brandRow}><div className={styles.logo}><BrandLogo /></div><PwaInstallButton /></div>
+        {mfa
+          ? <MfaVerify key={mfa.challengeToken} step={mfa} headingClassName={styles.heading} submitClassName={styles.submit} onCancel={cancelMfa} onDone={(result) => void enter(result.user)} />
+          : <>
         <header className={styles.heading}>
           <h1 id="login-title">Inicia sesión</h1>
           <p>Clientes, gestores y administradores usan el mismo acceso.</p>
@@ -136,6 +152,7 @@ export default function LoginForm() {
           Probar con una cuenta demo:{" "}
           {demoAccounts.map((account, index) => <span key={account}>{index > 0 && " · "}<TextButton size="inherit" underline="hover" onClick={() => fillDemoAccount(account)} disabled={pending}>{account}</TextButton></span>)}
         </p>}
+            </>}
       </motion.section>
     </main>
   );

@@ -1,8 +1,9 @@
 import { Inject } from "@nestjs/common";
-import { ConnectedSocket, MessageBody, OnGatewayConnection, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { AccessTokenService } from "../../auth/access-token.service";
-import { AuthPrincipal } from "../../auth/auth.types";
+import { AccessPayload, AuthPrincipal } from "../../auth/auth.types";
+import { SessionStateService } from "../../auth/session-state.service";
 import { MANAGER_SCOPE_QUERY, ManagerScopeQueryPort } from "../application/ports/manager-scope.ports";
 import { VerificationRealtimeEvent, VerificationRealtimePublisher } from "../application/ports/transaction-verification.ports";
 
@@ -11,28 +12,54 @@ const accountRoom = (accountId: string) => `account:${accountId}`;
    accountId y estados de transacciones de toda la cartera, no solo de la suya.
    Tiene sala propia y los eventos se le enrutan uno a uno. */
 const managerRoom = (managerId: string) => `manager:${managerId}`;
+/* Cada cuanto se vuelve a mirar si la sesion sigue en pie. */
+const revalidateMs = 60_000;
 
 @WebSocketGateway({
   namespace: "/transactions",
   cors: { origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000", credentials: true },
 })
-export class TransactionsGateway implements VerificationRealtimePublisher, OnGatewayConnection {
+export class TransactionsGateway implements VerificationRealtimePublisher, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly accessTokens: AccessTokenService,
     @Inject(MANAGER_SCOPE_QUERY) private readonly scopeQueries: ManagerScopeQueryPort,
+    private readonly sessions: SessionStateService,
   ) {}
   @WebSocketServer()
   private server!: Server;
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     const raw = typeof client.handshake.auth?.accessToken === "string" ? client.handshake.auth.accessToken : undefined;
     try {
       const user = this.accessTokens.verify(raw ?? "");
+      if (!(await this.sessions.isCurrent(user))) throw new Error("STALE_SESSION");
       client.data.user = user;
       this.joinRooms(client, user);
+      this.scheduleRevalidation(client, user);
     } catch {
       client.disconnect(true);
     }
+  }
+
+  handleDisconnect(client: Socket) { clearTimeout(client.data.revalidation as NodeJS.Timeout | undefined); }
+
+  /* El token solo se comprobaba al conectar: un socket abierto seguia
+     recibiendo eventos horas despues de una baja o de caducar la sesion.
+     Ahora se corta al vencer el access token o en cuanto la sesion deja de
+     valer (baja, cambio de rol, clave restablecida). El front reconecta con un
+     token nuevo, y si ya no puede renovarlo, se queda fuera. */
+  private scheduleRevalidation(client: Socket, user: AccessPayload) {
+    const untilExpiry = user.exp * 1000 - Date.now();
+    const timer = setTimeout(() => {
+      void (async () => {
+        const current = untilExpiry > revalidateMs && await this.sessions.isCurrent(user).catch(() => false);
+        if (!client.connected) return;
+        if (current) this.scheduleRevalidation(client, user);
+        else client.disconnect(true);
+      })();
+    }, Math.max(0, Math.min(untilExpiry, revalidateMs)));
+    timer.unref?.();
+    client.data.revalidation = timer;
   }
 
   @SubscribeMessage("transactions:subscribe")
@@ -40,8 +67,8 @@ export class TransactionsGateway implements VerificationRealtimePublisher, OnGat
     @ConnectedSocket() client: Socket,
     @MessageBody() input?: { scope?: "admin"; accountId?: string },
   ) {
-    const user = client.data.user as AuthPrincipal | undefined;
-    if (!user) return { event: "transactions:error", data: { message: "No autorizado" } };
+    const user = client.data.user as AccessPayload | undefined;
+    if (!user || !(user.exp * 1000 > Date.now())) return { event: "transactions:error", data: { message: "No autorizado" } };
     /* `scope: "admin"` nombra la vista de back-office, no el rol: admin y
        gestor comparten esas pantallas y cada uno entra en su propia sala.
        Mientras el gestor quedo fuera de este `if`, su pantalla recibia

@@ -1,0 +1,19 @@
+/* Segundo paso del login. Vive dentro del panel de cristal del login y usa
+   sus mismos campos y botones; aquí solo lo propio: el código grande, el QR
+   y la rejilla de códigos de recuperación. */
+.code { font-family: var(--font-family-mono); font-size: var(--font-size-card-title) !important; letter-spacing: .3em; text-align: center; }
+.recoveryInput { font-family: var(--font-family-mono); letter-spacing: .08em; }
+
+.links { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.6; text-align: center; }
+
+.setup { display: flex; align-items: center; gap: var(--space-2); }
+/* El QR va sobre blanco puro: las apps lo leen peor con el cristal detrás. */
+.qr { flex: none; width: 112px; height: 112px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-step-1); background: var(--color-surface-raised); }
+.secret { color: var(--color-text); font-family: var(--font-family-mono); font-size: var(--font-size-body-sm); line-height: 1.5; word-spacing: .2em; overflow-wrap: anywhere; }
+.copySecret { justify-self: start; display: inline-flex; align-items: center; gap: 4px; }
+.manual { display: grid; min-width: 0; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.5; }
+
+.codes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.codes li { border-radius: var(--radius-step-1); background: var(--color-surface-muted); padding: var(--space-1); color: var(--color-text); font-family: var(--font-family-mono); font-size: var(--font-size-body-sm); text-align: center; }
+.codeActions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.codeActions > * { flex: 1 1 140px; }

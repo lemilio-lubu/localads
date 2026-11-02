@@ -7,12 +7,18 @@ import { FormEvent, useEffect, useState } from "react";
 import Button from "../components/atoms/button";
 import BrandLogo from "../components/atoms/brand-logo";
 import { enterTransition } from "../design-system/motion";
-import { changePassword, getCurrentUser, refreshSession } from "../lib/auth-api";
+import { changePassword, getCurrentUser, refreshSession, type AuthUser } from "../lib/auth-api";
+import { landingFor } from "../lib/recharges-api";
+import TextButton from "../components/atoms/text-button";
 import styles from "./change-password-form.module.css";
 import { TextInput } from "../components/atoms/text-field";
 import FormField from "../components/molecules/form-field";
+import MfaSettings from "../features/auth/mfa-settings";
 
-const minimum = 8;
+/* La política entera (claves comunes, que no contenga el correo) la aplica el
+   backend con su propio mensaje; aquí solo se adelanta el largo. Sin reglas de
+   mayúsculas o símbolos: una frase larga es más fuerte y se recuerda. */
+const minimum = 12;
 
 export default function ChangePasswordForm() {
   const router = useRouter();
@@ -21,6 +27,7 @@ export default function ChangePasswordForm() {
   /* La pantalla también sirve para cambiar una contraseña propia. Decir
      «primer acceso» y «temporal» a quien no llega obligado sería falso. */
   const [forced, setForced] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [repeated, setRepeated] = useState("");
@@ -40,7 +47,7 @@ export default function ChangePasswordForm() {
     void (known ? Promise.resolve(known) : refreshSession()).then((user) => {
       if (!active) return;
       if (!user) { router.replace("/"); return; }
-      setUsername(user.username); setForced(user.mustChangePassword === true);
+      setUser(user); setUsername(user.username); setForced(user.mustChangePassword === true);
     });
     return () => { active = false; };
   }, [router]);
@@ -91,10 +98,16 @@ export default function ChangePasswordForm() {
             {({ id }) => <TextInput id={id} type="password" autoComplete="new-password" value={repeated} onChange={(event) => { setRepeated(event.target.value); setError(""); }} />}
           </FormField>
         </div>
-        <p className={styles.hint}>Al menos {minimum} caracteres, distinta de la {forced ? "temporal" : "actual"}.</p>
+        <p className={styles.hint}>Al menos {minimum} caracteres, distinta de la {forced ? "temporal" : "actual"}. Una frase de varias palabras funciona bien.</p>
         <p id="change-error" className={styles.error} role="alert" aria-live="polite">{error}</p>
         <Button variant="elevated" size="block" type="submit" disabled={pending}>{pending ? "guardando…" : "cambiar contraseña"}</Button>
       </form>
+      {/* Con la clave temporal el backend no deja hacer nada más: el doble
+          factor se ofrece cuando ya tiene una propia. */}
+      {username && !forced && <MfaSettings />}
+      {/* Quien llega desde el menú de perfil puede arrepentirse; quien llega
+          obligado no tiene adónde volver. */}
+      {user && !forced && <p className={styles.back}><TextButton size="body-sm" underline="hover" onClick={async () => router.push(await landingFor(user))}>volver</TextButton></p>}
     </motion.section>
   </main>;
 }

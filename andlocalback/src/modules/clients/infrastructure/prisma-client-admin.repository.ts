@@ -235,7 +235,7 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
     return this.prisma.$transaction(async (database) => {
       const user = await database.authUser.findFirst({ where: { username, clientId: id, role: "CLIENT" }, select: { id: true } });
       if (!user) return false;
-      await database.authUser.update({ where: { id: user.id }, data: { passwordHash, mustChangePassword: true } });
+      await database.authUser.update({ where: { id: user.id }, data: { passwordHash, mustChangePassword: true, tokenVersion: { increment: 1 }, failedLoginCount: 0, lockedUntil: null } });
       await database.refreshSession.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: new Date() } });
       return true;
     });

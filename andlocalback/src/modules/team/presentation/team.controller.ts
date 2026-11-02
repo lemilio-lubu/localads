@@ -29,6 +29,10 @@ export class TeamController {
   @Post(":id/password-reset")
   @HttpCode(HttpStatus.OK)
   resetPassword(@Param("id") id: string) { return this.team.resetPassword(id); }
+
+  @Post(":id/mfa-reset")
+  @HttpCode(HttpStatus.OK)
+  resetMfa(@Param("id") id: string, @CurrentUser() user: AuthPrincipal) { return this.team.resetMfa(id, user.userId); }
 }
 
 /* Sin ninguno de los dos campos devuelve undefined, y esa ausencia es la que

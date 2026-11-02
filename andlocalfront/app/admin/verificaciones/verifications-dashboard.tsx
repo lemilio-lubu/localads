@@ -98,13 +98,17 @@ export default function VerificationsDashboard() {
       void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
     });
     socket.io.on("reconnect_attempt", () => { socket.auth = { accessToken: getAccessToken() }; });
-    socket.on("connect_error", () => {
+    const reconnect = () => {
       void refreshSession().then((user) => {
         if (!user) return;
         socket.auth = { accessToken: getAccessToken() };
         socket.connect();
       });
-    });
+    };
+    socket.on("connect_error", reconnect);
+    /* El servidor corta el socket al vencer el token o la sesion; socket.io
+       no reintenta solo en ese caso, asi que se renueva y se vuelve a entrar. */
+    socket.on("disconnect", (reason) => { if (reason === "io server disconnect") reconnect(); });
     socket.on("verification:changed", (event: VerificationRealtimeEvent) => {
       setItems((current) => current.map((item) => item.id === event.verificationId ? { ...item, status: event.status, reviewReason: event.reason } : item));
       setSelected((current) => current?.detail.id === event.verificationId ? {

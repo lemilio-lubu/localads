@@ -83,7 +83,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
         void getMyTransactions(filtersRef.current).then((page) => { if (active) { setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); } }).catch(() => undefined);
       });
       socket.io.on("reconnect_attempt", () => { if (socket) socket.auth = { accessToken: getAccessToken() }; });
-      socket.on("connect_error", () => {
+      const reconnect = () => {
         if (refreshing) return;
         refreshing = true;
         void refreshSession().then((user) => {
@@ -92,7 +92,11 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
             socket.connect();
           }
         }).finally(() => { refreshing = false; });
-      });
+      };
+      socket.on("connect_error", reconnect);
+      /* El servidor corta el socket al vencer el token o la sesion; socket.io
+         no reintenta solo en ese caso, asi que se renueva y se vuelve a entrar. */
+      socket.on("disconnect", (reason) => { if (reason === "io server disconnect") reconnect(); });
       socket.on("verification:changed", (event: VerificationRealtimeEvent) => {
         setTransactions((current) => current.map((item) => item.id === event.transactionId ? { ...item, rechargeStatus: event.rechargeStatus, paymentStatus: event.paymentStatus } : item));
         setDetail((current) => current?.id === event.transactionId ? {

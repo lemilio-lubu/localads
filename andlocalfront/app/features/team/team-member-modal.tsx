@@ -1,6 +1,6 @@
 "use client";
 
-import { AtSign, UserRound, KeyRound, Link2, Power, RotateCw, Save, Unlink, UserCog } from "lucide-react";
+import { AtSign, UserRound, KeyRound, ShieldOff, Link2, Power, RotateCw, Save, Unlink, UserCog } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import MetricCard from "../../components/molecules/metric-card";
@@ -9,7 +9,8 @@ import FormError from "../../components/atoms/form-error";
 import FormField, { SelectChevron } from "../../components/molecules/form-field";
 import { formatAmount, formatDateTime } from "../../lib/format";
 import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";
-import { assignClientManager, getTeamMember, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";
+import { getCurrentUser } from "../../lib/auth-api";
+import { accessLabel, assignClientManager, getTeamMember, resetTeamMemberMfa, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";
 import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-member-modal.module.css";
 import { TextInput, Select } from "../../components/atoms/text-field";
@@ -45,7 +46,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
   const [notice, setNotice] = useState("");
   const [linking, setLinking] = useState(false);
   const [unassigned, setUnassigned] = useState<AdminClient[]>([]);
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmReset, setConfirmReset] = useState<"password" | "mfa" | null>(null);
 
   useEffect(() => {
     if (!memberId) return;
@@ -106,7 +107,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
             <MetricCard className={isManager ? styles.metric : styles.metricText} label="ventas" tone="success" valueSize={isManager ? "regular" : "small"}>{isManager ? String(member.metrics.sales) : "no aplica"}</MetricCard>
             <MetricCard className={styles.metric} label="estado">{member.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             {/* Texto y no cifra: en tamaño pequeño, como «no aplica» en las listas. */}
-            <MetricCard className={styles.metricText} label="acceso" valueSize="small">{member.mustChangePassword ? "clave temporal" : "clave propia"}</MetricCard>
+            <MetricCard className={styles.metricText} label="acceso" valueSize="small">{accessLabel(member)}</MetricCard>
           </div>
         </header>
 
@@ -139,16 +140,28 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
             <FormError message={actionError} />
 
             <div className={styles.access}>
-              {confirmReset
-                ? <div className={styles.confirm}>
+              {confirmReset === "password" && <div className={styles.confirm}>
                     <p>La contraseña actual de <strong>{member.username}</strong> dejará de servir y se cerrarán sus sesiones.</p>
                     <div>
-                      <Button variant="ghost" onClick={() => setConfirmReset(false)}>Cancelar</Button>
+                      <Button variant="ghost" onClick={() => setConfirmReset(null)}>Cancelar</Button>
                       <Button variant="secondary" onClick={() => onResetPassword(member)}>Sí, restablecer</Button>
                     </div>
-                  </div>
-                : <>
-                    <Button variant="secondary" disabled={Boolean(busy)} onClick={() => setConfirmReset(true)}><KeyRound size={16} aria-hidden="true" />restablecer contraseña</Button>
+                  </div>}
+              {/* Para quien perdió el móvil y sus códigos de recuperación. */}
+              {confirmReset === "mfa" && <div className={styles.confirm}>
+                    <p>Se borrará el doble factor de <strong>{member.username}</strong> y se cerrarán sus sesiones. Entrará solo con su contraseña y podrá volver a activarlo desde su cuenta.</p>
+                    <div>
+                      <Button variant="ghost" onClick={() => setConfirmReset(null)}>Cancelar</Button>
+                      <Button variant="secondary" disabled={Boolean(busy)} onClick={() => void run("mfa", async () => {
+                        await resetTeamMemberMfa(member.id);
+                        setConfirmReset(null); setNotice("Doble factor restablecido. Puede volver a activarlo desde su cuenta."); reload();
+                      })}>{busy === "mfa" ? "restableciendo…" : "Sí, restablecer"}</Button>
+                    </div>
+                  </div>}
+              {!confirmReset && <>
+                    <Button variant="secondary" disabled={Boolean(busy)} onClick={() => setConfirmReset("password")}><KeyRound size={16} aria-hidden="true" />restablecer contraseña</Button>
+                    {/* El propio no: con una sesión robada bastaría para quitarlo. Lo hace otro admin. */}
+                    {member.mfaEnabled && member.id !== getCurrentUser()?.userId && <Button variant="secondary" disabled={Boolean(busy)} onClick={() => setConfirmReset("mfa")}><ShieldOff size={16} aria-hidden="true" />restablecer doble factor</Button>}
                     {/* Dar de baja a un gestor con cartera exige decir a dónde
                         va: lo pregunta el modal de destino de la lista. */}
                     <Button variant="secondary" className={member.status === "ACTIVE" ? styles.danger : undefined} disabled={Boolean(busy)} onClick={() => onToggleStatus(member)}><Power size={16} aria-hidden="true" />{member.status === "ACTIVE" ? "dar de baja" : "reactivar"}</Button>

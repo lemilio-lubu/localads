@@ -25,6 +25,8 @@ export function usePlatformUpdates() {
     socket.on("platforms:changed", refresh);
     socket.on("connect", refresh);
     socket.on("connect_error", () => { void authenticate(); });
+    /* El servidor corta el socket al vencer el token o la sesion: renovar y volver. */
+    socket.on("disconnect", (reason) => { if (reason === "io server disconnect") void authenticate(); });
     socket.io.on("reconnect_attempt", () => { socket.auth = { accessToken: getAccessToken() }; });
     if (getAccessToken()) socket.connect(); else void authenticate();
     window.addEventListener("focus", refresh);
