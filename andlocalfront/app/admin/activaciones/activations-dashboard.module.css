@@ -48,8 +48,8 @@
 
 .reject { grid-column: 1 / -1; display: grid; gap: var(--space-1); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
 .reject label { display: grid; gap: var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.reject textarea { min-height: 88px; resize: vertical; border: 1px solid var(--color-border); border-radius: var(--radius-small); outline: 0; padding: var(--space-2); font: inherit; font-size: var(--font-size-body-sm); }
-.reject textarea:focus { border-color: rgb(157 0 3 / 35%); box-shadow: 0 0 0 3px rgb(157 0 3 / 8%); }
+/* El aspecto es de TextInput/TextArea (text-field); aquí solo lo propio de este campo. */
+.reject textarea { font-size: var(--font-size-body-sm); }
 .reject > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
 
 /* El fallo al resolver pertenece a la solicitud que se tocó, no al listado. */
@@ -86,8 +86,3 @@
 @media (max-width: 520px) { .toolbar { flex-wrap: wrap; } .toolbar > * { min-width: 0; flex: 1 1 100%; } .row > .cell:first-child { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .row, .actions button, .reject button { transition-duration: 0ms; } .actions button:not(:disabled):active, .reject button:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
 
-/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
-   Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .reject textarea { font-size: var(--font-size-body); }
-}

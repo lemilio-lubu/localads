@@ -13,6 +13,7 @@ import ModalShell from "../../components/organisms/modal-shell";
 import { createTeamMember, type TeamMemberWithCredentials, type TeamRole } from "../../lib/team-api";
 import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-form-modal.module.css";
+import { TextInput } from "../../components/atoms/text-field";
 
 type Props = { open: boolean; onClose: () => void; onCreated: (member: TeamMemberWithCredentials) => void };
 
@@ -63,12 +64,12 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
       <form className={`${form.form} ${styles.layout}`} onSubmit={submit} noValidate>
         <FormSection title="Acceso">
           <FormField label="Nombre" Icon={UserRound} error={shownNameError}>
-            {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={() => setTouched((state) => ({ ...state, name: true }))} maxLength={80} autoComplete="off" placeholder="Marta Pérez" aria-invalid={invalid} aria-describedby={describedBy} />}
+            {({ id, describedBy, invalid }) => <TextInput id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={() => setTouched((state) => ({ ...state, name: true }))} maxLength={80} autoComplete="off" placeholder="Marta Pérez" aria-invalid={invalid} aria-describedby={describedBy} />}
           </FormField>
           {/* Se escribe libre y se guarda en minúscula: rechazar «Gestor» por
               llevar mayúscula sería hostil sin motivo. */}
           <FormField label="Correo" Icon={AtSign} error={shownUsernameError}>
-            {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} onBlur={() => setTouched((state) => ({ ...state, username: true }))} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" placeholder="gestor@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
+            {({ id, describedBy, invalid }) => <TextInput id={id} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} onBlur={() => setTouched((state) => ({ ...state, username: true }))} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" placeholder="gestor@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
           </FormField>
         </FormSection>
 

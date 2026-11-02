@@ -16,6 +16,7 @@ import styles from "./activations-dashboard.module.css";
 import { activationStatusTone } from "../../lib/status-tone";
 import SearchField from "../../components/molecules/search-field";
 import LoadError from "../../components/molecules/load-error";
+import { TextArea } from "../../components/atoms/text-field";
 
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
@@ -94,7 +95,7 @@ export default function ActivationsDashboard() {
 
         {rejecting === item.id
           ? <div className={styles.reject}>
-              <label>Motivo del rechazo<textarea autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+              <label>Motivo del rechazo<TextArea surface="soft" shape="small" tone="danger" autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
               <div><button type="button" onClick={() => { setRejecting(null); setReason(""); }}>Cancelar</button><button type="button" className={styles.dangerButton} disabled={!reason.trim() || busy === item.id} onClick={() => void act(item, "reject")}><X size={16} aria-hidden="true" />Confirmar rechazo</button></div>
             </div>
           : <div className={styles.actions}>

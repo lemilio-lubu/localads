@@ -16,6 +16,7 @@ import { createAdminClient, resetAdminClientPassword, updateAdminClient, type Ad
 import { assignClientManager, getTeam, type TeamMember } from "../../lib/team-api";
 import { normalizeRuc, rucKind, validateClientFields, type ClientProfileField } from "../../lib/form-validation";
 import styles from "./client-form-modal.module.css";
+import { TextInput, Select } from "../../components/atoms/text-field";
 
 type Props = {
   client: AdminClient | null;
@@ -137,15 +138,15 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
         <Section title="Identidad" className={styles.identity}>
           <div className={form.grid}>
             <Field className={form.wide} label="Nombre o razón social" Icon={UserRound} error={shown("name")}>
-              {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={touch("name")} maxLength={80} autoComplete="organization" placeholder="Ej. Comercial Andina S.A." aria-invalid={invalid} aria-describedby={describedBy} />}
+              {({ id, describedBy, invalid }) => <TextInput id={id} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={touch("name")} maxLength={80} autoComplete="organization" placeholder="Ej. Comercial Andina S.A." aria-invalid={invalid} aria-describedby={describedBy} />}
             </Field>
             <Field label="RUC" Icon={IdCard} error={shown("ruc")} hint={kind
               ? <span className={fieldStyles.valid}><BadgeCheck size={14} aria-hidden="true" />RUC válido · {kind}</span>
               : `${rucDigits}/13 dígitos`}>
-              {({ id, describedBy, invalid }) => <input id={id} className={fieldStyles.mono} value={ruc} onChange={(event) => { setRuc(event.target.value); setError(""); }} onBlur={touch("ruc")} inputMode="numeric" autoComplete="off" maxLength={17} placeholder="1790011674001" aria-invalid={invalid} aria-describedby={describedBy} />}
+              {({ id, describedBy, invalid }) => <TextInput id={id} className={fieldStyles.mono} value={ruc} onChange={(event) => { setRuc(event.target.value); setError(""); }} onBlur={touch("ruc")} inputMode="numeric" autoComplete="off" maxLength={17} placeholder="1790011674001" aria-invalid={invalid} aria-describedby={describedBy} />}
             </Field>
             <Field label="Correo" Icon={Mail} error={shown("email")}>
-              {({ id, describedBy, invalid }) => <input id={id} type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} onBlur={touch("email")} autoComplete="email" placeholder="facturacion@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
+              {({ id, describedBy, invalid }) => <TextInput id={id} type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} onBlur={touch("email")} autoComplete="email" placeholder="facturacion@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
             </Field>
           </div>
         </Section>
@@ -169,10 +170,10 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
               >
                 <div className={styles.credit}>
                   <Field className={styles.creditLimit} label="Línea de crédito" Icon={Wallet} error={shown("creditLimit")} hint="Monto máximo para financiar recargas">
-                    {({ id, describedBy, invalid }) => <><input id={id} type="number" min="0.01" step="0.01" inputMode="decimal" value={creditLimit} onChange={(event) => { setCreditLimit(event.target.value); setError(""); }} onBlur={touch("creditLimit")} aria-invalid={invalid} aria-describedby={describedBy} placeholder="1000.00" /><span className={styles.suffix}>USD</span></>}
+                    {({ id, describedBy, invalid }) => <><TextInput id={id} type="number" min="0.01" step="0.01" inputMode="decimal" value={creditLimit} onChange={(event) => { setCreditLimit(event.target.value); setError(""); }} onBlur={touch("creditLimit")} aria-invalid={invalid} aria-describedby={describedBy} placeholder="1000.00" /><span className={styles.suffix}>USD</span></>}
                   </Field>
                   <Field label="Días de crédito" Icon={CalendarClock} error={shown("creditDays")}>
-                    {({ id, describedBy, invalid }) => <><input id={id} type="number" min={1} max={365} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy} /><span className={styles.suffix}>días</span></>}
+                    {({ id, describedBy, invalid }) => <><TextInput id={id} type="number" min={1} max={365} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy} /><span className={styles.suffix}>días</span></>}
                   </Field>
                   <div className={styles.presets} role="group" aria-label="Plazos frecuentes">
                     {creditPresets.map((days) => <button key={days} type="button" aria-pressed={creditDays === days} onClick={() => { setCreditDays(days); setError(""); }}>{days}</button>)}
@@ -186,10 +187,10 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
             <Field label="Gestor responsable" Icon={UserCog}>
               {({ id, describedBy }) => (
                 <>
-                  <select id={id} value={managerId} onChange={(event) => setManagerId(event.target.value)} aria-describedby={describedBy}>
+                  <Select id={id} value={managerId} onChange={(event) => setManagerId(event.target.value)} aria-describedby={describedBy}>
                     <option value="">Sin asignar</option>
                     {managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.username}</option>)}
-                  </select>
+                  </Select>
                   <SelectChevron />
                 </>
               )}

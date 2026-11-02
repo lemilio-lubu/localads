@@ -66,8 +66,8 @@
 .executeBar p { margin: 0; color: var(--color-brand); font-size: var(--font-size-caption); }
 .executeDetail { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
 .executeDetail label { color: var(--color-text-muted); font-size: var(--font-size-micro); }
-.executeDetail input { width: 104px; height: var(--control-height-compact); border: 1px solid var(--color-border); border-radius: var(--radius-menu); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-1); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
-.executeDetail input:focus-visible { box-shadow: var(--focus-ring); }
+/* El aspecto es de TextInput/TextArea (text-field); aquí solo lo propio de este campo. */
+.executeDetail input { width: 104px; padding: 0 var(--space-1); font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
 .executeDetail button { min-height: var(--control-height-compact); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding-inline: var(--space-2); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
 .executeDetail button:disabled { opacity: .5; cursor: not-allowed; }
 .executeDetail button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
@@ -105,8 +105,3 @@
 @media (max-width: 520px) { .filters > span { flex-basis: 100%; } .auditFooter { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .row { transition-duration: 0ms; } .skeleton { animation: none; } }
 
-/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
-   Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .executeDetail input { font-size: var(--font-size-body); }
-}

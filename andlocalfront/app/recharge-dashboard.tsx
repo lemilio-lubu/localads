@@ -14,6 +14,7 @@ import type { AccountType } from "./design-system/types";
 import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getRechargeContext, getMyPautas, type ActivationRequest, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
 import { formatAmount, formatPercent } from "./lib/format";
 import styles from "./recharge-dashboard.module.css";
+import { TextInput } from "./components/atoms/text-field";
 
 const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = [
   { id: "META", label: "Meta", icon: "/figma/meta.svg" },
@@ -169,7 +170,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
               return (
                 <label key={id} className={styles.platformField} htmlFor={`${id}-amount`}>
                   <Image src={id === "TIKTOK" ? "/figma/tiktok-modal.svg" : icon} alt="" width={30} height={30} /><span className={styles.currency}>$</span>
-                  <input id={`${id}-amount`} type="number" inputMode="decimal" min="0" step="0.01" placeholder="500" value={amounts[id]} onChange={(event) => { setAmounts((current) => ({ ...current, [id]: event.target.value })); setMessage(""); setError(""); }} aria-label={`Monto para ${label}`} />
+                  <TextInput surface="bare" id={`${id}-amount`} type="number" inputMode="decimal" min="0" step="0.01" placeholder="500" value={amounts[id]} onChange={(event) => { setAmounts((current) => ({ ...current, [id]: event.target.value })); setMessage(""); setError(""); }} aria-label={`Monto para ${label}`} />
                   <span className={styles.currentBalance}>{label}<b>saldo {formatAmount(pauta.currentBalance)}</b></span>
                 </label>
               );
@@ -213,10 +214,10 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
               <h2 id="activation-title">{reactivating ? "Reactiva" : "Solicita"} Local Ads para {selectedPlatform.label}</h2>
             </header>
             <p className={styles.activationDescription}>{reactivating ? <>Solicita volver a activar tu plataforma. Conservas tu saldo e historial.<br />Las recargas en stop deberán ser reanudadas manualmente por el administrador.</> : <>Una gran oportunidad para pautar en {selectedPlatform.label} con factura local en Ecuador.<br />Optimiza tu inversión publicitaria y aprovecha sus beneficios tributarios con Local Ads.</>}</p>
-            <label><input required autoComplete="name" minLength={2} disabled={submitting} value={activation.requesterName} onChange={(e) => setActivation((v) => ({ ...v, requesterName: e.target.value }))} /><span>nombre de la persona solicitante</span></label>
-            <label><input required disabled={submitting} readOnly={reactivating && Boolean(pautas.find((pauta) => pauta.platform === activationPlatform)?.externalAccountId)} value={activation.externalAccountId} onChange={(e) => setActivation((v) => ({ ...v, externalAccountId: e.target.value }))} /><span>ID de la cuenta de {selectedPlatform.label}</span></label>
-            <label><input required type="number" inputMode="decimal" min="0.01" step="0.01" disabled={submitting} value={activation.firstRechargeAmount} onChange={(e) => setActivation((v) => ({ ...v, firstRechargeAmount: e.target.value }))} /><span>{reactivating ? "monto de referencia para la próxima recarga" : "monto de la primera recarga"}</span></label>
-            <label><input required type="tel" autoComplete="tel" disabled={submitting} value={activation.phone} onChange={(e) => setActivation((v) => ({ ...v, phone: e.target.value }))} /><span>número de teléfono</span></label>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required autoComplete="name" minLength={2} disabled={submitting} value={activation.requesterName} onChange={(e) => setActivation((v) => ({ ...v, requesterName: e.target.value }))} /><span>nombre de la persona solicitante</span></label>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required disabled={submitting} readOnly={reactivating && Boolean(pautas.find((pauta) => pauta.platform === activationPlatform)?.externalAccountId)} value={activation.externalAccountId} onChange={(e) => setActivation((v) => ({ ...v, externalAccountId: e.target.value }))} /><span>ID de la cuenta de {selectedPlatform.label}</span></label>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required type="number" inputMode="decimal" min="0.01" step="0.01" disabled={submitting} value={activation.firstRechargeAmount} onChange={(e) => setActivation((v) => ({ ...v, firstRechargeAmount: e.target.value }))} /><span>{reactivating ? "monto de referencia para la próxima recarga" : "monto de la primera recarga"}</span></label>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required type="tel" autoComplete="tel" disabled={submitting} value={activation.phone} onChange={(e) => setActivation((v) => ({ ...v, phone: e.target.value }))} /><span>número de teléfono</span></label>
             <div className={styles.activationActions}><ActionButton className={styles.activationSubmit} type="submit" disabled={submitting}>{submitting ? "Enviando…" : reactivating ? "solicitar reactivación" : "solicitar la cuenta"}</ActionButton></div>
             {activationError && <p className={styles.activationError} role="alert">{activationError}</p>}
           </form>}

@@ -39,8 +39,8 @@
 .reviewForm { display: grid; width: 100%; gap: 10px; opacity: 1; transition: opacity var(--duration-fast) var(--ease-out); }
 @starting-style { .reviewForm { opacity: 0; } }
 .reviewForm label { display: grid; gap: 6px; color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.reviewForm textarea { min-height: 88px; resize: vertical; border: 1px solid var(--color-border); border-radius: var(--radius-menu); outline: 0; padding: 10px; font: inherit; }
-.reviewForm textarea:focus { border-color: rgb(122 89 0 / 42%); box-shadow: 0 0 0 3px rgb(122 89 0 / 10%); }
+/* El aspecto es de TextInput/TextArea (text-field); aquí solo lo propio de este campo. */
+.reviewForm textarea { padding: 10px; font-size: var(--font-size-caption); }
 .reviewForm > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
 .reviewForm button { background: var(--color-surface-muted); color: var(--color-text); }
 .reviewForm button:last-child { background: var(--color-amber-action); color: var(--color-text-on-fill); }
@@ -53,12 +53,6 @@
 @media (max-width: 780px) { .modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
 @media (max-width: 560px) { .preview { min-height: 320px; }.preview img, .preview iframe { height: 320px; }.actions { flex-direction: column; }.actions > button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .actions button, .reviewForm { transition-duration: 0ms; }.actions button:active:not(:disabled) { transform: none; } }
-
-/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
-   Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .reviewForm textarea { font-size: var(--font-size-body); }
-}
 
 /* Revisión en una columna: con 1fr el mínimo era el contenido, y el nombre
    del archivo (una sola línea) ensanchaba la columna hasta sacar comprobante

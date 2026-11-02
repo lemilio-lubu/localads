@@ -25,6 +25,7 @@ import LoadError from "./components/molecules/load-error";
 import TextButton from "./components/atoms/text-button";
 import EmptyAction from "./components/atoms/empty-action";
 import RowDetailLink from "./components/atoms/row-detail-link";
+import { TextInput } from "./components/atoms/text-field";
 
 const formatDate = formatDateTime;
 /** Traduce el fallo a algo accionable: el texto crudo del navegador no ayuda. */
@@ -139,9 +140,9 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
               «hasta», que costaban 90px de los 117 que sobraban. Los nombres siguen
               existiendo para quien navega con lector de pantalla. */}
           <fieldset className={styles.filterGroup}><legend>fecha</legend>
-            <input type="date" aria-label="Desde" value={fromDate} onChange={(event) => changeFrom(event.target.value)} />
+            <TextInput surface="filled" shape="pill" size="button" type="date" aria-label="Desde" value={fromDate} onChange={(event) => changeFrom(event.target.value)} />
             <span className={styles.rangeDash} aria-hidden="true">–</span>
-            <input type="date" aria-label="Hasta" value={toDate} onChange={(event) => changeTo(event.target.value)} />
+            <TextInput surface="filled" shape="pill" size="button" type="date" aria-label="Hasta" value={toDate} onChange={(event) => changeTo(event.target.value)} />
           </fieldset>
           {availablePlatforms.length > 0 && <fieldset className={styles.filterGroup}><legend>plataforma</legend>{availablePlatforms.map((item) => <button key={item} type="button" className={styles.platformFilter} aria-pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} size="filter" active={platform === item} /></button>)}</fieldset>}
         </div>

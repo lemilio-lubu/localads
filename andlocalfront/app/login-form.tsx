@@ -14,6 +14,7 @@ import { login } from "./lib/auth-api";
 import { landingFor } from "./lib/recharges-api";
 import LoginWalletDeck, { type DeckState } from "./components/organisms/login-wallet-deck";
 import styles from "./login-form.module.css";
+import { TextInput } from "./components/atoms/text-field";
 
 type Field = "username" | "password";
 /* Los accesos de prueba (todos con la clave 1234) son solo para desarrollo: se
@@ -114,11 +115,11 @@ export default function LoginForm() {
 
         <form className={`${form.form} ${styles.form}`} onSubmit={submitLogin} noValidate>
           <FormField label="Correo" Icon={UserRound} error={shown("username")}>
-            {({ id, describedBy, invalid }) => <input id={id} name="username" autoComplete="username" inputMode="email" autoCapitalize="none" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu correo" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
+            {({ id, describedBy, invalid }) => <TextInput id={id} name="username" autoComplete="username" inputMode="email" autoCapitalize="none" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu correo" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
           </FormField>
           <FormField label="Contraseña" Icon={LockKeyhole} error={shown("password")}>
             {({ id, describedBy, invalid }) => <>
-              <input id={id} name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} placeholder="tu contraseña" aria-invalid={invalid} aria-describedby={describedBy} className={styles.passwordInput} disabled={pending} />
+              <TextInput id={id} name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} placeholder="tu contraseña" aria-invalid={invalid} aria-describedby={describedBy} className={styles.passwordInput} disabled={pending} />
               <button type="button" className={styles.reveal} onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showPassword}>
                 {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
               </button>

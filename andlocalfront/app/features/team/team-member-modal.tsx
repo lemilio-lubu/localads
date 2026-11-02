@@ -13,6 +13,7 @@ import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeamMember, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";
 import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-member-modal.module.css";
+import { TextInput, Select } from "../../components/atoms/text-field";
 
 type Props = {
   memberId: string | null;
@@ -113,17 +114,17 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
             <h3 id="team-member-data">Datos de la cuenta</h3>
             <div className={styles.fields}>
               <FormField label="Nombre" Icon={UserRound} error={nameError} hint={member.name ? undefined : "Esta cuenta aún no tiene nombre. Se verá su correo hasta que se lo pongas."}>
-                {({ id, describedBy, invalid }) => <input id={id} value={name} onChange={(event) => { setName(event.target.value); setNotice(""); }} maxLength={80} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} />}
+                {({ id, describedBy, invalid }) => <TextInput id={id} value={name} onChange={(event) => { setName(event.target.value); setNotice(""); }} maxLength={80} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} />}
               </FormField>
               <FormField label="Correo" Icon={AtSign} error={usernameError} hint={legacyAccount ? "Esta cuenta aún entra con un usuario. Ponle un correo para que entre con él." : undefined}>
-                {({ id, describedBy, invalid }) => <input id={id} value={username} onChange={(event) => { setUsername(event.target.value); setNotice(""); }} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" aria-invalid={invalid} aria-describedby={describedBy} />}
+                {({ id, describedBy, invalid }) => <TextInput id={id} value={username} onChange={(event) => { setUsername(event.target.value); setNotice(""); }} maxLength={120} autoComplete="off" inputMode="email" autoCapitalize="none" aria-invalid={invalid} aria-describedby={describedBy} />}
               </FormField>
               <FormField label="Rol" Icon={UserCog}>
                 {({ id, describedBy }) => <>
-                  <select id={id} value={role} onChange={(event) => { setRole(event.target.value as TeamRole); setNotice(""); }} aria-describedby={describedBy}>
+                  <Select id={id} value={role} onChange={(event) => { setRole(event.target.value as TeamRole); setNotice(""); }} aria-describedby={describedBy}>
                     <option value="GESTOR">Gestor</option>
                     <option value="ADMIN">Administrador</option>
-                  </select>
+                  </Select>
                   <SelectChevron />
                 </>}
               </FormField>

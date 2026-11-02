@@ -13,8 +13,9 @@
    y mismo fondo que el resto de controles del producto. */
 /* El padding interior cede antes que el ancho: el campo tiene que caber en la
    línea, pero «dd/mm/aaaa» no puede rozar el icono del calendario. */
-.filterGroup input[type="date"] { width: 124px; height: var(--button-height); border: 0; border-radius: var(--radius-pill); outline: 0; background: var(--color-surface-muted); padding: 0 var(--space-1); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); }
-.filterGroup input[type="date"]:focus-visible { box-shadow: var(--focus-ring); }
+/* El aspecto es de TextInput (text-field); aquí el ancho, la letra y sin borde,
+   como siempre: el de la superficie filled lo estrecharía 1px por dentro. */
+.filterGroup input[type="date"] { width: 124px; border: 0; padding: 0 var(--space-1); font-size: var(--font-size-caption); }
 .platformFilter { display: inline-grid; min-width: var(--hit-target); min-height: var(--hit-target); place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; padding-inline: var(--space-half); cursor: pointer; transition: box-shadow var(--duration-fast) var(--ease-out); }
 /* El estado lo dice el relleno de la pastilla; el anillo lo repetia. */
 .platformFilter[aria-pressed="true"] { box-shadow: none; }
@@ -52,7 +53,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .filterGroup input[type="date"], .platformFilter, .invoiceRow { transition-duration: 0ms; }
+  .platformFilter, .invoiceRow { transition-duration: 0ms; }
 }
 
 @media (max-width: 1100px) {
@@ -88,8 +89,3 @@
 
 
 
-/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
-   Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .filterGroup input[type="date"] { font-size: var(--font-size-body); }
-}

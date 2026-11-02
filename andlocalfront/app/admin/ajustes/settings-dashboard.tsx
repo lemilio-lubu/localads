@@ -14,6 +14,7 @@ import {
   type PaymentAccount, type PaymentAccountChange, type PaymentAccountInput,
 } from "../../lib/payment-account-api";
 import styles from "./settings-dashboard.module.css";
+import { TextInput } from "../../components/atoms/text-field";
 
 const emptyForm: PaymentAccountInput = { bankName: "", accountType: "", accountNumber: "", holderName: "", holderTaxId: "", email: "", phone: "" };
 const labels: Record<keyof Omit<PaymentAccount, "id" | "updatedAt" | "updatedById">, string> = {
@@ -111,17 +112,17 @@ export default function SettingsDashboard() {
         <form className={`${form.form} ${styles.form}`} onSubmit={review} noValidate aria-label="Cuenta de cobro">
           <div className={form.section}>
             <div className={form.grid}>
-              <Field label="Banco" Icon={Landmark}>{({ id, describedBy, invalid }) => <input id={id} value={values.bankName} maxLength={80} onChange={(event) => set("bankName")(event.target.value)} placeholder="Produbanco" aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
-              <Field label="Tipo de cuenta" Icon={CreditCard}>{({ id, describedBy, invalid }) => <input id={id} value={values.accountType} maxLength={60} onChange={(event) => set("accountType")(event.target.value)} placeholder="Cuenta Pro Pyme" aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
-              <Field label="Número de cuenta" Icon={Hash}>{({ id, describedBy, invalid }) => <input id={id} className={styles.digits} inputMode="numeric" value={values.accountNumber} maxLength={40} onChange={(event) => set("accountNumber")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
-              <Field label="RUC / identificación" Icon={IdCard}>{({ id, describedBy, invalid }) => <input id={id} className={styles.digits} inputMode="numeric" value={values.holderTaxId} maxLength={20} onChange={(event) => set("holderTaxId")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
-              <Field className={form.wide} label="Titular" Icon={UserRound}>{({ id, describedBy, invalid }) => <input id={id} value={values.holderName} maxLength={120} onChange={(event) => set("holderName")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
+              <Field label="Banco" Icon={Landmark}>{({ id, describedBy, invalid }) => <TextInput id={id} value={values.bankName} maxLength={80} onChange={(event) => set("bankName")(event.target.value)} placeholder="Produbanco" aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
+              <Field label="Tipo de cuenta" Icon={CreditCard}>{({ id, describedBy, invalid }) => <TextInput id={id} value={values.accountType} maxLength={60} onChange={(event) => set("accountType")(event.target.value)} placeholder="Cuenta Pro Pyme" aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
+              <Field label="Número de cuenta" Icon={Hash}>{({ id, describedBy, invalid }) => <TextInput id={id} className={styles.digits} inputMode="numeric" value={values.accountNumber} maxLength={40} onChange={(event) => set("accountNumber")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
+              <Field label="RUC / identificación" Icon={IdCard}>{({ id, describedBy, invalid }) => <TextInput id={id} className={styles.digits} inputMode="numeric" value={values.holderTaxId} maxLength={20} onChange={(event) => set("holderTaxId")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
+              <Field className={form.wide} label="Titular" Icon={UserRound}>{({ id, describedBy, invalid }) => <TextInput id={id} value={values.holderName} maxLength={120} onChange={(event) => set("holderName")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
             </div>
             <fieldset className={styles.optional}>
               <legend>Contacto (opcional)</legend>
               <div className={form.grid}>
-                <Field label="Correo" Icon={Mail}>{({ id, describedBy, invalid }) => <input id={id} type="email" value={values.email} maxLength={120} onChange={(event) => set("email")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
-                <Field label="Celular" Icon={Phone}>{({ id, describedBy, invalid }) => <input id={id} type="tel" inputMode="tel" value={values.phone} maxLength={30} onChange={(event) => set("phone")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
+                <Field label="Correo" Icon={Mail}>{({ id, describedBy, invalid }) => <TextInput id={id} type="email" value={values.email} maxLength={120} onChange={(event) => set("email")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
+                <Field label="Celular" Icon={Phone}>{({ id, describedBy, invalid }) => <TextInput id={id} type="tel" inputMode="tel" value={values.phone} maxLength={30} onChange={(event) => set("phone")(event.target.value)} aria-describedby={describedBy} aria-invalid={invalid} />}</Field>
               </div>
             </fieldset>
           </div>
