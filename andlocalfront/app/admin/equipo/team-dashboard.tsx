@@ -7,6 +7,7 @@ import CredentialsModal from "../../components/organisms/credentials-modal";
 import { accessLabel, getTeam, resetTeamMemberPassword, updateTeamMember, type IssuedCredentials, type TeamMember, type TeamRole } from "../../lib/team-api";
 import TeamFormModal from "../../features/team/team-form-modal";
 import PortfolioHandoverModal from "./portfolio-handover-modal";
+import ResetPasswordModal from "./reset-password-modal";
 import TeamMemberModal from "../../features/team/team-member-modal";
 import MetricCard from "../../components/molecules/metric-card";
 import styles from "./team-dashboard.module.css";
@@ -44,6 +45,9 @@ export default function TeamDashboard() {
   /* La baja de un gestor con cartera pasa por el modal de destino. */
   const [handover, setHandover] = useState<TeamMember | null>(null);
   const [handoverError, setHandoverError] = useState("");
+  /* Restablecer pide confirmación antes: antes la fila lo hacía de un clic. */
+  const [resetTarget, setResetTarget] = useState<TeamMember | null>(null);
+  const [resetError, setResetError] = useState("");
   /* Ficha abierta. Se refleja en la URL (?miembro=) para que el enlace a un
      miembro se pueda compartir o guardar, como cuando era una pantalla. */
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -99,6 +103,20 @@ export default function TeamDashboard() {
       setReloadToken((token) => token + 1);
     } catch (reason) {
       setHandoverError(reason instanceof Error ? reason.message : "No fue posible dar de baja la cuenta");
+    } finally { setBusyId(null); }
+  }
+
+  async function confirmReset() {
+    if (!resetTarget) return;
+    setBusyId(resetTarget.id); setResetError("");
+    try {
+      const updated = await resetTeamMemberPassword(resetTarget.id);
+      save(updated);
+      /* Uno cierra antes de que abra el otro: los modales no se apilan. */
+      setResetTarget(null);
+      setIssued({ credentials: updated.credentials, title: `nueva contraseña de ${updated.username}` });
+    } catch (reason) {
+      setResetError(reason instanceof Error ? reason.message : "No fue posible restablecer la contraseña");
     } finally { setBusyId(null); }
   }
 
@@ -163,7 +181,7 @@ export default function TeamDashboard() {
             <MetricCard label="estado">{member.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="acceso" valueSize="small">{accessLabel(member)}</MetricCard>
             <RowActions className={styles.rowActions}>
-              <RowActionButton disabled={busyId === member.id} onClick={() => void run(member, "reset")}><KeyRound size={16} aria-hidden="true" />restablecer</RowActionButton>
+              <RowActionButton disabled={busyId === member.id} onClick={() => { setResetError(""); setResetTarget(member); }}><KeyRound size={16} aria-hidden="true" />restablecer</RowActionButton>
               <RowActionButton disabled={busyId === member.id} onClick={() => void run(member, "toggle")}><Power size={16} aria-hidden="true" />{busyId === member.id ? "guardando…" : member.status === "ACTIVE" ? "desactivar" : "activar"}</RowActionButton>
             </RowActions>
             {actionError?.id === member.id && <p className={styles.rowNotice} role="alert">{actionError.message}</p>}
@@ -183,6 +201,13 @@ export default function TeamDashboard() {
         )}
       </div>
 
+      <ResetPasswordModal
+        member={resetTarget}
+        pending={busyId === resetTarget?.id}
+        error={resetError}
+        onClose={() => { setResetTarget(null); setResetError(""); }}
+        onConfirm={() => void confirmReset()}
+      />
       <PortfolioHandoverModal
         member={handover}
         candidates={members.filter((item) => item.role === "GESTOR" && item.status === "ACTIVE" && item.id !== handover?.id)}
