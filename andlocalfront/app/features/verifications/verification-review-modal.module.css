@@ -1,0 +1,80 @@
+/* Sin altura máxima ni scroll propio: si no cabe en la ventana, hace scroll
+   el fondo (ModalShell), igual que el detalle de transacción. Un scroll dentro
+   de otro obligaba a atinar en qué caja girar la rueda. */
+.modal { width: min(1120px, 100%); }
+.modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
+.modalHeader small { color: var(--color-text-muted); }
+.modalHeader h2 { margin: 4px 0; font-size: var(--font-size-subhead); }
+.modalHeader p { margin: 0; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-caption); }
+.reviewGrid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: var(--space-3); margin-top: var(--space-4); }
+.previewPanel, .dataPanel { border-radius: var(--radius-control); background: var(--color-surface-raised); padding: var(--space-3); }
+.previewHeader { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-2); }
+.previewHeader > div { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.previewHeader small { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.previewHeader strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.previewHeader button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
+.preview { position: relative; display: grid; min-height: 500px; place-items: center; overflow: hidden; border-radius: var(--radius-menu); background: #eef0ed; color: var(--color-text-muted); }
+.preview img { display: block; width: 100%; height: 500px; object-fit: contain; }
+.preview iframe { width: 100%; height: 500px; border: 0; background: var(--color-surface-raised); }
+.previewFailure { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); color: var(--color-danger); }
+.dataPanel h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-card-title); }
+.dataPanel dl { display: grid; gap: 0; margin: 0; }
+.dataPanel dl div { display: flex; justify-content: space-between; gap: var(--space-2); border-bottom: 1px solid var(--color-border); padding: 11px 0; font-size: var(--font-size-caption); }
+.dataPanel dt { color: var(--color-text-muted); }
+.dataPanel dd { margin: 0; font-weight: var(--font-weight-bold); text-align: right; }
+.dataPanel dd[data-match="false"] { color: var(--color-danger); }
+.dataPanel dd[data-match="true"] { color: var(--color-brand); }
+.audit { display: flex; flex-direction: column; gap: 3px; margin-top: var(--space-2); border-radius: var(--radius-menu); background: var(--color-brand-surface); padding: 13px 16px; color: var(--color-brand); font-size: var(--font-size-caption); }
+.audit small, .audit span { color: var(--color-text-muted); }
+.audit p { margin: 5px 0 0; color: var(--color-text); }
+.issues { margin-top: var(--space-2); border-radius: var(--radius-menu); background: #fff8e8; padding: 13px 16px; color: #795200; font-size: var(--font-size-caption); }
+.issues ul { margin: 6px 0 0; padding-left: 18px; }
+.actions { display: flex; justify-content: flex-end; gap: var(--space-1); margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-3); }
+.actions > button, .reviewForm button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: var(--radius-pill); padding: 0 18px; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) ease, background-color var(--duration-fast) ease; }
+.actions > button:first-child { background: #7a5900; color: var(--color-text-on-fill); }
+.actions > button:last-child { background: var(--color-brand); color: var(--color-text-on-fill); }
+.actions button:active:not(:disabled) { transform: scale(.97); }
+.actions button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+.actions button:disabled { opacity: .45; cursor: not-allowed; }
+.reviewForm { display: grid; width: 100%; gap: 10px; opacity: 1; transition: opacity var(--duration-fast) var(--ease-out); }
+@starting-style { .reviewForm { opacity: 0; } }
+.reviewForm label { display: grid; gap: 6px; color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.reviewForm textarea { min-height: 88px; resize: vertical; border: 1px solid var(--color-border); border-radius: var(--radius-menu); outline: 0; padding: 10px; font: inherit; }
+.reviewForm textarea:focus { border-color: rgb(122 89 0 / 42%); box-shadow: 0 0 0 3px rgb(122 89 0 / 10%); }
+.reviewForm > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
+.reviewForm button { background: var(--color-surface-muted); color: var(--color-text); }
+.reviewForm button:last-child { background: #7a5900; color: var(--color-text-on-fill); }
+.reviewNotice { display: grid; gap: 4px; margin-top: var(--space-2); border-radius: var(--radius-menu); background: #fff8e8; padding: 13px 16px; color: #654900; font-size: var(--font-size-caption); }
+.reviewNotice small, .reviewNotice span { color: #725f2c; }
+.reviewNotice p { margin: 0; color: var(--color-text); }
+.error { margin: var(--space-2) 0 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: right; }
+@media (hover: hover) and (pointer: fine) { .actions > button:first-child:hover, .reviewForm button:last-child:hover { background: #624700; }.actions > button:last-child:hover { background: var(--color-brand-active); } }
+@media (max-width: 1180px) { .reviewGrid { grid-template-columns: minmax(0, 1fr); }.preview { min-height: 420px; }.preview img, .preview iframe { height: 420px; } }
+@media (max-width: 780px) { .modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
+@media (max-width: 560px) { .preview { min-height: 320px; }.preview img, .preview iframe { height: 320px; }.actions { flex-direction: column; }.actions > button { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .actions button, .reviewForm { transition-duration: 0ms; }.actions button:active:not(:disabled) { transform: none; } }
+
+/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
+   Solo en táctil: con ratón el campo conserva sus 13px. */
+@media (pointer: coarse) {
+  .reviewForm textarea { font-size: var(--font-size-body); }
+}
+
+/* Revisión en una columna: con 1fr el mínimo era el contenido, y el nombre
+   del archivo (una sola línea) ensanchaba la columna hasta sacar comprobante
+   y datos 110-166px de la pantalla. Los valores a validar se parten. */
+@media (max-width: 1180px) {
+  .dataPanel dd { min-width: 0; overflow-wrap: anywhere; }
+  .previewHeader strong { overflow-wrap: anywhere; white-space: normal; }
+  /* El título cede y se parte; la pastilla de estado no encoge, y con un
+     nombre largo la empujaba fuera de la pantalla. */
+  .modalHeader > :first-child { min-width: 0; flex: 1; }
+  .modalHeader h2 { overflow-wrap: anywhere; }
+}
+
+/* Área táctil de 40px en «Abrir», sin cambiar el aspecto (patrón de
+   design-system/hit-area.module.css). */
+@media (pointer: coarse) {
+  .previewHeader button { position: relative; }
+  .previewHeader button::after { position: absolute; inset: min(0px, calc((100% - var(--hit-target)) / 2)); content: ""; }
+}

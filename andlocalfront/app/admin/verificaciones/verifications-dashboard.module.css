@@ -6,10 +6,6 @@
    8 de hueco + 8 de margen = 16 entre el texto y su control. */
 /* El filtro de «sin asignar», con la misma medida que en Clientes: es el mismo
    control y el mismo concepto en las cuatro pantallas. */
-/* Quien tiene el caso. Va pegado al estado porque es ahi donde se mira antes
-   de entrar: «En revision» sin nombre no distingue «la tengo yo» de «la tiene
-   otro», y con dos administradores eso son dos personas en el mismo caso. */
-.holder { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
 .managerFilter { display: inline-flex; min-height: var(--hit-target); align-items: center; gap: var(--space-half); padding-inline: var(--space-2); font-size: var(--font-size-body-sm); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .filterGroup { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
@@ -18,121 +14,10 @@
 
 /* Patrón de lista: fila plana, la agrupa la separación de 32. */
 .list { composes: list from "../../components/atoms/list-row.module.css"; }
-.row { composes: row from "../../components/atoms/list-row.module.css"; grid-template-columns: 56px 150px minmax(180px, 1.2fr) minmax(130px, .9fr) 176px 124px 104px; color: var(--color-text); }
-.transferIcon { align-self: center; }
-/* Abrir el detalle no compromete nada: es un enlace con nombre, no una acción
-   con peso de decisión. El área táctil sigue siendo de 40px aunque lo que se
-   vea sea texto — el mínimo accesible manda sobre el aspecto. */
-.reviewButton { composes: hitArea from "../../design-system/hit-area.module.css"; display: inline-flex; min-height: var(--button-height); align-items: center; align-self: center; justify-content: center; justify-self: end; border: 0; background: transparent; padding: 0; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) var(--ease-out); }
-.reviewButton:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
-.reviewButton:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
-.transferIcon { position: relative; display: grid; width: 54px; height: 54px; place-items: center; overflow: hidden; }
-.transferIcon img { width: 54px; height: 54px; }
-.transferIcon small { position: absolute; color: var(--color-brand); font-size: var(--font-size-micro); font-weight: var(--font-weight-regular); }
-.cell { composes: cell from "../../components/atoms/list-row.module.css"; }
-.clientName { color: var(--color-text); font-size: var(--font-size-body); }
-.codeCell strong { color: var(--color-brand); }
-.copyCode { composes: hitArea from "../../design-system/hit-area.module.css"; display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin-left: -4px; background: transparent; padding: 2px 4px; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); text-align: left; cursor: pointer; }
-.copyCode span { overflow: hidden; font-family: var(--font-family-mono); text-overflow: ellipsis; white-space: nowrap; }
-.copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); letter-spacing: .06em; text-transform: uppercase; }
-.copyCode[data-state="failed"] small { color: var(--color-danger); }
-.copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
-.expected { color: var(--color-brand); font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
-.detected { color: var(--color-accent-teal); font-variant-numeric: tabular-nums; }
-/* Un importe no se recorta con «…»: se parte en dos líneas si no cabe. */
-.cell > .expected, .cell > .detected { overflow: visible; white-space: normal; }
 .message { display: grid; justify-items: center; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: var(--space-5) var(--space-3); color: var(--color-text-muted); text-align: center; }
 .message p { margin: 0; max-width: 46ch; }
 .message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
 .skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 112px; }
-/* Sin altura máxima ni scroll propio: si no cabe en la ventana, hace scroll
-   el fondo (ModalShell), igual que el detalle de transacción. Un scroll dentro
-   de otro obligaba a atinar en qué caja girar la rueda. */
-.modal { width: min(1120px, 100%); }
-.modalHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding-right: var(--space-5); }
-.modalHeader small { color: var(--color-text-muted); }
-.modalHeader h2 { margin: 4px 0; font-size: var(--font-size-subhead); }
-.modalHeader p { margin: 0; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-caption); }
-.reviewGrid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: var(--space-3); margin-top: var(--space-4); }
-.previewPanel, .dataPanel { border-radius: var(--radius-control); background: var(--color-surface-raised); padding: var(--space-3); }
-.previewHeader { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-2); }
-.previewHeader > div { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
-.previewHeader small { color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.previewHeader strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.previewHeader button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
-.preview { position: relative; display: grid; min-height: 500px; place-items: center; overflow: hidden; border-radius: var(--radius-menu); background: #eef0ed; color: var(--color-text-muted); }
-.preview img { display: block; width: 100%; height: 500px; object-fit: contain; }
-.preview iframe { width: 100%; height: 500px; border: 0; background: var(--color-surface-raised); }
-.previewFailure { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); color: var(--color-danger); }
-.dataPanel h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-card-title); }
-.dataPanel dl { display: grid; gap: 0; margin: 0; }
-.dataPanel dl div { display: flex; justify-content: space-between; gap: var(--space-2); border-bottom: 1px solid var(--color-border); padding: 11px 0; font-size: var(--font-size-caption); }
-.dataPanel dt { color: var(--color-text-muted); }
-.dataPanel dd { margin: 0; font-weight: var(--font-weight-bold); text-align: right; }
-.dataPanel dd[data-match="false"] { color: var(--color-danger); }
-.dataPanel dd[data-match="true"] { color: var(--color-brand); }
-.audit { display: flex; flex-direction: column; gap: 3px; margin-top: var(--space-2); border-radius: var(--radius-menu); background: var(--color-brand-surface); padding: 13px 16px; color: var(--color-brand); font-size: var(--font-size-caption); }
-.audit small, .audit span { color: var(--color-text-muted); }
-.audit p { margin: 5px 0 0; color: var(--color-text); }
-.issues { margin-top: var(--space-2); border-radius: var(--radius-menu); background: #fff8e8; padding: 13px 16px; color: #795200; font-size: var(--font-size-caption); }
-.issues ul { margin: 6px 0 0; padding-left: 18px; }
-.actions { display: flex; justify-content: flex-end; gap: var(--space-1); margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-3); }
-.actions > button, .reviewForm button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: var(--radius-pill); padding: 0 18px; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) ease, background-color var(--duration-fast) ease; }
-.actions > button:first-child { background: #7a5900; color: var(--color-text-on-fill); }
-.actions > button:last-child { background: var(--color-brand); color: var(--color-text-on-fill); }
-.actions button:active:not(:disabled) { transform: scale(.97); }
-.actions button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
-.actions button:disabled { opacity: .45; cursor: not-allowed; }
-.reviewForm { display: grid; width: 100%; gap: 10px; opacity: 1; transition: opacity var(--duration-fast) var(--ease-out); }
-@starting-style { .reviewForm { opacity: 0; } }
-.reviewForm label { display: grid; gap: 6px; color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.reviewForm textarea { min-height: 88px; resize: vertical; border: 1px solid var(--color-border); border-radius: var(--radius-menu); outline: 0; padding: 10px; font: inherit; }
-.reviewForm textarea:focus { border-color: rgb(122 89 0 / 42%); box-shadow: 0 0 0 3px rgb(122 89 0 / 10%); }
-.reviewForm > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
-.reviewForm button { background: var(--color-surface-muted); color: var(--color-text); }
-.reviewForm button:last-child { background: #7a5900; color: var(--color-text-on-fill); }
-.reviewNotice { display: grid; gap: 4px; margin-top: var(--space-2); border-radius: var(--radius-menu); background: #fff8e8; padding: 13px 16px; color: #654900; font-size: var(--font-size-caption); }
-.reviewNotice small, .reviewNotice span { color: #725f2c; }
-.reviewNotice p { margin: 0; color: var(--color-text); }
-.error { margin: var(--space-2) 0 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: right; }
-@media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .reviewButton:not(:disabled):hover { color: var(--color-brand); }.actions > button:first-child:hover, .reviewForm button:last-child:hover { background: #624700; }.actions > button:last-child:hover { background: var(--color-brand-active); } }
-/* Escritorio medio: los mínimos fijos sumaban 1064px de fila y a 1280 solo
-   hay 936, así que se salía por la derecha hasta ~1410. Aquí los mínimos son
-   los del contenido real; desde 1421 la fila es la de siempre. */
-@media (min-width: 1181px) and (max-width: 1420px) {
-  .row { grid-template-columns: 56px minmax(88px, .9fr) minmax(110px, 1.2fr) minmax(100px, .9fr) minmax(110px, 1fr) minmax(96px, .8fr) minmax(64px, .5fr); }
-}
-@media (max-width: 1180px) { .row { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); } .transferIcon { grid-row: span 2; } .reviewButton { align-self: end; }.reviewGrid { grid-template-columns: minmax(0, 1fr); }.preview { min-height: 420px; }.preview img, .preview iframe { height: 420px; } }
-@media (max-width: 780px) { .module { margin-top: var(--space-3); }.toolbar { grid-template-columns: 1fr; }.row { grid-template-columns: 56px repeat(2, minmax(0, 1fr)); padding: var(--space-2); }.modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
-/* En móvil los valores se parten en vez de recortarse: el banco de origen
-   es un dato a contrastar y acababa en «BANCO PIC…». */
-@media (max-width: 560px) { .cell > span { overflow-wrap: anywhere; white-space: normal; } }
-/* En móvil, dos columnas como «tus facturas»: el icono de transferencia va
-   en su propia fila, encima, para no quitarle 46px a cada línea de datos. */
-@media (max-width: 560px) { .search { min-width: 0; }.row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control) }.transferIcon { grid-column: 1 / -1; grid-row: auto; }.reviewButton { grid-column: 1 / -1; justify-self: start; }.transferIcon, .transferIcon img { width: 44px; height: 44px; }.preview { min-height: 320px; }.preview img, .preview iframe { height: 320px; }.actions { flex-direction: column; }.actions > button { width: 100%; } }
-@media (prefers-reduced-motion: reduce) { .row, .reviewButton, .actions button, .reviewForm { transition-duration: 0ms; }.actions button:active:not(:disabled) { transform: none; }.skeleton { animation: none; } }
-
-/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
-   Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .reviewForm textarea { font-size: var(--font-size-body); }
-}
-
-/* Revisión en una columna: con 1fr el mínimo era el contenido, y el nombre
-   del archivo (una sola línea) ensanchaba la columna hasta sacar comprobante
-   y datos 110-166px de la pantalla. Los valores a validar se parten. */
-@media (max-width: 1180px) {
-  .dataPanel dd { min-width: 0; overflow-wrap: anywhere; }
-  .previewHeader strong { overflow-wrap: anywhere; white-space: normal; }
-  /* El título cede y se parte; la pastilla de estado no encoge, y con un
-     nombre largo la empujaba fuera de la pantalla. */
-  .modalHeader > :first-child { min-width: 0; flex: 1; }
-  .modalHeader h2 { overflow-wrap: anywhere; }
-}
-
-/* Área táctil de 40px en «Abrir», sin cambiar el aspecto (patrón de
-   design-system/hit-area.module.css). */
-@media (pointer: coarse) {
-  .previewHeader button { position: relative; }
-  .previewHeader button::after { position: absolute; inset: min(0px, calc((100% - var(--hit-target)) / 2)); content: ""; }
-}
+@media (max-width: 780px) { .module { margin-top: var(--space-3); }.toolbar { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .search { min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
