@@ -1,0 +1,2 @@
+.opener { position: absolute; z-index: 1; inset: 0; border: 0; border-radius: inherit; outline: 0; background: transparent; cursor: pointer; }
+.opener:focus-visible { box-shadow: inset var(--focus-ring); }

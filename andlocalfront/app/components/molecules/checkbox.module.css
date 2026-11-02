@@ -1,0 +1,8 @@
+/* hitArea da los 40px táctiles sin ocupar alto: en recargas la casilla mide lo que su texto. */
+.checkbox { composes: hitArea from "../../design-system/hit-area.module.css"; }
+:where(.checkbox) { position: relative; display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-size-body-sm); cursor: pointer; }
+.checkbox input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.checkbox:has(input:focus-visible) .mark { border-radius: 50%; outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .checkbox:hover input:not(:checked) + .mark { color: var(--color-text-muted); }
+}

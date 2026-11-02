@@ -1,0 +1,12 @@
+/* Sin align-self ni justify-self: cada fila coloca el enlace en su rejilla. */
+.link { composes: hitArea from "../../design-system/hit-area.module.css"; display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; border: 0; background: transparent; padding: 0; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) var(--ease-out); }
+.link:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
+.link:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .link:not(:disabled):hover { color: var(--color-brand); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link { transition-duration: 0ms; }
+}

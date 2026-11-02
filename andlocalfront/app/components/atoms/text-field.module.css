@@ -1,0 +1,60 @@
+/* Todo va dentro de :where(), sin especificidad: el sitio, el ancho, el
+   relleno y la letra los pone la pantalla, y su clase siempre gana. */
+:where(.field) {
+  --field-focus-border: var(--color-brand);
+  --field-focus-ring: var(--focus-ring);
+  width: 100%;
+  min-width: 0;
+  border: 1px solid transparent;
+  outline: 0;
+  background: transparent;
+  padding: 0 var(--space-2);
+  color: var(--color-text);
+  font: inherit;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+/* La letra va fuera de :where(): globals.css hace `input { font: inherit }` y,
+   sin especificidad, esa regla de elemento la pisaba. */
+.field { font-size: var(--font-size-body); }
+:where(.field)::placeholder { color: var(--color-text-subtle); }
+:where(.field):focus { border-color: var(--field-focus-border); box-shadow: var(--field-focus-ring); }
+:where(textarea.field) { min-height: 88px; padding: var(--space-2); resize: vertical; }
+:where(select.field) { appearance: none; cursor: pointer; }
+
+/* Superficie. */
+:where(.field[data-surface="outlined"]) { border-color: var(--color-border-strong); background: var(--color-surface-raised); }
+:where(.field[data-surface="filled"]) { border: 0; background: var(--color-surface-muted); }
+:where(.field[data-surface="elevated"]) { border-color: rgb(0 0 0 / 6%); background: var(--color-surface-raised); box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 6px 16px -6px rgb(0 0 0 / 8%); }
+:where(.field[data-surface="elevated"]):focus { box-shadow: var(--field-focus-ring), 0 6px 16px -6px rgb(0 0 0 / 8%); }
+:where(.field[data-surface="bare"]) { border: 0; padding: 0; }
+:where(.field[data-surface="bare"]):focus { box-shadow: none; }
+
+/* Forma. */
+:where(.field[data-shape="small"]) { border-radius: var(--radius-small); }
+:where(.field[data-shape="menu"]) { border-radius: var(--radius-menu); }
+:where(.field[data-shape="control"]) { border-radius: var(--radius-control); }
+:where(.field[data-shape="pill"]) { border-radius: var(--radius-pill); }
+
+/* Alto. */
+:where(.field[data-size="regular"]) { height: var(--control-height); }
+:where(.field[data-size="button"]) { height: var(--button-height); }
+:where(.field[data-size="compact"]) { height: var(--control-height-compact); }
+
+/* Color del foco: va después de la superficie para ganarle. */
+:where(.field[data-tone="danger"]) { --field-focus-border: rgb(157 0 3 / 35%); --field-focus-ring: 0 0 0 3px rgb(157 0 3 / 8%); }
+:where(.field[data-tone="amber"]) { --field-focus-border: rgb(122 89 0 / 42%); --field-focus-ring: 0 0 0 3px rgb(122 89 0 / 10%); }
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.field[data-surface="elevated"]):hover:not(:focus):not(:disabled) { border-color: rgb(0 0 0 / 12%); box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 10px 22px -8px rgb(0 0 0 / 12%); }
+}
+
+/* Con el dedo, 16px como mínimo: con menos, iOS hace zoom al enfocar y no lo
+   deshace. Es la única regla que gana a la pantalla: la letra más pequeña que
+   esta ponga (13px) solo vale con ratón. */
+@media (pointer: coarse) {
+  .field { font-size: var(--font-size-body) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.field) { transition-duration: 0ms; }
+}

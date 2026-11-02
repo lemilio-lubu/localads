@@ -4,14 +4,18 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
-import ActionButton from "./components/action-button";
-import BrandLogo from "./components/brand-logo";
-import PwaInstallButton from "./components/pwa-install-button";
-import { FormError, FormField, formStyles as form } from "./components/form-modal";
+import Button from "./components/atoms/button";
+import BrandLogo from "./components/atoms/brand-logo";
+import PwaInstallButton from "./components/molecules/pwa-install-button";
+import FormError from "./components/atoms/form-error";
+import FormField from "./components/molecules/form-field";
+import form from "./components/molecules/form-layout.module.css";
 import { login } from "./lib/auth-api";
 import { landingFor } from "./lib/recharges-api";
-import LoginWalletDeck, { type DeckState } from "./login-wallet-deck";
+import LoginWalletDeck, { type DeckState } from "./components/organisms/login-wallet-deck";
 import styles from "./login-form.module.css";
+import { TextInput } from "./components/atoms/text-field";
+import TextButton from "./components/atoms/text-button";
 
 type Field = "username" | "password";
 /* Los accesos de prueba (todos con la clave 1234) son solo para desarrollo: se
@@ -112,25 +116,25 @@ export default function LoginForm() {
 
         <form className={`${form.form} ${styles.form}`} onSubmit={submitLogin} noValidate>
           <FormField label="Correo" Icon={UserRound} error={shown("username")}>
-            {({ id, describedBy, invalid }) => <input id={id} name="username" autoComplete="username" inputMode="email" autoCapitalize="none" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu correo" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
+            {({ id, describedBy, invalid }) => <TextInput id={id} name="username" autoComplete="username" inputMode="email" autoCapitalize="none" value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} placeholder="tu correo" aria-invalid={invalid} aria-describedby={describedBy} autoFocus disabled={pending} />}
           </FormField>
           <FormField label="Contraseña" Icon={LockKeyhole} error={shown("password")}>
             {({ id, describedBy, invalid }) => <>
-              <input id={id} name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} placeholder="tu contraseña" aria-invalid={invalid} aria-describedby={describedBy} className={styles.passwordInput} disabled={pending} />
+              <TextInput id={id} name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} placeholder="tu contraseña" aria-invalid={invalid} aria-describedby={describedBy} className={styles.passwordInput} disabled={pending} />
               <button type="button" className={styles.reveal} onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showPassword}>
                 {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
               </button>
             </>}
           </FormField>
           <FormError message={error} />
-          <ActionButton type="submit" className={styles.submit} disabled={pending} stretch>{deck === "launching" ? "Entrando…" : pending ? "Verificando…" : "Continuar"}</ActionButton>
+          <Button variant="elevated" size="block" type="submit" className={styles.submit} disabled={pending}>{deck === "launching" ? "Entrando…" : pending ? "Verificando…" : "Continuar"}</Button>
         </form>
 
         {/* Solo para probar: una línea discreta, no un bloque que compita con
             el acceso real. Fuera de desarrollo no se pinta (ver showDemoAccounts). */}
         {showDemoAccounts && <p className={styles.demo}>
           Probar con una cuenta demo:{" "}
-          {demoAccounts.map((account, index) => <span key={account}>{index > 0 && " · "}<button type="button" onClick={() => fillDemoAccount(account)} disabled={pending}>{account}</button></span>)}
+          {demoAccounts.map((account, index) => <span key={account}>{index > 0 && " · "}<TextButton size="inherit" underline="hover" onClick={() => fillDemoAccount(account)} disabled={pending}>{account}</TextButton></span>)}
         </p>}
       </motion.section>
     </main>

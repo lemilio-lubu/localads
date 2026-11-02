@@ -1,12 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AccountShell from "./account-shell";
-import ActionButton from "./components/action-button";
-import ModalShell from "./components/modal-shell";
-import { PaymentAccountView, paymentDestinationLabel } from "./components/payment-account-panel";
+import Button from "./components/atoms/button";
+import ModalShell from "./components/organisms/modal-shell";
+import { PaymentAccountView, paymentDestinationLabel } from "./features/payments/payment-account-panel";
 import RechargeConfirmModal from "./recharge-confirm-modal";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
 import { usePaymentAccount } from "./lib/use-payment-account";
@@ -14,6 +13,10 @@ import type { AccountType } from "./design-system/types";
 import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getRechargeContext, getMyPautas, type ActivationRequest, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
 import { formatAmount, formatPercent } from "./lib/format";
 import styles from "./recharge-dashboard.module.css";
+import { TextInput } from "./components/atoms/text-field";
+import TextButton from "./components/atoms/text-button";
+import TextLink from "./components/atoms/text-link";
+import Checkbox from "./components/molecules/checkbox";
 
 const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = [
   { id: "META", label: "Meta", icon: "/figma/meta.svg" },
@@ -169,7 +172,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
               return (
                 <label key={id} className={styles.platformField} htmlFor={`${id}-amount`}>
                   <Image src={id === "TIKTOK" ? "/figma/tiktok-modal.svg" : icon} alt="" width={30} height={30} /><span className={styles.currency}>$</span>
-                  <input id={`${id}-amount`} type="number" inputMode="decimal" min="0" step="0.01" placeholder="500" value={amounts[id]} onChange={(event) => { setAmounts((current) => ({ ...current, [id]: event.target.value })); setMessage(""); setError(""); }} aria-label={`Monto para ${label}`} />
+                  <TextInput surface="bare" id={`${id}-amount`} type="number" inputMode="decimal" min="0" step="0.01" placeholder="500" value={amounts[id]} onChange={(event) => { setAmounts((current) => ({ ...current, [id]: event.target.value })); setMessage(""); setError(""); }} aria-label={`Monto para ${label}`} />
                   <span className={styles.currentBalance}>{label}<b>saldo {formatAmount(pauta.currentBalance)}</b></span>
                 </label>
               );
@@ -184,7 +187,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
               <span>Comisión AND ({formatPercent(rates!.agencyFee)}) <b>{formatAmount(breakdown.agencyFee)}</b></span>
               <span>IVA ({formatPercent(rates!.vat)}) <b>{formatAmount(breakdown.vat)}</b></span>
               <strong>Total a pagar {formatAmount(breakdown.total)}</strong>
-            </> : ratesFailed ? <span className={styles.ratesError}>No pudimos calcular el total. <button type="button" onClick={retry}>reintentar</button></span> : <strong>Calculando total…</strong>}
+            </> : ratesFailed ? <span className={styles.ratesError}>No pudimos calcular el total. <TextButton size="inherit" tone="inherit" onClick={retry}>reintentar</TextButton></span> : <strong>Calculando total…</strong>}
           </div>}
           {isPrepaid && breakdown && <div className={styles.paymentCard}><PaymentAccountView state={paymentAccount} retry={retryPaymentAccount} amount={breakdown.total} /></div>}
           {isPrepaid && <button type="button" className={`${styles.uploadArea} ${receipt ? styles.hasReceipt : ""}`} onClick={() => fileInput.current?.click()}>
@@ -192,17 +195,17 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
             <Image src="/figma/attachment.svg" alt="" width={36} height={36} /><span>{receipt?.name ?? "adjuntar comprobante"}</span><small className={styles.uploadHint}>JPG, PNG o PDF · hasta 5 MB</small>
           </button>}
 
-          <label className={styles.terms}><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /><span className={styles.checkbox} aria-hidden="true"><Image src="/figma/check.svg" alt="" width={19} height={19} /></span><span>He leído términos y condiciones</span></label>
-          <ActionButton className={styles.submitButton} type="submit" disabled={!canSubmit}>{submitting ? "Procesando…" : "recargar"}</ActionButton>
+          <Checkbox className={styles.terms} checked={acceptedTerms} onChange={setAcceptedTerms}>He leído términos y condiciones</Checkbox>
+          <Button variant="elevated" size="cta" className={styles.submitButton} type="submit" disabled={!canSubmit}>{submitting ? "Procesando…" : "recargar"}</Button>
           {!canSubmit && !submitting && !loading && <p className={styles.submitHint}>{
             lines.length === 0 ? "Escribe un monto mayor que cero en al menos una plataforma."
             : isPrepaid && !receipt ? "Adjunta el comprobante de tu transferencia."
             : !acceptedTerms ? "Acepta los términos y condiciones para continuar."
             : ""
           }</p>}
-          {!(isPrepaid && breakdown) && <Link className={styles.payLink} href={`/${accountType}/pagar`}>ver datos de pago</Link>}
+          {!(isPrepaid && breakdown) && <TextLink className={styles.payLink} tone="muted" weight="regular" href={`/${accountType}/pagar`}>ver datos de pago</TextLink>}
           <p className={styles.formStatus} role="status" aria-live="polite">{loading ? "Cargando pautas…" : message}</p>
-          {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <button type="button" onClick={retry}>reintentar</button></p>}
+          {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <TextButton size="inherit" tone="inherit" onClick={retry}>reintentar</TextButton></p>}
         </form>
 
         <RechargeConfirmModal step={confirmStep} lines={lines} prepaid={isPrepaid} destination={paymentAccount.status === "ready" ? paymentDestinationLabel(paymentAccount.data.account) : null} payHref={`/${accountType}/pagar`} error={confirmError} onConfirm={() => void confirmRecharge()} onClose={() => { setConfirmStep(null); setConfirmError(""); }} />
@@ -213,11 +216,11 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
               <h2 id="activation-title">{reactivating ? "Reactiva" : "Solicita"} Local Ads para {selectedPlatform.label}</h2>
             </header>
             <p className={styles.activationDescription}>{reactivating ? <>Solicita volver a activar tu plataforma. Conservas tu saldo e historial.<br />Las recargas en stop deberán ser reanudadas manualmente por el administrador.</> : <>Una gran oportunidad para pautar en {selectedPlatform.label} con factura local en Ecuador.<br />Optimiza tu inversión publicitaria y aprovecha sus beneficios tributarios con Local Ads.</>}</p>
-            <label><input required autoComplete="name" minLength={2} disabled={submitting} value={activation.requesterName} onChange={(e) => setActivation((v) => ({ ...v, requesterName: e.target.value }))} /><span>nombre de la persona solicitante</span></label>
-            <label><input required disabled={submitting} readOnly={reactivating && Boolean(pautas.find((pauta) => pauta.platform === activationPlatform)?.externalAccountId)} value={activation.externalAccountId} onChange={(e) => setActivation((v) => ({ ...v, externalAccountId: e.target.value }))} /><span>ID de la cuenta de {selectedPlatform.label}</span></label>
-            <label><input required type="number" inputMode="decimal" min="0.01" step="0.01" disabled={submitting} value={activation.firstRechargeAmount} onChange={(e) => setActivation((v) => ({ ...v, firstRechargeAmount: e.target.value }))} /><span>{reactivating ? "monto de referencia para la próxima recarga" : "monto de la primera recarga"}</span></label>
-            <label><input required type="tel" autoComplete="tel" disabled={submitting} value={activation.phone} onChange={(e) => setActivation((v) => ({ ...v, phone: e.target.value }))} /><span>número de teléfono</span></label>
-            <div className={styles.activationActions}><ActionButton className={styles.activationSubmit} type="submit" disabled={submitting}>{submitting ? "Enviando…" : reactivating ? "solicitar reactivación" : "solicitar la cuenta"}</ActionButton></div>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required autoComplete="name" minLength={2} disabled={submitting} value={activation.requesterName} onChange={(e) => setActivation((v) => ({ ...v, requesterName: e.target.value }))} /><span>nombre de la persona solicitante</span></label>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required disabled={submitting} readOnly={reactivating && Boolean(pautas.find((pauta) => pauta.platform === activationPlatform)?.externalAccountId)} value={activation.externalAccountId} onChange={(e) => setActivation((v) => ({ ...v, externalAccountId: e.target.value }))} /><span>ID de la cuenta de {selectedPlatform.label}</span></label>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required type="number" inputMode="decimal" min="0.01" step="0.01" disabled={submitting} value={activation.firstRechargeAmount} onChange={(e) => setActivation((v) => ({ ...v, firstRechargeAmount: e.target.value }))} /><span>{reactivating ? "monto de referencia para la próxima recarga" : "monto de la primera recarga"}</span></label>
+            <label><TextInput surface="elevated" shape="pill" size="auto" required type="tel" autoComplete="tel" disabled={submitting} value={activation.phone} onChange={(e) => setActivation((v) => ({ ...v, phone: e.target.value }))} /><span>número de teléfono</span></label>
+            <div className={styles.activationActions}><Button variant="elevated" size="cta" className={styles.activationSubmit} type="submit" disabled={submitting}>{submitting ? "Enviando…" : reactivating ? "solicitar reactivación" : "solicitar la cuenta"}</Button></div>
             {activationError && <p className={styles.activationError} role="alert">{activationError}</p>}
           </form>}
         </ModalShell>

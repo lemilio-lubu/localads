@@ -1,13 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { KeyRound, LockKeyhole } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { FormEvent, useEffect, useState } from "react";
-import ActionButton from "../components/action-button";
-import BrandLogo from "../components/brand-logo";
+import Button from "../components/atoms/button";
+import BrandLogo from "../components/atoms/brand-logo";
 import { enterTransition } from "../design-system/motion";
 import { changePassword, getCurrentUser, refreshSession } from "../lib/auth-api";
 import styles from "./change-password-form.module.css";
+import { TextInput } from "../components/atoms/text-field";
+import FormField from "../components/molecules/form-field";
 
 const minimum = 8;
 
@@ -60,7 +63,7 @@ export default function ChangePasswordForm() {
   if (done) return <main className={styles.page}><section className={styles.card}>
     <div className={styles.logo}><BrandLogo /></div>
     <div className={styles.heading}><p>listo</p><h1>contraseña actualizada</h1><span>Se cerraron las sesiones abiertas. Entra de nuevo con tu contraseña.</span></div>
-    <ActionButton stretch onClick={() => router.replace("/")}>ir a iniciar sesión</ActionButton>
+    <Button variant="elevated" size="block" onClick={() => router.replace("/")}>ir a iniciar sesión</Button>
   </section></main>;
 
   return <main className={styles.page}>
@@ -77,12 +80,20 @@ export default function ChangePasswordForm() {
           : `${username ? `Estás cambiando la contraseña de ${username}. ` : ""}Se cerrarán las sesiones abiertas.`}</span>
       </div>
       <form className={styles.form} onSubmit={submit} noValidate>
-        <label><span>{forced ? "contraseña temporal" : "contraseña actual"}</span><input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => { setCurrentPassword(event.target.value); setError(""); }} autoFocus /></label>
-        <label><span>contraseña nueva</span><input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => { setNewPassword(event.target.value); setError(""); }} /></label>
-        <label><span>repite la contraseña nueva</span><input type="password" autoComplete="new-password" value={repeated} onChange={(event) => { setRepeated(event.target.value); setError(""); }} /></label>
+        <div className={styles.fields}>
+          <FormField label={forced ? "Contraseña temporal" : "Contraseña actual"} Icon={LockKeyhole}>
+            {({ id }) => <TextInput id={id} type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => { setCurrentPassword(event.target.value); setError(""); }} autoFocus />}
+          </FormField>
+          <FormField label="Contraseña nueva" Icon={KeyRound}>
+            {({ id }) => <TextInput id={id} type="password" autoComplete="new-password" value={newPassword} onChange={(event) => { setNewPassword(event.target.value); setError(""); }} />}
+          </FormField>
+          <FormField label="Repite la contraseña nueva" Icon={KeyRound}>
+            {({ id }) => <TextInput id={id} type="password" autoComplete="new-password" value={repeated} onChange={(event) => { setRepeated(event.target.value); setError(""); }} />}
+          </FormField>
+        </div>
         <p className={styles.hint}>Al menos {minimum} caracteres, distinta de la {forced ? "temporal" : "actual"}.</p>
         <p id="change-error" className={styles.error} role="alert" aria-live="polite">{error}</p>
-        <ActionButton type="submit" disabled={pending} stretch>{pending ? "guardando…" : "cambiar contraseña"}</ActionButton>
+        <Button variant="elevated" size="block" type="submit" disabled={pending}>{pending ? "guardando…" : "cambiar contraseña"}</Button>
       </form>
     </motion.section>
   </main>;

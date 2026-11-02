@@ -1,0 +1,8 @@
+/* Mismo tamaño que el check de Figma. */
+:where(.mark) { display: block; width: 19px; height: 19px; flex: none; color: var(--color-text-subtle); }
+.fill { fill: transparent; }
+.ring, .check { fill: currentcolor; }
+.fill, .ring, .check { transition: fill var(--duration-fast) var(--ease-out); }
+.mark[data-checked] .fill, .mark[data-checked] .ring { fill: var(--color-brand); }
+.mark[data-checked] .check { fill: var(--color-text-on-fill); }
+@media (prefers-reduced-motion: reduce) { .fill, .ring, .check { transition-duration: 0ms; } }

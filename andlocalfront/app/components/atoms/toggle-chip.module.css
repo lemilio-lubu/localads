@@ -1,0 +1,20 @@
+/* :where() deja la base con especificidad cero, como en ModalShell. Cada
+   pantalla personaliza el chip con su clase (.managerFilter, .platformFilter)
+   y antes las dos pesaban lo mismo: ganaba la que se cargaba última, que
+   cambia según la ruta o una recarga. Con la del chip al final, «sin
+   asignar» salía en rejilla y el icono quedaba encima del texto. */
+:where(.chip) { white-space: nowrap; display: inline-grid; min-width: var(--space-5); min-height: var(--space-3); place-items: center; border: 0; border-radius: var(--radius-pill); outline: 0; background: transparent; padding: var(--space-half); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
+:where(.chip)[aria-pressed="true"][data-indicator="ring"] { box-shadow: 0 0 0 3px rgb(67 67 67 / 16%); }
+/* Fondo de marca: el texto pasa a marca y negrita. La negrita va fuera de
+   :where() porque globals.css hereda la fuente en los botones. */
+:where(.chip)[data-indicator="fill"] { color: var(--color-text-muted); transition-property: transform, box-shadow, background-color, color; }
+:where(.chip)[data-indicator="fill"][aria-pressed="true"] { background: var(--color-brand-surface); color: var(--color-brand); }
+.chip[data-indicator="fill"] { font-size: var(--font-size-body-sm); }
+.chip[data-indicator="fill"][aria-pressed="true"] { font-weight: var(--font-weight-bold); }
+.chip:focus-visible { box-shadow: var(--focus-ring); }
+.chip:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .chip:not([data-indicator="fill"]):hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 9%); }
+  .chip[data-indicator="fill"]:not([aria-pressed="true"]):hover { background: var(--color-surface-hover); color: var(--color-text); }
+}
+@media (prefers-reduced-motion: reduce) { .chip { transition-duration: 0ms; } }

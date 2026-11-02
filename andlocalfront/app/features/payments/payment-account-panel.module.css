@@ -1,0 +1,1 @@
+.skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 240px; border-radius: var(--radius-card); }

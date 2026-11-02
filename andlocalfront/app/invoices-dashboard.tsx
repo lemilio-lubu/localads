@@ -1,15 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, RotateCw, Search } from "lucide-react";
-import Link from "next/link";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import AccountShell from "./account-shell";
-import DateCell from "./components/date-cell";
-import InvoiceDetailModal from "./components/invoice-detail-modal";
-import PlatformPill from "./components/platform-pill";
-import StatusPill from "./components/status-pill";
+import DateCell from "./components/atoms/date-cell";
+import InvoiceDetailModal from "./features/payments/invoice-detail-modal";
+import PlatformPill from "./components/atoms/platform-pill";
+import StatusPill from "./components/atoms/status-pill";
 import type { AccountType, AdvertisingPlatform } from "./design-system/types";
 import { getAccessToken, refreshSession } from "./lib/auth-api";
 import { accountContext, getMyTransactionDetail, getMyTransactions, transactionsRealtimeUrl, type ClientTransactionDetail, type TransactionListItem } from "./lib/recharges-api";
@@ -17,8 +16,18 @@ import { dueLabel, formatAmount, formatClock, formatDateTime } from "./lib/forma
 import { paymentStatusLabel, rechargeStatusLabel } from "./lib/status-labels";
 import type { VerificationRealtimeEvent } from "./lib/transaction-realtime";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
+import CopyCode from "./components/molecules/copy-code";
 import styles from "./invoices-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "./lib/status-tone";
+import SearchField from "./components/molecules/search-field";
+import Pagination from "./components/molecules/pagination";
+import LoadError from "./components/molecules/load-error";
+import TextButton from "./components/atoms/text-button";
+import EmptyAction from "./components/atoms/empty-action";
+import RowDetailLink from "./components/atoms/row-detail-link";
+import { TextInput } from "./components/atoms/text-field";
+import ToggleChip from "./components/atoms/toggle-chip";
+import ListCell from "./components/atoms/list-cell";
 
 const formatDate = formatDateTime;
 /** Traduce el fallo a algo accionable: el texto crudo del navegador no ayuda. */
@@ -42,7 +51,6 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
   /* La búsqueda y las fechas van al servidor: filtrar solo lo cargado ponía un
      techo invisible de 50 transacciones. */
   useEffect(() => { const timer = window.setTimeout(() => setSearch(query.trim()), 300); return () => window.clearTimeout(timer); }, [query]);
-  const [copiedCode, setCopiedCode] = useState("");
   const [reloads, setReloads] = useState(0);
   const [platform, setPlatform] = useState<AdvertisingPlatform | null>(null);
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
@@ -51,15 +59,6 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
   const [loading, setLoading] = useState(true); const [detailLoading, setDetailLoading] = useState(false); const [error, setError] = useState("");
 
   useEffect(() => { detailRef.current = detail; }, [detail]);
-  async function copyCode(code: string) {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopiedCode(code);
-      window.setTimeout(() => setCopiedCode((current) => (current === code ? "" : current)), 2000);
-    } catch {
-      setCopiedCode("");
-    }
-  }
 
   const filters = useMemo(() => ({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, from: fromDate || undefined, to: toDate || undefined }), [pageNumber, search, fromDate, toDate]);
   const filtersRef = useRef(filters);
@@ -137,65 +136,55 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
     <section className={styles.invoiceModule} aria-labelledby="transactions-heading">
       <h1 id="transactions-heading" className={styles.srOnly}>Mis transacciones</h1>
       <div className={styles.toolbar}>
-        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por código" /></label>
+        <SearchField value={query} onChange={changeQuery} placeholder="Buscar por código" placeholderTone="muted" />
         <div className={styles.filters}>
           {/* Un rango, no dos campos sueltos: el guion dice lo que decían «desde» y
               «hasta», que costaban 90px de los 117 que sobraban. Los nombres siguen
               existiendo para quien navega con lector de pantalla. */}
           <fieldset className={styles.filterGroup}><legend>fecha</legend>
-            <input type="date" aria-label="Desde" value={fromDate} onChange={(event) => changeFrom(event.target.value)} />
+            <TextInput surface="filled" shape="pill" size="button" type="date" aria-label="Desde" value={fromDate} onChange={(event) => changeFrom(event.target.value)} />
             <span className={styles.rangeDash} aria-hidden="true">–</span>
-            <input type="date" aria-label="Hasta" value={toDate} onChange={(event) => changeTo(event.target.value)} />
+            <TextInput surface="filled" shape="pill" size="button" type="date" aria-label="Hasta" value={toDate} onChange={(event) => changeTo(event.target.value)} />
           </fieldset>
-          {availablePlatforms.length > 0 && <fieldset className={styles.filterGroup}><legend>plataforma</legend>{availablePlatforms.map((item) => <button key={item} type="button" className={styles.platformFilter} aria-pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} size="filter" active={platform === item} /></button>)}</fieldset>}
+          {availablePlatforms.length > 0 && <fieldset className={styles.filterGroup}><legend>plataforma</legend>{availablePlatforms.map((item) => <ToggleChip key={item} className={styles.platformFilter} indicator="content" pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} size="filter" active={platform === item} /></ToggleChip>)}</fieldset>}
         </div>
       </div>
       <div className={styles.listMeta}>
-        <span className={styles.metaRange}>{rangeLabel}{hasFilters && <button type="button" className={styles.clearFilters} onClick={clearFilters}>limpiar filtros</button>}</span>
+        <span className={styles.metaRange}>{rangeLabel}{hasFilters && <TextButton onClick={clearFilters}>limpiar filtros</TextButton>}</span>
         <span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span>
       </div>
       <div className={styles.invoiceList} aria-live="polite" aria-busy={loading || detailLoading}>
         {visible.map((item) => <article key={item.id} className={styles.invoiceRow}>
           <DateCell value={item.createdAt} />
           <div className={`${styles.cell} ${styles.codeCell}`}><strong><Image src="/figma/money.svg" alt="" width={16} height={16} /> código</strong>
-            <button type="button" className={styles.copyCode} title={item.code} onClick={() => void copyCode(item.code)}>
-              <span>{item.code}</span><small>{copiedCode === item.code ? "copiado" : "copiar"}</small>
-            </button>
+            <CopyCode code={item.code} tone="muted" size="body" />
           </div>
-          <div className={styles.cell}><strong>inversión / total</strong><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></div>
-          <div className={styles.cell}><strong>recarga / pago</strong><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
+          <ListCell className={styles.cell} label="inversión / total"><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></ListCell>
+          <ListCell className={styles.cell} label="recarga / pago"><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
             {item.dueDate && (item.paymentStatus === "IN_CREDIT" || item.paymentStatus === "OVERDUE") &&
               <span className={`${styles.dueDate} ${item.paymentStatus === "OVERDUE" ? styles.dueOverdue : ""}`}>{dueLabel(item.dueDate)}</span>}
-          </div>
+          </ListCell>
           <div className={styles.platforms} aria-label="Plataformas">{item.platforms.map((value) => <PlatformPill key={value} platform={value.toLowerCase() as AdvertisingPlatform} size="compact" />)}</div>
-          <button type="button" className={styles.detailsLink} aria-haspopup="dialog" disabled={detailLoading} onClick={() => void openDetail(item.id)}>ver detalles</button>
+          <RowDetailLink className={styles.detailsLink} disabled={detailLoading} onClick={() => void openDetail(item.id)}>ver detalles</RowDetailLink>
         </article>)}
         {loading && <p className={styles.emptyState}>Cargando transacciones…</p>}
-        {!loading && error && <div className={`${styles.emptyState} ${styles.errorState}`} role="alert">
-          <p><strong>No pudimos cargar tus recargas</strong></p>
-          <p>{error}</p>
-          <button type="button" className={styles.retry} onClick={() => setReloads((value) => value + 1)}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-        </div>}
+        {!loading && error && <LoadError title="No pudimos cargar tus recargas" message={error} frame="bare" text="neutral" onRetry={() => setReloads((value) => value + 1)} />}
         {!loading && !error && visible.length === 0 && (
           transactions.length === 0
             ? <div className={styles.emptyState}>
                 <p><strong>Aún no tienes recargas</strong></p>
                 <p>Cuando hagas tu primera recarga aparecerá aquí, con su factura y su estado de pago.</p>
-                <Link className={styles.emptyAction} href={`/${accountType}`}>hacer una recarga</Link>
+                <EmptyAction href={`/${accountType}`}>hacer una recarga</EmptyAction>
               </div>
             : <div className={styles.emptyState}>
                 <p><strong>Ninguna recarga coincide con estos filtros</strong></p>
                 <p>Tienes {transactions.length} {transactions.length === 1 ? "recarga registrada" : "recargas registradas"}.</p>
-                <button type="button" className={styles.emptyAction} onClick={clearFilters}>limpiar filtros</button>
+                <EmptyAction onClick={clearFilters}>limpiar filtros</EmptyAction>
               </div>
         )}
       </div>
 
-      {pageInfo.totalPages > 1 && <nav className={styles.pagination} aria-label="Paginación de recargas">
-        <button type="button" disabled={pageNumber <= 1 || loading} onClick={() => setPageNumber((value) => Math.max(1, value - 1))}><ChevronLeft size={16} aria-hidden="true" />anterior</button>
-        <span aria-live="polite">página {pageNumber} de {pageInfo.totalPages}</span>
-        <button type="button" disabled={pageNumber >= pageInfo.totalPages || loading} onClick={() => setPageNumber((value) => Math.min(pageInfo.totalPages, value + 1))}>siguiente<ChevronRight size={16} aria-hidden="true" /></button>
-      </nav>}
+      <Pagination page={pageNumber} totalPages={pageInfo.totalPages} disabled={loading} label="Paginación de recargas" onChange={setPageNumber} />
     </section>
     <InvoiceDetailModal accountType={accountType} transaction={detail} onClose={() => setDetail(null)} onReceiptUploaded={() => { setDetail(null); setReloads((value) => value + 1); }} />
   </></AccountShell>;

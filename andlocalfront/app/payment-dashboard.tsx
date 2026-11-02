@@ -1,7 +1,7 @@
 "use client";
 
 import AccountShell from "./account-shell";
-import PaymentAccountPanel from "./components/payment-account-panel";
+import PaymentAccountPanel from "./features/payments/payment-account-panel";
 import type { AccountType } from "./design-system/types";
 import styles from "./payment-dashboard.module.css";
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { Check, RotateCw, Search, X, UserMinus } from "lucide-react";
+import { Check, X, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import ToggleChip from "../../components/toggle-chip";
-import PlatformPill from "../../components/platform-pill";
-import StatusPill from "../../components/status-pill";
+import ToggleChip from "../../components/atoms/toggle-chip";
+import PlatformPill from "../../components/atoms/platform-pill";
+import StatusPill from "../../components/atoms/status-pill";
 import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import type { AdvertisingPlatform } from "../../design-system/types";
@@ -14,6 +14,12 @@ import { activationStatusLabel } from "../../lib/status-labels";
 import type { ActivationRequest } from "../../lib/recharges-api";
 import styles from "./activations-dashboard.module.css";
 import { activationStatusTone } from "../../lib/status-tone";
+import SearchField from "../../components/molecules/search-field";
+import LoadError from "../../components/molecules/load-error";
+import { TextArea } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
+import ListCell from "../../components/atoms/list-cell";
+import TextButton from "../../components/atoms/text-button";
 
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
@@ -66,7 +72,7 @@ export default function ActivationsDashboard() {
 
   return <div className={styles.module}>
     <header className={styles.toolbar}>
-      <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por cliente, RUC, solicitante o ID externo" /></label>
+      <SearchField value={query} onChange={setQuery} placeholder="Buscar por cliente, RUC, solicitante o ID externo" placeholderTone="muted" className={styles.search} />
       <div className={styles.filters}>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
     </header>
 
@@ -79,37 +85,33 @@ export default function ActivationsDashboard() {
       {!loading && !error && visible.map((item) => <article key={item.id} className={styles.row}>
         {/* Primero de qué cliente es: su nombre y RUC. Quien la pidió y su
             teléfono van debajo, para contactarle. */}
-        <div className={styles.cell}><strong>cliente</strong><span className={styles.requester}>{item.clientName ?? "cliente sin nombre"}</span>{item.clientRuc && <span className={styles.subtle}>RUC {item.clientRuc}</span>}<span className={styles.subtle} title={`${item.requesterName} · ${item.phone}`}>{item.requesterName} · {item.phone}</span></div>
-        <div className={styles.cell}><strong>plataforma</strong><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span className={styles.subtle}>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></div>
-        <div className={styles.cell}><strong>cuenta externa</strong><span title={item.externalAccountId}>{item.externalAccountId}</span></div>
-        <div className={styles.cell}><strong>primera recarga</strong><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span></div>
-        <div className={styles.cell}><strong>estado</strong><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}
+        <ListCell className={styles.cell} label="cliente"><span className={styles.requester}>{item.clientName ?? "cliente sin nombre"}</span>{item.clientRuc && <span className={styles.subtle}>RUC {item.clientRuc}</span>}<span className={styles.subtle} title={`${item.requesterName} · ${item.phone}`}>{item.requesterName} · {item.phone}</span></ListCell>
+        <ListCell className={styles.cell} label="plataforma"><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span className={styles.subtle}>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></ListCell>
+        <ListCell className={styles.cell} label="cuenta externa"><span title={item.externalAccountId}>{item.externalAccountId}</span></ListCell>
+        <ListCell className={styles.cell} label="primera recarga"><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span></ListCell>
+        <ListCell className={styles.cell} label="estado"><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}
           {/* Tomar el caso no decide nada: marca quién lo lleva. Vive junto al
               estado, donde luego aparece «por …», y no entre los botones de
               decisión, donde parecía un paso obligatorio. Activar o rechazar
               funcionan igual sin tomarlo. */}
-          {item.status === "PENDING" && <button type="button" className={styles.claim} disabled={busy === item.id} title="Marca la solicitud como tuya para que el equipo sepa que la estás revisando" onClick={() => void act(item, "review")}>tomar el caso</button>}<span className={styles.subtle}>{formatDateTime(item.createdAt)}</span></div>
+          {item.status === "PENDING" && <TextButton size="body-sm" className={styles.claim} disabled={busy === item.id} title="Marca la solicitud como tuya para que el equipo sepa que la estás revisando" onClick={() => void act(item, "review")}>tomar el caso</TextButton>}<span className={styles.subtle}>{formatDateTime(item.createdAt)}</span></ListCell>
 
         {rejecting === item.id
           ? <div className={styles.reject}>
-              <label>Motivo del rechazo<textarea autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
-              <div><button type="button" onClick={() => { setRejecting(null); setReason(""); }}>Cancelar</button><button type="button" className={styles.dangerButton} disabled={!reason.trim() || busy === item.id} onClick={() => void act(item, "reject")}><X size={16} aria-hidden="true" />Confirmar rechazo</button></div>
+              <label>Motivo del rechazo<TextArea tone="danger" autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+              <div><Button variant="neutral" onClick={() => { setRejecting(null); setReason(""); }}>Cancelar</Button><Button variant="danger" disabled={!reason.trim() || busy === item.id} onClick={() => void act(item, "reject")}><X size={16} aria-hidden="true" />Confirmar rechazo</Button></div>
             </div>
           : <div className={styles.actions}>
               {["PENDING", "IN_REVIEW"].includes(item.status) && <>
-                <button type="button" className={styles.rejectButton} disabled={busy === item.id} onClick={() => setRejecting(item.id)}><X size={16} aria-hidden="true" />Rechazar</button>
-                <button type="button" className={styles.approveButton} disabled={busy === item.id} title="La primera recarga se ejecuta al activar y validar el pago" onClick={() => void act(item, "approve")}><Check size={16} aria-hidden="true" />Activar pauta</button>
+                <Button variant="danger-soft" disabled={busy === item.id} onClick={() => setRejecting(item.id)}><X size={16} aria-hidden="true" />Rechazar</Button>
+                <Button disabled={busy === item.id} title="La primera recarga se ejecuta al activar y validar el pago" onClick={() => void act(item, "approve")}><Check size={16} aria-hidden="true" />Activar pauta</Button>
               </>}
             </div>}
         {actionError?.id === item.id && <p className={styles.rowNotice} role="alert">{actionError.message}</p>}
       </article>)}
 
       {loading && <><div className={styles.skeleton} aria-hidden="true" /><div className={styles.skeleton} aria-hidden="true" /></>}
-      {!loading && error && <div className={`${styles.message} ${styles.errorMessage}`} role="alert">
-        <p><strong>No se pudieron cargar las solicitudes</strong></p>
-        <p>{error}</p>
-        <button type="button" className={styles.retry} onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-      </div>}
+      {!loading && error && <LoadError title="No se pudieron cargar las solicitudes" message={error} frame="control" onRetry={retry} />}
       {!loading && !error && !visible.length && (
         items.length === 0
           ? <p className={styles.message}>No hay solicitudes de activación pendientes.</p>

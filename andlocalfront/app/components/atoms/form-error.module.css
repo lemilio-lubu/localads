@@ -1,0 +1,2 @@
+.formError { display: flex; align-items: center; gap: var(--space-1); margin: 0; color: var(--color-danger); font-size: var(--font-size-body-sm); }
+.formError svg { flex: none; }

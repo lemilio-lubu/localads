@@ -1,0 +1,26 @@
+.field { display: grid; align-content: start; gap: var(--space-1); min-width: 0; }
+.field > label { color: var(--color-text); font-size: var(--font-size-body-sm); }
+.control { position: relative; display: flex; align-items: center; }
+/* Icono dentro del campo: gris en reposo, verde al enfocar, rojo con error. */
+.control > svg { position: absolute; left: var(--space-2); color: var(--color-text-subtle); pointer-events: none; transition: color var(--duration-fast) var(--ease-out); }
+.control:has(textarea) > svg { top: 15px; }
+.control:focus-within > svg { color: var(--color-brand); }
+.field[data-invalid="true"] .control > svg { color: var(--color-danger); }
+/* El aspecto del campo es de TextInput/Select (surface outlined); aquí solo
+   el hueco del icono a la izquierda. */
+.control input, .control select, .control textarea { padding-left: calc(var(--space-2) + 18px + var(--space-1)); }
+.control textarea { min-height: calc(var(--control-height) * 2); padding-block: 13px; line-height: 1.45; }
+.control select { padding-right: var(--space-5); }
+/* La flecha del selector es el mismo chevron de los desplegables (antes, un triángulo dibujado con degradados). Hereda el color gris/verde/rojo de los iconos del campo. */
+.control > .selectChevron { left: auto; right: var(--space-2); }
+.field[data-invalid="true"] .control input { border-color: var(--color-danger); }
+.mono { font-family: var(--font-family-mono) !important; letter-spacing: .06em; }
+.fieldHint, .fieldError { display: flex; align-items: center; gap: var(--space-half); margin: 0; font-size: var(--font-size-caption); line-height: 1.4; }
+.fieldHint { color: var(--color-text-muted); }
+.fieldError { color: var(--color-danger); }
+.fieldError svg { flex: none; }
+.valid { display: inline-flex; align-items: center; gap: var(--space-half); color: var(--color-brand); }
+
+@media (prefers-reduced-motion: reduce) {
+  .control > svg { transition-duration: 0ms; }
+}

@@ -1,0 +1,15 @@
+/* Deslizador: pista con borde y tirador verde. El relleno tenue que sigue al
+   tirador enseña cuánto falta sin necesidad de texto. */
+.track { position: relative; display: flex; align-items: center; height: 60px; overflow: hidden; margin-top: var(--space-3); border: 2px solid var(--color-text-subtle); border-radius: var(--radius-pill); padding: 4px; touch-action: none; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pill); background: var(--color-brand-surface); }
+.hint { position: absolute; inset: 0; display: grid; place-items: center; color: var(--color-text-muted); font-size: var(--font-size-body-sm); pointer-events: none; }
+.handle { position: relative; z-index: 1; display: grid; width: 48px; height: 48px; flex: none; place-items: center; border: 0; border-radius: 50%; background: var(--color-brand); color: var(--color-text-on-fill); cursor: grab; }
+.handle:active { cursor: grabbing; }
+.handle:disabled { cursor: progress; }
+.handle:focus-visible { outline: 3px solid rgb(11 89 1 / 30%); outline-offset: 3px; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation-duration: 2.4s; }
+}

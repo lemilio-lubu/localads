@@ -1,0 +1,38 @@
+/* La fila de la lista de verificaciones. Patrón de lista: fila plana, la
+   agrupa la separación de 32 (el contenedor lo pone la pantalla). */
+/* Quien tiene el caso. Va pegado al estado porque es ahi donde se mira antes
+   de entrar: «En revision» sin nombre no distingue «la tengo yo» de «la tiene
+   otro», y con dos administradores eso son dos personas en el mismo caso. */
+.holder { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+.row { composes: row from "../../components/atoms/list-row.module.css"; grid-template-columns: 56px 150px minmax(180px, 1.2fr) minmax(130px, .9fr) 176px 124px 104px; color: var(--color-text); }
+.transferIcon { align-self: center; }
+/* Abrir el detalle no compromete nada: es un enlace con nombre, no una acción
+   con peso de decisión. El área táctil sigue siendo de 40px aunque lo que se
+   vea sea texto — el mínimo accesible manda sobre el aspecto. */
+/* Aspecto en RowDetailLink; aquí solo su sitio en la fila. */
+.reviewButton { align-self: center; justify-self: end; }
+.transferIcon { position: relative; display: grid; width: 54px; height: 54px; place-items: center; overflow: hidden; }
+.transferIcon img { width: 54px; height: 54px; }
+.transferIcon small { position: absolute; color: var(--color-brand); font-size: var(--font-size-micro); font-weight: var(--font-weight-regular); }
+.cell { composes: cell from "../../components/atoms/list-row.module.css"; }
+.clientName { color: var(--color-text); font-size: var(--font-size-body); }
+.codeCell strong { color: var(--color-brand); }
+.expected { color: var(--color-brand); font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
+.detected { color: var(--color-accent-teal); font-variant-numeric: tabular-nums; }
+/* Un importe no se recorta con «…»: se parte en dos líneas si no cabe. */
+.cell > .expected, .cell > .detected { overflow: visible; white-space: normal; }
+/* Escritorio medio: los mínimos fijos sumaban 1064px de fila y a 1280 solo
+   hay 936, así que se salía por la derecha hasta ~1410. Aquí los mínimos son
+   los del contenido real; desde 1421 la fila es la de siempre. */
+@media (min-width: 1181px) and (max-width: 1420px) {
+  .row { grid-template-columns: 56px minmax(88px, .9fr) minmax(110px, 1.2fr) minmax(100px, .9fr) minmax(110px, 1fr) minmax(96px, .8fr) minmax(64px, .5fr); }
+}
+@media (max-width: 1180px) { .row { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); } .transferIcon { grid-row: span 2; } .reviewButton { align-self: end; } }
+@media (max-width: 780px) { .row { grid-template-columns: 56px repeat(2, minmax(0, 1fr)); padding: var(--space-2); } }
+/* En móvil los valores se parten en vez de recortarse: el banco de origen
+   es un dato a contrastar y acababa en «BANCO PIC…». */
+@media (max-width: 560px) { .cell > span { overflow-wrap: anywhere; white-space: normal; } }
+/* En móvil, dos columnas como «tus facturas»: el icono de transferencia va
+   en su propia fila, encima, para no quitarle 46px a cada línea de datos. */
+@media (max-width: 560px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control) }.transferIcon { grid-column: 1 / -1; grid-row: auto; }.reviewButton { grid-column: 1 / -1; justify-self: start; }.transferIcon, .transferIcon img { width: 44px; height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .row { transition-duration: 0ms; } }

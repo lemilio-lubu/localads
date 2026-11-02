@@ -1,37 +1,31 @@
 "use client";
 
-import Image from "next/image";
-import { Check, ChevronLeft, ChevronRight, CircleAlert, ExternalLink, Layers, RotateCw, Search, ShieldAlert, UserMinus } from "lucide-react";
+import { Check, CircleAlert, Layers, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
-import ToggleChip from "../../components/toggle-chip";
-import DateCell from "../../components/date-cell";
-import ModalShell from "../../components/modal-shell";
-import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
-import StatusPill from "../../components/status-pill";
-import { authenticatedFetch, getAccessToken, getCurrentUser, openAuthenticatedFile, refreshSession } from "../../lib/auth-api";
+import ToggleChip from "../../components/atoms/toggle-chip";
+import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
+import { getAccessToken, getCurrentUser, refreshSession } from "../../lib/auth-api";
 import {
   approveVerification,
   getAdminTransactionDetail,
   getAdminVerifications,
   markVerificationUnderReview,
   retryReceiptOcr,
-  type AdminVerification,
   type PendingVerification,
-  type VerificationStatus,
 } from "../../lib/admin-recharges-api";
-import { formatAmount, formatClock, formatDateTime } from "../../lib/format";
-import { paymentDestinationLabel } from "../../components/payment-account-panel";
-import { usePaymentAccount } from "../../lib/use-payment-account";
-import { resolveApiAssetUrl, transactionsRealtimeUrl } from "../../lib/recharges-api";
-import { verificationIssueLabel, verificationStatusLabel } from "../../lib/status-labels";
+import { formatClock } from "../../lib/format";
+import { transactionsRealtimeUrl } from "../../lib/recharges-api";
 import type { VerificationRealtimeEvent } from "../../lib/transaction-realtime";
+import VerificationRow from "../../features/verifications/verification-row";
+import VerificationReviewModal, { type VerificationSelection } from "../../features/verifications/verification-review-modal";
 import styles from "./verifications-dashboard.module.css";
-import { verificationStatusTone } from "../../lib/status-tone";
+import SearchField from "../../components/molecules/search-field";
+import Pagination from "../../components/molecules/pagination";
+import LoadError from "../../components/molecules/load-error";
 
 type VerificationFilter = "ALL" | "APPROVED" | "REVIEW";
 
-const reviewStatuses: VerificationStatus[] = ["EN_REVISION", "VERIFICADA_AUTOMATICAMENTE"];
 const PAGE_SIZE = 20;
 
 /* El ámbito es excluyente: mismo control segmentado que Clientes y
@@ -47,7 +41,6 @@ function fetchVerifications(filter: VerificationFilter, search: string, pageNumb
 }
 
 export default function VerificationsDashboard() {
-  const [paymentAccount] = usePaymentAccount();
   const [items, setItems] = useState<PendingVerification[]>([]);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
@@ -56,7 +49,6 @@ export default function VerificationsDashboard() {
   const [pageInfo, setPageInfo] = useState({ totalItems: 0, totalPages: 1 });
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const [copied, setCopied] = useState<{ code: string; ok: boolean } | null>(null);
   /* El cubo de los que no tienen gestor. Solo se le ofrece al admin: un
      gestor que lo pidiera no obtendria huerfanos ajenos sino nada, porque
      su recorte y este filtro condicionan el mismo campo. */
@@ -68,16 +60,11 @@ export default function VerificationsDashboard() {
   /* El refresco por tiempo real lee de refs; sin esta, un evento devolvia
      la lista sin filtro y el cubo se vaciaba solo. */
   const unassignedRef = useRef(unassignedOnly);
-  const [selected, setSelected] = useState<{ item: PendingVerification; detail: AdminVerification } | null>(null);
+  const [selected, setSelected] = useState<VerificationSelection | null>(null);
   const selectedRef = useRef(selected);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [previewLoading, setPreviewLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [previewError, setPreviewError] = useState("");
-  const [reason, setReason] = useState("");
-  const [reviewing, setReviewing] = useState(false);
 
   useEffect(() => {
     filterRef.current = filter;
@@ -137,25 +124,6 @@ export default function VerificationsDashboard() {
     return () => { socket.disconnect(); };
   }, []);
 
-  useEffect(() => {
-    if (!selected) return;
-    let active = true;
-    let objectUrl = "";
-    authenticatedFetch(resolveApiAssetUrl(selected.item.receiptContentUrl)).then(async (response) => {
-      if (!response.ok) throw new Error("No fue posible cargar el comprobante");
-      objectUrl = URL.createObjectURL(await response.blob());
-      if (active) setPreviewUrl(objectUrl);
-    }).catch((cause: unknown) => {
-      if (active) setPreviewError(cause instanceof Error ? cause.message : "No fue posible mostrar el comprobante");
-    }).finally(() => { if (active) setPreviewLoading(false); });
-    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [selected]);
-
-  /* Solo un fallo de lectura sin ninguna decisión firmada se puede repetir:
-     el backend lo vuelve a comprobar, esto solo decide si ofrecer el botón. */
-  const canRetryOcr = selected !== null && selected.detail.status === "EN_REVISION" && selected.detail.receipt.status === "FAILED" && selected.detail.decisionAudit === null;
-  const hardBlocked = selected?.detail.issues.some((issue) => ["COMPROBANTE_DUPLICADO", "REFERENCIA_BANCARIA_DUPLICADA"].includes(issue)) ?? false;
-
   async function open(item: PendingVerification) {
     setBusy(true);
     setError("");
@@ -163,19 +131,15 @@ export default function VerificationsDashboard() {
       const transaction = await getAdminTransactionDetail(item.transactionId);
       const detail = transaction.verifications.find((verification) => verification.id === item.id);
       if (!detail) throw new Error("La verificación ya no está disponible");
-      setPreviewUrl("");
-      setPreviewError("");
-      setPreviewLoading(true);
       setSelected({ item, detail });
-      setReason("");
-      setReviewing(false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible cargar la verificación");
     } finally { setBusy(false); }
   }
 
-  async function decide(action: "approve" | "review") {
-    if (!selected || (action === "review" && !reason.trim())) return;
+  /* Devuelve si se resolvió: la revisión cierra su formulario del motivo solo entonces. */
+  async function decide(action: "approve" | "review", reason = ""): Promise<boolean> {
+    if (!selected || (action === "review" && !reason.trim())) return false;
     const current = selected;
     setBusy(true);
     setError("");
@@ -190,10 +154,10 @@ export default function VerificationsDashboard() {
       setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages });
       const detail = transaction.verifications.find((verification) => verification.id === current.detail.id);
       if (detail) setSelected((value) => value?.detail.id === detail.id ? { ...value, detail } : value);
-      setReviewing(false);
-      setReason("");
+      return true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible resolver la verificación");
+      return false;
     } finally { setBusy(false); }
   }
 
@@ -233,21 +197,9 @@ export default function VerificationsDashboard() {
     return `${first}-${Math.min(first + items.length - 1, pageInfo.totalItems)} de ${pageInfo.totalItems}`;
   }, [items.length, pageInfo.totalItems, pageNumber]);
 
-  async function copyCode(code: string, element: HTMLElement | null) {
-    let ok = true;
-    try { await navigator.clipboard.writeText(code); }
-    catch { ok = false; if (element) window.getSelection()?.selectAllChildren(element); }
-    setCopied({ code, ok });
-    window.setTimeout(() => setCopied((current) => current?.code === code ? null : current), 2400);
-  }
-  function copyLabel(code: string) {
-    if (copied?.code !== code) return "copiar";
-    return copied.ok ? "copiado" : "no se pudo";
-  }
-
   return <div className={styles.module}>
     <header className={styles.toolbar}>
-      <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente, código o banco" /></label>
+      <SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente, código o banco" placeholderTone="muted" className={styles.search} />
       <div className={styles.filters}><div className={styles.filterGroup}><span>estado</span>
         <SegmentedFilter label="Estado de la verificación" options={scopeSegments} value={filter} onChange={selectFilter} />
       </div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
@@ -256,75 +208,14 @@ export default function VerificationsDashboard() {
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
 
     <div className={styles.list} aria-live="polite" aria-busy={loading || busy}>
-      {!loading && !error && items.map((item) => <article key={item.id} className={styles.row}>
-        <span className={styles.transferIcon}><Image src="/figma/admin-transfer.svg" alt="" width={54} height={54} /><small>transf.</small></span>
-        <DateCell value={item.createdAt} />
-        <div className={`${styles.cell} ${styles.codeCell}`}><strong>cliente</strong><span className={styles.clientName}>{item.clientName}</span>
-          <button type="button" className={styles.copyCode} data-state={copied?.code === item.transactionCode ? (copied.ok ? "done" : "failed") : undefined} title={item.transactionCode} onClick={(event) => void copyCode(item.transactionCode, event.currentTarget.querySelector("span"))}>
-            <span>{item.transactionCode}</span><small>{copyLabel(item.transactionCode)}</small>
-          </button>
-        </div>
-        <div className={styles.cell}><strong>banco de origen</strong><span>{item.bank ?? "No identificado"}</span></div>
-        <div className={styles.cell}><strong>a verificar / a recargar</strong><span className={styles.expected}>{formatAmount(item.expectedTransferAmount)}</span><span className={styles.detected}>recarga {formatAmount(item.requestedPautaAmount)}</span></div>
-        <div className={styles.cell}><strong>estado</strong><StatusPill tone={verificationStatusTone(item.status)}>{verificationStatusLabel(item.status)}</StatusPill>{item.decidedByName && <span className={styles.holder}>por {item.decidedByName}</span>}</div>
-        <button type="button" className={styles.reviewButton} aria-haspopup="dialog" disabled={busy} onClick={() => void open(item)}>revisar</button>
-      </article>)}
+      {!loading && !error && items.map((item) => <VerificationRow key={item.id} item={item} busy={busy} onOpen={() => void open(item)} />)}
       {loading && <><div className={styles.skeleton} /><div className={styles.skeleton} /></>}
-      {!loading && error && <div className={`${styles.message} ${styles.errorMessage}`} role="alert">
-        <p><strong>No se pudieron cargar las verificaciones</strong></p>
-        <p>{error}</p>
-        <button type="button" className={styles.retry} onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-      </div>}
+      {!loading && error && <LoadError title="No se pudieron cargar las verificaciones" message={error} frame="control" onRetry={retry} />}
       {!loading && !error && !items.length && <p className={styles.message}>No hay verificaciones para este filtro.</p>}
     </div>
 
-    {pageInfo.totalPages > 1 && <nav className={styles.pagination} aria-label="Paginación de verificaciones">
-      <button type="button" disabled={pageNumber <= 1 || loading} onClick={() => setPageNumber((value) => Math.max(1, value - 1))}><ChevronLeft size={16} aria-hidden="true" />anterior</button>
-      <span aria-live="polite">página {pageNumber} de {pageInfo.totalPages}</span>
-      <button type="button" disabled={pageNumber >= pageInfo.totalPages || loading} onClick={() => setPageNumber((value) => Math.min(pageInfo.totalPages, value + 1))}>siguiente<ChevronRight size={16} aria-hidden="true" /></button>
-    </nav>}
+    <Pagination page={pageNumber} totalPages={pageInfo.totalPages} disabled={loading} label="Paginación de verificaciones" onChange={setPageNumber} />
 
-    <ModalShell open={Boolean(selected)} labelledBy="verification-title" onClose={() => setSelected(null)} className={styles.modal}>{selected && <>
-      <header className={styles.modalHeader}><div><small>verificación de transferencia</small><h2 id="verification-title">{selected.item.clientName}</h2><p>{selected.item.transactionCode}</p></div><StatusPill tone={verificationStatusTone(selected.detail.status)}>{verificationStatusLabel(selected.detail.status)}</StatusPill></header>
-      <div className={styles.reviewGrid}>
-        <section className={styles.previewPanel}>
-          <div className={styles.previewHeader}><div><small>evidencia original</small><strong>{selected.detail.receipt.originalName}</strong></div><button type="button" onClick={() => void openAuthenticatedFile(resolveApiAssetUrl(selected.item.receiptContentUrl))}>Abrir <ExternalLink size={15} /></button></div>
-          <div className={styles.preview}>
-            {previewLoading && <span>Cargando comprobante…</span>}
-            {previewError && <span className={styles.previewFailure}><ShieldAlert size={24} />{previewError}</span>}
-            {previewUrl && selected.detail.receipt.mimeType === "application/pdf" && <iframe src={previewUrl} title="Comprobante de transferencia" />}
-            {previewUrl && selected.detail.receipt.mimeType !== "application/pdf" && <Image src={previewUrl} alt={`Comprobante de ${selected.item.clientName}`} fill unoptimized sizes="(max-width: 1120px) 100vw, 580px" />}
-          </div>
-        </section>
-        <section className={styles.dataPanel}>
-          <h3>Datos para validar</h3>
-          <dl>
-            <div><dt>Valor esperado</dt><dd>{formatAmount(selected.detail.expectedAmount)}</dd></div>
-            <div><dt>Valor detectado</dt><dd data-match={selected.detail.amountMatches}>{selected.detail.detectedAmount == null ? "No detectado" : formatAmount(selected.detail.detectedAmount)}</dd></div>
-            <div><dt>Banco</dt><dd>{selected.detail.ocr?.bank ?? "No identificado"}</dd></div>
-            <div><dt>Cuenta de cobro</dt><dd>{paymentAccount.status === "ready" ? paymentDestinationLabel(paymentAccount.data.account) ?? "No configurada" : "—"}</dd></div>
-            <div><dt>Código bancario</dt><dd>{selected.detail.ocr?.transactionCode ?? "No identificado"}</dd></div>
-            <div><dt>Fecha detectada</dt><dd>{selected.detail.ocr?.detectedDate ?? "No detectada"}</dd></div>
-            <div><dt>Confianza OCR</dt><dd>{selected.detail.ocr?.confidence == null ? "—" : `${Math.round(selected.detail.ocr.confidence)}%`}</dd></div>
-          </dl>
-          {selected.detail.decisionAudit && <div className={styles.audit}>
-            <small>decisión registrada</small>
-            <strong>{selected.detail.decisionAudit.decision === "APPROVE" ? "Aprobada" : selected.detail.decisionAudit.decision === "REVIEW" ? "En revisión" : "Rechazada"} por {selected.detail.decisionAudit.administratorUserId}</strong>
-            <span>{formatDateTime(selected.detail.decisionAudit.createdAt)}</span>
-            {(selected.detail.decisionAudit.notes || selected.detail.decisionAudit.reviewReason || selected.detail.decisionAudit.rejectionReason) && <p>{selected.detail.decisionAudit.notes ?? selected.detail.decisionAudit.reviewReason ?? selected.detail.decisionAudit.rejectionReason}</p>}
-          </div>}
-          {selected.detail.reviewReason && <div className={styles.reviewNotice}>
-            <small>Motivo de revisión</small>
-            <p>{selected.detail.reviewReason}</p>
-            <span>Actualizado {formatDateTime(selected.detail.updatedAt ?? selected.detail.decisionAudit?.createdAt ?? selected.detail.createdAt)}</span>
-          </div>}
-          {selected.detail.issues.length > 0 && <div className={styles.issues}><strong>Señales de revisión</strong><ul>{selected.detail.issues.map((issue) => <li key={issue}>{verificationIssueLabel(issue)}</li>)}</ul></div>}
-          {canRetryOcr && <div className={styles.actions}><button type="button" disabled={busy} onClick={() => void retryOcr()}><RotateCw size={17} />{busy ? "Leyendo…" : "Reintentar lectura"}</button></div>}
-          {reviewStatuses.includes(selected.detail.status) && <div className={styles.actions}>{reviewing ? <div className={styles.reviewForm}><label>Motivo de revisión<textarea autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label><div><button type="button" onClick={() => { setReviewing(false); setReason(""); }}>Cancelar</button><button type="button" disabled={!reason.trim() || busy} onClick={() => void decide("review")}><CircleAlert size={16} />Enviar a revisión</button></div></div> : <><button type="button" disabled={busy} onClick={() => { setReason(selected.detail.reviewReason ?? ""); setReviewing(true); }}><CircleAlert size={17} />En revisión</button><button type="button" disabled={busy || hardBlocked} title={hardBlocked ? "La evidencia duplicada no puede aprobarse" : undefined} onClick={() => void decide("approve")}><Check size={17} />Aprobar transferencia</button></>}</div>}
-          {hardBlocked && !reviewing && <p className={styles.error}>La aprobación está bloqueada: el comprobante o código bancario ya fue utilizado.</p>}
-          {error && <p className={styles.error} role="alert">{error}</p>}
-        </section>
-      </div>
-    </>}</ModalShell>
+    <VerificationReviewModal selected={selected} busy={busy} error={error} onClose={() => setSelected(null)} onApprove={() => void decide("approve")} onReview={(reason) => decide("review", reason)} onRetryOcr={() => void retryOcr()} />
   </div>;
 }

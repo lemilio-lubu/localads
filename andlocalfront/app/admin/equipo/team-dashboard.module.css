@@ -3,15 +3,11 @@
    las columnas, porque un usuario interno no tiene plataformas ni crédito. */
 .module { width: min(100%, var(--layout-admin-content)); margin-top: var(--space-3); }
 .toolbar { display: grid; grid-template-columns: minmax(calc(var(--space-20) + var(--space-12)), 1fr) auto; align-items: center; gap: var(--space-4); }
-.search { display: flex; height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); color: var(--color-text); }
-.search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: var(--font-size-body-sm); }
-.search input::placeholder { color: var(--color-text); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .filterGroup { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .filterGroup > span:first-child { margin-right: var(--space-1); color: var(--color-text); font-size: var(--font-size-body-sm); }
 
-.createButton { display: flex; min-width: calc(var(--space-20) + var(--space-6)); height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin: var(--space-3) 0 var(--space-5); background: var(--color-surface-muted); padding: 0 var(--space-2); color: var(--color-text-muted); cursor: pointer; font-size: var(--font-size-body-sm); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
-.createButton:active { transform: scale(.97); }
+.createButton { margin: var(--space-3) 0 var(--space-5); }
 
 .list { display: grid; gap: var(--space-4); }
 /* Pesos sobre φ. La identidad se lleva 1,272 y no 1,618 como en Clientes: allí
@@ -20,10 +16,8 @@
    Las dos cajas del mockup, cuentas y ventas, comparten 0,786 porque son un
    número corto; «acceso» sube a 1 porque su valor es texto. */
 .row { position: relative; display: grid; min-height: var(--space-15); grid-template-columns: minmax(var(--space-15), 1.272fr) minmax(var(--space-10), .786fr) minmax(var(--space-10), .786fr) minmax(var(--space-10), .618fr) minmax(var(--space-15), 1fr) minmax(var(--space-20), 1fr); align-items: stretch; gap: var(--space-1); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-2); transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out), opacity var(--duration-ui) var(--ease-out); }
-.openDetail { position: absolute; z-index: 1; inset: 0; border: 0; border-radius: inherit; outline: 0; background: transparent; cursor: pointer; }
-.openDetail:focus-visible { box-shadow: inset var(--focus-ring); }
-.row:has(.openDetail:active) { transform: scale(.99); }
-.row > *:not(.openDetail, .rowActions) { pointer-events: none; }
+.row:has([data-row-opener]:active) { transform: scale(.99); }
+.row > *:not([data-row-opener], .rowActions) { pointer-events: none; }
 .identity { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: var(--space-half); }
 .identity small { color: var(--color-text); font-size: var(--font-size-micro); }
 .identity > strong { max-width: 100%; overflow: hidden; color: var(--color-text); font-size: var(--font-size-nav); text-overflow: ellipsis; white-space: nowrap; }
@@ -33,32 +27,19 @@
 .identityMeta > em { overflow: hidden; color: var(--color-text-muted); font-size: var(--font-size-caption); font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
 .identityMeta > span[data-role="ADMIN"] { background: var(--color-teal-surface); color: var(--color-teal-text); }
 .identityMeta > span[data-role="GESTOR"] { background: var(--color-brand-surface); color: var(--color-brand); }
-
-.rowActions { position: relative; z-index: 2; display: grid; align-content: stretch; gap: var(--space-1); }
-.rowActions button { display: flex; align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-menu); background: var(--color-surface-muted); color: var(--color-text-muted); cursor: pointer; font-size: var(--font-size-caption); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
-.rowActions button:active { transform: scale(.97); }
-.rowActions button:disabled { opacity: .55; cursor: wait; }
 .inactive { opacity: .58; }
 
 .listMeta { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); padding: 0 var(--space-3) var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.clearFiltersInline { border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
 .rowNotice { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-1); border-radius: var(--radius-menu); margin: var(--space-1) 0 0; background: var(--color-danger-surface); padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); }
 .skeleton { composes: base from "../../design-system/skeleton.module.css"; }
 .message { display: grid; justify-items: center; gap: var(--space-1); margin: var(--space-4); color: var(--color-text-muted); text-align: center; }
 .message p { margin: 0; max-width: 46ch; }
 .message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
-.errorMessage { border-radius: var(--radius-card); margin: 0; background: var(--color-danger-surface); padding: var(--space-5) var(--space-3); color: var(--color-danger); }
-.errorMessage strong { color: var(--color-danger); }
-.retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
-.clearFilters { display: inline-grid; min-height: var(--button-height); align-content: center; margin-top: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding: 0 var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
-.search:focus-within, .createButton:focus-visible, .rowActions button:focus-visible, .clearFilters:focus-visible, .clearFiltersInline:focus-visible, .retry:focus-visible { outline: 3px solid rgb(11 89 1 / 14%); outline-offset: 2px; }
-@media (hover: hover) and (pointer: fine) { .createButton:hover { box-shadow: var(--shadow-card); color: var(--color-text); } .rowActions button:hover { background: var(--color-surface-hover); color: var(--color-text); } .row:hover { box-shadow: var(--shadow-card); } }
+@media (hover: hover) and (pointer: fine) { .row:hover { box-shadow: var(--shadow-card); } }
 @media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .identity { grid-row: span 2; } .rowActions { grid-column: span 2; grid-template-columns: 1fr 1fr; min-height: 40px; } }
 @media (max-width: 650px) { .row { grid-template-columns: 1fr 1fr; } .identity, .rowActions { grid-column: 1 / -1; grid-row: auto; } }
-@media (prefers-reduced-motion: reduce) { .createButton, .row, .rowActions button { transition-duration: 0ms; } .skeleton { animation: none; } .row:has(.openDetail:active) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .createButton, .row { transition-duration: 0ms; } .skeleton { animation: none; } .row:has([data-row-opener]:active) { transform: none; } }
 
 /* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
    Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .search input { font-size: var(--font-size-body); }
-}
+

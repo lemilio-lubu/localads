@@ -2,18 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import AccountNavigation from "./components/account-navigation";
-import BrandLogo from "./components/brand-logo";
-import PwaInstallButton from "./components/pwa-install-button";
-import ProfileMenu from "./components/profile-menu";
+import AccountTemplate from "./components/templates/account-template";
 import type { AccountPage, AccountType } from "./design-system/types";
 import { getCurrentUser, logout, refreshSession } from "./lib/auth-api";
-import styles from "./account-shell.module.css";
 
-export default function AccountShell({ accountType, activePage, contentSize = "standard", children }: { accountType: AccountType; activePage: AccountPage; contentSize?: "standard" | "wide"; children: ReactNode }) {
-  const router = useRouter(); const isPrepaid = accountType === "prepago"; const [authorized, setAuthorized] = useState(false);
+export default function AccountShell({ accountType, activePage, contentSize = "standard", contentAlign = "start", children }: { accountType: AccountType; activePage: AccountPage; contentSize?: "standard" | "wide"; contentAlign?: "start" | "center"; children: ReactNode }) {
+  const router = useRouter(); const [authorized, setAuthorized] = useState(false);
   useEffect(() => { let active = true; refreshSession().then((user) => { const expected = accountType === "prepago" ? "PREPAGO" : "POSTPAGO"; if (!user || user.role !== "CLIENT" || user.accountType !== expected) router.replace("/"); else if (user.mustChangePassword) router.replace("/cambiar-contrasena"); else if (active) setAuthorized(true); }); return () => { active = false; }; }, [accountType, router]);
   async function logOut() { await logout(); router.replace("/"); }
   if (!authorized) return null;
-  return <main className={styles.pageShell}><header className={styles.header}><BrandLogo edition={isPrepaid ? "pre" : "pos"} /><PwaInstallButton /></header><div className={`${styles.workspace} ${contentSize === "wide" ? styles.wideWorkspace : ""}`}><div className={styles.navColumn}><AccountNavigation accountType={accountType} activePage={activePage} /><div className={styles.navFooter}><ProfileMenu userName={getCurrentUser()?.displayName ?? getCurrentUser()?.username} compact placement="up" links={[{ label: "cómo pagar", href: `/${accountType}/pagar` }]} onLogout={logOut} /></div></div><div className={styles.content}>{children}</div></div></main>;
+  return <AccountTemplate accountType={accountType} activePage={activePage} contentSize={contentSize} contentAlign={contentAlign} userName={getCurrentUser()?.displayName ?? getCurrentUser()?.username} onLogout={logOut}>{children}</AccountTemplate>;
 }

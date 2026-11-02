@@ -1,0 +1,11 @@
+.button { display: flex; min-width: calc(var(--space-20) + var(--space-6)); height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-small); background: var(--color-surface-muted); padding: 0 var(--space-2); color: var(--color-text-muted); cursor: pointer; font-size: var(--font-size-body-sm); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.button:active { transform: scale(.97); }
+.button:focus-visible { outline: 3px solid rgb(11 89 1 / 14%); outline-offset: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .button:hover { box-shadow: var(--shadow-card); color: var(--color-text); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition-duration: 0ms; }
+}

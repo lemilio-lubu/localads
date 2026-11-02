@@ -1,44 +1,38 @@
 .rechargePanel { width: 100%; border-radius: var(--radius-card); background: var(--color-surface); padding: var(--space-3) var(--space-6); }
-.prepaidPanel { background: #f5f5f5; }
+.prepaidPanel { background: var(--color-surface-muted); }
 .heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .heading h1 { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-title); line-height: 1.2; text-wrap: balance; }
 .summary { display: grid; gap: var(--space-half); align-self: stretch; margin-top: var(--space-2); margin-left: auto; width: min(100%, 320px); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .summary strong { display: flex; justify-content: space-between; gap: var(--space-2); color: var(--color-text); font-size: var(--font-size-body); }
 .form { display: flex; flex-direction: column; align-items: center; }
 .fields { display: grid; width: 100%; gap: var(--space-1); }
-.platformField, .activationButton { display: grid; min-height: 58px; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: #fff; padding: 8px 16px; color: var(--color-text); }
+.platformField, .activationButton { display: grid; min-height: 58px; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--color-surface-raised); padding: 8px 16px; color: var(--color-text); }
 .platformField img, .activationButton img { object-fit: contain; }
 .platformField { grid-template-columns: 44px 12px minmax(0, 1fr) auto; cursor: text; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out); }
 .platformField:focus-within { border-color: rgb(11 89 1 / 34%); box-shadow: var(--focus-ring); }
 .currency { color: var(--color-text-muted); }
-.platformField input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
+.platformField input { font-variant-numeric: tabular-nums; }
 .platformField input::placeholder { color: var(--color-text-muted); opacity: 1; }
 .platformField input::-webkit-inner-spin-button, .platformField input::-webkit-outer-spin-button { appearance: none; }
-.meta { --activation-surface: var(--color-meta-strong); --activation-text: #fff; --activation-ink: var(--color-meta-strong); }
+.meta { --activation-surface: var(--color-meta-strong); --activation-text: var(--color-text-on-fill); --activation-ink: var(--color-meta-strong); }
 .google { --activation-surface: var(--color-google); --activation-text: var(--color-google-text); --activation-ink: var(--color-google-strong); }
-.tiktok { --activation-surface: var(--color-tiktok-strong); --activation-text: #fff; --activation-ink: var(--color-tiktok-strong); }
+.tiktok { --activation-surface: var(--color-tiktok-strong); --activation-text: var(--color-text-on-fill); --activation-ink: var(--color-tiktok-strong); }
 .activationButton { grid-template-columns: 44px 1fr; background: var(--activation-surface); color: var(--activation-text); cursor: pointer; font: inherit; font-size: var(--font-size-body-sm); font-weight: 700; text-align: left; transition: transform 160ms var(--ease-out), opacity 160ms ease; }
 .activationButton:disabled { cursor: default; opacity: .6; }
 .activationButton:not(:disabled):active, .uploadArea:active { transform: scale(.97); }
 .activationButton:focus-visible, .uploadArea:focus-visible { outline: 3px solid var(--color-text-muted); outline-offset: 4px; }
-.uploadArea { display: flex; width: 100%; min-height: 96px; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-card); background: #fff; color: var(--color-text-muted); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
-.uploadArea.hasReceipt { border-style: solid; border-color: rgb(11 89 1 / 30%); background: #fbfffb; color: var(--color-brand); }
+.uploadArea { display: flex; width: 100%; min-height: 96px; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-card); background: var(--color-surface-raised); color: var(--color-text-muted); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out); }
+.uploadArea.hasReceipt { border-style: solid; border-color: rgb(11 89 1 / 30%); background: var(--color-brand-surface-soft); color: var(--color-brand); }
 .uploadArea input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .uploadArea span { max-width: min(420px, 70vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.terms { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); cursor: pointer; }
-.terms input { position: absolute; opacity: 0; }
-.checkbox { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; }
-.checkbox img { opacity: .4; transition: opacity 140ms var(--ease-out); }
-.terms input:checked + .checkbox img { opacity: 1; }
-.terms:has(input:focus-visible) .checkbox { box-shadow: var(--focus-ring); }
+/* Aspecto en Checkbox; aquí el sitio y el gris. */
+.terms { margin-top: var(--space-2); color: var(--color-text-muted); }
 .submitButton { margin-top: var(--space-3); }
 .formStatus { margin: var(--space-1) 0 0; color: var(--color-brand); font-size: var(--font-size-caption); font-weight: 700; text-align: center; }
 /* El aviso de tasas vive donde luego aparece el desglose, para que el cliente
    sepa qué se le va a sumar antes de escribir el primer monto. */
 .ratesHint { align-self: stretch; margin: var(--space-2) 0 0; margin-left: auto; width: min(100%, 320px); color: var(--color-text-muted); font-size: var(--font-size-caption); text-wrap: balance; }
 .ratesError { color: var(--color-danger); font-weight: var(--font-weight-regular); }
-.ratesError button, .formStatus button { border: 0; background: transparent; padding: 0; color: inherit; font: inherit; font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
-.ratesError button:focus-visible, .formStatus button:focus-visible { outline: 2px solid currentcolor; outline-offset: 2px; }
 .formStatus:empty { margin-top: 0; }
 .error { color: var(--color-danger); }
 .activationModal { --modal-pad-top: 40px; width: min(100%, var(--layout-content)); padding-block: 40px 28px; padding-inline-start: 44px; background: var(--color-surface-raised); box-shadow: 0 4px 20px rgb(0 0 0 / 25%); }
@@ -56,16 +50,14 @@
    6% y una sombra en dos capas muy difusas: se despega del fondo sin marcar
    una línea dura. El foco no dobla el anillo; tiñe el filo y abre un halo
    tenue del color de la plataforma. */
-.activationPanel input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid rgb(0 0 0 / 6%); border-radius: var(--radius-pill); outline: 0; background: var(--color-surface-raised); padding: 0 var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 6px 16px -6px rgb(0 0 0 / 8%); transition: border-color var(--duration-ui) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out); }
-.activationPanel input:focus { border-color: var(--activation-ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--activation-ink) 12%, transparent), 0 6px 16px -6px rgb(0 0 0 / 8%); }
-@media (hover: hover) and (pointer: fine) { .activationPanel input:hover:not(:focus):not(:disabled) { border-color: rgb(0 0 0 / 12%); box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 10px 22px -8px rgb(0 0 0 / 12%); } }
-@media (prefers-reduced-motion: reduce) { .activationPanel input { transition-duration: 0ms; } }
+/* El aspecto es de TextInput (surface elevated); el foco toma el color de la plataforma. */
+.activationPanel input { --field-focus-border: var(--activation-ink); --field-focus-ring: 0 0 0 4px color-mix(in srgb, var(--activation-ink) 12%, transparent); min-height: 44px; font-size: var(--font-size-body-sm); }
 .activationPanel input:disabled { opacity: .6; }
 .activationActions { display: flex; justify-content: center; margin-top: 8px; }
 .activationSubmit, .activationSubmit:not(:disabled):hover, .activationSubmit:not(:disabled):active { background: var(--activation-surface); color: var(--activation-text); box-shadow: none; }
 .activationError { margin: 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: center; }
 @media (hover: hover) and (pointer: fine) { .platformField:hover, .activationButton:not(:disabled):hover { border-color: rgb(11 89 1 / 18%); box-shadow: var(--shadow-card); } .uploadArea:hover { border-color: rgb(11 89 1 / 30%); } }
-@media (prefers-reduced-motion: reduce) { .platformField, .activationButton, .uploadArea, .checkbox img, .activationSubmit { transition: none; } .activationButton:not(:disabled):active, .uploadArea:active, .activationSubmit:not(:disabled):active { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .platformField, .activationButton, .uploadArea, .activationSubmit { transition: none; } .activationButton:not(:disabled):active, .uploadArea:active, .activationSubmit:not(:disabled):active { transform: none; } }
 @media (max-width: 680px) { .rechargePanel { border-radius: var(--radius-control); padding: 28px 20px; } .heading { align-items: flex-start; flex-direction: column; } .summary { text-align: left; } .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); } .activationPanel { grid-template-columns: 1fr; } .activationPanel label { grid-column: 1 / -1; } .activationModal { --modal-pad-top: 48px; padding-block: 48px 28px; padding-inline-start: 20px; } .activationHeading { gap: 12px; } .activationHeading h2 { font-size: var(--font-size-body-sm); } }
 
 /* Fase 2: el cliente decide con la informacion a la vista. */
@@ -90,12 +82,6 @@
   .summary span { justify-content: space-between; }
 }
 
-/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
-   Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .activationPanel input { font-size: var(--font-size-body); }
-}
-
 /* En móvil la nota de formatos le quitaba el ancho al texto: «adjuntar c…» a
    320px, y con un archivo elegido no se veía qué se había subido. La nota
    baja a su propia línea y el nombre se parte en vez de recortarse. */
@@ -107,6 +93,5 @@
 /* El resumen de importes termina pegado a lo que sigue: la tarjeta de pago pide su propio respiro. */
 .paymentCard { margin-top: var(--space-2); }
 /* Salida discreta a «cómo pagar» cuando la tarjeta de pago todavía no está a la vista (prepago sin total) o no va aquí (pospago). */
-.payLink { composes: hitArea from "./design-system/hit-area.module.css"; justify-self: center; margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); text-decoration: underline; }
-.payLink:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; border-radius: var(--radius-small); }
-@media (hover: hover) and (pointer: fine) { .payLink:hover { color: var(--color-brand); } }
+/* Aspecto en TextLink; aquí solo su sitio. */
+.payLink { justify-self: center; margin-top: var(--space-1); }

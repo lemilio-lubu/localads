@@ -1,19 +1,27 @@
 "use client";
 
-import { CalendarClock, Layers, Pencil, PlusCircle, Power, RotateCw, Search, UserMinus, Wallet } from "lucide-react";
+import { CalendarClock, Layers, Pencil, PlusCircle, Power, UserMinus, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import PlatformPill from "../../components/platform-pill";
-import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
-import ToggleChip from "../../components/toggle-chip";
-import CredentialsModal from "../../components/credentials-modal";
+import PlatformPill from "../../components/atoms/platform-pill";
+import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
+import ToggleChip from "../../components/atoms/toggle-chip";
+import CredentialsModal from "../../components/organisms/credentials-modal";
 import { deactivateAdminClient, getAdminClients, updateAdminClient, type AdminAccountType, type AdminClient, type AdminPlatform } from "../../lib/admin-clients-api";
-import MetricCard from "../../components/metric-card";
-import ClientDetailModal from "./client-detail-modal";
-import ClientFormModal from "./client-form-modal";
+import MetricCard from "../../components/molecules/metric-card";
+import ClientDetailModal from "../../features/clients/client-detail-modal";
+import ClientFormModal from "../../features/clients/client-form-modal";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import { getCurrentUser } from "../../lib/auth-api";
 import { daysUntil, formatAmount, remainingLabel } from "../../lib/format";
 import styles from "./clients-dashboard.module.css";
+import SearchField from "../../components/molecules/search-field";
+import LoadError from "../../components/molecules/load-error";
+import TextButton from "../../components/atoms/text-button";
+import EmptyAction from "../../components/atoms/empty-action";
+import ToolbarButton from "../../components/atoms/toolbar-button";
+import RowActionButton from "../../components/atoms/row-action-button";
+import RowOpener from "../../components/atoms/row-opener";
+import RowActions from "../../components/molecules/row-actions";
 
 /* Los iconos son de lucide y no SVG de marca a propósito: pintan con
    `currentColor`, así que se vuelven blancos al activarse el segmento. Un
@@ -93,12 +101,12 @@ export default function ClientsDashboard() {
   return (
     <div className={styles.module}>
       <div className={styles.toolbar}>
-        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o correo" /></label>
-        <button type="button" className={styles.createButton} onClick={openCreate}><PlusCircle size={17} aria-hidden="true" />crear nuevo cliente</button>
+        <SearchField value={query} onChange={setQuery} placeholder="Buscar por nombre o correo" placeholderTone="strong" className={styles.search} />
+        <ToolbarButton className={styles.createButton} onClick={openCreate}><PlusCircle size={17} aria-hidden="true" />crear nuevo cliente</ToolbarButton>
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
             <span>plataforma</span>
-            {(["META", "GOOGLE", "TIKTOK"] as const).map((item) => <ToggleChip key={item} className={styles.platformFilter} pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="filter" active={platform === item} /></ToggleChip>)}
+            {(["META", "GOOGLE", "TIKTOK"] as const).map((item) => <ToggleChip key={item} className={styles.platformFilter} indicator="content" pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="filter" active={platform === item} /></ToggleChip>)}
           </div>
           {/* El tipo de cuenta es excluyente, así que se dibuja como una sola pieza
               con «todos» a la vista: antes había que deducir que se volvía a todos
@@ -119,39 +127,35 @@ export default function ClientsDashboard() {
 
       {!loading && !error && visibleClients.length > 0 && <div className={styles.listMeta}>
         <span>{visibleClients.length} {visibleClients.length === 1 ? "cliente" : "clientes"}{hasFilters && clients.length !== visibleClients.length ? ` de ${clients.length}` : ""}</span>
-        {hasFilters && <button type="button" className={styles.clearFiltersInline} onClick={clearFilters}>limpiar filtros</button>}
+        {hasFilters && <TextButton onClick={clearFilters}>limpiar filtros</TextButton>}
       </div>}
 
       <div className={styles.clientList} aria-live="polite" aria-busy={loading}>
         {visibleClients.map((client) => (
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
-            <button type="button" className={styles.openDetailButton} onClick={() => setSelectedClient(client)} aria-label={`Ver detalle de ${client.name}`} aria-haspopup="dialog" />
+            <RowOpener label={`Ver detalle de ${client.name}`} onClick={() => setSelectedClient(client)} />
             <div className={styles.clientIdentity}><small>clientes</small><strong>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
             <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="correo" valueSize="small">{client.email}</MetricCard>
             <MetricCard label="plazo" valueSize="small" tone={client.nextDueDate && daysUntil(client.nextDueDate) < 0 ? "danger" : "default"}>{client.account.type !== "POSTPAGO" ? "no aplica" : client.nextDueDate ? remainingLabel(daysUntil(client.nextDueDate)) : `${client.account.creditDays} días`}</MetricCard>
             <MetricCard label="gestor" valueSize="small">{client.manager?.username ?? "sin asignar"}</MetricCard>
-            <div className={styles.rowActions}>
-              <button type="button" disabled={busyClientId === client.id} onClick={() => { setEditing(client); setFormOpen(true); }}><Pencil size={16} aria-hidden="true" />editar</button>
-              <button type="button" disabled={busyClientId === client.id} onClick={() => toggleClient(client)}><Power size={16} aria-hidden="true" />{busyClientId === client.id ? "guardando…" : client.status === "ACTIVE" ? "desactivar" : "activar"}</button>
-            </div>
+            <RowActions className={styles.rowActions}>
+              <RowActionButton disabled={busyClientId === client.id} onClick={() => { setEditing(client); setFormOpen(true); }}><Pencil size={16} aria-hidden="true" />editar</RowActionButton>
+              <RowActionButton disabled={busyClientId === client.id} onClick={() => toggleClient(client)}><Power size={16} aria-hidden="true" />{busyClientId === client.id ? "guardando…" : client.status === "ACTIVE" ? "desactivar" : "activar"}</RowActionButton>
+            </RowActions>
             {actionError?.id === client.id && <p className={styles.rowNotice} role="alert">{actionError.message}</p>}
           </article>
         ))}
         {loading && <><div className={`${styles.clientRow} ${styles.skeleton}`} aria-hidden="true" /><div className={`${styles.clientRow} ${styles.skeleton}`} aria-hidden="true" /></>}
-        {!loading && error && <div className={`${styles.message} ${styles.errorMessage}`} role="alert">
-          <p><strong>No se pudo cargar la lista de clientes</strong></p>
-          <p>{error}</p>
-          <button type="button" className={styles.retry} onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-        </div>}
+        {!loading && error && <LoadError title="No se pudo cargar la lista de clientes" message={error} frame="card" text="neutral-title" onRetry={retry} />}
         {!loading && !error && !visibleClients.length && (
           clients.length === 0
             ? <div className={styles.message}><p><strong>Todavía no hay clientes</strong></p><p>Crea el primero para empezar a registrar recargas.</p></div>
             : <div className={styles.message}>
                 <p><strong>Ningún cliente coincide con estos filtros</strong></p>
                 <p>Hay {clients.length} {clients.length === 1 ? "cliente registrado" : "clientes registrados"}.</p>
-                <button type="button" className={styles.clearFilters} onClick={clearFilters}>limpiar filtros</button>
+                <EmptyAction onClick={clearFilters}>limpiar filtros</EmptyAction>
               </div>
         )}
       </div>

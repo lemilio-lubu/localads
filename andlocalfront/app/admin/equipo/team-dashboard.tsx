@@ -1,15 +1,23 @@
 "use client";
 
-import { CirclePlus, KeyRound, Layers, Power, RotateCw, Search, Shield, UserCog } from "lucide-react";
+import { CirclePlus, KeyRound, Layers, Power, Shield, UserCog } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
-import CredentialsModal from "../../components/credentials-modal";
+import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
+import CredentialsModal from "../../components/organisms/credentials-modal";
 import { getTeam, resetTeamMemberPassword, updateTeamMember, type IssuedCredentials, type TeamMember, type TeamRole } from "../../lib/team-api";
-import TeamFormModal from "./team-form-modal";
+import TeamFormModal from "../../features/team/team-form-modal";
 import PortfolioHandoverModal from "./portfolio-handover-modal";
-import TeamMemberModal from "./team-member-modal";
-import MetricCard from "../../components/metric-card";
+import TeamMemberModal from "../../features/team/team-member-modal";
+import MetricCard from "../../components/molecules/metric-card";
 import styles from "./team-dashboard.module.css";
+import SearchField from "../../components/molecules/search-field";
+import LoadError from "../../components/molecules/load-error";
+import TextButton from "../../components/atoms/text-button";
+import EmptyAction from "../../components/atoms/empty-action";
+import ToolbarButton from "../../components/atoms/toolbar-button";
+import RowActionButton from "../../components/atoms/row-action-button";
+import RowOpener from "../../components/atoms/row-opener";
+import RowActions from "../../components/molecules/row-actions";
 
 /* Mismos iconos de lucide que el resto de filtros: pintan con `currentColor`,
    así que se vuelven blancos al activarse el segmento. Un escudo para quien
@@ -119,7 +127,7 @@ export default function TeamDashboard() {
   return (
     <div className={styles.module}>
       <div className={styles.toolbar}>
-        <label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o correo" /></label>
+        <SearchField value={query} onChange={setQuery} placeholder="Buscar por nombre o correo" placeholderTone="strong" />
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
             <span>rol</span>
@@ -128,17 +136,17 @@ export default function TeamDashboard() {
         </div>
       </div>
 
-      <button type="button" className={styles.createButton} onClick={() => setFormOpen(true)}><CirclePlus size={17} aria-hidden="true" />crear cuenta</button>
+      <ToolbarButton className={styles.createButton} onClick={() => setFormOpen(true)}><CirclePlus size={17} aria-hidden="true" />crear cuenta</ToolbarButton>
 
       {!loading && !error && visible.length > 0 && <div className={styles.listMeta}>
         <span>{visible.length} {visible.length === 1 ? "cuenta" : "cuentas"}{hasFilters && members.length !== visible.length ? ` de ${members.length}` : ""}</span>
-        {hasFilters && <button type="button" className={styles.clearFiltersInline} onClick={clearFilters}>limpiar filtros</button>}
+        {hasFilters && <TextButton onClick={clearFilters}>limpiar filtros</TextButton>}
       </div>}
 
       <div className={styles.list} aria-live="polite" aria-busy={loading}>
         {!loading && !error && visible.map((member) => (
           <article key={member.id} className={`${styles.row} ${member.status === "INACTIVE" ? styles.inactive : ""}`}>
-            <button type="button" className={styles.openDetail} onClick={() => openMember(member.id)} aria-label={`Ver detalle de ${member.name || member.username}`} aria-haspopup="dialog" />
+            <RowOpener label={`Ver detalle de ${member.name || member.username}`} onClick={() => openMember(member.id)} />
             <div className={styles.identity}>
               <small>equipo</small>
               <strong>{member.name || member.username}</strong>
@@ -154,27 +162,23 @@ export default function TeamDashboard() {
             <MetricCard label="ventas" valueSize={member.role === "ADMIN" ? "small" : "regular"}>{member.role === "ADMIN" ? "no aplica" : String(member.metrics.sales)}</MetricCard>
             <MetricCard label="estado">{member.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="acceso" valueSize="small">{member.mustChangePassword ? "clave temporal" : "clave propia"}</MetricCard>
-            <div className={styles.rowActions}>
-              <button type="button" disabled={busyId === member.id} onClick={() => void run(member, "reset")}><KeyRound size={16} aria-hidden="true" />restablecer</button>
-              <button type="button" disabled={busyId === member.id} onClick={() => void run(member, "toggle")}><Power size={16} aria-hidden="true" />{busyId === member.id ? "guardando…" : member.status === "ACTIVE" ? "desactivar" : "activar"}</button>
-            </div>
+            <RowActions className={styles.rowActions}>
+              <RowActionButton disabled={busyId === member.id} onClick={() => void run(member, "reset")}><KeyRound size={16} aria-hidden="true" />restablecer</RowActionButton>
+              <RowActionButton disabled={busyId === member.id} onClick={() => void run(member, "toggle")}><Power size={16} aria-hidden="true" />{busyId === member.id ? "guardando…" : member.status === "ACTIVE" ? "desactivar" : "activar"}</RowActionButton>
+            </RowActions>
             {actionError?.id === member.id && <p className={styles.rowNotice} role="alert">{actionError.message}</p>}
           </article>
         ))}
 
         {loading && <><div className={`${styles.row} ${styles.skeleton}`} aria-hidden="true" /><div className={`${styles.row} ${styles.skeleton}`} aria-hidden="true" /></>}
-        {!loading && error && <div className={`${styles.message} ${styles.errorMessage}`} role="alert">
-          <p><strong>No se pudo cargar el equipo</strong></p>
-          <p>{error}</p>
-          <button type="button" className={styles.retry} onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-        </div>}
+        {!loading && error && <LoadError title="No se pudo cargar el equipo" message={error} frame="card" onRetry={retry} />}
         {!loading && !error && !visible.length && (
           members.length === 0
             ? <div className={styles.message}><p><strong>Todavía no hay cuentas internas</strong></p><p>Crea la primera para repartir la cartera de clientes.</p></div>
             : <div className={styles.message}>
                 <p><strong>Ninguna cuenta coincide con estos filtros</strong></p>
                 <p>Hay {members.length} {members.length === 1 ? "cuenta" : "cuentas"}.</p>
-                <button type="button" className={styles.clearFilters} onClick={clearFilters}>limpiar filtros</button>
+                <EmptyAction onClick={clearFilters}>limpiar filtros</EmptyAction>
               </div>
         )}
       </div>

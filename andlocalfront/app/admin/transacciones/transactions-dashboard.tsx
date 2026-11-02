@@ -1,23 +1,29 @@
 "use client";
 
-import { CalendarClock, ChevronLeft, ChevronRight, Layers, Search, Wallet, UserMinus } from "lucide-react";
+import { CalendarClock, Layers, Wallet, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import ToggleChip from "../../components/toggle-chip";
-import DateCell from "../../components/date-cell";
-import InvoiceDetailModal from "../../components/invoice-detail-modal";
-import ActionButton from "../../components/action-button";
+import ToggleChip from "../../components/atoms/toggle-chip";
+import DateCell from "../../components/atoms/date-cell";
+import RowDetailLink from "../../components/atoms/row-detail-link";
+import InvoiceDetailModal from "../../features/payments/invoice-detail-modal";
 import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
-import PlatformPill from "../../components/platform-pill";
-import SegmentedFilter, { type SegmentOption } from "../../components/segmented-filter";
-import StatusPill from "../../components/status-pill";
+import PlatformPill from "../../components/atoms/platform-pill";
+import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
+import StatusPill from "../../components/atoms/status-pill";
 import type { AdvertisingPlatform } from "../../design-system/types";
 import { completeTransaction, completeTransactionDetail, getAdminTransactionDetail, getAdminTransactionsPage, resumeTransactionDetail, startTransactionRecharge, type AdminTransactionDetail } from "../../lib/admin-recharges-api";
 import type { TransactionListItem } from "../../lib/recharges-api";
 import { dueLabel, formatAmount, formatClock } from "../../lib/format";
 import { accountTypeLabel, invoiceStatusLabel, paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
+import CopyCode from "../../components/molecules/copy-code";
 import styles from "./transactions-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "../../lib/status-tone";
+import SearchField from "../../components/molecules/search-field";
+import Pagination from "../../components/molecules/pagination";
+import { TextInput } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
+import ListCell from "../../components/atoms/list-cell";
 
 const PAGE_SIZE = 20;
 
@@ -46,7 +52,6 @@ export default function TransactionsDashboard() {
   const [loading, setLoading] = useState(true); const [detailLoading, setDetailLoading] = useState(false); const [error, setError] = useState("");
   const [pageInfo, setPageInfo] = useState({ totalItems: 0, totalPages: 1, totals: { pautaAmount: 0, totalAmount: 0 } });
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const [copied, setCopied] = useState<{ code: string; ok: boolean } | null>(null);
 
   /* La búsqueda va al servidor, así que se espera a que el administrador deje de
      escribir en vez de pedir una consulta por tecla. */
@@ -104,53 +109,32 @@ export default function TransactionsDashboard() {
     return `${first}-${Math.min(first + transactions.length - 1, pageInfo.totalItems)} de ${pageInfo.totalItems}`;
   }, [pageInfo.totalItems, pageNumber, transactions.length]);
 
-  /* El portapapeles puede negarse (permiso, contexto inseguro, foco perdido) y
-     entonces el clic no haría nada visible. El fallo se dice y se deja el código
-     seleccionado para copiarlo a mano. */
-  async function copyCode(code: string, element: HTMLElement | null) {
-    let ok = true;
-    try { await navigator.clipboard.writeText(code); }
-    catch { ok = false; if (element) window.getSelection()?.selectAllChildren(element); }
-    setCopied({ code, ok });
-    window.setTimeout(() => setCopied((current) => current?.code === code ? null : current), 2400);
-  }
-
-  function copyLabel(code: string) {
-    if (copied?.code !== code) return "copiar";
-    return copied.ok ? "copiado" : "no se pudo";
-  }
   async function open(id: string) { setDetailLoading(true); setError(""); setResumeError(""); try { setSelected(await getAdminTransactionDetail(id)); } catch (reason) { setError(reason instanceof Error ? reason.message : "No fue posible cargar el detalle"); } finally { setDetailLoading(false); } }
 
   return <div className={styles.module}>
-    <div className={styles.toolbar}><label className={styles.search}><Search size={18} aria-hidden="true" /><input value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Buscar por cliente o código" /></label><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div></div>
+    <div className={styles.toolbar}><SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente o código" placeholderTone="strong" /><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div></div>
     <div className={styles.overview}><div><small>transacciones</small><strong>{pageInfo.totalItems}</strong></div><div><small>inversión en pauta</small><strong>{formatAmount(pageInfo.totals.pautaAmount)}</strong></div><div><small>total facturable</small><strong>{formatAmount(pageInfo.totals.totalAmount)}</strong></div></div>
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>
       {transactions.map((item) => <article key={item.id} className={styles.row}>
-        <div className={styles.cell}><strong>cliente</strong><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></div>
+        <ListCell className={styles.cell} label="cliente"><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></ListCell>
         <DateCell value={item.createdAt} />
         <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {accountTypeLabel(item.accountTypeSnapshot)}</strong>
-          <button type="button" className={styles.copyCode} data-state={copied?.code === item.code ? (copied.ok ? "done" : "failed") : undefined} title={item.code} onClick={(event) => void copyCode(item.code, event.currentTarget.querySelector("span"))}>
-            <span>{item.code}</span><small>{copyLabel(item.code)}</small>
-          </button>
+          <CopyCode code={item.code} tone="strong" size="small" mono />
         </div>
-        <div className={styles.cell}><strong>inversión / total</strong><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></div>
-        <div className={styles.cell}><strong>recarga / pago</strong><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
+        <ListCell className={styles.cell} label="inversión / total"><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></ListCell>
+        <ListCell className={styles.cell} label="recarga / pago"><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
           {item.dueDate && (item.paymentStatus === "IN_CREDIT" || item.paymentStatus === "OVERDUE") && <span className={`${styles.dueDate} ${item.paymentStatus === "OVERDUE" ? styles.dueOverdue : ""}`}>{dueLabel(item.dueDate)}</span>}
-        </div>
+        </ListCell>
         <div className={styles.platforms} aria-label="Plataformas">{item.platforms.map((platform) => <PlatformPill key={platform} platform={platform.toLowerCase() as AdvertisingPlatform} size="compact" />)}</div>
-        <button type="button" className={styles.detailsButton} aria-haspopup="dialog" disabled={detailLoading} onClick={() => void open(item.id)}>ver detalles</button>
+        <RowDetailLink className={styles.detailsButton} disabled={detailLoading} onClick={() => void open(item.id)}>ver detalles</RowDetailLink>
       </article>)}
       {loading && <><div className={`${styles.row} ${styles.skeleton}`} aria-hidden="true" /><div className={`${styles.row} ${styles.skeleton}`} aria-hidden="true" /></>}
       {!loading && error && <p className={`${styles.message} ${styles.errorMessage}`} role="alert">{error}</p>}
       {!loading && !error && !transactions.length && <p className={styles.message}>No hay transacciones para los filtros seleccionados.</p>}
     </div>
 
-    {pageInfo.totalPages > 1 && <nav className={styles.pagination} aria-label="Paginación de transacciones">
-      <button type="button" disabled={pageNumber <= 1 || loading} onClick={() => setPageNumber((value) => Math.max(1, value - 1))}><ChevronLeft size={16} aria-hidden="true" />anterior</button>
-      <span aria-live="polite">página {pageNumber} de {pageInfo.totalPages}</span>
-      <button type="button" disabled={pageNumber >= pageInfo.totalPages || loading} onClick={() => setPageNumber((value) => Math.min(pageInfo.totalPages, value + 1))}>siguiente<ChevronRight size={16} aria-hidden="true" /></button>
-    </nav>}
+    <Pagination page={pageNumber} totalPages={pageInfo.totalPages} disabled={loading} label="Paginación de transacciones" onChange={setPageNumber} />
 
     {/* El mismo detalle que ve el cliente en «tus facturas». Lo que solo hace
         el equipo -ejecutar la recarga- va dentro de cada tarjeta y en el pie. */}
@@ -165,20 +149,20 @@ export default function TransactionsDashboard() {
       detailActions={(detail) => selected && (detail.pausedAt || (selected.rechargeStatus === "PROCESSING" && detail.status !== "COMPLETED")) ? <>
         {detail.pausedAt && <>
           <p className={styles.executionNote}>{detail.pautaStatus !== "ACTIVE" ? "Reactiva la plataforma antes de reanudar." : "Reanudación manual; se validará el pago."}</p>
-          <ActionButton type="button" disabled={Boolean(resuming) || detail.pautaStatus !== "ACTIVE"} onClick={() => void resume(detail.id)}>{resuming === detail.id ? "Reanudando…" : "Reanudar recarga"}</ActionButton>
+          <Button variant="elevated" size="cta" type="button" disabled={Boolean(resuming) || detail.pautaStatus !== "ACTIVE"} onClick={() => void resume(detail.id)}>{resuming === detail.id ? "Reanudando…" : "Reanudar recarga"}</Button>
         </>}
         {selected.rechargeStatus === "PROCESSING" && !detail.pausedAt && detail.status !== "COMPLETED" && <div className={styles.executeDetail}>
           <label htmlFor={`effective-${detail.id}`}>monto recargado</label>
-          <input id={`effective-${detail.id}`} type="number" min="0.01" step="0.01" inputMode="decimal" readOnly={!isAdmin} title={isAdmin ? undefined : "Acreditar un importe distinto al solicitado requiere un administrador"} value={effective[detail.id] ?? String(detail.requestedAmount)} onChange={(event) => setEffective((current) => ({ ...current, [detail.id]: event.target.value }))} />{!isAdmin && <small className={styles.executionNote}>Si lo recargado no coincide con lo solicitado, lo acredita un administrador.</small>}
-          <button type="button" disabled={Boolean(resuming)} onClick={() => void runExecution(detail.id, () => completeTransactionDetail(selected.id, detail.id, effective[detail.id] ?? String(detail.requestedAmount)))}>{resuming === detail.id ? "Acreditando…" : "marcar como recargada"}</button>
+          <TextInput size="compact" id={`effective-${detail.id}`} type="number" min="0.01" step="0.01" inputMode="decimal" readOnly={!isAdmin} title={isAdmin ? undefined : "Acreditar un importe distinto al solicitado requiere un administrador"} value={effective[detail.id] ?? String(detail.requestedAmount)} onChange={(event) => setEffective((current) => ({ ...current, [detail.id]: event.target.value }))} />{!isAdmin && <small className={styles.executionNote}>Si lo recargado no coincide con lo solicitado, lo acredita un administrador.</small>}
+          <Button size="compact" disabled={Boolean(resuming)} onClick={() => void runExecution(detail.id, () => completeTransactionDetail(selected.id, detail.id, effective[detail.id] ?? String(detail.requestedAmount)))}>{resuming === detail.id ? "Acreditando…" : "marcar como recargada"}</Button>
         </div>}
       </> : null}
       footer={selected && <>
         {(selected.rechargeStatus === "APPROVED" || selected.rechargeStatus === "PROCESSING") && <div className={styles.executeBar}>
           {selected.rechargeStatus === "APPROVED"
-            ? <><p>Aprobada: el saldo del cliente no se mueve hasta ejecutar la recarga.</p><ActionButton type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("start", () => startTransactionRecharge(selected.id))}>{resuming === "start" ? "Iniciando…" : "Iniciar recarga"}</ActionButton></>
+            ? <><p>Aprobada: el saldo del cliente no se mueve hasta ejecutar la recarga.</p><Button variant="elevated" size="cta" type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("start", () => startTransactionRecharge(selected.id))}>{resuming === "start" ? "Iniciando…" : "Iniciar recarga"}</Button></>
             : selected.details.every((detail) => detail.status === "COMPLETED")
-              ? <><p>Todas las plataformas acreditadas. Al completar se emite la factura.</p><ActionButton type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("complete", () => completeTransaction(selected.id))}>{resuming === "complete" ? "Completando…" : "Completar recarga"}</ActionButton></>
+              ? <><p>Todas las plataformas acreditadas. Al completar se emite la factura.</p><Button variant="elevated" size="cta" type="button" disabled={Boolean(resuming)} onClick={() => void runExecution("complete", () => completeTransaction(selected.id))}>{resuming === "complete" ? "Completando…" : "Completar recarga"}</Button></>
               : <p>En proceso: registra en cada plataforma el monto recargado.</p>}
         </div>}
         {resumeError && <p className={`${styles.message} ${styles.errorMessage}`} role="alert">{resumeError}</p>}

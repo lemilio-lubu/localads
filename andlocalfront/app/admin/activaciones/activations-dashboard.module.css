@@ -10,28 +10,24 @@
    de entrar: «En revision» sin nombre no distingue «la tengo yo» de «la tiene
    otro», y con dos administradores eso son dos personas en el mismo caso. */
 /* Enlace discreto bajo el estado para quedarse el caso. */
-.claim { composes: hitArea from "../../design-system/hit-area.module.css"; align-self: flex-start; border: 0; background: transparent; padding: 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.claim:disabled { opacity: .5; cursor: wait; }
-.claim:focus-visible { border-radius: 4px; outline: 2px solid var(--color-brand); outline-offset: 2px; }
+/* El aspecto es de TextButton; aquí solo su sitio. */
+.claim { align-self: flex-start; }
 .holder { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
 .managerFilter { display: inline-flex; min-height: var(--hit-target); align-items: center; gap: var(--space-half); padding-inline: var(--space-2); font-size: var(--font-size-body-sm); }
-.search { display: flex; width: min(100%, 672px); height: var(--control-height); align-items: center; gap: var(--space-2); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: 0 var(--space-3); color: var(--color-text); }
-.search:focus-within { box-shadow: var(--focus-ring); }
-.search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); }
-.search input::placeholder { color: var(--color-text-muted); }
+.search { width: min(100%, 672px); }
 .listMeta { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 
 /* Patrón de lista: fila plana, la agrupa la separación de 32. Antes eran
    tarjetas con borde propio y una rejilla de tres datos. */
-.list { composes: list from "../../components/list-row.module.css"; }
+.list { composes: list from "../../components/atoms/list-row.module.css"; }
 /* Cliente, plataforma, cuenta externa, primera recarga, estado y, al final,
    las acciones en su propia columna, como en Clientes. */
-.row { composes: row from "../../components/list-row.module.css"; grid-template-columns: minmax(180px, 1.4fr) minmax(120px, .8fr) minmax(110px, .8fr) minmax(120px, .8fr) minmax(150px, 1fr) minmax(168px, auto); }
-.cell { composes: cell from "../../components/list-row.module.css"; }
+.row { composes: row from "../../components/atoms/list-row.module.css"; grid-template-columns: minmax(180px, 1.4fr) minmax(120px, .8fr) minmax(110px, .8fr) minmax(120px, .8fr) minmax(150px, 1fr) minmax(168px, auto); }
+.cell { composes: cell from "../../components/atoms/list-row.module.css"; }
 /* Segunda línea de cada celda (teléfono, tipo, cliente, nota, fecha): más
    pequeña y en gris, como en Transacciones. Sin ella todo pesaba igual que
    el dato principal y la fila se leía como un bloque. */
-.subtle { composes: subtle from "../../components/list-row.module.css"; }
+.subtle { composes: subtle from "../../components/atoms/list-row.module.css"; }
 .requester { color: var(--color-text); font-size: var(--font-size-body); }
 .amount { color: var(--color-brand); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; }
 .platformLine { display: flex; flex-wrap: wrap; gap: var(--space-half); }
@@ -40,19 +36,11 @@
    iban en un piso aparte bajo una línea y cada solicitud medía casi el doble
    que una fila de las otras listas. */
 .actions { display: grid; align-self: center; align-content: center; gap: var(--space-1); }
-.actions button, .reject button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-3); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out); }
-.rejectButton { background: #fbecec !important; color: var(--color-danger) !important; }
-.approveButton, .dangerButton { color: #fff !important; }
-.approveButton { background: var(--color-brand) !important; }
-.dangerButton { background: var(--color-danger) !important; }
-.actions button:disabled, .reject button:disabled { opacity: .45; cursor: not-allowed; }
-.actions button:not(:disabled):active, .reject button:not(:disabled):active { transform: scale(.97); }
-.actions button:focus-visible, .reject button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+/* Los botones son Button; aquí solo su letra. */
+.actions button, .reject button { font-size: var(--font-size-caption); }
 
 .reject { grid-column: 1 / -1; display: grid; gap: var(--space-1); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
 .reject label { display: grid; gap: var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-.reject textarea { min-height: 88px; resize: vertical; border: 1px solid var(--color-border); border-radius: var(--radius-small); outline: 0; padding: var(--space-2); font: inherit; font-size: var(--font-size-body-sm); }
-.reject textarea:focus { border-color: rgb(157 0 3 / 35%); box-shadow: 0 0 0 3px rgb(157 0 3 / 8%); }
 .reject > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
 
 /* El fallo al resolver pertenece a la solicitud que se tocó, no al listado. */
@@ -62,17 +50,7 @@
 .message { display: grid; justify-items: center; gap: var(--space-1); border-radius: var(--radius-control); margin: 0; background: var(--color-surface-muted); padding: var(--space-5) var(--space-3); color: var(--color-text-muted); text-align: center; }
 .message p { margin: 0; max-width: 46ch; }
 .message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
-.errorMessage { background: var(--color-danger-surface); color: var(--color-danger); }
-.errorMessage strong { color: var(--color-danger); }
-.retry { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: #fff; font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
-.retry:focus-visible { outline: 3px solid rgb(157 0 3 / 22%); outline-offset: 3px; }
 
-@media (hover: hover) and (pointer: fine) {
-  .actions button:not(:disabled):hover, .reject button:not(:disabled):hover { background: var(--color-surface-hover); }
-  .rejectButton:hover { background: #f7dede !important; }
-  .approveButton:hover { background: var(--color-brand-hover) !important; }
-  .dangerButton:hover { background: #7d0002 !important; }
-}
 @media (max-width: 1180px) { .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .actions { grid-column: 1 / -1; grid-auto-flow: column; justify-content: end; } }
 @media (max-width: 760px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .actions { grid-auto-columns: 1fr; justify-content: stretch; } }
 /* En móvil, dos columnas como «tus facturas»; el cliente y las acciones
@@ -91,10 +69,5 @@
   .actions button { padding-inline: var(--space-1); }
 }
 @media (max-width: 520px) { .toolbar { flex-wrap: wrap; } .toolbar > * { min-width: 0; flex: 1 1 100%; } .row > .cell:first-child { grid-column: 1 / -1; } }
-@media (prefers-reduced-motion: reduce) { .row, .actions button, .reject button { transition-duration: 0ms; } .actions button:not(:disabled):active, .reject button:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .row { transition-duration: 0ms; } .skeleton { animation: none; } }
 
-/* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
-   Solo en táctil: con ratón el campo conserva sus 13px. */
-@media (pointer: coarse) {
-  .search input, .reject textarea { font-size: var(--font-size-body); }
-}

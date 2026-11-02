@@ -1,10 +1,11 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import ActionButton from "../../components/action-button";
-import ModalShell from "../../components/modal-shell";
+import ModalShell from "../../components/organisms/modal-shell";
 import type { TeamMember } from "../../lib/team-api";
 import styles from "./portfolio-handover-modal.module.css";
+import Button from "../../components/atoms/button";
+import ChoiceCard from "../../components/molecules/choice-card";
 
 type Props = {
   member: TeamMember | null;
@@ -49,27 +50,21 @@ export default function PortfolioHandoverModal({ member, candidates, pending, er
         <fieldset className={styles.options}>
           <legend>que pasa con su cartera</legend>
           {candidates.map((candidate) => (
-            <label key={candidate.id}>
-              <input type="radio" name="handover" value={candidate.id} checked={choice === candidate.id} onChange={() => setChoice(candidate.id)} />
-              <span>pasarla a <strong>{candidate.name || candidate.username}</strong></span>
-            </label>
+            <ChoiceCard key={candidate.id} className={styles.option} name="handover" value={candidate.id} checked={choice === candidate.id} onChange={() => setChoice(candidate.id)} title={<>pasarla a <b>{candidate.name || candidate.username}</b></>} />
           ))}
           {/* Soltarla es una eleccion mas, no el camino por defecto: va al
               final y dice a donde van a parar los clientes. */}
-          <label>
-            <input type="radio" name="handover" value="release" checked={choice === "release"} onChange={() => setChoice("release")} />
-            <span>dejarla sin asignar <small>quedan en la bandeja del administrador</small></span>
-          </label>
+          <ChoiceCard name="handover" value="release" checked={choice === "release"} onChange={() => setChoice("release")} title="dejarla sin asignar" detail="quedan en la bandeja del administrador" />
         </fieldset>
 
         {candidates.length === 0 && <p className={styles.empty}>No hay otros gestores activos a quien pasarla.</p>}
         {error && <p className={styles.error} role="alert">{error}</p>}
 
         <div className={styles.actions}>
-          <button type="button" onClick={onClose} disabled={pending}>cancelar</button>
-          <ActionButton type="submit" disabled={!choice || pending}>
+          <Button variant="neutral" onClick={onClose} disabled={pending}>cancelar</Button>
+          <Button variant="elevated" size="cta" type="submit" disabled={!choice || pending}>
             {pending ? "dando de baja…" : "confirmar baja"}
-          </ActionButton>
+          </Button>
         </div>
       </form>
     </ModalShell>

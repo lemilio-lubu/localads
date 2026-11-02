@@ -1,0 +1,55 @@
+/* Solo lo propio del formulario de cliente: crédito, plataformas y acceso al
+   portal. Cabecera, secciones, campos, tarjetas de elección y pie son las
+   moléculas form-* y choice-card, que comparte con el formulario de equipo. */
+/* Mismo lenguaje que el detalle de cliente: modal blanco y paneles grises en
+   dos columnas. Identidad a la izquierda, cuenta a la derecha; plataformas y,
+   al editar, acceso al portal debajo a todo el ancho (las tres tarjetas de
+   plataforma no caben en media columna). */
+.modal { width: min(calc(100vw - var(--space-6)), 920px); background: var(--color-surface-raised); }
+.layout { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.layout > :not(section) { grid-column: 1 / -1; }
+.wide { grid-column: 1 / -1; }
+/* En media columna, nombre, RUC y correo van uno debajo de otro. */
+.identity > div { grid-template-columns: 1fr; }
+/* Y prepago/pospago, uno sobre otro: lado a lado su descripción se partía en
+   tres líneas. */
+.layout [role="radiogroup"] { grid-template-columns: 1fr; }
+/* Una columna con mínimo cero: con 1fr las secciones no bajaban de su
+   contenido y a 320 se salían 12px. A 560 o menos el modal usa casi todo el
+   ancho, como los detalles de cliente y de miembro (tenía 48px menos). */
+@media (max-width: 760px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .modal { width: calc(100vw - var(--space-2)); } }
+
+.reveal { overflow: hidden; }
+.credit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: var(--space-2); padding-top: var(--space-half); }
+.creditLimit { grid-column: 1 / -1; }
+.credit input { padding-right: var(--space-7) !important; }
+.suffix { position: absolute; right: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); pointer-events: none; }
+.presets { display: flex; flex-wrap: wrap; align-self: end; align-items: center; gap: var(--space-half); min-height: var(--control-height); }
+/* Aspecto en ToggleChip (indicator="fill"); aquí solo el tamaño. */
+.presets button { min-width: var(--space-6); height: var(--button-height); }
+
+/* Plataformas: tarjeta de elección con el logo de marca, en gris si no está
+   elegida. El nombre acompaña siempre al logo. */
+.platforms { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); }
+.platform { gap: var(--space-1) !important; }
+.platformLogo { display: grid; flex: none; width: var(--space-3); height: var(--space-3); place-items: center; transition: filter var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
+.platformLogo img { max-width: 100%; height: auto; }
+.platform:not(:has(input:checked)) .platformLogo { filter: grayscale(1); opacity: .5; }
+.platform strong { color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
+
+.accessRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.accessRow p { display: flex; align-items: center; gap: var(--space-1); }
+.accessRow p svg { flex: none; color: var(--color-text-subtle); }
+.accessRow p, .resetConfirm p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.5; }
+.resetConfirm { display: grid; gap: var(--space-2); }
+.resetConfirm strong { color: var(--color-text); }
+.resetConfirm > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); }
+
+@media (max-width: 640px) {
+  .credit, .platforms { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .platformLogo { transition-duration: 0ms; }
+}
