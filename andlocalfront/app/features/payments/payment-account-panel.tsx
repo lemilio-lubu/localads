@@ -5,6 +5,7 @@ import { maskedAccountNumber, paymentAccountText } from "../../lib/payment-accou
 import { usePaymentAccount, type PaymentAccountState } from "../../lib/use-payment-account";
 import PaymentAccountCard from "../../components/organisms/payment-account-card";
 import styles from "./payment-account-panel.module.css";
+import TextButton from "../../components/atoms/text-button";
 
 /* La cuenta de cobro con sus cuatro estados: cargando, error, sin configurar y
    con datos. Se usa donde el cliente va a pagar (recargar, detalle de una
@@ -21,7 +22,7 @@ export default function PaymentAccountPanel({ note, compact, amount, detailed }:
 export function PaymentAccountView({ state, retry, note, compact, amount, detailed }: ViewOptions & { state: PaymentAccountState; retry: () => void }) {
   if (state.status === "loading") return <div className={styles.skeleton} role="status" aria-label="Cargando los datos de pago" />;
   if (state.status === "error") {
-    return <p className={styles.message} role="alert">{state.message} <button type="button" onClick={retry}>reintentar</button></p>;
+    return <p className={styles.message} role="alert">{state.message} <TextButton size="inherit" onClick={retry}>reintentar</TextButton></p>;
   }
   const { account, reference } = state.data;
   if (!account) {

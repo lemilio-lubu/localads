@@ -15,6 +15,7 @@ import { accountContext, createActivationRequest, createPostpaidTransaction, cre
 import { formatAmount, formatPercent } from "./lib/format";
 import styles from "./recharge-dashboard.module.css";
 import { TextInput } from "./components/atoms/text-field";
+import TextButton from "./components/atoms/text-button";
 
 const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = [
   { id: "META", label: "Meta", icon: "/figma/meta.svg" },
@@ -185,7 +186,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
               <span>Comisión AND ({formatPercent(rates!.agencyFee)}) <b>{formatAmount(breakdown.agencyFee)}</b></span>
               <span>IVA ({formatPercent(rates!.vat)}) <b>{formatAmount(breakdown.vat)}</b></span>
               <strong>Total a pagar {formatAmount(breakdown.total)}</strong>
-            </> : ratesFailed ? <span className={styles.ratesError}>No pudimos calcular el total. <button type="button" onClick={retry}>reintentar</button></span> : <strong>Calculando total…</strong>}
+            </> : ratesFailed ? <span className={styles.ratesError}>No pudimos calcular el total. <TextButton size="inherit" tone="inherit" onClick={retry}>reintentar</TextButton></span> : <strong>Calculando total…</strong>}
           </div>}
           {isPrepaid && breakdown && <div className={styles.paymentCard}><PaymentAccountView state={paymentAccount} retry={retryPaymentAccount} amount={breakdown.total} /></div>}
           {isPrepaid && <button type="button" className={`${styles.uploadArea} ${receipt ? styles.hasReceipt : ""}`} onClick={() => fileInput.current?.click()}>
@@ -203,7 +204,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
           }</p>}
           {!(isPrepaid && breakdown) && <Link className={styles.payLink} href={`/${accountType}/pagar`}>ver datos de pago</Link>}
           <p className={styles.formStatus} role="status" aria-live="polite">{loading ? "Cargando pautas…" : message}</p>
-          {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <button type="button" onClick={retry}>reintentar</button></p>}
+          {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <TextButton size="inherit" tone="inherit" onClick={retry}>reintentar</TextButton></p>}
         </form>
 
         <RechargeConfirmModal step={confirmStep} lines={lines} prepaid={isPrepaid} destination={paymentAccount.status === "ready" ? paymentDestinationLabel(paymentAccount.data.account) : null} payHref={`/${accountType}/pagar`} error={confirmError} onConfirm={() => void confirmRecharge()} onClose={() => { setConfirmStep(null); setConfirmError(""); }} />

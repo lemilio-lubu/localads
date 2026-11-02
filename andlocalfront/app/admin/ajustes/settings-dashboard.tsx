@@ -15,6 +15,7 @@ import {
 } from "../../lib/payment-account-api";
 import styles from "./settings-dashboard.module.css";
 import { TextInput } from "../../components/atoms/text-field";
+import TextButton from "../../components/atoms/text-button";
 
 const emptyForm: PaymentAccountInput = { bankName: "", accountType: "", accountNumber: "", holderName: "", holderTaxId: "", email: "", phone: "" };
 const labels: Record<keyof Omit<PaymentAccount, "id" | "updatedAt" | "updatedById">, string> = {
@@ -90,7 +91,7 @@ export default function SettingsDashboard() {
   }
 
   if (loading) return <div className={styles.skeleton} role="status" aria-label="Cargando la cuenta de cobro" />;
-  if (loadError) return <p className={styles.message} role="alert">{loadError} <button type="button" onClick={retry}>reintentar</button></p>;
+  if (loadError) return <p className={styles.message} role="alert">{loadError} <TextButton size="inherit" onClick={retry}>reintentar</TextButton></p>;
 
   const preview = {
     bankName: values.bankName.trim() || "Banco", accountType: values.accountType.trim() || "Tipo de cuenta",

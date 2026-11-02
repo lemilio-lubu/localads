@@ -37,8 +37,6 @@
    sepa qué se le va a sumar antes de escribir el primer monto. */
 .ratesHint { align-self: stretch; margin: var(--space-2) 0 0; margin-left: auto; width: min(100%, 320px); color: var(--color-text-muted); font-size: var(--font-size-caption); text-wrap: balance; }
 .ratesError { color: var(--color-danger); font-weight: var(--font-weight-regular); }
-.ratesError button, .formStatus button { border: 0; background: transparent; padding: 0; color: inherit; font: inherit; font-weight: var(--font-weight-bold); text-decoration: underline; cursor: pointer; }
-.ratesError button:focus-visible, .formStatus button:focus-visible { outline: 2px solid currentcolor; outline-offset: 2px; }
 .formStatus:empty { margin-top: 0; }
 .error { color: var(--color-danger); }
 .activationModal { --modal-pad-top: 40px; width: min(100%, var(--layout-content)); padding-block: 40px 28px; padding-inline-start: 44px; background: var(--color-surface-raised); box-shadow: 0 4px 20px rgb(0 0 0 / 25%); }
