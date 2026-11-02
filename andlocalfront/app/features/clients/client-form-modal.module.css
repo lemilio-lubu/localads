@@ -26,9 +26,8 @@
 .credit input { padding-right: var(--space-7) !important; }
 .suffix { position: absolute; right: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); pointer-events: none; }
 .presets { display: flex; flex-wrap: wrap; align-self: end; align-items: center; gap: var(--space-half); min-height: var(--control-height); }
-.presets button { min-width: var(--space-6); height: var(--button-height); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
-.presets button[aria-pressed="true"] { background: var(--color-brand-surface); color: var(--color-brand); font-weight: var(--font-weight-bold); }
-.presets button:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
+/* Aspecto en ToggleChip (indicator="fill"); aquí solo el tamaño. */
+.presets button { min-width: var(--space-6); height: var(--button-height); }
 
 /* Plataformas: tarjeta de elección con el logo de marca, en gris si no está
    elegida. El nombre acompaña siempre al logo. */
@@ -47,14 +46,10 @@
 .resetConfirm strong { color: var(--color-text); }
 .resetConfirm > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); }
 
-@media (hover: hover) and (pointer: fine) {
-  .presets button:hover:not([aria-pressed="true"]) { background: var(--color-surface-hover); color: var(--color-text); }
-}
-
 @media (max-width: 640px) {
   .credit, .platforms { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .platformLogo, .presets button { transition-duration: 0ms; }
+  .platformLogo { transition-duration: 0ms; }
 }

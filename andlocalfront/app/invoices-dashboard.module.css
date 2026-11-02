@@ -15,16 +15,14 @@
    línea, pero «dd/mm/aaaa» no puede rozar el icono del calendario. */
 /* El aspecto es de TextInput (text-field); aquí solo el ancho y la letra. */
 .filterGroup input[type="date"] { width: 124px; padding: 0 var(--space-1); font-size: var(--font-size-caption); }
-.platformFilter { display: inline-grid; min-width: var(--hit-target); min-height: var(--hit-target); place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; padding-inline: var(--space-half); cursor: pointer; transition: box-shadow var(--duration-fast) var(--ease-out); }
-/* El estado lo dice el relleno de la pastilla; el anillo lo repetia. */
-.platformFilter[aria-pressed="true"] { box-shadow: none; }
+/* Aspecto en ToggleChip; el estado lo dice el relleno de la pastilla. */
+.platformFilter { min-width: var(--hit-target); min-height: var(--hit-target); padding-inline: var(--space-half); }
 .listMeta { display: flex; align-items: center; justify-content: space-between; margin: var(--space-3) 0 var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 /* La salida está siempre que haya filtro, no solo cuando no devuelve nada:
    con resultados había que recordar qué se activó para deshacerlo. */
 .metaRange { display: inline-flex; align-items: baseline; gap: var(--space-2); }
 /* Sin seleccion, todas valen igual. Con una activa, el resto se atenua
    para que el filtro aplicado se lea de un vistazo. */
-.platformFilter:focus-visible { outline: 3px solid rgb(11 89 1 / 16%); outline-offset: 3px; }
 .invoiceList { composes: list from "./components/atoms/list-row.module.css"; padding-top: var(--space-3); }
 .invoiceRow { composes: row from "./components/atoms/list-row.module.css"; grid-template-columns: 100px minmax(140px, 1fr) 148px 168px 104px 80px; }
 .cell { composes: cell from "./components/atoms/list-row.module.css"; }
@@ -41,18 +39,16 @@
 .statuses { display: flex; flex-wrap: wrap; gap: var(--space-half); }
 /* Aspecto en RowDetailLink; aquí solo su sitio en la fila. */
 .detailsLink { align-self: center; justify-self: end; }
-.platformFilter:active { transform: scale(.97); }
 .emptyState { display: grid; justify-items: center; gap: var(--space-1); margin: var(--space-5) 0; color: var(--color-text-muted); text-align: center; }
 .emptyState p { margin: 0; max-width: 46ch; }
 .emptyState strong { color: var(--color-text); font-size: var(--font-size-card-title); }
 
 @media (hover: hover) and (pointer: fine) {
   .filterGroup input[type="date"]:hover { box-shadow: 0 0 0 2px rgb(67 67 67 / 8%); }
-  .platformFilter:hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 9%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .platformFilter, .invoiceRow { transition-duration: 0ms; }
+  .invoiceRow { transition-duration: 0ms; }
 }
 
 @media (max-width: 1100px) {

@@ -106,7 +106,7 @@ export default function ClientsDashboard() {
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
             <span>plataforma</span>
-            {(["META", "GOOGLE", "TIKTOK"] as const).map((item) => <ToggleChip key={item} className={styles.platformFilter} pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="filter" active={platform === item} /></ToggleChip>)}
+            {(["META", "GOOGLE", "TIKTOK"] as const).map((item) => <ToggleChip key={item} className={styles.platformFilter} indicator="content" pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="filter" active={platform === item} /></ToggleChip>)}
           </div>
           {/* El tipo de cuenta es excluyente, así que se dibuja como una sola pieza
               con «todos» a la vista: antes había que deducir que se volvía a todos

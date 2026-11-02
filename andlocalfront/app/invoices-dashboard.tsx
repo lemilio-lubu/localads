@@ -26,6 +26,7 @@ import TextButton from "./components/atoms/text-button";
 import EmptyAction from "./components/atoms/empty-action";
 import RowDetailLink from "./components/atoms/row-detail-link";
 import { TextInput } from "./components/atoms/text-field";
+import ToggleChip from "./components/atoms/toggle-chip";
 import ListCell from "./components/atoms/list-cell";
 
 const formatDate = formatDateTime;
@@ -145,7 +146,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
             <span className={styles.rangeDash} aria-hidden="true">–</span>
             <TextInput surface="filled" shape="pill" size="button" type="date" aria-label="Hasta" value={toDate} onChange={(event) => changeTo(event.target.value)} />
           </fieldset>
-          {availablePlatforms.length > 0 && <fieldset className={styles.filterGroup}><legend>plataforma</legend>{availablePlatforms.map((item) => <button key={item} type="button" className={styles.platformFilter} aria-pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} size="filter" active={platform === item} /></button>)}</fieldset>}
+          {availablePlatforms.length > 0 && <fieldset className={styles.filterGroup}><legend>plataforma</legend>{availablePlatforms.map((item) => <ToggleChip key={item} className={styles.platformFilter} indicator="content" pressed={platform === item} onClick={() => setPlatform((current) => current === item ? null : item)}><PlatformPill platform={item} size="filter" active={platform === item} /></ToggleChip>)}</fieldset>}
         </div>
       </div>
       <div className={styles.listMeta}>

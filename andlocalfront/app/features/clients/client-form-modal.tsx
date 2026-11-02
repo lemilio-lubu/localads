@@ -17,6 +17,7 @@ import { assignClientManager, getTeam, type TeamMember } from "../../lib/team-ap
 import { normalizeRuc, rucKind, validateClientFields, type ClientProfileField } from "../../lib/form-validation";
 import styles from "./client-form-modal.module.css";
 import { TextInput, Select } from "../../components/atoms/text-field";
+import ToggleChip from "../../components/atoms/toggle-chip";
 import Button from "../../components/atoms/button";
 
 type Props = {
@@ -177,7 +178,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
                     {({ id, describedBy, invalid }) => <><TextInput id={id} type="number" min={1} max={365} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy} /><span className={styles.suffix}>días</span></>}
                   </Field>
                   <div className={styles.presets} role="group" aria-label="Plazos frecuentes">
-                    {creditPresets.map((days) => <button key={days} type="button" aria-pressed={creditDays === days} onClick={() => { setCreditDays(days); setError(""); }}>{days}</button>)}
+                    {creditPresets.map((days) => <ToggleChip key={days} indicator="fill" pressed={creditDays === days} onClick={() => { setCreditDays(days); setError(""); }}>{days}</ToggleChip>)}
                   </div>
                 </div>
               </motion.div>
