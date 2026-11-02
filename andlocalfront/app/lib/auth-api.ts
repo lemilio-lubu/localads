@@ -5,6 +5,15 @@
 /* `username` es la credencial (el correo de un cliente); `displayName` es lo que se muestra: su nombre o razón social, o el usuario del equipo. */
 export type AuthUser = { userId: string; username: string; displayName: string; role: "CLIENT" | "GESTOR" | "ADMIN"; clientId: string | null; accountId: string | null; accountType: "PREPAGO" | "POSTPAGO" | null; mustChangePassword?: boolean };
 type AuthResponse = { accessToken: string; expiresIn: number; user: AuthUser };
+/* Con el doble factor activo, el login no abre sesión: devuelve un reto de 5
+   minutos para el paso del código. Sin él entra, y al equipo se le sugiere
+   activarlo (`mfaSuggested`); es opcional. */
+export type MfaStep = { kind: "mfa"; challengeToken: string };
+export type LoginResult = { kind: "session"; user: AuthUser; mfaSuggested: boolean } | MfaStep;
+type LoginResponse = (AuthResponse & { mfaSuggested?: boolean }) | { mfaRequired: true; challengeToken: string };
+/* `recoveryCodesLeft` llega cuando se entró gastando un código de recuperación. */
+export type MfaResult = { user: AuthUser; recoveryCodesLeft?: number };
+type MfaResponse = AuthResponse & { recoveryCodesLeft?: number };
 
 const apiUrl = "/api/v1";
 let accessToken: string | null = null; let currentUser: AuthUser | null = null; let refreshPromise: Promise<AuthUser | null> | null = null;
@@ -16,9 +25,41 @@ async function payload<T>(response: Response): Promise<T> {
 }
 function accept(result: AuthResponse) { accessToken = result.accessToken; currentUser = result.user; return result.user; }
 
-export async function login(username: string, password: string) {
-  const response = await fetch(`${apiUrl}/auth/login`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
-  return accept(await payload<AuthResponse>(response));
+const postJson = (path: string, body: object) => fetch(`${apiUrl}${path}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+export async function login(username: string, password: string): Promise<LoginResult> {
+  const result = await payload<LoginResponse>(await postJson("/auth/login", { username, password }));
+  if ("mfaRequired" in result) return { kind: "mfa", challengeToken: result.challengeToken };
+  return { kind: "session", user: accept(result), mfaSuggested: result.mfaSuggested === true };
+}
+
+function acceptMfa(result: MfaResponse): MfaResult {
+  return { user: accept(result), recoveryCodesLeft: result.recoveryCodesLeft };
+}
+
+/* Acepta el código de la app o uno de recuperación. */
+export async function verifyMfa(challengeToken: string, code: string) {
+  return acceptMfa(await payload<MfaResponse>(await postJson("/auth/mfa/verify", { challengeToken, code })));
+}
+
+const authedJson = (path: string, body?: object) => authenticatedFetch(`${apiUrl}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });
+
+export async function getMfaStatus() {
+  return payload<{ enabled: boolean; recoveryCodesLeft: number }>(await authenticatedFetch(`${apiUrl}/auth/mfa`));
+}
+
+/* El secreto llega una vez para pintarlo en el QR; no se guarda en el navegador. */
+export async function startMfaEnrollment() {
+  return payload<{ secret: string; otpauthUri: string }>(await authedJson("/auth/mfa/enroll"));
+}
+
+/* Los códigos de recuperación llegan aquí y en ningún otro sitio. */
+export async function confirmMfaEnrollment(code: string) {
+  return payload<{ recoveryCodes: string[] }>(await authedJson("/auth/mfa/enroll/confirm", { code }));
+}
+
+export async function disableMfa(password: string, code: string) {
+  return payload<{ enabled: false }>(await authedJson("/auth/mfa/disable", { password, code }));
 }
 
 export function refreshSession(): Promise<AuthUser | null> {

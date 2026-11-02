@@ -11,8 +11,12 @@ import { changePassword, getCurrentUser, refreshSession } from "../lib/auth-api"
 import styles from "./change-password-form.module.css";
 import { TextInput } from "../components/atoms/text-field";
 import FormField from "../components/molecules/form-field";
+import MfaSettings from "../features/auth/mfa-settings";
 
-const minimum = 8;
+/* La política entera (claves comunes, que no contenga el correo) la aplica el
+   backend con su propio mensaje; aquí solo se adelanta el largo. Sin reglas de
+   mayúsculas o símbolos: una frase larga es más fuerte y se recuerda. */
+const minimum = 12;
 
 export default function ChangePasswordForm() {
   const router = useRouter();
@@ -91,10 +95,13 @@ export default function ChangePasswordForm() {
             {({ id }) => <TextInput id={id} type="password" autoComplete="new-password" value={repeated} onChange={(event) => { setRepeated(event.target.value); setError(""); }} />}
           </FormField>
         </div>
-        <p className={styles.hint}>Al menos {minimum} caracteres, distinta de la {forced ? "temporal" : "actual"}.</p>
+        <p className={styles.hint}>Al menos {minimum} caracteres, distinta de la {forced ? "temporal" : "actual"}. Una frase de varias palabras funciona bien.</p>
         <p id="change-error" className={styles.error} role="alert" aria-live="polite">{error}</p>
         <Button variant="elevated" size="block" type="submit" disabled={pending}>{pending ? "guardando…" : "cambiar contraseña"}</Button>
       </form>
+      {/* Con la clave temporal el backend no deja hacer nada más: el doble
+          factor se ofrece cuando ya tiene una propia. */}
+      {username && !forced && <MfaSettings />}
     </motion.section>
   </main>;
 }

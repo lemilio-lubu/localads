@@ -4,7 +4,7 @@ import { CirclePlus, KeyRound, Layers, Power, Shield, UserCog } from "lucide-rea
 import { useEffect, useMemo, useState } from "react";
 import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
 import CredentialsModal from "../../components/organisms/credentials-modal";
-import { getTeam, resetTeamMemberPassword, updateTeamMember, type IssuedCredentials, type TeamMember, type TeamRole } from "../../lib/team-api";
+import { accessLabel, getTeam, resetTeamMemberPassword, updateTeamMember, type IssuedCredentials, type TeamMember, type TeamRole } from "../../lib/team-api";
 import TeamFormModal from "../../features/team/team-form-modal";
 import PortfolioHandoverModal from "./portfolio-handover-modal";
 import TeamMemberModal from "../../features/team/team-member-modal";
@@ -161,7 +161,7 @@ export default function TeamDashboard() {
             <MetricCard label="cuentas" valueSize={member.role === "ADMIN" ? "small" : "regular"}>{member.role === "ADMIN" ? "no aplica" : String(member.metrics.clients)}</MetricCard>
             <MetricCard label="ventas" valueSize={member.role === "ADMIN" ? "small" : "regular"}>{member.role === "ADMIN" ? "no aplica" : String(member.metrics.sales)}</MetricCard>
             <MetricCard label="estado">{member.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
-            <MetricCard label="acceso" valueSize="small">{member.mustChangePassword ? "clave temporal" : "clave propia"}</MetricCard>
+            <MetricCard label="acceso" valueSize="small">{accessLabel(member)}</MetricCard>
             <RowActions className={styles.rowActions}>
               <RowActionButton disabled={busyId === member.id} onClick={() => void run(member, "reset")}><KeyRound size={16} aria-hidden="true" />restablecer</RowActionButton>
               <RowActionButton disabled={busyId === member.id} onClick={() => void run(member, "toggle")}><Power size={16} aria-hidden="true" />{busyId === member.id ? "guardando…" : member.status === "ACTIVE" ? "desactivar" : "activar"}</RowActionButton>
