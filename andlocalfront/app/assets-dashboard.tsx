@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { RotateCw } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import AccountShell from "./account-shell";
 import AssetCard from "./components/organisms/asset-card";
+import LoadError from "./components/molecules/load-error";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
 import type { AccountType, AdvertisingPlatform } from "./design-system/types";
 import { accountContext, getMyWallet, getRechargeContext, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
@@ -73,10 +73,6 @@ export default function AssetsDashboard({ accountType }: { accountType: AccountT
         {credit && <span className={styles.creditLine}>crédito disponible <b>{formatAmount(credit.creditAvailable)}</b> de <span>{formatAmount(credit.creditLimit)}</span> <span>· {credit.creditDays} días</span><small>{pendingTotal > 0 ? "Lo que está en camino se suma al saldo cuando lo acreditamos." : "El saldo de plataforma aumenta al completar una recarga."}</small></span>}
       </span></article>
     </section>
-    {error && <div className={styles.errorPanel} role="alert">
-      <p><strong>No pudimos cargar tus activos</strong></p>
-      <p>{error}</p>
-      <button type="button" onClick={retry}><RotateCw size={16} aria-hidden="true" />reintentar</button>
-    </div>}
+    {error && <LoadError className={styles.loadError} title="No pudimos cargar tus activos" message={error} frame="control" onRetry={retry} />}
   </></AccountShell>;
 }
