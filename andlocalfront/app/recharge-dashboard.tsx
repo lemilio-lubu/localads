@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AccountShell from "./account-shell";
 import ActionButton from "./components/atoms/action-button";
@@ -16,6 +15,8 @@ import { formatAmount, formatPercent } from "./lib/format";
 import styles from "./recharge-dashboard.module.css";
 import { TextInput } from "./components/atoms/text-field";
 import TextButton from "./components/atoms/text-button";
+import TextLink from "./components/atoms/text-link";
+import Checkbox from "./components/molecules/checkbox";
 
 const platforms: Array<{ id: RechargePlatform; label: string; icon: string }> = [
   { id: "META", label: "Meta", icon: "/figma/meta.svg" },
@@ -194,7 +195,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
             <Image src="/figma/attachment.svg" alt="" width={36} height={36} /><span>{receipt?.name ?? "adjuntar comprobante"}</span><small className={styles.uploadHint}>JPG, PNG o PDF · hasta 5 MB</small>
           </button>}
 
-          <label className={styles.terms}><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /><span className={styles.checkbox} aria-hidden="true"><Image src="/figma/check.svg" alt="" width={19} height={19} /></span><span>He leído términos y condiciones</span></label>
+          <Checkbox className={styles.terms} checked={acceptedTerms} onChange={setAcceptedTerms}>He leído términos y condiciones</Checkbox>
           <ActionButton className={styles.submitButton} type="submit" disabled={!canSubmit}>{submitting ? "Procesando…" : "recargar"}</ActionButton>
           {!canSubmit && !submitting && !loading && <p className={styles.submitHint}>{
             lines.length === 0 ? "Escribe un monto mayor que cero en al menos una plataforma."
@@ -202,7 +203,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
             : !acceptedTerms ? "Acepta los términos y condiciones para continuar."
             : ""
           }</p>}
-          {!(isPrepaid && breakdown) && <Link className={styles.payLink} href={`/${accountType}/pagar`}>ver datos de pago</Link>}
+          {!(isPrepaid && breakdown) && <TextLink className={styles.payLink} tone="muted" weight="regular" href={`/${accountType}/pagar`}>ver datos de pago</TextLink>}
           <p className={styles.formStatus} role="status" aria-live="polite">{loading ? "Cargando pautas…" : message}</p>
           {error && <p className={`${styles.formStatus} ${styles.error}`} role="alert">{error} <TextButton size="inherit" tone="inherit" onClick={retry}>reintentar</TextButton></p>}
         </form>

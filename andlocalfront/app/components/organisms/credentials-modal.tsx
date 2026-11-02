@@ -3,6 +3,7 @@
 import { Check, Copy, KeyRound, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import Button from "../atoms/button";
+import Checkbox from "../molecules/checkbox";
 import ModalShell from "./modal-shell";
 import styles from "./credentials-modal.module.css";
 
@@ -50,10 +51,7 @@ export default function CredentialsModal({ credentials, title, onClose }: Props)
           {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
           {copied ? "copiado" : "copiar credenciales"}
         </Button>
-        <label className={styles.acknowledge}>
-          <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
-          ya la guardé
-        </label>
+        <Checkbox className={styles.acknowledge} checked={acknowledged} onChange={setAcknowledged}>ya la guardé</Checkbox>
         <Button className={styles.done} disabled={!acknowledged} onClick={close}>cerrar</Button>
       </div>
       <p aria-live="polite" className={styles.live}>{copied ? "Credenciales copiadas al portapapeles" : ""}</p>

@@ -2,7 +2,7 @@
 
 import { Check, SquareExclamationPoint } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import TextLink from "./components/atoms/text-link";
 import SlideToConfirm from "./components/molecules/slide-to-confirm";
 import ModalShell from "./components/organisms/modal-shell";
 import { formatAmount } from "./lib/format";
@@ -46,7 +46,7 @@ export default function RechargeConfirmModal({ step, lines, prepaid, destination
               <ul className={styles.notes}>
                 <li><SquareExclamationPoint size={24} strokeWidth={1.75} aria-hidden="true" />Tu factura te llegará de manera automática al correo o la podrás encontrar en tus transacciones en máximo 3 horas.</li>
                 <li><SquareExclamationPoint size={24} strokeWidth={1.75} aria-hidden="true" />Tu dinero será agregado en máximo 5 horas.</li>
-                {!prepaid && payHref && <li><SquareExclamationPoint size={24} strokeWidth={1.75} aria-hidden="true" /><span>Paga antes del vencimiento. Los datos de la cuenta están en <Link href={payHref} className={styles.payLink}>cómo pagar</Link>.</span></li>}
+                {!prepaid && payHref && <li><SquareExclamationPoint size={24} strokeWidth={1.75} aria-hidden="true" /><span>Paga antes del vencimiento. Los datos de la cuenta están en <TextLink href={payHref} size="inherit">cómo pagar</TextLink>.</span></li>}
               </ul>
             </div>
           </div>

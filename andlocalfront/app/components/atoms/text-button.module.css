@@ -2,6 +2,8 @@
 .button[data-size="body-sm"] { font-size: var(--font-size-body-sm); }
 .button[data-size="inherit"] { font-size: inherit; }
 .button[data-tone="inherit"] { color: inherit; }
+.button[data-tone="muted"] { color: var(--color-text-muted); }
+.button[data-weight="regular"] { font-weight: var(--font-weight-regular); }
 .button[data-underline="hover"] { text-decoration: none; }
 .button:has(> svg) { display: inline-flex; align-items: center; gap: var(--space-1); }
 .button:disabled { opacity: .5; cursor: wait; }
@@ -9,4 +11,5 @@
 
 @media (hover: hover) and (pointer: fine) {
   .button[data-underline="hover"]:not(:disabled):hover { text-decoration: underline; }
+  .button[data-tone="muted"]:hover { color: var(--color-brand); }
 }

@@ -25,12 +25,8 @@
 .uploadArea.hasReceipt { border-style: solid; border-color: rgb(11 89 1 / 30%); background: var(--color-brand-surface-soft); color: var(--color-brand); }
 .uploadArea input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .uploadArea span { max-width: min(420px, 70vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.terms { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); cursor: pointer; }
-.terms input { position: absolute; opacity: 0; }
-.checkbox { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; }
-.checkbox img { opacity: .4; transition: opacity 140ms var(--ease-out); }
-.terms input:checked + .checkbox img { opacity: 1; }
-.terms:has(input:focus-visible) .checkbox { box-shadow: var(--focus-ring); }
+/* Aspecto en Checkbox; aquí el sitio y el gris. */
+.terms { margin-top: var(--space-2); color: var(--color-text-muted); }
 .submitButton { margin-top: var(--space-3); }
 .formStatus { margin: var(--space-1) 0 0; color: var(--color-brand); font-size: var(--font-size-caption); font-weight: 700; text-align: center; }
 /* El aviso de tasas vive donde luego aparece el desglose, para que el cliente
@@ -61,7 +57,7 @@
 .activationSubmit, .activationSubmit:not(:disabled):hover, .activationSubmit:not(:disabled):active { background: var(--activation-surface); color: var(--activation-text); box-shadow: none; }
 .activationError { margin: 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: center; }
 @media (hover: hover) and (pointer: fine) { .platformField:hover, .activationButton:not(:disabled):hover { border-color: rgb(11 89 1 / 18%); box-shadow: var(--shadow-card); } .uploadArea:hover { border-color: rgb(11 89 1 / 30%); } }
-@media (prefers-reduced-motion: reduce) { .platformField, .activationButton, .uploadArea, .checkbox img, .activationSubmit { transition: none; } .activationButton:not(:disabled):active, .uploadArea:active, .activationSubmit:not(:disabled):active { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .platformField, .activationButton, .uploadArea, .activationSubmit { transition: none; } .activationButton:not(:disabled):active, .uploadArea:active, .activationSubmit:not(:disabled):active { transform: none; } }
 @media (max-width: 680px) { .rechargePanel { border-radius: var(--radius-control); padding: 28px 20px; } .heading { align-items: flex-start; flex-direction: column; } .summary { text-align: left; } .platformField { grid-template-columns: 36px 12px minmax(0, 1fr); } .activationPanel { grid-template-columns: 1fr; } .activationPanel label { grid-column: 1 / -1; } .activationModal { --modal-pad-top: 48px; padding-block: 48px 28px; padding-inline-start: 20px; } .activationHeading { gap: 12px; } .activationHeading h2 { font-size: var(--font-size-body-sm); } }
 
 /* Fase 2: el cliente decide con la informacion a la vista. */
@@ -97,6 +93,5 @@
 /* El resumen de importes termina pegado a lo que sigue: la tarjeta de pago pide su propio respiro. */
 .paymentCard { margin-top: var(--space-2); }
 /* Salida discreta a «cómo pagar» cuando la tarjeta de pago todavía no está a la vista (prepago sin total) o no va aquí (pospago). */
-.payLink { composes: hitArea from "./design-system/hit-area.module.css"; justify-self: center; margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); text-decoration: underline; }
-.payLink:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; border-radius: var(--radius-small); }
-@media (hover: hover) and (pointer: fine) { .payLink:hover { color: var(--color-brand); } }
+/* Aspecto en TextLink; aquí solo su sitio. */
+.payLink { justify-self: center; margin-top: var(--space-1); }
