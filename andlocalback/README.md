@@ -30,7 +30,18 @@ La migración inicial crea el esquema, pero no copia automáticamente los datos 
 
 ## Despliegue en Railway
 
-El servicio del backend debe usar `andlocalback` como **Root Directory** y `/andlocalback/railway.json` como archivo de configuración Railway. El archivo configura la compilación, ejecuta `prisma migrate deploy` antes de publicar y arranca la API. Añade un servicio PostgreSQL al proyecto y crea en el servicio backend estas variables:
+El servicio del backend debe usar `andlocalback` como **Root Directory**. La configuración del despliegue vive en la interfaz de Railway, no en el repositorio: el servicio nunca usó un archivo de configuración (*config as code*), Railway ya no deja activarlo en servicios nuevos y lo retira el 2026-12-01. Por eso no hay `railway.json`. En **Settings** del servicio:
+
+| Ajuste | Valor | Para qué |
+|---|---|---|
+| Build | Railpack, sin comando propio | ejecuta `npm run build` (`prisma generate` + `nest build`) |
+| Start Command | vacío | Railpack ejecuta `npm start` (`node dist/main.js`) |
+| Pre-deploy Command | `npm run db:migrate` | aplica `prisma migrate deploy` antes de cada despliegue; si falla, el despliegue se aborta y sigue el anterior |
+| Healthcheck Path | `/api/v1/health` | el tráfico solo pasa a la versión nueva cuando responde 200 |
+
+Sin el pre-deploy, una migración nueva llega a producción sin aplicarse y la API falla hasta que alguien la ejecute a mano.
+
+Añade un servicio PostgreSQL al proyecto y crea en el servicio backend estas variables:
 
 ```dotenv
 DATABASE_URL=${{Postgres.DATABASE_URL}}
