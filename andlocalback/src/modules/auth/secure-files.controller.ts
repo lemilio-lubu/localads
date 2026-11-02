@@ -47,16 +47,6 @@ export class SecureFilesController {
     return this.sendReceipt(response, receipt.url, receipt.originalName, receipt.mimeType);
   }
 
-  @Get("receipts/:filename")
-  async receipt(@Param("filename") filename: string, @CurrentUser() user: AuthPrincipal, @Res() response: Response) {
-    if (!/^[A-Za-z0-9._-]+$/.test(filename)) throw new NotFoundException();
-    const url = `/uploads/receipts/${filename}`;
-    const receipt = await this.database.paymentReceipt.findFirst({ where: { url }, select: ownerSelect });
-    if (!receipt) throw new NotFoundException("Comprobante no encontrado");
-    assertCanRead(user, receipt.payment.transaction);
-    return this.sendReceipt(response, url, filename, undefined);
-  }
-
   private async sendReceipt(response: Response, storedUrl: string, originalName: string, storedMimeType: string | undefined) {
     if (storedUrl.startsWith("r2://")) {
       const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);

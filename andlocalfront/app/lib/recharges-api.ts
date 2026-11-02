@@ -87,8 +87,8 @@ export const createPostpaidTransaction = (accountId: string, details: RechargeLi
 export const createActivationRequest = (input: { accountId: string; platform: RechargePlatform; requesterName: string; externalAccountId: string; phone: string; firstRechargeAmount: number }) => api<ActivationRequest>("/campaign-activation-requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, firstRechargeAmount: input.firstRechargeAmount.toFixed(2) }) });
 export const getActivationRequests = (accountId: string) => api<ActivationRequest[]>(`/campaign-activation-requests?accountId=${encodeURIComponent(accountId)}`);
 export function resolveApiAssetUrl(path: string) {
-  if (path.startsWith("/uploads/receipts/")) return `${apiUrl}/files/receipts/${encodeURIComponent(path.split("/").at(-1) ?? "")}`;
-  /* Rutas de la API (p. ej. el PDF de la factura): van con su prefijo /api/v1. */
+  /* Rutas de la API (el PDF de la factura, el contenido de un comprobante por
+     su id): van con su prefijo /api/v1. */
   if (path.startsWith("/files/")) return `${apiUrl}${path}`;
   const resolved = new URL(path, apiOrigin);
   if (resolved.origin === apiOrigin) return `${resolved.pathname}${resolved.search}${resolved.hash}`;
