@@ -4,6 +4,8 @@ import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { AllowsTemporaryPassword, CurrentUser, Public } from "./auth.decorators";
 import { AuthPrincipal } from "./auth.types";
+import { Throttle } from "@nestjs/throttler";
+import { loginRateLimit, passwordChangeRateLimit } from "./rate-limit";
 
 class LoginDto { @IsString() @IsNotEmpty() @MaxLength(120) username!: string; @IsString() @MinLength(4) @MaxLength(200) password!: string; }
 class ChangePasswordDto { @IsString() @MinLength(4) @MaxLength(200) currentPassword!: string; @IsString() @MinLength(8) @MaxLength(200) newPassword!: string; }
@@ -28,13 +30,13 @@ function setRefreshCookie(response: Response, token: string) {
 @Controller("auth")
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
-  @Public() @Post("login") async login(@Req() request: Request, @Body() body: LoginDto, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const result = await this.auth.login(body.username, body.password); setRefreshCookie(response, result.refreshToken); return { accessToken: result.accessToken, expiresIn: result.expiresIn, user: { ...result.principal, displayName: result.displayName } }; }
+  @Public() @Throttle(loginRateLimit()) @Post("login") async login(@Req() request: Request, @Body() body: LoginDto, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const result = await this.auth.login(body.username, body.password); setRefreshCookie(response, result.refreshToken); return { accessToken: result.accessToken, expiresIn: result.expiresIn, user: { ...result.principal, displayName: result.displayName } }; }
   @Public() @Post("refresh") async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const token = readCookie(request); if (!token) return this.auth.refresh(""); const result = await this.auth.refresh(token); setRefreshCookie(response, result.refreshToken); return { accessToken: result.accessToken, expiresIn: result.expiresIn, user: { ...result.principal, displayName: result.displayName } }; }
   @Public() @Post("logout") async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); await this.auth.revoke(readCookie(request)); response.clearCookie(cookieName, { path: cookiePath }); return { success: true }; }
   @AllowsTemporaryPassword() @Get("me") async me(@CurrentUser() user: AuthPrincipal) { return { user: { ...user, displayName: await this.auth.displayName(user) } }; }
   /* Unica ruta que una cuenta con clave temporal puede usar ademas de /me.
      Cierra la sesion despues de cambiarla: los refresh quedan revocados. */
-  @AllowsTemporaryPassword() @Post("password") async changePassword(@CurrentUser() user: AuthPrincipal, @Body() body: ChangePasswordDto, @Res({ passthrough: true }) response: Response) {
+  @AllowsTemporaryPassword() @Throttle(passwordChangeRateLimit) @Post("password") async changePassword(@CurrentUser() user: AuthPrincipal, @Body() body: ChangePasswordDto, @Res({ passthrough: true }) response: Response) {
     const result = await this.auth.changePassword(user.userId, body.currentPassword, body.newPassword);
     response.clearCookie(cookieName, { path: cookiePath });
     return result;
