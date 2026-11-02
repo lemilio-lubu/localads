@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { KeyRound, LockKeyhole } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { FormEvent, useEffect, useState } from "react";
 import ActionButton from "../components/atoms/action-button";
@@ -9,6 +10,7 @@ import { enterTransition } from "../design-system/motion";
 import { changePassword, getCurrentUser, refreshSession } from "../lib/auth-api";
 import styles from "./change-password-form.module.css";
 import { TextInput } from "../components/atoms/text-field";
+import FormField from "../components/molecules/form-field";
 
 const minimum = 8;
 
@@ -78,9 +80,17 @@ export default function ChangePasswordForm() {
           : `${username ? `Estás cambiando la contraseña de ${username}. ` : ""}Se cerrarán las sesiones abiertas.`}</span>
       </div>
       <form className={styles.form} onSubmit={submit} noValidate>
-        <label><span>{forced ? "contraseña temporal" : "contraseña actual"}</span><TextInput surface="filled" shape="control" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => { setCurrentPassword(event.target.value); setError(""); }} autoFocus /></label>
-        <label><span>contraseña nueva</span><TextInput surface="filled" shape="control" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => { setNewPassword(event.target.value); setError(""); }} /></label>
-        <label><span>repite la contraseña nueva</span><TextInput surface="filled" shape="control" type="password" autoComplete="new-password" value={repeated} onChange={(event) => { setRepeated(event.target.value); setError(""); }} /></label>
+        <div className={styles.fields}>
+          <FormField label={forced ? "Contraseña temporal" : "Contraseña actual"} Icon={LockKeyhole}>
+            {({ id }) => <TextInput id={id} type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => { setCurrentPassword(event.target.value); setError(""); }} autoFocus />}
+          </FormField>
+          <FormField label="Contraseña nueva" Icon={KeyRound}>
+            {({ id }) => <TextInput id={id} type="password" autoComplete="new-password" value={newPassword} onChange={(event) => { setNewPassword(event.target.value); setError(""); }} />}
+          </FormField>
+          <FormField label="Repite la contraseña nueva" Icon={KeyRound}>
+            {({ id }) => <TextInput id={id} type="password" autoComplete="new-password" value={repeated} onChange={(event) => { setRepeated(event.target.value); setError(""); }} />}
+          </FormField>
+        </div>
         <p className={styles.hint}>Al menos {minimum} caracteres, distinta de la {forced ? "temporal" : "actual"}.</p>
         <p id="change-error" className={styles.error} role="alert" aria-live="polite">{error}</p>
         <ActionButton type="submit" disabled={pending} stretch>{pending ? "guardando…" : "cambiar contraseña"}</ActionButton>
