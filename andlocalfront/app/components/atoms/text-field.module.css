@@ -11,9 +11,11 @@
   padding: 0 var(--space-2);
   color: var(--color-text);
   font: inherit;
-  font-size: var(--font-size-body);
   transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
+/* La letra va fuera de :where(): globals.css hace `input { font: inherit }` y,
+   sin especificidad, esa regla de elemento la pisaba. */
+.field { font-size: var(--font-size-body); }
 :where(.field)::placeholder { color: var(--color-text-subtle); }
 :where(.field):focus { border-color: var(--field-focus-border); box-shadow: var(--field-focus-ring); }
 :where(textarea.field) { min-height: 88px; padding: var(--space-2); resize: vertical; }

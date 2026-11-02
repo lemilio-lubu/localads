@@ -7,13 +7,13 @@ import MetricCard from "../../components/molecules/metric-card";
 import ModalShell from "../../components/organisms/modal-shell";
 import FormError from "../../components/atoms/form-error";
 import FormField, { SelectChevron } from "../../components/molecules/form-field";
-import form from "../../components/molecules/form-layout.module.css";
 import { formatAmount, formatDateTime } from "../../lib/format";
 import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeamMember, updateTeamMember, type TeamMember, type TeamMemberDetail, type TeamRole } from "../../lib/team-api";
 import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-member-modal.module.css";
 import { TextInput, Select } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
 
 type Props = {
   memberId: string | null;
@@ -91,7 +91,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
       {!loading && (error || !member) && <div className={styles.errorPanel} role="alert">
         <h2 id="team-member-title">No se pudo cargar la cuenta</h2>
         <p>{error}</p>
-        <button type="button" onClick={() => { setLoading(true); setError(""); setReloadToken((token) => token + 1); }}><RotateCw size={16} aria-hidden="true" />reintentar</button>
+        <Button variant="danger" onClick={() => { setLoading(true); setError(""); setReloadToken((token) => token + 1); }}><RotateCw size={16} aria-hidden="true" />reintentar</Button>
       </div>}
 
       {!loading && member && <>
@@ -129,10 +129,10 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
                 </>}
               </FormField>
             </div>
-            <button type="button" className={styles.primary} disabled={!dirty || Boolean(nameError) || Boolean(usernameError) || Boolean(busy)} onClick={() => void run("save", async () => {
+            <Button className={styles.primary} disabled={!dirty || Boolean(nameError) || Boolean(usernameError) || Boolean(busy)} onClick={() => void run("save", async () => {
               await updateTeamMember(member.id, { username, ...(name.trim() !== (member.name ?? "") ? { name: name.trim() } : {}), role });
               setNotice("Cambios guardados."); reload();
-            })}><Save size={16} aria-hidden="true" />{busy === "save" ? "guardando…" : "guardar cambios"}</button>
+            })}><Save size={16} aria-hidden="true" />{busy === "save" ? "guardando…" : "guardar cambios"}</Button>
 
             {notice && <p className={styles.notice} role="status">{notice}</p>}
             <FormError message={actionError} />
@@ -142,15 +142,15 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
                 ? <div className={styles.confirm}>
                     <p>La contraseña actual de <strong>{member.username}</strong> dejará de servir y se cerrarán sus sesiones.</p>
                     <div>
-                      <button type="button" className={form.ghost} onClick={() => setConfirmReset(false)}>Cancelar</button>
-                      <button type="button" className={form.secondary} onClick={() => onResetPassword(member)}>Sí, restablecer</button>
+                      <Button variant="ghost" onClick={() => setConfirmReset(false)}>Cancelar</Button>
+                      <Button variant="secondary" onClick={() => onResetPassword(member)}>Sí, restablecer</Button>
                     </div>
                   </div>
                 : <>
-                    <button type="button" disabled={Boolean(busy)} onClick={() => setConfirmReset(true)}><KeyRound size={16} aria-hidden="true" />restablecer contraseña</button>
+                    <Button variant="secondary" disabled={Boolean(busy)} onClick={() => setConfirmReset(true)}><KeyRound size={16} aria-hidden="true" />restablecer contraseña</Button>
                     {/* Dar de baja a un gestor con cartera exige decir a dónde
                         va: lo pregunta el modal de destino de la lista. */}
-                    <button type="button" className={member.status === "ACTIVE" ? styles.danger : undefined} disabled={Boolean(busy)} onClick={() => onToggleStatus(member)}><Power size={16} aria-hidden="true" />{member.status === "ACTIVE" ? "dar de baja" : "reactivar"}</button>
+                    <Button variant="secondary" className={member.status === "ACTIVE" ? styles.danger : undefined} disabled={Boolean(busy)} onClick={() => onToggleStatus(member)}><Power size={16} aria-hidden="true" />{member.status === "ACTIVE" ? "dar de baja" : "reactivar"}</Button>
                   </>}
             </div>
           </section>

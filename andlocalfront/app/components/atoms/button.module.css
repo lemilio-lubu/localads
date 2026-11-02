@@ -1,0 +1,50 @@
+/* Todo va dentro de :where(), sin especificidad: relleno, letra y sitio los
+   ajusta la pantalla, y su clase siempre gana. */
+:where(.button) {
+  display: inline-flex;
+  min-height: var(--button-height);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  padding-inline: var(--space-3);
+  color: var(--color-text-on-fill);
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+/* La letra va fuera de :where(): globals.css hace `button { font: inherit }` y,
+   sin especificidad, esa regla de elemento la pisaba. Una clase de la pantalla
+   con algo más que la clase sola sigue ganando. */
+.button { font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); }
+.button[data-size="compact"] { font-size: var(--font-size-caption); }
+.button:is([data-variant="secondary"], [data-variant="ghost"]) { font-weight: var(--font-weight-regular); }
+:where(.button):disabled { opacity: .45; cursor: not-allowed; }
+:where(.button):not(:disabled):active { transform: scale(.97); }
+:where(.button):focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
+
+:where(.button[data-size="compact"]) { min-height: var(--control-height-compact); padding-inline: var(--space-2); }
+
+:where(.button[data-variant="secondary"]) { border: 1px solid var(--color-border-strong); background: var(--color-surface-raised); color: var(--color-text); }
+:where(.button[data-variant="ghost"]) { background: transparent; color: var(--color-text-muted); }
+:where(.button[data-variant="neutral"]) { background: var(--color-surface-muted); color: var(--color-text); }
+:where(.button[data-variant="danger"]) { background: var(--color-danger); }
+:where(.button[data-variant="danger-soft"]) { background: var(--color-danger-soft); color: var(--color-danger); }
+:where(.button[data-variant="amber"]) { background: var(--color-amber-action); }
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.button[data-variant="primary"]):not(:disabled):hover { background: var(--color-brand-hover); }
+  :where(.button[data-variant="secondary"]):not(:disabled):hover { border-color: var(--color-text-subtle); }
+  :where(.button[data-variant="ghost"]):not(:disabled):hover { color: var(--color-text); }
+  :where(.button[data-variant="neutral"]):not(:disabled):hover { background: var(--color-surface-hover); }
+  :where(.button[data-variant="danger"]):not(:disabled):hover { background: var(--color-danger-hover); }
+  :where(.button[data-variant="danger-soft"]):not(:disabled):hover { background: var(--color-danger-soft-hover); }
+  :where(.button[data-variant="amber"]):not(:disabled):hover { background: var(--color-amber-action-hover); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.button) { transition-duration: 0ms; }
+  :where(.button):not(:disabled):active { transform: none; }
+}

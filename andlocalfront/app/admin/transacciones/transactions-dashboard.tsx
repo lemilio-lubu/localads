@@ -23,6 +23,7 @@ import { paymentStatusTone, rechargeStatusTone } from "../../lib/status-tone";
 import SearchField from "../../components/molecules/search-field";
 import Pagination from "../../components/molecules/pagination";
 import { TextInput } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
 
 const PAGE_SIZE = 20;
 
@@ -153,7 +154,7 @@ export default function TransactionsDashboard() {
         {selected.rechargeStatus === "PROCESSING" && !detail.pausedAt && detail.status !== "COMPLETED" && <div className={styles.executeDetail}>
           <label htmlFor={`effective-${detail.id}`}>monto recargado</label>
           <TextInput size="compact" id={`effective-${detail.id}`} type="number" min="0.01" step="0.01" inputMode="decimal" readOnly={!isAdmin} title={isAdmin ? undefined : "Acreditar un importe distinto al solicitado requiere un administrador"} value={effective[detail.id] ?? String(detail.requestedAmount)} onChange={(event) => setEffective((current) => ({ ...current, [detail.id]: event.target.value }))} />{!isAdmin && <small className={styles.executionNote}>Si lo recargado no coincide con lo solicitado, lo acredita un administrador.</small>}
-          <button type="button" disabled={Boolean(resuming)} onClick={() => void runExecution(detail.id, () => completeTransactionDetail(selected.id, detail.id, effective[detail.id] ?? String(detail.requestedAmount)))}>{resuming === detail.id ? "Acreditando…" : "marcar como recargada"}</button>
+          <Button size="compact" disabled={Boolean(resuming)} onClick={() => void runExecution(detail.id, () => completeTransactionDetail(selected.id, detail.id, effective[detail.id] ?? String(detail.requestedAmount)))}>{resuming === detail.id ? "Acreditando…" : "marcar como recargada"}</Button>
         </div>}
       </> : null}
       footer={selected && <>

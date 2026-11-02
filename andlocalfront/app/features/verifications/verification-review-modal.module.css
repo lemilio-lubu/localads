@@ -30,27 +30,19 @@
 .issues { margin-top: var(--space-2); border-radius: var(--radius-menu); background: var(--color-amber-surface); padding: 13px 16px; color: var(--color-amber-text); font-size: var(--font-size-caption); }
 .issues ul { margin: 6px 0 0; padding-left: 18px; }
 .actions { display: flex; justify-content: flex-end; gap: var(--space-1); margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-3); }
-.actions > button, .reviewForm button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: var(--radius-pill); padding: 0 18px; font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) ease, background-color var(--duration-fast) ease; }
-.actions > button:first-child { background: var(--color-amber-action); color: var(--color-text-on-fill); }
-.actions > button:last-child { background: var(--color-brand); color: var(--color-text-on-fill); }
-.actions button:active:not(:disabled) { transform: scale(.97); }
-.actions button:focus-visible { outline: 3px solid rgb(11 89 1 / 18%); outline-offset: 2px; }
-.actions button:disabled { opacity: .45; cursor: not-allowed; }
+/* Los botones son Button; aquí solo su relleno y su letra. */
+.actions > button, .reviewForm button { gap: 6px; padding: 0 18px; font-size: var(--font-size-caption); }
 .reviewForm { display: grid; width: 100%; gap: 10px; opacity: 1; transition: opacity var(--duration-fast) var(--ease-out); }
 @starting-style { .reviewForm { opacity: 0; } }
 .reviewForm label { display: grid; gap: 6px; color: var(--color-text-muted); font-size: var(--font-size-caption); }
 .reviewForm > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
-.reviewForm button { background: var(--color-surface-muted); color: var(--color-text); }
-.reviewForm button:last-child { background: var(--color-amber-action); color: var(--color-text-on-fill); }
 .reviewNotice { display: grid; gap: 4px; margin-top: var(--space-2); border-radius: var(--radius-menu); background: var(--color-amber-surface); padding: 13px 16px; color: var(--color-amber-text-strong); font-size: var(--font-size-caption); }
 .reviewNotice small, .reviewNotice span { color: var(--color-amber-text-soft); }
 .reviewNotice p { margin: 0; color: var(--color-text); }
 .error { margin: var(--space-2) 0 0; color: var(--color-danger); font-size: var(--font-size-caption); text-align: right; }
-@media (hover: hover) and (pointer: fine) { .actions > button:first-child:hover, .reviewForm button:last-child:hover { background: var(--color-amber-action-hover); }.actions > button:last-child:hover { background: var(--color-brand-active); } }
 @media (max-width: 1180px) { .reviewGrid { grid-template-columns: minmax(0, 1fr); }.preview { min-height: 420px; }.preview img, .preview iframe { height: 420px; } }
 @media (max-width: 780px) { .modal { padding-block: var(--space-3); padding-inline-start: var(--space-3); } }
 @media (max-width: 560px) { .preview { min-height: 320px; }.preview img, .preview iframe { height: 320px; }.actions { flex-direction: column; }.actions > button { width: 100%; } }
-@media (prefers-reduced-motion: reduce) { .actions button, .reviewForm { transition-duration: 0ms; }.actions button:active:not(:disabled) { transform: none; } }
 
 /* Revisión en una columna: con 1fr el mínimo era el contenido, y el nombre
    del archivo (una sola línea) ensanchaba la columna hasta sacar comprobante

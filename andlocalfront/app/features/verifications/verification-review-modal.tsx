@@ -15,6 +15,7 @@ import { verificationIssueLabel, verificationStatusLabel } from "../../lib/statu
 import { verificationStatusTone } from "../../lib/status-tone";
 import styles from "./verification-review-modal.module.css";
 import { TextArea } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
 
 export type VerificationSelection = { item: PendingVerification; detail: AdminVerification };
 
@@ -108,8 +109,8 @@ function ReviewContent({ selected, destination, busy, error, onApprove, onReview
           <span>Actualizado {formatDateTime(selected.detail.updatedAt ?? selected.detail.decisionAudit?.createdAt ?? selected.detail.createdAt)}</span>
         </div>}
         {selected.detail.issues.length > 0 && <div className={styles.issues}><strong>Señales de revisión</strong><ul>{selected.detail.issues.map((issue) => <li key={issue}>{verificationIssueLabel(issue)}</li>)}</ul></div>}
-        {canRetryOcr && <div className={styles.actions}><button type="button" disabled={busy} onClick={onRetryOcr}><RotateCw size={17} />{busy ? "Leyendo…" : "Reintentar lectura"}</button></div>}
-        {reviewStatuses.includes(selected.detail.status) && <div className={styles.actions}>{reviewing ? <div className={styles.reviewForm}><label>Motivo de revisión<TextArea tone="amber" autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label><div><button type="button" onClick={() => { setReviewing(false); setReason(""); }}>Cancelar</button><button type="button" disabled={!reason.trim() || busy} onClick={() => void sendReview()}><CircleAlert size={16} />Enviar a revisión</button></div></div> : <><button type="button" disabled={busy} onClick={() => { setReason(selected.detail.reviewReason ?? ""); setReviewing(true); }}><CircleAlert size={17} />En revisión</button><button type="button" disabled={busy || hardBlocked} title={hardBlocked ? "La evidencia duplicada no puede aprobarse" : undefined} onClick={onApprove}><Check size={17} />Aprobar transferencia</button></>}</div>}
+        {canRetryOcr && <div className={styles.actions}><Button disabled={busy} onClick={onRetryOcr}><RotateCw size={17} />{busy ? "Leyendo…" : "Reintentar lectura"}</Button></div>}
+        {reviewStatuses.includes(selected.detail.status) && <div className={styles.actions}>{reviewing ? <div className={styles.reviewForm}><label>Motivo de revisión<TextArea tone="amber" autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label><div><Button variant="neutral" onClick={() => { setReviewing(false); setReason(""); }}>Cancelar</Button><Button variant="amber" disabled={!reason.trim() || busy} onClick={() => void sendReview()}><CircleAlert size={16} />Enviar a revisión</Button></div></div> : <><Button variant="amber" disabled={busy} onClick={() => { setReason(selected.detail.reviewReason ?? ""); setReviewing(true); }}><CircleAlert size={17} />En revisión</Button><Button disabled={busy || hardBlocked} title={hardBlocked ? "La evidencia duplicada no puede aprobarse" : undefined} onClick={onApprove}><Check size={17} />Aprobar transferencia</Button></>}</div>}
         {hardBlocked && !reviewing && <p className={styles.error}>La aprobación está bloqueada: el comprobante o código bancario ya fue utilizado.</p>}
         {error && <p className={styles.error} role="alert">{error}</p>}
       </section>

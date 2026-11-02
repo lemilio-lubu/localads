@@ -17,6 +17,7 @@ import { activationStatusTone } from "../../lib/status-tone";
 import SearchField from "../../components/molecules/search-field";
 import LoadError from "../../components/molecules/load-error";
 import { TextArea } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
 
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
@@ -96,12 +97,12 @@ export default function ActivationsDashboard() {
         {rejecting === item.id
           ? <div className={styles.reject}>
               <label>Motivo del rechazo<TextArea tone="danger" autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
-              <div><button type="button" onClick={() => { setRejecting(null); setReason(""); }}>Cancelar</button><button type="button" className={styles.dangerButton} disabled={!reason.trim() || busy === item.id} onClick={() => void act(item, "reject")}><X size={16} aria-hidden="true" />Confirmar rechazo</button></div>
+              <div><Button variant="neutral" onClick={() => { setRejecting(null); setReason(""); }}>Cancelar</Button><Button variant="danger" disabled={!reason.trim() || busy === item.id} onClick={() => void act(item, "reject")}><X size={16} aria-hidden="true" />Confirmar rechazo</Button></div>
             </div>
           : <div className={styles.actions}>
               {["PENDING", "IN_REVIEW"].includes(item.status) && <>
-                <button type="button" className={styles.rejectButton} disabled={busy === item.id} onClick={() => setRejecting(item.id)}><X size={16} aria-hidden="true" />Rechazar</button>
-                <button type="button" className={styles.approveButton} disabled={busy === item.id} title="La primera recarga se ejecuta al activar y validar el pago" onClick={() => void act(item, "approve")}><Check size={16} aria-hidden="true" />Activar pauta</button>
+                <Button variant="danger-soft" disabled={busy === item.id} onClick={() => setRejecting(item.id)}><X size={16} aria-hidden="true" />Rechazar</Button>
+                <Button disabled={busy === item.id} title="La primera recarga se ejecuta al activar y validar el pago" onClick={() => void act(item, "approve")}><Check size={16} aria-hidden="true" />Activar pauta</Button>
               </>}
             </div>}
         {actionError?.id === item.id && <p className={styles.rowNotice} role="alert">{actionError.message}</p>}

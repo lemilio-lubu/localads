@@ -14,6 +14,7 @@ import { createTeamMember, type TeamMemberWithCredentials, type TeamRole } from 
 import { validateTeamEmail, validateTeamName } from "../../lib/form-validation";
 import styles from "./team-form-modal.module.css";
 import { TextInput } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
 
 type Props = { open: boolean; onClose: () => void; onCreated: (member: TeamMemberWithCredentials) => void };
 
@@ -86,7 +87,7 @@ export default function TeamFormModal({ open, onClose, onCreated }: Props) {
         <footer className={form.footer}>
           <p><KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />Se generará una contraseña temporal que verás una sola vez.</p>
           <div>
-            <button type="button" className={form.ghost} onClick={onClose}>Cancelar</button>
+            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
             <ActionButton type="submit" disabled={pending}>{pending ? "Creando…" : "Crear cuenta"}</ActionButton>
           </div>
         </footer>

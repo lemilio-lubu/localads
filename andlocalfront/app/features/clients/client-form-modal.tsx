@@ -17,6 +17,7 @@ import { assignClientManager, getTeam, type TeamMember } from "../../lib/team-ap
 import { normalizeRuc, rucKind, validateClientFields, type ClientProfileField } from "../../lib/form-validation";
 import styles from "./client-form-modal.module.css";
 import { TextInput, Select } from "../../components/atoms/text-field";
+import Button from "../../components/atoms/button";
 
 type Props = {
   client: AdminClient | null;
@@ -213,13 +214,13 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
         {client && (
           <Section title="Acceso al portal" className={styles.wide}>
             {resetStep === "idle"
-              ? <div className={styles.accessRow}><p><KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />Genera una contraseña temporal nueva.</p><button type="button" className={form.secondary} onClick={() => setResetStep("confirm")}>Restablecer contraseña</button></div>
+              ? <div className={styles.accessRow}><p><KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />Genera una contraseña temporal nueva.</p><Button variant="secondary" onClick={() => setResetStep("confirm")}>Restablecer contraseña</Button></div>
               : <div className={styles.resetConfirm}>
                   <p>La contraseña actual de <strong>{client.name}</strong> dejará de servir y se cerrarán sus sesiones. Los cambios sin guardar de este formulario se descartan.</p>
                   {resetError && <p className={fieldStyles.fieldError} role="alert"><CircleAlert size={14} aria-hidden="true" />{resetError}</p>}
                   <div>
-                    <button type="button" className={form.ghost} disabled={resetStep === "pending"} onClick={() => { setResetStep("idle"); setResetError(""); }}>Cancelar</button>
-                    <button type="button" className={form.secondary} disabled={resetStep === "pending"} onClick={() => void resetPassword()}>{resetStep === "pending" ? "Restableciendo…" : "Sí, restablecer"}</button>
+                    <Button variant="ghost" disabled={resetStep === "pending"} onClick={() => { setResetStep("idle"); setResetError(""); }}>Cancelar</Button>
+                    <Button variant="secondary" disabled={resetStep === "pending"} onClick={() => void resetPassword()}>{resetStep === "pending" ? "Restableciendo…" : "Sí, restablecer"}</Button>
                   </div>
                 </div>}
           </Section>
@@ -230,7 +231,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
         <footer className={form.footer}>
           {!client && <p><KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />Se generará una contraseña temporal que verás una sola vez.</p>}
           <div>
-            <button type="button" className={form.ghost} onClick={onClose}>Cancelar</button>
+            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
             <ActionButton type="submit" disabled={pending}>{pending ? "Guardando…" : client ? "Guardar cambios" : "Crear cliente"}</ActionButton>
           </div>
         </footer>

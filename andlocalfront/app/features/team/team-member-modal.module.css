@@ -26,14 +26,13 @@
 .panelHead h3 { margin: 0; }
 
 .fields { display: grid; gap: var(--space-2); }
-.primary { display: inline-flex; min-height: var(--button-height); align-items: center; justify-self: start; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-brand); padding-inline: var(--space-3); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
-.primary:disabled { opacity: .45; cursor: not-allowed; }
+/* Los botones de este panel son Button; aquí solo su sitio y su relleno. */
+.primary { justify-self: start; }
 
 /* Acceso y estado, al pie del panel y separados por una línea: actúan en el
    momento, no se guardan con los datos. */
 .access { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); border-top: 1px solid var(--color-border-strong); padding-top: var(--space-3); }
-.access > button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); padding-inline: var(--space-2); color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); cursor: pointer; }
-.access > button:disabled { opacity: .5; cursor: not-allowed; }
+.access > button { padding-inline: var(--space-2); }
 .access > .danger { color: var(--color-danger); }
 .confirm { display: grid; width: 100%; gap: var(--space-2); }
 .confirm p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.5; }
@@ -69,12 +68,12 @@
 .errorPanel { display: grid; justify-items: center; gap: var(--space-1); padding: var(--space-5) var(--space-3); color: var(--color-danger); text-align: center; }
 .errorPanel h2 { margin: 0; font-size: var(--font-size-card-title); }
 .errorPanel p { margin: 0; max-width: 46ch; }
-.errorPanel button { display: inline-flex; min-height: var(--button-height); align-items: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); margin-top: var(--space-1); background: var(--color-danger); padding-inline: var(--space-3); color: var(--color-text-on-fill); font: inherit; font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
+.errorPanel button { margin-top: var(--space-1); }
 
-.primary:focus-visible, .access > button:focus-visible, .link:focus-visible, .picker button:focus-visible, .chips a:focus-visible, .chips button:focus-visible, .sale:focus-visible, .errorPanel button:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
+.link:focus-visible, .picker button:focus-visible, .chips a:focus-visible, .chips button:focus-visible, .sale:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
 
 @media (hover: hover) and (pointer: fine) {
-  .access > button:hover:not(:disabled), .picker button:hover { border-color: var(--color-text-subtle); }
+  .picker button:hover { border-color: var(--color-text-subtle); }
   .link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .chips li:hover, .sale:hover { background: var(--color-surface-hover); }
 }
