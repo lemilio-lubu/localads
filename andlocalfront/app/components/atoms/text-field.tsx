@@ -3,15 +3,15 @@ import styles from "./text-field.module.css";
 
 /* Campo de texto común: input, textarea y select comparten aspecto y estados.
    Cuatro ejes, cada uno con pocas opciones:
-   - surface: blanco con borde (outlined), borde tenue (soft), gris sin borde
-     (filled), blanco con relieve (elevated) o sin nada, dentro de otro control (bare).
+   - surface: blanco con borde (outlined), gris sin borde (filled), blanco con
+     relieve (elevated) o sin nada, dentro de otro control (bare).
    - shape: esquinas small, menu, control o pill.
    - size: alto regular (48), button (40), compact (32) o auto.
    - tone: color del foco, verde de marca, rojo (danger) o ámbar (amber).
    Ancho, relleno y tamaño de letra los ajusta la pantalla con className: la
    base no tiene especificidad y cualquier clase de la pantalla gana. */
 type FieldLook = {
-  surface?: "outlined" | "soft" | "filled" | "elevated" | "bare";
+  surface?: "outlined" | "filled" | "elevated" | "bare";
   shape?: "small" | "menu" | "control" | "pill";
   size?: "regular" | "button" | "compact" | "auto";
   tone?: "brand" | "danger" | "amber";
