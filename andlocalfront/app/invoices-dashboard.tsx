@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import AccountShell from "./account-shell";
@@ -24,6 +23,7 @@ import SearchField from "./components/molecules/search-field";
 import Pagination from "./components/molecules/pagination";
 import LoadError from "./components/molecules/load-error";
 import TextButton from "./components/atoms/text-button";
+import EmptyAction from "./components/atoms/empty-action";
 import RowDetailLink from "./components/atoms/row-detail-link";
 
 const formatDate = formatDateTime;
@@ -171,12 +171,12 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
             ? <div className={styles.emptyState}>
                 <p><strong>Aún no tienes recargas</strong></p>
                 <p>Cuando hagas tu primera recarga aparecerá aquí, con su factura y su estado de pago.</p>
-                <Link className={styles.emptyAction} href={`/${accountType}`}>hacer una recarga</Link>
+                <EmptyAction href={`/${accountType}`}>hacer una recarga</EmptyAction>
               </div>
             : <div className={styles.emptyState}>
                 <p><strong>Ninguna recarga coincide con estos filtros</strong></p>
                 <p>Tienes {transactions.length} {transactions.length === 1 ? "recarga registrada" : "recargas registradas"}.</p>
-                <button type="button" className={styles.emptyAction} onClick={clearFilters}>limpiar filtros</button>
+                <EmptyAction onClick={clearFilters}>limpiar filtros</EmptyAction>
               </div>
         )}
       </div>

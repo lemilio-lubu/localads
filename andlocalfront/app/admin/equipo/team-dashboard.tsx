@@ -13,6 +13,7 @@ import styles from "./team-dashboard.module.css";
 import SearchField from "../../components/molecules/search-field";
 import LoadError from "../../components/molecules/load-error";
 import TextButton from "../../components/atoms/text-button";
+import EmptyAction from "../../components/atoms/empty-action";
 import ToolbarButton from "../../components/atoms/toolbar-button";
 import RowActionButton from "../../components/atoms/row-action-button";
 import RowOpener from "../../components/atoms/row-opener";
@@ -177,7 +178,7 @@ export default function TeamDashboard() {
             : <div className={styles.message}>
                 <p><strong>Ninguna cuenta coincide con estos filtros</strong></p>
                 <p>Hay {members.length} {members.length === 1 ? "cuenta" : "cuentas"}.</p>
-                <button type="button" className={styles.clearFilters} onClick={clearFilters}>limpiar filtros</button>
+                <EmptyAction onClick={clearFilters}>limpiar filtros</EmptyAction>
               </div>
         )}
       </div>
