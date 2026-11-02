@@ -44,6 +44,19 @@ R2_BUCKET=<nombre-del-bucket>
 R2_REGION=auto
 ```
 
+La API no arranca en un despliegue (`NODE_ENV=production` o cualquier entorno de Railway) si `JWT_ACCESS_SECRET` tiene menos de 32 caracteres o es el de ejemplo, si falta `DATABASE_URL` o si `FRONTEND_ORIGIN` no es un único origen `https`. Variables opcionales de seguridad:
+
+```dotenv
+# Proxies delante de la API; por defecto 1 en un despliegue (el borde de Railway) y 0 en local
+TRUST_PROXY_HOPS=1
+# Solicitudes por minuto y usuario (o IP sin sesión); por defecto 600
+RATE_LIMIT_PER_MINUTE=600
+# Intentos de login por minuto para cada IP y correo; por defecto 10
+LOGIN_RATE_LIMIT_PER_MINUTE=10
+```
+
+El seed (`npm run prisma:seed`) crea las cuentas demo con clave `1234` y se niega a correr si el entorno es un despliegue o la base no es local. Para una demo sin datos reales se puede forzar con `ALLOW_DEMO_SEED=true`.
+
 En Cloudflare R2 crea un bucket privado y un token **Object Read & Write** limitado a ese bucket. El backend usa el endpoint S3 `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`; no hace falta exponer el bucket públicamente porque las descargas pasan por la API autenticada. Guarda el secreto únicamente en Railway. La comprobación de salud está en `/api/v1/health`.
 
 No ejecutes `npm run prisma:seed` en producción: crea cuentas demo con contraseñas conocidas. Para crear el primer administrador, agrega temporalmente `BOOTSTRAP_ADMIN_USERNAME` y `BOOTSTRAP_ADMIN_PASSWORD` (mínimo 12 caracteres) al servicio, ejecuta `npm run bootstrap:admin` desde la consola del servicio y elimina esas dos variables inmediatamente. El comando solo crea el usuario cuando la tabla de usuarios está vacía y nunca modifica cuentas existentes.

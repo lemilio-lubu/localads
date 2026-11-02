@@ -47,4 +47,25 @@ async function seed() {
   console.info("Seed completado: cuentas con Pauta META/GOOGLE activas, client-001 asignado al gestor.");
 }
 
+/* El seed crea cuentas con la clave 1234 y sal fija: en una base desplegada
+   serian cuatro puertas abiertas, una de ellas de administrador. Solo corre
+   contra una base local salvo que se pida a proposito con ALLOW_DEMO_SEED=true
+   (una demo o un staging sin datos reales). */
+function assertDemoSeedAllowed(env = process.env) {
+  if (env.ALLOW_DEMO_SEED === "true") return;
+  const deployed = env.NODE_ENV === "production" || Boolean(env.RAILWAY_ENVIRONMENT_NAME || env.RAILWAY_ENVIRONMENT);
+  let host = "";
+  try { host = new URL(env.DATABASE_URL ?? "").hostname; } catch { host = ""; }
+  const localDatabase = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(host);
+  if (deployed || !localDatabase) {
+    throw new Error("Seed cancelado: crea cuentas demo con clave 1234 y solo corre contra una base local. Usa ALLOW_DEMO_SEED=true si de verdad es una demo.");
+  }
+}
+
+try {
+  assertDemoSeedAllowed();
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
 seed().finally(() => database.$disconnect());
