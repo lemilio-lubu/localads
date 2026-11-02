@@ -17,10 +17,7 @@
 .error { margin: var(--space-2) 0 0; border-radius: var(--radius-menu); background: var(--color-danger-surface); padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-body-sm); }
 
 .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-3); }
-.actions button[type="button"] { min-height: var(--button-height); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-3); color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); cursor: pointer; }
-.actions button[type="button"]:disabled { opacity: .55; cursor: not-allowed; }
 
 @media (hover: hover) and (pointer: fine) {
   .options label:hover { background: var(--color-surface-hover); }
-  .actions button[type="button"]:hover:not(:disabled) { box-shadow: var(--shadow-card); }
 }

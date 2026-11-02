@@ -5,6 +5,7 @@ import ActionButton from "../../components/atoms/action-button";
 import ModalShell from "../../components/organisms/modal-shell";
 import type { TeamMember } from "../../lib/team-api";
 import styles from "./portfolio-handover-modal.module.css";
+import Button from "../../components/atoms/button";
 
 type Props = {
   member: TeamMember | null;
@@ -66,7 +67,7 @@ export default function PortfolioHandoverModal({ member, candidates, pending, er
         {error && <p className={styles.error} role="alert">{error}</p>}
 
         <div className={styles.actions}>
-          <button type="button" onClick={onClose} disabled={pending}>cancelar</button>
+          <Button variant="neutral" onClick={onClose} disabled={pending}>cancelar</Button>
           <ActionButton type="submit" disabled={!choice || pending}>
             {pending ? "dando de baja…" : "confirmar baja"}
           </ActionButton>

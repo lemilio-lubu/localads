@@ -16,6 +16,7 @@ import {
 import styles from "./settings-dashboard.module.css";
 import { TextInput } from "../../components/atoms/text-field";
 import TextButton from "../../components/atoms/text-button";
+import Button from "../../components/atoms/button";
 
 const emptyForm: PaymentAccountInput = { bankName: "", accountType: "", accountNumber: "", holderName: "", holderTaxId: "", email: "", phone: "" };
 const labels: Record<keyof Omit<PaymentAccount, "id" | "updatedAt" | "updatedById">, string> = {
@@ -135,7 +136,7 @@ export default function SettingsDashboard() {
             ? <div className={styles.confirm} role="alertdialog" aria-labelledby="confirm-payment-account">
                 <p id="confirm-payment-account"><Banknote size={18} aria-hidden="true" /><span><strong>Esto es lo que verán los clientes, de inmediato.</strong> Comprueba el número y el titular: un dato mal puesto desvía pagos reales.</span></p>
                 <PaymentAccountCard quiet account={preview} />
-                <div><button type="button" className={styles.cancel} onClick={() => setConfirming(false)} disabled={saving}>Revisar de nuevo</button><ActionButton type="button" disabled={saving} onClick={() => void save()}>{saving ? "Guardando…" : "Sí, guardar"}</ActionButton></div>
+                <div><Button variant="ghost" onClick={() => setConfirming(false)} disabled={saving}>Revisar de nuevo</Button><ActionButton type="button" disabled={saving} onClick={() => void save()}>{saving ? "Guardando…" : "Sí, guardar"}</ActionButton></div>
               </div>
             : <ActionButton type="submit" disabled={!complete || unchanged}>{account ? "Guardar cambios" : "Guardar cuenta"}</ActionButton>}
         </form>

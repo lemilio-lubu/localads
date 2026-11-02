@@ -17,6 +17,7 @@ import styles from "./invoice-detail-modal.module.css";
 import FileViewer, { type ViewerFile } from "../../components/organisms/file-viewer";
 import { paymentStatusTone, rechargeStatusTone, verificationStatusTone } from "../../lib/status-tone";
 import { paymentVerificationMessage, pendingInvoiceLabel, platformList, rechargeMessage, rechargeSteps } from "../../lib/transaction-progress";
+import Button from "../../components/atoms/button";
 
 /* El anillo dice si hay documento que abrir: verde si lo hay, gris si no.
    Antes cada documento tenía su color fijo -factura siempre gris, transferencia
@@ -137,7 +138,7 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
         {receipt ? <button className={styles.documentAction} onClick={() => setViewing({ url: resolveApiAssetUrl(receipt.url), name: receipt.originalName })}><span className={styles.documentCircle}><Image src={documentRing.ready} alt="" fill sizes="64px" /><span>transf.</span></span><small title={receipt.originalName}>{shortFileName(receipt.originalName)}</small></button> : <button className={styles.documentAction} disabled><span className={styles.documentCircle}><Image src={documentRing.pending} alt="" fill sizes="64px" /><span>transf.</span></span><small>Sin comprobante</small></button>}
         {acceptsReceipt && <div className={styles.uploadReceipt}>
           <input ref={receiptInput} type="file" accept="image/png,image/jpeg,application/pdf" hidden onChange={(event) => void sendReceipt(event.target.files?.[0])} />
-          <button type="button" className={styles.uploadButton} disabled={uploading} onClick={() => receiptInput.current?.click()}>{uploading ? "Cargando…" : receipt ? "Reemplazar transferencia" : "Subir transferencia"}</button>
+          <Button size="compact" disabled={uploading} onClick={() => receiptInput.current?.click()}>{uploading ? "Cargando…" : receipt ? "Reemplazar transferencia" : "Subir transferencia"}</Button>
           <small>JPG, PNG o PDF · hasta 5 MB</small>
           {uploadError && <small role="alert" className={styles.uploadError}>{uploadError}</small>}
         </div>}
