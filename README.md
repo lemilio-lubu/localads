@@ -13,7 +13,7 @@ Aplicación local compuesta por:
 
 El backend requiere una base PostgreSQL configurada en `DATABASE_URL`.
 
-Para Railway, configura `andlocalback` como directorio raíz del servicio y usa `/andlocalback/railway.json` como archivo de configuración. El archivo ejecuta las migraciones de PostgreSQL antes de iniciar la API. Añade también las variables `JWT_ACCESS_SECRET`, `FRONTEND_ORIGIN` y las credenciales `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` y `R2_REGION=auto` en el servicio backend. Los detalles están en [andlocalback/README.md](andlocalback/README.md#despliegue-en-railway).
+Para Railway, configura `andlocalback` como directorio raíz del servicio backend y, en **Settings → Deploy**, el pre-deploy `npm run db:migrate` (aplica las migraciones de PostgreSQL antes de iniciar la API) y el healthcheck `/api/v1/health`. Añade también las variables `JWT_ACCESS_SECRET`, `FRONTEND_ORIGIN` y las credenciales `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` y `R2_REGION=auto` en el servicio backend. Los detalles están en [andlocalback/README.md](andlocalback/README.md#despliegue-en-railway).
 
 ## 1. Preparar y levantar el backend
 
