@@ -1,5 +1,6 @@
 import Image from "next/image";
 import DateCell from "../../components/atoms/date-cell";
+import RowDetailLink from "../../components/atoms/row-detail-link";
 import StatusPill from "../../components/atoms/status-pill";
 import CopyCode from "../../components/molecules/copy-code";
 import type { PendingVerification } from "../../lib/admin-recharges-api";
@@ -20,6 +21,6 @@ export default function VerificationRow({ item, busy, onOpen }: { item: PendingV
     <div className={styles.cell}><strong>banco de origen</strong><span>{item.bank ?? "No identificado"}</span></div>
     <div className={styles.cell}><strong>a verificar / a recargar</strong><span className={styles.expected}>{formatAmount(item.expectedTransferAmount)}</span><span className={styles.detected}>recarga {formatAmount(item.requestedPautaAmount)}</span></div>
     <div className={styles.cell}><strong>estado</strong><StatusPill tone={verificationStatusTone(item.status)}>{verificationStatusLabel(item.status)}</StatusPill>{item.decidedByName && <span className={styles.holder}>por {item.decidedByName}</span>}</div>
-    <button type="button" className={styles.reviewButton} aria-haspopup="dialog" disabled={busy} onClick={onOpen}>revisar</button>
+    <RowDetailLink className={styles.reviewButton} disabled={busy} onClick={onOpen}>revisar</RowDetailLink>
   </article>;
 }

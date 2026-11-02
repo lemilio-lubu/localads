@@ -9,9 +9,8 @@
 /* Abrir el detalle no compromete nada: es un enlace con nombre, no una acción
    con peso de decisión. El área táctil sigue siendo de 40px aunque lo que se
    vea sea texto — el mínimo accesible manda sobre el aspecto. */
-.reviewButton { composes: hitArea from "../../design-system/hit-area.module.css"; display: inline-flex; min-height: var(--button-height); align-items: center; align-self: center; justify-content: center; justify-self: end; border: 0; background: transparent; padding: 0; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) var(--ease-out); }
-.reviewButton:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
-.reviewButton:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+/* Aspecto en RowDetailLink; aquí solo su sitio en la fila. */
+.reviewButton { align-self: center; justify-self: end; }
 .transferIcon { position: relative; display: grid; width: 54px; height: 54px; place-items: center; overflow: hidden; }
 .transferIcon img { width: 54px; height: 54px; }
 .transferIcon small { position: absolute; color: var(--color-brand); font-size: var(--font-size-micro); font-weight: var(--font-weight-regular); }
@@ -22,7 +21,6 @@
 .detected { color: var(--color-accent-teal); font-variant-numeric: tabular-nums; }
 /* Un importe no se recorta con «…»: se parte en dos líneas si no cabe. */
 .cell > .expected, .cell > .detected { overflow: visible; white-space: normal; }
-@media (hover: hover) and (pointer: fine) { .reviewButton:not(:disabled):hover { color: var(--color-brand); } }
 /* Escritorio medio: los mínimos fijos sumaban 1064px de fila y a 1280 solo
    hay 936, así que se salía por la derecha hasta ~1410. Aquí los mínimos son
    los del contenido real; desde 1421 la fila es la de siempre. */
@@ -37,4 +35,4 @@
 /* En móvil, dos columnas como «tus facturas»: el icono de transferencia va
    en su propia fila, encima, para no quitarle 46px a cada línea de datos. */
 @media (max-width: 560px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control) }.transferIcon { grid-column: 1 / -1; grid-row: auto; }.reviewButton { grid-column: 1 / -1; justify-self: start; }.transferIcon, .transferIcon img { width: 44px; height: 44px; } }
-@media (prefers-reduced-motion: reduce) { .row, .reviewButton { transition-duration: 0ms; } }
+@media (prefers-reduced-motion: reduce) { .row { transition-duration: 0ms; } }

@@ -24,6 +24,7 @@ import SearchField from "./components/molecules/search-field";
 import Pagination from "./components/molecules/pagination";
 import LoadError from "./components/molecules/load-error";
 import TextButton from "./components/atoms/text-button";
+import RowDetailLink from "./components/atoms/row-detail-link";
 
 const formatDate = formatDateTime;
 /** Traduce el fallo a algo accionable: el texto crudo del navegador no ayuda. */
@@ -161,7 +162,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
               <span className={`${styles.dueDate} ${item.paymentStatus === "OVERDUE" ? styles.dueOverdue : ""}`}>{dueLabel(item.dueDate)}</span>}
           </div>
           <div className={styles.platforms} aria-label="Plataformas">{item.platforms.map((value) => <PlatformPill key={value} platform={value.toLowerCase() as AdvertisingPlatform} size="compact" />)}</div>
-          <button type="button" className={styles.detailsLink} aria-haspopup="dialog" disabled={detailLoading} onClick={() => void openDetail(item.id)}>ver detalles</button>
+          <RowDetailLink className={styles.detailsLink} disabled={detailLoading} onClick={() => void openDetail(item.id)}>ver detalles</RowDetailLink>
         </article>)}
         {loading && <p className={styles.emptyState}>Cargando transacciones…</p>}
         {!loading && error && <LoadError title="No pudimos cargar tus recargas" message={error} frame="bare" text="neutral" onRetry={() => setReloads((value) => value + 1)} />}

@@ -54,9 +54,8 @@
 /* Abrir el detalle no compromete nada: es un enlace con nombre, no una acción
    con peso de decisión. El área táctil sigue siendo de 40px aunque lo que se
    vea sea texto — el mínimo accesible manda sobre el aspecto. */
-.detailsButton { display: inline-flex; min-height: var(--button-height); align-items: center; align-self: center; justify-content: center; justify-self: end; border: 0; background: transparent; padding: 0; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) var(--ease-out); }
-.detailsButton:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
-.detailsButton:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+/* Aspecto en RowDetailLink; aquí solo su sitio en la fila. */
+.detailsButton { align-self: center; justify-self: end; }
 .skeleton { composes: base from "../../design-system/skeleton.module.css"; min-height: 112px; }
 .message { border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-3); color: var(--color-text-muted); text-align: center; }
 .errorMessage { background: var(--color-danger-surface); color: var(--color-danger); }
@@ -75,7 +74,6 @@
 .auditFooter { display: flex; justify-content: space-between; gap: var(--space-2); margin: var(--space-3) 0 0; border-top: 1px solid var(--color-border); padding-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-caption); }
 /* La tarifa aplicada se dice al lado del importe: antes el ISD aparecía cobrado
    sin que nada explicara de dónde salía. */
-@media (hover: hover) and (pointer: fine) { .detailsButton:not(:disabled):hover { color: var(--color-brand); } }
 /* Escritorio medio: los mínimos fijos (150, 164, 180…) sumaban 1168px de fila
    y la columna de trabajo solo tiene 1096 a 1440, así que la fila se salía
    por la derecha hasta ~1520 y «ver detalles» quedaba cortado. Aquí los
@@ -105,7 +103,7 @@
    recortaba y el title que lo completa no aparece con el dedo. */
 @media (max-width: 520px), (pointer: coarse) { .cell > .clientName { overflow-wrap: anywhere; white-space: normal; } }
 @media (max-width: 520px) { .filters > span { flex-basis: 100%; } .auditFooter { flex-direction: column; } }
-@media (prefers-reduced-motion: reduce) { .row, .detailsButton { transition-duration: 0ms; } .detailsButton:not(:disabled):active { transform: none; } .skeleton { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .row { transition-duration: 0ms; } .skeleton { animation: none; } }
 
 /* iOS Safari hace zoom al enfocar un campo de menos de 16px y no lo deshace.
    Solo en táctil: con ratón el campo conserva sus 13px. */

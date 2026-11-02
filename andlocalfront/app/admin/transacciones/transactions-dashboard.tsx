@@ -4,6 +4,7 @@ import { CalendarClock, Layers, Wallet, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import ToggleChip from "../../components/atoms/toggle-chip";
 import DateCell from "../../components/atoms/date-cell";
+import RowDetailLink from "../../components/atoms/row-detail-link";
 import InvoiceDetailModal from "../../features/payments/invoice-detail-modal";
 import ActionButton from "../../components/atoms/action-button";
 import { getCurrentUser } from "../../lib/auth-api";
@@ -124,7 +125,7 @@ export default function TransactionsDashboard() {
           {item.dueDate && (item.paymentStatus === "IN_CREDIT" || item.paymentStatus === "OVERDUE") && <span className={`${styles.dueDate} ${item.paymentStatus === "OVERDUE" ? styles.dueOverdue : ""}`}>{dueLabel(item.dueDate)}</span>}
         </div>
         <div className={styles.platforms} aria-label="Plataformas">{item.platforms.map((platform) => <PlatformPill key={platform} platform={platform.toLowerCase() as AdvertisingPlatform} size="compact" />)}</div>
-        <button type="button" className={styles.detailsButton} aria-haspopup="dialog" disabled={detailLoading} onClick={() => void open(item.id)}>ver detalles</button>
+        <RowDetailLink className={styles.detailsButton} disabled={detailLoading} onClick={() => void open(item.id)}>ver detalles</RowDetailLink>
       </article>)}
       {loading && <><div className={`${styles.row} ${styles.skeleton}`} aria-hidden="true" /><div className={`${styles.row} ${styles.skeleton}`} aria-hidden="true" /></>}
       {!loading && error && <p className={`${styles.message} ${styles.errorMessage}`} role="alert">{error}</p>}
