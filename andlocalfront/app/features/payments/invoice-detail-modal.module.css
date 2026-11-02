@@ -57,7 +57,7 @@
 .progress li[data-reached="true"] { color: var(--color-brand); font-weight: var(--font-weight-bold); }
 .progress li[data-reached="true"]::before { background: currentColor; }
 .progress p { margin: 0; color: var(--color-text-muted); line-height: 1.4; }
-.verificationSummary { display: grid; gap: var(--space-1); margin-top: var(--space-3); border: 1px solid #eadba9; border-radius: var(--radius-menu); background: #fffaf0; padding: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
+.verificationSummary { display: grid; gap: var(--space-1); margin-top: var(--space-3); border: 1px solid var(--color-amber-border); border-radius: var(--radius-menu); background: var(--color-amber-surface); padding: var(--space-2); color: var(--color-text); font-size: var(--font-size-body-sm); }
 .verificationSummary > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); }
 .verificationSummary p { display: grid; gap: 3px; margin: 0; line-height: 1.4; }
 .verificationSummary p span, .verificationSummary small { color: var(--color-text-muted); font-size: var(--font-size-caption); }

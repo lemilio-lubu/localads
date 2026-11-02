@@ -18,9 +18,9 @@
 /* Las entradas con enlace (p. ej. «cómo pagar») se ven igual que «cerrar sesión». */
 .menu a { display: block; width: 100%; border-radius: var(--space-1); padding: var(--space-1) 12px; color: var(--color-text-muted); text-align: left; text-decoration: none; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out); }
 .menu a:focus-visible { outline: 2px solid rgb(11 89 1 / 20%); }
-.menu a:active { background: #edf4ec; color: var(--color-text); }
+.menu a:active { background: var(--color-brand-surface); color: var(--color-text); }
 .menu button:focus-visible { outline: 2px solid rgb(11 89 1 / 20%); }
-.menu button:active { background: #edf4ec; color: var(--color-text); }
+.menu button:active { background: var(--color-brand-surface); color: var(--color-text); }
 
 /* Al pie de la barra lateral el menú sube: abrir hacia abajo lo sacaría de la pantalla. */
 .dropUp .menu { top: auto; right: auto; left: 0; bottom: calc(100% + var(--space-1)); transform-origin: bottom left; }

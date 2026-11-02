@@ -6,4 +6,4 @@
    así que el texto blanco mantiene el contraste AA. */
 .warning { background: var(--color-status-warning); }
 .danger { background: var(--color-danger); }
-.neutral { background: #5f5f5f; color: var(--color-text-on-fill); }
+.neutral { background: var(--color-status-neutral); color: var(--color-text-on-fill); }

@@ -38,7 +38,7 @@
    que una fila de las otras listas. */
 .actions { display: grid; align-self: center; align-content: center; gap: var(--space-1); }
 .actions button, .reject button { display: inline-flex; min-height: var(--button-height); align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-3); color: var(--color-text); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; transform: scale(1); transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out); }
-.rejectButton { background: #fbecec !important; color: var(--color-danger) !important; }
+.rejectButton { background: var(--color-danger-soft) !important; color: var(--color-danger) !important; }
 .approveButton, .dangerButton { color: var(--color-text-on-fill) !important; }
 .approveButton { background: var(--color-brand) !important; }
 .dangerButton { background: var(--color-danger) !important; }
@@ -62,9 +62,9 @@
 
 @media (hover: hover) and (pointer: fine) {
   .actions button:not(:disabled):hover, .reject button:not(:disabled):hover { background: var(--color-surface-hover); }
-  .rejectButton:hover { background: #f7dede !important; }
+  .rejectButton:hover { background: var(--color-danger-soft-hover) !important; }
   .approveButton:hover { background: var(--color-brand-hover) !important; }
-  .dangerButton:hover { background: #7d0002 !important; }
+  .dangerButton:hover { background: var(--color-danger-hover) !important; }
 }
 @media (max-width: 1180px) { .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .actions { grid-column: 1 / -1; grid-auto-flow: column; justify-content: end; } }
 @media (max-width: 760px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .actions { grid-auto-columns: 1fr; justify-content: stretch; } }

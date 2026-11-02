@@ -65,6 +65,31 @@
   --color-google-strong: #765700;
   --color-tiktok-strong: #c51640;
 
+  /* Avisos ámbar (credenciales, verificación de pagos). Había tres fondos casi
+     iguales (#fff6e0, #fffaf0, #fff8e8): queda el último. Los textos son más
+     oscuros que --color-accent-amber porque van sobre ese fondo, no sobre blanco. */
+  --color-amber-surface: #fff8e8;
+  --color-amber-border: #eadba9;
+  --color-amber-text: #795200;
+  --color-amber-text-strong: #654900;
+  --color-amber-text-soft: #725f2c;
+  /* Botón «observar» de verificaciones y su estado con el puntero encima. */
+  --color-amber-action: #7a5900;
+  --color-amber-action-hover: #624700;
+  /* Rojos de acción: botón «rechazar» suave y el relleno de peligro con el
+     puntero encima, un peldaño más oscuro que --color-danger. */
+  --color-danger-soft: #fbecec;
+  --color-danger-soft-hover: #f7dede;
+  --color-danger-hover: #7d0002;
+  /* Pastilla de estado neutra: gris sólido con texto blanco (6,4:1). */
+  --color-status-neutral: #5f5f5f;
+  /* Fondo donde se muestra un comprobante, todavía sin cargar. */
+  --color-preview-surface: #eef0ed;
+  /* Zona de subida que ya tiene comprobante: verde apenas insinuado. */
+  --color-brand-surface-soft: #fbfffb;
+  /* Marco del mazo de tarjetas de activos. */
+  --color-deck-border: #c0b7b7;
+
   /* 8-point spacing scale */
   --space-1: 8px;
   --space-half: 4px;
