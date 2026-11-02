@@ -95,7 +95,7 @@ export default function ActivationsDashboard() {
 
         {rejecting === item.id
           ? <div className={styles.reject}>
-              <label>Motivo del rechazo<TextArea surface="soft" shape="small" tone="danger" autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+              <label>Motivo del rechazo<TextArea tone="danger" autoFocus maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
               <div><button type="button" onClick={() => { setRejecting(null); setReason(""); }}>Cancelar</button><button type="button" className={styles.dangerButton} disabled={!reason.trim() || busy === item.id} onClick={() => void act(item, "reject")}><X size={16} aria-hidden="true" />Confirmar rechazo</button></div>
             </div>
           : <div className={styles.actions}>

@@ -39,8 +39,6 @@
 .reviewForm { display: grid; width: 100%; gap: 10px; opacity: 1; transition: opacity var(--duration-fast) var(--ease-out); }
 @starting-style { .reviewForm { opacity: 0; } }
 .reviewForm label { display: grid; gap: 6px; color: var(--color-text-muted); font-size: var(--font-size-caption); }
-/* El aspecto es de TextInput/TextArea (text-field); aquí solo lo propio de este campo. */
-.reviewForm textarea { padding: 10px; font-size: var(--font-size-caption); }
 .reviewForm > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
 .reviewForm button { background: var(--color-surface-muted); color: var(--color-text); }
 .reviewForm button:last-child { background: var(--color-amber-action); color: var(--color-text-on-fill); }

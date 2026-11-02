@@ -48,8 +48,6 @@
 
 .reject { grid-column: 1 / -1; display: grid; gap: var(--space-1); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
 .reject label { display: grid; gap: var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-caption); }
-/* El aspecto es de TextInput/TextArea (text-field); aquí solo lo propio de este campo. */
-.reject textarea { font-size: var(--font-size-body-sm); }
 .reject > div { display: flex; justify-content: flex-end; gap: var(--space-1); }
 
 /* El fallo al resolver pertenece a la solicitud que se tocó, no al listado. */
