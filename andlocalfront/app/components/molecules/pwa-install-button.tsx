@@ -2,6 +2,7 @@
 
 import { Download, Share, X } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Button from "../atoms/button";
 import styles from "./pwa-install-button.module.css";
 
 type InstallPromptEvent = Event & {
@@ -126,8 +127,8 @@ export default function PwaInstallButton({ className = "" }: { className?: strin
         <li><span>2</span><p>Elige <b>Añadir a pantalla de inicio</b> y confirma.</p></li>
       </ol> : <p className={styles.helpText}>Abre el menú de tu navegador y elige <b>Instalar app</b> o <b>Añadir a pantalla principal</b>.</p>}
       <div className={styles.dialogActions}>
-        <button type="button" className={styles.done} onClick={() => setShowHelp(false)}>Cerrar</button>
-        <button type="button" className={styles.done} onClick={() => { markInstalled(); setShowHelp(false); }}>Ya la instalé</button>
+        <Button variant="secondary" onClick={() => setShowHelp(false)}>Cerrar</Button>
+        <Button onClick={() => { markInstalled(); setShowHelp(false); }}>Ya la instalé</Button>
       </div>
     </dialog>}
   </>;
