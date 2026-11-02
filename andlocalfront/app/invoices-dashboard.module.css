@@ -13,9 +13,8 @@
    y mismo fondo que el resto de controles del producto. */
 /* El padding interior cede antes que el ancho: el campo tiene que caber en la
    línea, pero «dd/mm/aaaa» no puede rozar el icono del calendario. */
-/* El aspecto es de TextInput (text-field); aquí el ancho, la letra y sin borde,
-   como siempre: el de la superficie filled lo estrecharía 1px por dentro. */
-.filterGroup input[type="date"] { width: 124px; border: 0; padding: 0 var(--space-1); font-size: var(--font-size-caption); }
+/* El aspecto es de TextInput (text-field); aquí solo el ancho y la letra. */
+.filterGroup input[type="date"] { width: 124px; padding: 0 var(--space-1); font-size: var(--font-size-caption); }
 .platformFilter { display: inline-grid; min-width: var(--hit-target); min-height: var(--hit-target); place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; padding-inline: var(--space-half); cursor: pointer; transition: box-shadow var(--duration-fast) var(--ease-out); }
 /* El estado lo dice el relleno de la pastilla; el anillo lo repetia. */
 .platformFilter[aria-pressed="true"] { box-shadow: none; }
