@@ -2,12 +2,15 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Forbi
 import { Reflector } from "@nestjs/core";
 import { AccessTokenService } from "./access-token.service";
 import { ALLOWS_TEMPORARY_PASSWORD_KEY, IS_PUBLIC_KEY, ROLES_KEY } from "./auth.decorators";
-import { AuthPrincipal, AuthRole } from "./auth.types";
+import { AccessPayload, AuthPrincipal, AuthRole } from "./auth.types";
+import { SessionStateService } from "./session-state.service";
 
+/* Autentica y, ademas, comprueba que el token siga vigente para su usuario
+   (activo, mismo rol, misma version): ver SessionStateService. */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector, private readonly tokens: AccessTokenService) {}
-  canActivate(context: ExecutionContext): boolean {
+  constructor(private readonly reflector: Reflector, private readonly tokens: AccessTokenService, private readonly sessions: SessionStateService) {}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [context.getHandler(), context.getClass()])) return true;
     if (context.getType() === "ws") {
       const client = context.switchToWs().getClient<{
@@ -17,19 +20,23 @@ export class JwtAuthGuard implements CanActivate {
       if (client.data?.user) return true;
       const raw = client.handshake?.auth?.accessToken;
       if (typeof raw !== "string") throw new UnauthorizedException("Debes iniciar sesión");
-      try {
-        const user = this.tokens.verify(raw);
-        client.data ??= {};
-        client.data.user = user;
-        return true;
-      } catch {
-        throw new UnauthorizedException("La sesión expiró o no es válida");
-      }
+      const user = await this.current(raw);
+      client.data ??= {};
+      client.data.user = user;
+      return true;
     }
     const request = context.switchToHttp().getRequest<{ headers: Record<string, string | string[] | undefined>; user?: AuthPrincipal }>();
     const authorization = request.headers.authorization; const value = Array.isArray(authorization) ? authorization[0] : authorization;
     if (!value?.startsWith("Bearer ")) throw new UnauthorizedException("Debes iniciar sesión");
-    try { request.user = this.tokens.verify(value.slice(7)); return true; } catch { throw new UnauthorizedException("La sesión expiró o no es válida"); }
+    request.user = await this.current(value.slice(7));
+    return true;
+  }
+
+  private async current(raw: string): Promise<AccessPayload> {
+    let payload: AccessPayload;
+    try { payload = this.tokens.verify(raw); } catch { throw new UnauthorizedException("La sesión expiró o no es válida"); }
+    if (!(await this.sessions.isCurrent(payload))) throw new UnauthorizedException("La sesión ya no es válida");
+    return payload;
   }
 }
 

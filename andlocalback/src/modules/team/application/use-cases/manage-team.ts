@@ -70,4 +70,14 @@ export class ManageTeam {
     if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
     return { ...updated, credentials: { username: member.username, temporaryPassword: issued.temporaryPassword } };
   }
+
+  /* Nadie se quita a si mismo el doble factor: con una sesion robada bastaria
+     para dejar la cuenta solo con la contrasena. Lo hace otro admin. */
+  async resetMfa(id: string, actorId: string) {
+    if (id === actorId) throw new ApplicationError("MFA_SELF_RESET", "El doble factor propio lo restablece otro administrador", 403);
+    await this.get(id);
+    const updated = await this.team.resetMfa(id);
+    if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
+    return updated;
+  }
 }

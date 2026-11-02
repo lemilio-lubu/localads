@@ -2,7 +2,7 @@ import { ExecutionContext, Injectable } from "@nestjs/common";
 import { ThrottlerGuard, ThrottlerModuleOptions } from "@nestjs/throttler";
 import { AuthPrincipal } from "./auth.types";
 
-type ThrottledRequest = { ip?: string; user?: AuthPrincipal; body?: { username?: unknown } };
+type ThrottledRequest = { ip?: string; user?: AuthPrincipal; body?: { username?: unknown; challengeToken?: unknown } };
 
 const minute = 60_000;
 const positive = (value: string | undefined, fallback: number) => {
@@ -31,6 +31,19 @@ export const loginRateLimit = (env: NodeJS.ProcessEnv = process.env) => ({
     },
   },
 });
+
+/* El paso del doble factor se cuenta por IP y reto: cada login da un reto
+   nuevo, y los fallos de codigo suman ademas al bloqueo de la cuenta. */
+export const mfaRateLimit = {
+  default: {
+    ttl: minute,
+    limit: 10,
+    getTracker: (request: ThrottledRequest) => {
+      const challenge = typeof request.body?.challengeToken === "string" ? request.body.challengeToken.slice(-16) : "";
+      return `${request.ip ?? "unknown"}:mfa:${challenge}`;
+    },
+  },
+};
 
 /* Cambiar la clave exige la actual: limitarlo frena adivinarla con una sesion robada. */
 export const passwordChangeRateLimit = { default: { ttl: 15 * minute, limit: 5 } };

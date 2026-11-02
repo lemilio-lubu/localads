@@ -12,4 +12,4 @@ export type AuthPrincipal = Readonly<{ userId: string; username: string; role: A
    con el que se muestra a la persona. No viaja en el token (no es de seguridad
    y se desactualizaría si se edita el nombre); solo en la respuesta. */
 export type SessionUser = AuthPrincipal & Readonly<{ displayName: string }>;
-export type AccessPayload = AuthPrincipal & Readonly<{ type: "access"; iat: number; exp: number; iss: string; aud: string }>;
+export type AccessPayload = AuthPrincipal & Readonly<{ type: "access"; iat: number; exp: number; iss: string; aud: string; tv?: number }>;

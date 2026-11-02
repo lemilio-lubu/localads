@@ -23,6 +23,8 @@ export function environmentProblems(env: NodeJS.ProcessEnv = process.env): strin
   if (!origin) problems.push("FRONTEND_ORIGIN es obligatorio");
   else if (!/^https:\/\/[^/*\s]+$/.test(origin)) problems.push("FRONTEND_ORIGIN debe ser un unico origen https, sin comodines ni ruta");
   if (!env.DATABASE_URL?.trim()) problems.push("DATABASE_URL es obligatorio");
+  const mfaKey = env.MFA_ENCRYPTION_KEY?.trim();
+  if (!mfaKey || Buffer.from(mfaKey, "base64").length !== 32) problems.push("MFA_ENCRYPTION_KEY debe ser una clave aleatoria de 32 bytes en base64 (openssl rand -base64 32)");
   const hops = env.TRUST_PROXY_HOPS;
   if (hops !== undefined && !/^\d+$/.test(hops)) problems.push("TRUST_PROXY_HOPS debe ser un entero");
   return problems;

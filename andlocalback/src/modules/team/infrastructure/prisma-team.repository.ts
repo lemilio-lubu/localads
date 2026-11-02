@@ -144,10 +144,11 @@ export class PrismaTeamRepository implements TeamRepository {
 
   async resetPassword(id: string, passwordHash: string) {
     try {
-      /* La clave nueva tambien revoca las sesiones: si la cuenta estaba en
-         manos equivocadas, la sesion abierta muere con el restablecimiento. */
+      /* La clave nueva tambien revoca las sesiones y el access token en curso
+         (tokenVersion): si la cuenta estaba en manos equivocadas, muere con el
+         restablecimiento. Tambien levanta un bloqueo por intentos fallidos. */
       const [record] = await this.prisma.$transaction([
-        this.prisma.authUser.update({ where: { id }, data: { passwordHash, mustChangePassword: true } }),
+        this.prisma.authUser.update({ where: { id }, data: { passwordHash, mustChangePassword: true, tokenVersion: { increment: 1 }, failedLoginCount: 0, lockedUntil: null } }),
         this.prisma.refreshSession.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } }),
       ]);
       return this.toView(record, await this.metrics(id));
@@ -155,6 +156,16 @@ export class PrismaTeamRepository implements TeamRepository {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") return null;
       throw error;
     }
+  }
+
+  async resetMfa(id: string) {
+    const current = await this.prisma.authUser.findFirst({ where: { id, role: { in: [...TEAM_ROLES] } }, select: { id: true } });
+    if (!current) return null;
+    const [record] = await this.prisma.$transaction([
+      this.prisma.authUser.update({ where: { id }, data: { mfaSecret: null, mfaEnabledAt: null, mfaLastStep: null, mfaRecoveryCodes: [], tokenVersion: { increment: 1 } } }),
+      this.prisma.refreshSession.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } }),
+    ]);
+    return this.toView(record, await this.metrics(id));
   }
 
   private async metrics(id: string) {
@@ -173,6 +184,7 @@ export class PrismaTeamRepository implements TeamRepository {
       role: record.role as TeamRole,
       status: record.status as "ACTIVE" | "INACTIVE",
       mustChangePassword: record.mustChangePassword,
+      mfaEnabled: record.mfaEnabledAt !== null,
       createdAt: record.createdAt.toISOString(),
       metrics,
     };

@@ -8,6 +8,8 @@ export type TeamMemberView = Readonly<{
   role: TeamRole;
   status: "ACTIVE" | "INACTIVE";
   mustChangePassword: boolean;
+  /* Si ya configuro el doble factor. Sin el, su proximo login le pide hacerlo. */
+  mfaEnabled: boolean;
   createdAt: string;
   /* Las dos cajas del mockup. «cuentas» son los clientes asignados y «ventas»
      las recargas completadas de esa cartera: ambas solo tienen sentido para un
@@ -42,6 +44,9 @@ export interface TeamRepository {
      ser una eleccion escrita, no lo que pasa cuando nadie dice nada. */
   deactivate(id: string, destination: PortfolioDestination): Promise<Readonly<{ member: TeamMemberView; movedClients: number }> | null>;
   resetPassword(id: string, passwordHash: string): Promise<TeamMemberView | null>;
+  /* Borra el segundo factor (movil perdido) y cierra sus sesiones: el
+     siguiente login le obliga a configurarlo de nuevo. */
+  resetMfa(id: string): Promise<TeamMemberView | null>;
 }
 
 export const TEAM_REPOSITORY = Symbol("TEAM_REPOSITORY");

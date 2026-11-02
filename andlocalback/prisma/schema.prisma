@@ -25,6 +25,21 @@ model AuthUser {
   // Quien creo la cuenta. Un gestor solo puede crear clientes, y esto deja
   // rastro de quien lo hizo sin necesidad de una tabla de auditoria.
   createdById  String?
+  // Se incrementa al cambiar o restablecer la clave y al restablecer el doble
+  // factor: los tokens de acceso firmados antes dejan de valer al momento.
+  tokenVersion       Int        @default(0)
+  // Intentos fallidos seguidos; al quinto la cuenta se bloquea un rato que se
+  // duplica con cada fallo extra. Un acceso correcto los pone a cero.
+  failedLoginCount   Int        @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  // Doble factor (TOTP). El secreto va cifrado con MFA_ENCRYPTION_KEY; los
+  // codigos de recuperacion, solo como hash. mfaLastStep impide reutilizar un
+  // codigo ya aceptado dentro de su ventana de 30 segundos.
+  mfaSecret          String?
+  mfaEnabledAt       DateTime?
+  mfaLastStep        Int?
+  mfaRecoveryCodes   String[]   @default([])
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   sessions     RefreshSession[]
@@ -39,6 +54,9 @@ model RefreshSession {
   userId       String
   tokenHash    String    @unique
   familyId     String
+  // Cuando se abrio la sesion (el login), comun a toda la familia: marca el
+  // tope absoluto, que la rotacion no puede alargar.
+  familyCreatedAt DateTime  @default(now())
   expiresAt    DateTime
   revokedAt    DateTime?
   replacedById String?

@@ -58,7 +58,7 @@ describe("eventos de verificaciones fase 11", () => {
     const emit = vi.fn();
     const transport = { to: vi.fn(), emit };
     transport.to.mockReturnValue(transport);
-    const gateway = new TransactionsGateway({} as never, { managerOfAccount: async () => null } as never);
+    const gateway = new TransactionsGateway({} as never, { managerOfAccount: async () => null } as never, { isCurrent: async () => true } as never);
     (gateway as unknown as { server: typeof transport }).server = transport;
 
     gateway.publishVerification({

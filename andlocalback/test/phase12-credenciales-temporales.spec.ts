@@ -1,4 +1,4 @@
-import { ForbiddenException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { TemporaryPasswordGuard } from "../src/modules/auth/auth.guards";
 import { AuthService } from "../src/modules/auth/auth.service";
@@ -102,7 +102,7 @@ describe("Fase 12 - cambio de contraseña", () => {
     const authUser = { findUnique: vi.fn().mockResolvedValue({ id: "u1", passwordHash: stored }), update: vi.fn() };
     const refreshSession = { updateMany: vi.fn() };
     const database = { authUser, refreshSession, $transaction: vi.fn().mockResolvedValue([]) };
-    return { database, service: new AuthService(database as never, passwords, {} as never) };
+    return { database, service: new AuthService(database as never, passwords, {} as never, {} as never, { invalidate: vi.fn() } as never) };
   }
 
   it("rechaza si la contraseña actual no coincide", async () => {
@@ -111,14 +111,20 @@ describe("Fase 12 - cambio de contraseña", () => {
   });
 
   it("rechaza repetir la misma contraseña: dejaría la cuenta con la clave temporal", async () => {
+    const { service: auth } = await service(await passwords.hash("temporal-larga-1"));
+    await expect(auth.changePassword("u1", "temporal-larga-1", "temporal-larga-1")).rejects.toThrow(BadRequestException);
+  });
+
+  it("rechaza una clave nueva corta o común (NIST 800-63B)", async () => {
     const { service: auth } = await service(await passwords.hash("temporal-1"));
-    await expect(auth.changePassword("u1", "temporal-1", "temporal-1")).rejects.toThrow(UnauthorizedException);
+    await expect(auth.changePassword("u1", "temporal-1", "corta-1")).rejects.toThrow(/al menos 12/);
+    await expect(auth.changePassword("u1", "temporal-1", "Password1234")).rejects.toThrow(/común/);
   });
 
   it("al cambiarla limpia la bandera y revoca las sesiones abiertas, en una transacción", async () => {
     const { database, service: auth } = await service(await passwords.hash("temporal-1"));
     await expect(auth.changePassword("u1", "temporal-1", "nueva-larga-9")).resolves.toEqual({ success: true });
-    expect(database.authUser.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ mustChangePassword: false }) }));
+    expect(database.authUser.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ mustChangePassword: false, tokenVersion: { increment: 1 } }) }));
     expect(database.refreshSession.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1", revokedAt: null } }));
     expect(database.$transaction).toHaveBeenCalledTimes(1);
   });
