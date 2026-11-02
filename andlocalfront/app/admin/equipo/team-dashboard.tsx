@@ -15,6 +15,7 @@ import LoadError from "../../components/molecules/load-error";
 import TextButton from "../../components/atoms/text-button";
 import ToolbarButton from "../../components/atoms/toolbar-button";
 import RowActionButton from "../../components/atoms/row-action-button";
+import RowOpener from "../../components/atoms/row-opener";
 import RowActions from "../../components/molecules/row-actions";
 
 /* Mismos iconos de lucide que el resto de filtros: pintan con `currentColor`,
@@ -144,7 +145,7 @@ export default function TeamDashboard() {
       <div className={styles.list} aria-live="polite" aria-busy={loading}>
         {!loading && !error && visible.map((member) => (
           <article key={member.id} className={`${styles.row} ${member.status === "INACTIVE" ? styles.inactive : ""}`}>
-            <button type="button" className={styles.openDetail} onClick={() => openMember(member.id)} aria-label={`Ver detalle de ${member.name || member.username}`} aria-haspopup="dialog" />
+            <RowOpener label={`Ver detalle de ${member.name || member.username}`} onClick={() => openMember(member.id)} />
             <div className={styles.identity}>
               <small>equipo</small>
               <strong>{member.name || member.username}</strong>

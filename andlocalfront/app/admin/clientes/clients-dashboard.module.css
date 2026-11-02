@@ -33,10 +33,8 @@
    siguiente. */
 .clientList { display: grid; gap: var(--space-4); }
 .clientRow { position: relative; display: grid; min-height: var(--space-15); grid-template-columns: minmax(var(--space-20), 1.618fr) minmax(var(--space-12), 1fr) minmax(var(--space-10), .618fr) minmax(var(--space-15), 1.272fr) minmax(var(--space-10), .786fr) minmax(var(--space-10), .786fr) minmax(var(--space-15), 1fr); align-items: stretch; gap: var(--space-1); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-2); transform: scale(1); transform-origin: center; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out), opacity var(--duration-ui) var(--ease-out); }
-.openDetailButton { position: absolute; z-index: 1; inset: 0; border: 0; border-radius: inherit; outline: 0; background: transparent; cursor: pointer; }
-.openDetailButton:focus-visible { box-shadow: inset var(--focus-ring); }
-.clientRow:has(.openDetailButton:active) { transform: scale(.99); }
-.clientRow > *:not(.openDetailButton, .rowActions) { pointer-events: none; }
+.clientRow:has([data-row-opener]:active) { transform: scale(.99); }
+.clientRow > *:not([data-row-opener], .rowActions) { pointer-events: none; }
 .clientIdentity { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: var(--space-half); }
 .clientIdentity small { color: var(--color-text); font-size: var(--font-size-micro); font-weight: var(--font-weight-regular); }
 .clientIdentity > strong { max-width: 100%; overflow: hidden; color: var(--color-text); font-size: var(--font-size-nav); text-overflow: ellipsis; white-space: nowrap; }
@@ -62,7 +60,7 @@
 @media (max-width: 650px) { .toolbar > .search { grid-row: 1; } .toolbar > .filters { grid-row: 2; } .toolbar > .createButton { grid-column: 1; grid-row: 3; justify-self: start; } }
 @media (max-width: 650px) { .filters { justify-content: start; } .filters > span { flex-basis: 100%; margin-right: 0; } .clientRow { grid-template-columns: 1fr 1fr; } .clientIdentity, .rowActions { grid-column: 1 / -1; grid-row: auto; } }
 @media (prefers-reduced-motion: reduce) { .filters button, .clientRow { transition-duration: 0ms; }
-  .skeleton { animation: none; } .clientRow:has(.openDetailButton:active) { transform: none; } }
+  .skeleton { animation: none; } .clientRow:has([data-row-opener]:active) { transform: none; } }
 
 /* Fase 4: recuento visible y salida de los filtros. */
 .listMeta { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); padding: 0 var(--space-3) var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-caption); }

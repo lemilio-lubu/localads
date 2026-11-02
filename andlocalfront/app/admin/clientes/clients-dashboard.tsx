@@ -19,6 +19,7 @@ import LoadError from "../../components/molecules/load-error";
 import TextButton from "../../components/atoms/text-button";
 import ToolbarButton from "../../components/atoms/toolbar-button";
 import RowActionButton from "../../components/atoms/row-action-button";
+import RowOpener from "../../components/atoms/row-opener";
 import RowActions from "../../components/molecules/row-actions";
 
 /* Los iconos son de lucide y no SVG de marca a propósito: pintan con
@@ -131,7 +132,7 @@ export default function ClientsDashboard() {
       <div className={styles.clientList} aria-live="polite" aria-busy={loading}>
         {visibleClients.map((client) => (
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
-            <button type="button" className={styles.openDetailButton} onClick={() => setSelectedClient(client)} aria-label={`Ver detalle de ${client.name}`} aria-haspopup="dialog" />
+            <RowOpener label={`Ver detalle de ${client.name}`} onClick={() => setSelectedClient(client)} />
             <div className={styles.clientIdentity}><small>clientes</small><strong>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
             <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
