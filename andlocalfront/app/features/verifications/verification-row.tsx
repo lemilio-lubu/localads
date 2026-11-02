@@ -8,6 +8,7 @@ import { formatAmount } from "../../lib/format";
 import { verificationStatusLabel } from "../../lib/status-labels";
 import { verificationStatusTone } from "../../lib/status-tone";
 import styles from "./verification-row.module.css";
+import ListCell from "../../components/atoms/list-cell";
 
 /* Una transferencia por verificar en la lista. Abrir la revisión lo resuelve
    la pantalla: aquí solo se pinta y se avisa. */
@@ -18,9 +19,9 @@ export default function VerificationRow({ item, busy, onOpen }: { item: PendingV
     <div className={`${styles.cell} ${styles.codeCell}`}><strong>cliente</strong><span className={styles.clientName}>{item.clientName}</span>
       <CopyCode code={item.transactionCode} tone="strong" size="small" mono />
     </div>
-    <div className={styles.cell}><strong>banco de origen</strong><span>{item.bank ?? "No identificado"}</span></div>
-    <div className={styles.cell}><strong>a verificar / a recargar</strong><span className={styles.expected}>{formatAmount(item.expectedTransferAmount)}</span><span className={styles.detected}>recarga {formatAmount(item.requestedPautaAmount)}</span></div>
-    <div className={styles.cell}><strong>estado</strong><StatusPill tone={verificationStatusTone(item.status)}>{verificationStatusLabel(item.status)}</StatusPill>{item.decidedByName && <span className={styles.holder}>por {item.decidedByName}</span>}</div>
+    <ListCell className={styles.cell} label="banco de origen"><span>{item.bank ?? "No identificado"}</span></ListCell>
+    <ListCell className={styles.cell} label="a verificar / a recargar"><span className={styles.expected}>{formatAmount(item.expectedTransferAmount)}</span><span className={styles.detected}>recarga {formatAmount(item.requestedPautaAmount)}</span></ListCell>
+    <ListCell className={styles.cell} label="estado"><StatusPill tone={verificationStatusTone(item.status)}>{verificationStatusLabel(item.status)}</StatusPill>{item.decidedByName && <span className={styles.holder}>por {item.decidedByName}</span>}</ListCell>
     <RowDetailLink className={styles.reviewButton} disabled={busy} onClick={onOpen}>revisar</RowDetailLink>
   </article>;
 }

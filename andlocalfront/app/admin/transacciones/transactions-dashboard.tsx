@@ -24,6 +24,7 @@ import SearchField from "../../components/molecules/search-field";
 import Pagination from "../../components/molecules/pagination";
 import { TextInput } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
+import ListCell from "../../components/atoms/list-cell";
 
 const PAGE_SIZE = 20;
 
@@ -117,15 +118,15 @@ export default function TransactionsDashboard() {
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>
       {transactions.map((item) => <article key={item.id} className={styles.row}>
-        <div className={styles.cell}><strong>cliente</strong><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></div>
+        <ListCell className={styles.cell} label="cliente"><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></ListCell>
         <DateCell value={item.createdAt} />
         <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {accountTypeLabel(item.accountTypeSnapshot)}</strong>
           <CopyCode code={item.code} tone="strong" size="small" mono />
         </div>
-        <div className={styles.cell}><strong>inversión / total</strong><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></div>
-        <div className={styles.cell}><strong>recarga / pago</strong><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
+        <ListCell className={styles.cell} label="inversión / total"><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></ListCell>
+        <ListCell className={styles.cell} label="recarga / pago"><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
           {item.dueDate && (item.paymentStatus === "IN_CREDIT" || item.paymentStatus === "OVERDUE") && <span className={`${styles.dueDate} ${item.paymentStatus === "OVERDUE" ? styles.dueOverdue : ""}`}>{dueLabel(item.dueDate)}</span>}
-        </div>
+        </ListCell>
         <div className={styles.platforms} aria-label="Plataformas">{item.platforms.map((platform) => <PlatformPill key={platform} platform={platform.toLowerCase() as AdvertisingPlatform} size="compact" />)}</div>
         <RowDetailLink className={styles.detailsButton} disabled={detailLoading} onClick={() => void open(item.id)}>ver detalles</RowDetailLink>
       </article>)}

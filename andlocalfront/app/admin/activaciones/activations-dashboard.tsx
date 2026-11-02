@@ -18,6 +18,7 @@ import SearchField from "../../components/molecules/search-field";
 import LoadError from "../../components/molecules/load-error";
 import { TextArea } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
+import ListCell from "../../components/atoms/list-cell";
 
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
@@ -83,16 +84,16 @@ export default function ActivationsDashboard() {
       {!loading && !error && visible.map((item) => <article key={item.id} className={styles.row}>
         {/* Primero de qué cliente es: su nombre y RUC. Quien la pidió y su
             teléfono van debajo, para contactarle. */}
-        <div className={styles.cell}><strong>cliente</strong><span className={styles.requester}>{item.clientName ?? "cliente sin nombre"}</span>{item.clientRuc && <span className={styles.subtle}>RUC {item.clientRuc}</span>}<span className={styles.subtle} title={`${item.requesterName} · ${item.phone}`}>{item.requesterName} · {item.phone}</span></div>
-        <div className={styles.cell}><strong>plataforma</strong><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span className={styles.subtle}>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></div>
-        <div className={styles.cell}><strong>cuenta externa</strong><span title={item.externalAccountId}>{item.externalAccountId}</span></div>
-        <div className={styles.cell}><strong>primera recarga</strong><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span></div>
-        <div className={styles.cell}><strong>estado</strong><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}
+        <ListCell className={styles.cell} label="cliente"><span className={styles.requester}>{item.clientName ?? "cliente sin nombre"}</span>{item.clientRuc && <span className={styles.subtle}>RUC {item.clientRuc}</span>}<span className={styles.subtle} title={`${item.requesterName} · ${item.phone}`}>{item.requesterName} · {item.phone}</span></ListCell>
+        <ListCell className={styles.cell} label="plataforma"><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span className={styles.subtle}>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></ListCell>
+        <ListCell className={styles.cell} label="cuenta externa"><span title={item.externalAccountId}>{item.externalAccountId}</span></ListCell>
+        <ListCell className={styles.cell} label="primera recarga"><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span></ListCell>
+        <ListCell className={styles.cell} label="estado"><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}
           {/* Tomar el caso no decide nada: marca quién lo lleva. Vive junto al
               estado, donde luego aparece «por …», y no entre los botones de
               decisión, donde parecía un paso obligatorio. Activar o rechazar
               funcionan igual sin tomarlo. */}
-          {item.status === "PENDING" && <button type="button" className={styles.claim} disabled={busy === item.id} title="Marca la solicitud como tuya para que el equipo sepa que la estás revisando" onClick={() => void act(item, "review")}>tomar el caso</button>}<span className={styles.subtle}>{formatDateTime(item.createdAt)}</span></div>
+          {item.status === "PENDING" && <button type="button" className={styles.claim} disabled={busy === item.id} title="Marca la solicitud como tuya para que el equipo sepa que la estás revisando" onClick={() => void act(item, "review")}>tomar el caso</button>}<span className={styles.subtle}>{formatDateTime(item.createdAt)}</span></ListCell>
 
         {rejecting === item.id
           ? <div className={styles.reject}>

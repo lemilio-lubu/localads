@@ -1,4 +1,5 @@
 import { formatClock, formatDay } from "../../lib/format";
+import ListCell from "./list-cell";
 import styles from "./list-row.module.css";
 
 /**
@@ -12,10 +13,9 @@ import styles from "./list-row.module.css";
  */
 export default function DateCell({ value, label = "fecha" }: { value: string; label?: string }) {
   return (
-    <div className={styles.cell}>
-      <strong>{label}</strong>
+    <ListCell label={label}>
       <span>{formatDay(value)}</span>
       <span className={styles.subtle}>{formatClock(new Date(value))}</span>
-    </div>
+    </ListCell>
   );
 }

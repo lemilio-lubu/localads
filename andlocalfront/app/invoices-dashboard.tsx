@@ -26,6 +26,7 @@ import TextButton from "./components/atoms/text-button";
 import EmptyAction from "./components/atoms/empty-action";
 import RowDetailLink from "./components/atoms/row-detail-link";
 import { TextInput } from "./components/atoms/text-field";
+import ListCell from "./components/atoms/list-cell";
 
 const formatDate = formatDateTime;
 /** Traduce el fallo a algo accionable: el texto crudo del navegador no ayuda. */
@@ -157,11 +158,11 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
           <div className={`${styles.cell} ${styles.codeCell}`}><strong><Image src="/figma/money.svg" alt="" width={16} height={16} /> código</strong>
             <CopyCode code={item.code} tone="muted" size="body" />
           </div>
-          <div className={styles.cell}><strong>inversión / total</strong><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></div>
-          <div className={styles.cell}><strong>recarga / pago</strong><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
+          <ListCell className={styles.cell} label="inversión / total"><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></ListCell>
+          <ListCell className={styles.cell} label="recarga / pago"><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>
             {item.dueDate && (item.paymentStatus === "IN_CREDIT" || item.paymentStatus === "OVERDUE") &&
               <span className={`${styles.dueDate} ${item.paymentStatus === "OVERDUE" ? styles.dueOverdue : ""}`}>{dueLabel(item.dueDate)}</span>}
-          </div>
+          </ListCell>
           <div className={styles.platforms} aria-label="Plataformas">{item.platforms.map((value) => <PlatformPill key={value} platform={value.toLowerCase() as AdvertisingPlatform} size="compact" />)}</div>
           <RowDetailLink className={styles.detailsLink} disabled={detailLoading} onClick={() => void openDetail(item.id)}>ver detalles</RowDetailLink>
         </article>)}
