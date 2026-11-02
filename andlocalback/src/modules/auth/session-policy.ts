@@ -32,6 +32,3 @@ export function lockoutUntil(failedCount: number, now = new Date()): Date | null
   return new Date(now.getTime() + minutes * minute);
 }
 
-/* El doble factor es opcional para todos. Al equipo, que aprueba dinero, se
-   le sugiere al entrar mientras no lo tenga; puede posponerlo. */
-export const suggestsMfa = (role: AuthRole) => role === "ADMIN" || role === "GESTOR";

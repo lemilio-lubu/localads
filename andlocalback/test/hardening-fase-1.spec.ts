@@ -5,7 +5,7 @@ import { AuthService, IssuedSession, MfaChallenge } from "../src/modules/auth/au
 import { MfaSecretCipher } from "../src/modules/auth/mfa-secret-cipher";
 import { PasswordService } from "../src/modules/auth/password.service";
 import { passwordProblem } from "../src/modules/auth/password-policy";
-import { lockoutUntil, refreshExpiry, sessionLimits, suggestsMfa } from "../src/modules/auth/session-policy";
+import { lockoutUntil, refreshExpiry, sessionLimits } from "../src/modules/auth/session-policy";
 import { SessionStateService } from "../src/modules/auth/session-state.service";
 import { base32Decode, base32Encode, hotp, totpStep, verifyTotp } from "../src/modules/auth/totp";
 
@@ -70,10 +70,6 @@ describe("politicas de sesion y contrasena", () => {
     expect(lockoutUntil(5, now)?.getTime()).toBe(15 * minute);
     expect(lockoutUntil(6, now)?.getTime()).toBe(30 * minute);
     expect(lockoutUntil(40, now)?.getTime()).toBe(day);
-  });
-
-  it("el doble factor solo se le sugiere al equipo", () => {
-    expect([suggestsMfa("ADMIN"), suggestsMfa("GESTOR"), suggestsMfa("CLIENT")]).toEqual([true, true, false]);
   });
 
   it("pide 12 caracteres, rechaza claves comunes o con el usuario y no exige simbolos", () => {
@@ -210,12 +206,11 @@ describe("login, bloqueo y doble factor", () => {
     expect(user.lastLoginAt).toBeInstanceOf(Date);
   });
 
-  it("el MFA es opcional: un admin sin el entra y se le sugiere; un cliente, no", async () => {
+  it("el MFA es opcional: un admin sin el entra directo, sin sugerencias", async () => {
     const admin = await setup("ADMIN");
-    await expect(admin.auth.login("marta@andlocal.ec", "tres palabras cualquiera")).resolves.toMatchObject({ kind: "session", mfaSuggested: true });
-    const client = await setup("CLIENT");
-    const session = await client.auth.login("marta@andlocal.ec", "tres palabras cualquiera") as IssuedSession;
-    expect(session.mfaSuggested).toBeUndefined();
+    const session = await admin.auth.login("marta@andlocal.ec", "tres palabras cualquiera") as IssuedSession;
+    expect(session.kind).toBe("session");
+    expect(Object.keys(session)).not.toContain("mfaSuggested");
   });
 
   it("se activa con la sesion abierta y solo tras demostrar un codigo valido", async () => {

@@ -43,7 +43,6 @@ function sessionBody(session: IssuedSession) {
   return {
     accessToken: session.accessToken, expiresIn: session.expiresIn, user: { ...session.principal, displayName: session.displayName },
     ...(session.recoveryCodesLeft !== undefined ? { recoveryCodesLeft: session.recoveryCodesLeft } : {}),
-    ...(session.mfaSuggested ? { mfaSuggested: true } : {}),
   };
 }
 function loginBody(response: Response, result: IssuedSession | MfaChallenge) {

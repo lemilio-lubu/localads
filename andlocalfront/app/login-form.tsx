@@ -11,7 +11,7 @@ import FormError from "./components/atoms/form-error";
 import FormField from "./components/molecules/form-field";
 import form from "./components/molecules/form-layout.module.css";
 import { login, type AuthUser, type MfaStep } from "./lib/auth-api";
-import { MfaEnrollment, MfaVerify } from "./features/auth/mfa-panel";
+import { MfaVerify } from "./features/auth/mfa-panel";
 import { landingFor } from "./lib/recharges-api";
 import LoginWalletDeck, { type DeckState } from "./components/organisms/login-wallet-deck";
 import styles from "./login-form.module.css";
@@ -41,9 +41,6 @@ export default function LoginForm() {
   /* Con doble factor, el login se queda a medio camino: este reto lleva al
      paso del código en el mismo panel. */
   const [mfa, setMfa] = useState<MfaStep | null>(null);
-  /* Al equipo sin doble factor se le sugiere activarlo, ya con la sesión
-     abierta. Es opcional: «Ahora no» entra sin más. */
-  const [suggest, setSuggest] = useState<AuthUser | null>(null);
   const pending = deck !== "idle";
 
   /* noValidate: el globo nativo («Completa este campo») habla con la voz del
@@ -68,8 +65,6 @@ export default function LoginForm() {
     try {
       const result = await login(username.trim().toLowerCase(), password);
       if (result.kind === "mfa") { setPassword(""); setMfa(result); setDeck("idle"); return; }
-      /* Con clave temporal no se sugiere nada: primero tiene que cambiarla. */
-      if (result.mfaSuggested && !result.user.mustChangePassword) { setPassword(""); setSuggest(result.user); setDeck("idle"); return; }
       await enter(result.user);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Correo o contraseña incorrectos");
@@ -129,8 +124,6 @@ export default function LoginForm() {
         <div className={styles.brandRow}><div className={styles.logo}><BrandLogo /></div><PwaInstallButton /></div>
         {mfa
           ? <MfaVerify key={mfa.challengeToken} step={mfa} headingClassName={styles.heading} submitClassName={styles.submit} onCancel={cancelMfa} onDone={(result) => void enter(result.user)} />
-          : suggest
-          ? <MfaEnrollment headingClassName={styles.heading} submitClassName={styles.submit} intro="Te recomendamos activar el doble factor: con él, tu contraseña sola no basta para entrar. Escanea el código con Google Authenticator, Microsoft Authenticator o 1Password." skipLabel="Ahora no" onSkip={() => void enter(suggest)} onFinished={() => void enter(suggest)} />
           : <>
         <header className={styles.heading}>
           <h1 id="login-title">Inicia sesión</h1>

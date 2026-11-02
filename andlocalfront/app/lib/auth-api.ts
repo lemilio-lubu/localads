@@ -6,11 +6,11 @@
 export type AuthUser = { userId: string; username: string; displayName: string; role: "CLIENT" | "GESTOR" | "ADMIN"; clientId: string | null; accountId: string | null; accountType: "PREPAGO" | "POSTPAGO" | null; mustChangePassword?: boolean };
 type AuthResponse = { accessToken: string; expiresIn: number; user: AuthUser };
 /* Con el doble factor activo, el login no abre sesión: devuelve un reto de 5
-   minutos para el paso del código. Sin él entra, y al equipo se le sugiere
-   activarlo (`mfaSuggested`); es opcional. */
+   minutos para el paso del código. Sin él entra; activarlo es opcional y se
+   hace desde «Cambiar contraseña». */
 export type MfaStep = { kind: "mfa"; challengeToken: string };
-export type LoginResult = { kind: "session"; user: AuthUser; mfaSuggested: boolean } | MfaStep;
-type LoginResponse = (AuthResponse & { mfaSuggested?: boolean }) | { mfaRequired: true; challengeToken: string };
+export type LoginResult = { kind: "session"; user: AuthUser } | MfaStep;
+type LoginResponse = AuthResponse | { mfaRequired: true; challengeToken: string };
 /* `recoveryCodesLeft` llega cuando se entró gastando un código de recuperación. */
 export type MfaResult = { user: AuthUser; recoveryCodesLeft?: number };
 type MfaResponse = AuthResponse & { recoveryCodesLeft?: number };
@@ -30,7 +30,7 @@ const postJson = (path: string, body: object) => fetch(`${apiUrl}${path}`, { met
 export async function login(username: string, password: string): Promise<LoginResult> {
   const result = await payload<LoginResponse>(await postJson("/auth/login", { username, password }));
   if ("mfaRequired" in result) return { kind: "mfa", challengeToken: result.challengeToken };
-  return { kind: "session", user: accept(result), mfaSuggested: result.mfaSuggested === true };
+  return { kind: "session", user: accept(result) };
 }
 
 function acceptMfa(result: MfaResponse): MfaResult {

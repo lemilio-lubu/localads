@@ -31,7 +31,7 @@ export function MfaVerify({ step, onDone, onCancel, ...look }: Look & { step: Mf
 
 /* Alta del doble factor, con la sesión ya abierta: QR + clave, código de
    confirmación y, justo después, los códigos de recuperación, que no vuelven
-   a mostrarse. `skipLabel` pone la salida («Ahora no» en el login). */
+   a mostrarse. `skipLabel` pone la salida («Cancelar»). */
 export function MfaEnrollment({ onFinished, onSkip, skipLabel, intro, ...look }: Look & { onFinished: () => void; onSkip: () => void; skipLabel: string; intro: string }) {
   const [codes, setCodes] = useState<string[] | null>(null);
   if (codes) return <RecoveryCodes codes={codes} {...look} onContinue={onFinished} />;

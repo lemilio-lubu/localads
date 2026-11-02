@@ -6,7 +6,7 @@ import { PasswordService } from "./password.service";
 import { AuthPrincipal, isAuthRole } from "./auth.types";
 import { MfaSecretCipher } from "./mfa-secret-cipher";
 import { passwordProblem } from "./password-policy";
-import { lockoutUntil, refreshExpiry, refreshReuseGraceMs, sessionLimits, suggestsMfa } from "./session-policy";
+import { lockoutUntil, refreshExpiry, refreshReuseGraceMs, sessionLimits } from "./session-policy";
 import { SessionStateService } from "./session-state.service";
 import { generateRecoveryCodes, generateTotpSecret, hashRecoveryCode, otpauthUri, verifyTotp } from "./totp";
 
@@ -29,7 +29,7 @@ type UserRecord = Readonly<{
 
 export type IssuedSession = Readonly<{
   kind: "session"; principal: AuthPrincipal; displayName: string; accessToken: string; expiresIn: number;
-  refreshToken: string; refreshMaxAgeMs: number; recoveryCodesLeft?: number; mfaSuggested?: boolean;
+  refreshToken: string; refreshMaxAgeMs: number; recoveryCodesLeft?: number;
 }>;
 export type MfaChallenge = Readonly<{ kind: "mfa"; challengeToken: string }>;
 
@@ -61,10 +61,10 @@ export class AuthService {
     }
     await this.assertCommercialAccess(user.clientId, user.accountId);
     /* Con el doble factor activo, la clave sola no abre sesion: devuelve un
-       reto para el paso del codigo. Sin el, entra; al equipo se le sugiere. */
+       reto para el paso del codigo. Sin el, entra: activarlo es decision de
+       cada uno, desde la pantalla de la cuenta. */
     if (user.mfaEnabledAt) return { kind: "mfa", challengeToken: this.accessTokens.signChallenge(user.id, "verify") };
-    const session = await this.completeLogin(user);
-    return suggestsMfa(session.principal.role) ? { ...session, mfaSuggested: true } : session;
+    return this.completeLogin(user);
   }
 
   /* Segundo paso: un codigo de la app o uno de recuperacion. Las escrituras
