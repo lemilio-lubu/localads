@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { AccessPayload, AuthPrincipal, isAuthRole } from "./auth.types";
+import { isDeployed } from "../../common/config/environment";
 
 const issuer = "andlocal-api"; const audience = "andlocal-web"; const ttlSeconds = 15 * 60;
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -9,8 +10,10 @@ const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("
 export class AccessTokenService {
   private readonly secret: string;
   constructor() {
+    /* El secreto por defecto solo vale fuera de un despliegue; main.ts ya lo
+       comprueba al arrancar, y esto cubre a quien construya el servicio sin pasar por alli. */
+    if (isDeployed() && (process.env.JWT_ACCESS_SECRET ?? "").length < 32) throw new Error("JWT_ACCESS_SECRET must contain at least 32 characters when deployed");
     this.secret = process.env.JWT_ACCESS_SECRET ?? "development-only-change-this-jwt-secret";
-    if (process.env.NODE_ENV === "production" && (!process.env.JWT_ACCESS_SECRET || this.secret.length < 32)) throw new Error("JWT_ACCESS_SECRET must contain at least 32 characters in production");
   }
   sign(principal: AuthPrincipal): { token: string; expiresIn: number } {
     const now = Math.floor(Date.now() / 1000); const header = encode({ alg: "HS256", typ: "JWT" });
