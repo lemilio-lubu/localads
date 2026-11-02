@@ -49,7 +49,6 @@ export default function VerificationsDashboard() {
   const [pageInfo, setPageInfo] = useState({ totalItems: 0, totalPages: 1 });
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const [copied, setCopied] = useState<{ code: string; ok: boolean } | null>(null);
   /* El cubo de los que no tienen gestor. Solo se le ofrece al admin: un
      gestor que lo pidiera no obtendria huerfanos ajenos sino nada, porque
      su recorte y este filtro condicionan el mismo campo. */
@@ -198,18 +197,6 @@ export default function VerificationsDashboard() {
     return `${first}-${Math.min(first + items.length - 1, pageInfo.totalItems)} de ${pageInfo.totalItems}`;
   }, [items.length, pageInfo.totalItems, pageNumber]);
 
-  async function copyCode(code: string, element: HTMLElement | null) {
-    let ok = true;
-    try { await navigator.clipboard.writeText(code); }
-    catch { ok = false; if (element) window.getSelection()?.selectAllChildren(element); }
-    setCopied({ code, ok });
-    window.setTimeout(() => setCopied((current) => current?.code === code ? null : current), 2400);
-  }
-  function copyLabel(code: string) {
-    if (copied?.code !== code) return "copiar";
-    return copied.ok ? "copiado" : "no se pudo";
-  }
-
   return <div className={styles.module}>
     <header className={styles.toolbar}>
       <SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente, código o banco" placeholderTone="muted" className={styles.search} />
@@ -221,7 +208,7 @@ export default function VerificationsDashboard() {
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
 
     <div className={styles.list} aria-live="polite" aria-busy={loading || busy}>
-      {!loading && !error && items.map((item) => <VerificationRow key={item.id} item={item} copyState={copied?.code === item.transactionCode ? (copied.ok ? "done" : "failed") : undefined} copyLabel={copyLabel(item.transactionCode)} busy={busy} onCopy={(element) => void copyCode(item.transactionCode, element)} onOpen={() => void open(item)} />)}
+      {!loading && !error && items.map((item) => <VerificationRow key={item.id} item={item} busy={busy} onOpen={() => void open(item)} />)}
       {loading && <><div className={styles.skeleton} /><div className={styles.skeleton} /></>}
       {!loading && error && <LoadError title="No se pudieron cargar las verificaciones" message={error} frame="control" onRetry={retry} />}
       {!loading && !error && !items.length && <p className={styles.message}>No hay verificaciones para este filtro.</p>}

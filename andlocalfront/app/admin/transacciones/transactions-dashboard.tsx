@@ -16,6 +16,7 @@ import { completeTransaction, completeTransactionDetail, getAdminTransactionDeta
 import type { TransactionListItem } from "../../lib/recharges-api";
 import { dueLabel, formatAmount, formatClock } from "../../lib/format";
 import { accountTypeLabel, invoiceStatusLabel, paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
+import CopyCode from "../../components/molecules/copy-code";
 import styles from "./transactions-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "../../lib/status-tone";
 import SearchField from "../../components/molecules/search-field";
@@ -48,7 +49,6 @@ export default function TransactionsDashboard() {
   const [loading, setLoading] = useState(true); const [detailLoading, setDetailLoading] = useState(false); const [error, setError] = useState("");
   const [pageInfo, setPageInfo] = useState({ totalItems: 0, totalPages: 1, totals: { pautaAmount: 0, totalAmount: 0 } });
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const [copied, setCopied] = useState<{ code: string; ok: boolean } | null>(null);
 
   /* La búsqueda va al servidor, así que se espera a que el administrador deje de
      escribir en vez de pedir una consulta por tecla. */
@@ -106,21 +106,6 @@ export default function TransactionsDashboard() {
     return `${first}-${Math.min(first + transactions.length - 1, pageInfo.totalItems)} de ${pageInfo.totalItems}`;
   }, [pageInfo.totalItems, pageNumber, transactions.length]);
 
-  /* El portapapeles puede negarse (permiso, contexto inseguro, foco perdido) y
-     entonces el clic no haría nada visible. El fallo se dice y se deja el código
-     seleccionado para copiarlo a mano. */
-  async function copyCode(code: string, element: HTMLElement | null) {
-    let ok = true;
-    try { await navigator.clipboard.writeText(code); }
-    catch { ok = false; if (element) window.getSelection()?.selectAllChildren(element); }
-    setCopied({ code, ok });
-    window.setTimeout(() => setCopied((current) => current?.code === code ? null : current), 2400);
-  }
-
-  function copyLabel(code: string) {
-    if (copied?.code !== code) return "copiar";
-    return copied.ok ? "copiado" : "no se pudo";
-  }
   async function open(id: string) { setDetailLoading(true); setError(""); setResumeError(""); try { setSelected(await getAdminTransactionDetail(id)); } catch (reason) { setError(reason instanceof Error ? reason.message : "No fue posible cargar el detalle"); } finally { setDetailLoading(false); } }
 
   return <div className={styles.module}>
@@ -132,9 +117,7 @@ export default function TransactionsDashboard() {
         <div className={styles.cell}><strong>cliente</strong><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></div>
         <DateCell value={item.createdAt} />
         <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {accountTypeLabel(item.accountTypeSnapshot)}</strong>
-          <button type="button" className={styles.copyCode} data-state={copied?.code === item.code ? (copied.ok ? "done" : "failed") : undefined} title={item.code} onClick={(event) => void copyCode(item.code, event.currentTarget.querySelector("span"))}>
-            <span>{item.code}</span><small>{copyLabel(item.code)}</small>
-          </button>
+          <CopyCode code={item.code} tone="strong" size="small" mono />
         </div>
         <div className={styles.cell}><strong>inversión / total</strong><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></div>
         <div className={styles.cell}><strong>recarga / pago</strong><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>

@@ -17,6 +17,7 @@ import { dueLabel, formatAmount, formatClock, formatDateTime } from "./lib/forma
 import { paymentStatusLabel, rechargeStatusLabel } from "./lib/status-labels";
 import type { VerificationRealtimeEvent } from "./lib/transaction-realtime";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
+import CopyCode from "./components/molecules/copy-code";
 import styles from "./invoices-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "./lib/status-tone";
 import SearchField from "./components/molecules/search-field";
@@ -46,7 +47,6 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
   /* La búsqueda y las fechas van al servidor: filtrar solo lo cargado ponía un
      techo invisible de 50 transacciones. */
   useEffect(() => { const timer = window.setTimeout(() => setSearch(query.trim()), 300); return () => window.clearTimeout(timer); }, [query]);
-  const [copiedCode, setCopiedCode] = useState("");
   const [reloads, setReloads] = useState(0);
   const [platform, setPlatform] = useState<AdvertisingPlatform | null>(null);
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
@@ -55,15 +55,6 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
   const [loading, setLoading] = useState(true); const [detailLoading, setDetailLoading] = useState(false); const [error, setError] = useState("");
 
   useEffect(() => { detailRef.current = detail; }, [detail]);
-  async function copyCode(code: string) {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopiedCode(code);
-      window.setTimeout(() => setCopiedCode((current) => (current === code ? "" : current)), 2000);
-    } catch {
-      setCopiedCode("");
-    }
-  }
 
   const filters = useMemo(() => ({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, from: fromDate || undefined, to: toDate || undefined }), [pageNumber, search, fromDate, toDate]);
   const filtersRef = useRef(filters);
@@ -162,9 +153,7 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
         {visible.map((item) => <article key={item.id} className={styles.invoiceRow}>
           <DateCell value={item.createdAt} />
           <div className={`${styles.cell} ${styles.codeCell}`}><strong><Image src="/figma/money.svg" alt="" width={16} height={16} /> código</strong>
-            <button type="button" className={styles.copyCode} title={item.code} onClick={() => void copyCode(item.code)}>
-              <span>{item.code}</span><small>{copiedCode === item.code ? "copiado" : "copiar"}</small>
-            </button>
+            <CopyCode code={item.code} tone="muted" size="body" />
           </div>
           <div className={styles.cell}><strong>inversión / total</strong><span className={styles.amount}>{formatAmount(item.pautaAmount)}</span><span className={styles.totalDue}>a pagar {formatAmount(item.totalAmount)}</span></div>
           <div className={styles.cell}><strong>recarga / pago</strong><div className={styles.statuses}><StatusPill tone={rechargeStatusTone(item.rechargeStatus)}>{rechargeStatusLabel(item.rechargeStatus)}</StatusPill>{Boolean(item.pausedDetails) && <StatusPill tone="neutral">{`${item.pausedDetails} en stop`}</StatusPill>}<StatusPill tone={paymentStatusTone(item.paymentStatus)}>{paymentStatusLabel(item.paymentStatus)}</StatusPill></div>

@@ -12,6 +12,7 @@ import Disclosure from "../../components/molecules/disclosure";
 import PaymentAccountPanel from "./payment-account-panel";
 import PlatformPill from "../../components/atoms/platform-pill";
 import StatusPill from "../../components/atoms/status-pill";
+import CopyCode from "../../components/molecules/copy-code";
 import styles from "./invoice-detail-modal.module.css";
 import FileViewer, { type ViewerFile } from "../../components/organisms/file-viewer";
 import { paymentStatusTone, rechargeStatusTone, verificationStatusTone } from "../../lib/status-tone";
@@ -78,20 +79,8 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
   const receiptInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [copied, setCopied] = useState<{ code: string; ok: boolean } | null>(null);
   /* Factura y comprobante se ven aquí mismo, en un visor encima del detalle. */
   const [viewing, setViewing] = useState<ViewerFile | null>(null);
-
-  /* El código va como referencia de la transferencia. Si el portapapeles se
-     niega, se dice y el código queda seleccionado para copiarlo a mano. */
-  async function copyCode(code: string, element: HTMLElement | null) {
-    let ok = true;
-    try { await navigator.clipboard.writeText(code); }
-    catch { ok = false; if (element) window.getSelection()?.selectAllChildren(element); }
-    setCopied({ code, ok });
-    window.setTimeout(() => setCopied((current) => current?.code === code ? null : current), 2400);
-  }
-  const copyState = copied?.code === transaction?.code ? (copied?.ok ? "done" : "failed") : undefined;
 
   // El pago admite comprobante mientras no este confirmado. Un pago rechazado
   // tambien lo admite: el cliente puede regularizar con una nueva evidencia.
@@ -125,7 +114,7 @@ export default function InvoiceDetailModal({ accountType, transaction, onClose, 
         {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
         <div className={styles.accountLabel}><Image src="/figma/pay.svg" alt="" width={24} height={24} /><strong>{postpaid ? "pospago" : "prepago"}</strong></div>
         <dl className={styles.transactionData}>
-          <div><dt>Código</dt><dd><button type="button" className={styles.copyCode} data-state={copyState} title={transaction.code} onClick={(event) => void copyCode(transaction.code, event.currentTarget.querySelector("span"))}><span>{transaction.code}</span><small>{copyState === "done" ? "copiado" : copyState === "failed" ? "no se pudo" : "copiar"}</small></button></dd></div><div><dt>Fecha</dt><dd>{formatDateTimeOr(transaction.createdAt)}</dd></div>
+          <div><dt>Código</dt><dd><CopyCode code={transaction.code} contained /></dd></div><div><dt>Fecha</dt><dd>{formatDateTimeOr(transaction.createdAt)}</dd></div>
           <div><dt>Estado de recarga</dt><dd><StatusPill tone={rechargeStatusTone(transaction.rechargeStatus)}>{rechargeStatusLabel(transaction.rechargeStatus)}</StatusPill></dd></div><div><dt>Estado de pago</dt><dd><StatusPill tone={paymentStatusTone(transaction.payment?.status)}>{paymentStatusLabel(transaction.payment?.status)}</StatusPill></dd></div>
           <div><dt>Inversión</dt><dd>{formatAmountOr(transaction.pautaAmount)}</dd></div><div><dt>Total</dt><dd>{formatAmountOr(transaction.totalAmount)}</dd></div>
           {transaction.payment?.dueDate && <div><dt>Vencimiento</dt><dd>{formatDateTimeOr(transaction.payment.dueDate)}</dd></div>}

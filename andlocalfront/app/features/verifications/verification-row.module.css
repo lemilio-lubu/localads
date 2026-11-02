@@ -18,16 +18,11 @@
 .cell { composes: cell from "../../components/atoms/list-row.module.css"; }
 .clientName { color: var(--color-text); font-size: var(--font-size-body); }
 .codeCell strong { color: var(--color-brand); }
-.copyCode { composes: hitArea from "../../design-system/hit-area.module.css"; display: flex; min-width: 0; align-items: baseline; gap: var(--space-1); border: 0; border-radius: var(--radius-small); margin-left: -4px; background: transparent; padding: 2px 4px; color: var(--color-text); font: inherit; font-size: var(--font-size-body-sm); text-align: left; cursor: pointer; }
-.copyCode span { overflow: hidden; font-family: var(--font-family-mono); text-overflow: ellipsis; white-space: nowrap; }
-.copyCode small { flex-shrink: 0; color: var(--color-brand); font-size: var(--font-size-micro); letter-spacing: .06em; text-transform: uppercase; }
-.copyCode[data-state="failed"] small { color: var(--color-danger); }
-.copyCode:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 1px; }
 .expected { color: var(--color-brand); font-size: var(--font-size-body); font-variant-numeric: tabular-nums; }
 .detected { color: var(--color-accent-teal); font-variant-numeric: tabular-nums; }
 /* Un importe no se recorta con «…»: se parte en dos líneas si no cabe. */
 .cell > .expected, .cell > .detected { overflow: visible; white-space: normal; }
-@media (hover: hover) and (pointer: fine) { .copyCode:hover { background: var(--color-surface-muted); color: var(--color-text); } .reviewButton:not(:disabled):hover { color: var(--color-brand); } }
+@media (hover: hover) and (pointer: fine) { .reviewButton:not(:disabled):hover { color: var(--color-brand); } }
 /* Escritorio medio: los mínimos fijos sumaban 1064px de fila y a 1280 solo
    hay 936, así que se salía por la derecha hasta ~1410. Aquí los mínimos son
    los del contenido real; desde 1421 la fila es la de siempre. */
