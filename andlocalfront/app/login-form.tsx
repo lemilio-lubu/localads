@@ -12,7 +12,7 @@ import FormField from "./components/molecules/form-field";
 import form from "./components/molecules/form-layout.module.css";
 import { login } from "./lib/auth-api";
 import { landingFor } from "./lib/recharges-api";
-import LoginWalletDeck, { type DeckState } from "./login-wallet-deck";
+import LoginWalletDeck, { type DeckState } from "./components/organisms/login-wallet-deck";
 import styles from "./login-form.module.css";
 
 type Field = "username" | "password";
