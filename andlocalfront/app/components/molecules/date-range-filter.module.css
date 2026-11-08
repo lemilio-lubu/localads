@@ -1,0 +1,33 @@
+/* Misma pastilla que «sin asignar» (.managerFilter): 40 de alto, texto a 13 e
+   icono de 15. Activa toma el relleno de marca de ToggleChip `fill`. */
+.root { position: relative; display: inline-flex; }
+
+.chip { display: inline-flex; min-height: var(--hit-target); align-items: center; border-radius: var(--radius-pill); color: var(--color-text); transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.chip[data-active] { background: var(--color-brand-surface); color: var(--color-brand); font-weight: var(--font-weight-bold); }
+
+.trigger, .clear { display: inline-flex; min-height: var(--hit-target); align-items: center; border: 0; border-radius: var(--radius-pill); outline: 0; background: transparent; color: inherit; font: inherit; font-size: var(--font-size-body-sm); white-space: nowrap; cursor: pointer; }
+.trigger { gap: var(--space-half); padding-inline: var(--space-2); }
+.chip[data-active] .trigger { padding-inline-end: var(--space-half); }
+/* La × tiene su propia área de 40: quitar el filtro no obliga a abrir el panel. */
+.clear { min-width: var(--hit-target); justify-content: center; padding: 0; }
+.trigger:focus-visible, .clear:focus-visible, .preset:focus-visible { box-shadow: var(--focus-ring); }
+.trigger:active, .clear:active, .preset:active { transform: scale(.97); }
+
+.panel { position: absolute; z-index: 20; top: calc(100% + var(--space-1)); left: 0; display: grid; width: max-content; max-width: calc(100vw - var(--space-4)); gap: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: var(--color-surface-raised); padding: var(--space-2); box-shadow: var(--shadow-popover); }
+
+.presets { display: flex; flex-wrap: wrap; gap: var(--space-half); }
+.preset { min-height: var(--control-height-compact); border: 0; border-radius: var(--radius-pill); background: var(--color-surface-muted); padding-inline: var(--space-2); color: var(--color-text-muted); font: inherit; font-size: var(--font-size-body-sm); white-space: nowrap; cursor: pointer; }
+.preset[aria-pressed="true"] { background: var(--color-brand-surface); color: var(--color-brand); font-weight: var(--font-weight-bold); }
+
+/* Los dos campos de «Tus facturas», mismo ancho y misma letra. */
+.range { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+.range input[type="date"] { width: 124px; padding: 0 var(--space-1); font-size: var(--font-size-caption); }
+
+@media (hover: hover) and (pointer: fine) {
+  .chip:not([data-active]):hover { box-shadow: 0 0 0 3px rgb(67 67 67 / 9%); }
+  .chip[data-active] .clear:hover { background: rgb(11 89 1 / 8%); }
+  .preset:not([aria-pressed="true"]):hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .range input[type="date"]:hover { box-shadow: 0 0 0 2px rgb(67 67 67 / 8%); }
+}
+
+@media (prefers-reduced-motion: reduce) { .chip { transition-duration: 0ms; } }

@@ -3,6 +3,8 @@
 import { Check, CircleAlert, Layers, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import DateRangeFilter from "../../components/molecules/date-range-filter";
+import { apiDayRange, emptyDayRange, type DayRange } from "../../lib/date-range";
 import ToggleChip from "../../components/atoms/toggle-chip";
 import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
 import { getAccessToken, getCurrentUser, refreshSession } from "../../lib/auth-api";
@@ -36,8 +38,8 @@ const scopeSegments: SegmentOption<VerificationFilter>[] = [
   { value: "APPROVED", label: "aprobada", Icon: Check, tone: "brand" },
 ];
 
-function fetchVerifications(filter: VerificationFilter, search: string, pageNumber: number, unassignedOnly = false) {
-  return getAdminVerifications({ page: pageNumber, limit: PAGE_SIZE, scope: filter, search: search.trim() || undefined, owner: unassignedOnly ? "unassigned" : undefined });
+function fetchVerifications(filter: VerificationFilter, search: string, pageNumber: number, unassignedOnly = false, dates: DayRange = emptyDayRange) {
+  return getAdminVerifications({ page: pageNumber, limit: PAGE_SIZE, scope: filter, search: search.trim() || undefined, owner: unassignedOnly ? "unassigned" : undefined, ...apiDayRange(dates) });
 }
 
 export default function VerificationsDashboard() {
@@ -60,6 +62,9 @@ export default function VerificationsDashboard() {
   /* El refresco por tiempo real lee de refs; sin esta, un evento devolvia
      la lista sin filtro y el cubo se vaciaba solo. */
   const unassignedRef = useRef(unassignedOnly);
+  const [dates, setDates] = useState<DayRange>(emptyDayRange);
+  const datesRef = useRef(dates);
+  function changeDates(value: DayRange) { setDates(value); setPageNumber(1); }
   const [selected, setSelected] = useState<VerificationSelection | null>(null);
   const selectedRef = useRef(selected);
   const [loading, setLoading] = useState(true);
@@ -71,7 +76,8 @@ export default function VerificationsDashboard() {
     searchRef.current = search;
     pageRef.current = pageNumber;
     unassignedRef.current = unassignedOnly;
-  }, [search, filter, pageNumber, unassignedOnly]);
+    datesRef.current = dates;
+  }, [search, filter, pageNumber, unassignedOnly, dates]);
 
   /* La búsqueda va al servidor: se espera a que el administrador deje de
      escribir en vez de pedir una consulta por pulsación. */
@@ -81,13 +87,13 @@ export default function VerificationsDashboard() {
 
   useEffect(() => {
     let active = true;
-    fetchVerifications(filter, search, pageNumber, unassignedOnly).then((page) => {
+    fetchVerifications(filter, search, pageNumber, unassignedOnly, dates).then((page) => {
       if (active) { setError(""); setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); setUpdatedAt(new Date()); }
     }).catch((cause: unknown) => {
       if (active) setError(cause instanceof Error ? cause.message : "No fue posible consultar las verificaciones");
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [search, filter, pageNumber, reloadToken, unassignedOnly]);
+  }, [search, filter, pageNumber, reloadToken, unassignedOnly, dates]);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -95,7 +101,7 @@ export default function VerificationsDashboard() {
     const socket = io(transactionsRealtimeUrl, { auth: { accessToken }, transports: ["websocket"] });
     socket.on("connect", () => {
       socket.emit("transactions:subscribe", { scope: "admin" });
-      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
+      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current, datesRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
     });
     socket.io.on("reconnect_attempt", () => { socket.auth = { accessToken: getAccessToken() }; });
     const reconnect = () => {
@@ -116,7 +122,7 @@ export default function VerificationsDashboard() {
         item: { ...current.item, status: event.status, reviewReason: event.reason },
         detail: { ...current.detail, status: event.status, reviewReason: event.reason, updatedAt: event.occurredAt },
       } : current);
-      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
+      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current, datesRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
       if (selectedRef.current?.detail.id === event.verificationId) {
         void getAdminTransactionDetail(event.transactionId).then((transaction) => {
           const detail = transaction.verifications.find((verification) => verification.id === event.verificationId);
@@ -151,7 +157,7 @@ export default function VerificationsDashboard() {
       if (action === "approve") await approveVerification(current.detail.id);
       else await markVerificationUnderReview(current.detail.id, reason);
       const [page, transaction] = await Promise.all([
-        fetchVerifications(filter, search, pageNumber, unassignedOnly),
+        fetchVerifications(filter, search, pageNumber, unassignedOnly, dates),
         getAdminTransactionDetail(current.item.transactionId),
       ]);
       setItems(page.items);
@@ -173,7 +179,7 @@ export default function VerificationsDashboard() {
     try {
       await retryReceiptOcr(current.detail.receipt.id);
       const [page, transaction] = await Promise.all([
-        fetchVerifications(filter, search, pageNumber, unassignedOnly),
+        fetchVerifications(filter, search, pageNumber, unassignedOnly, dates),
         getAdminTransactionDetail(current.item.transactionId),
       ]);
       setItems(page.items);
@@ -206,7 +212,7 @@ export default function VerificationsDashboard() {
       <SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente, código o banco" placeholderTone="muted" className={styles.search} />
       <div className={styles.filters}><div className={styles.filterGroup}><span>estado</span>
         <SegmentedFilter label="Estado de la verificación" options={scopeSegments} value={filter} onChange={selectFilter} />
-      </div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div>
+      </div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}<DateRangeFilter value={dates} onChange={changeDates} /></div>
     </header>
 
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
