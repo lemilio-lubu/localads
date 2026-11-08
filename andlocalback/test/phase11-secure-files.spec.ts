@@ -1,3 +1,4 @@
+import { recordingAudit } from "./support/security-audit";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { SecureFilesController } from "../src/modules/auth/secure-files.controller";
@@ -18,7 +19,7 @@ describe("SecureFilesController fase 11", () => {
     }) } };
     const response = { type: vi.fn(), set: vi.fn(), sendFile: vi.fn().mockReturnValue("sent") };
     const storage = { put: vi.fn(), get: vi.fn() };
-    return { controller: new SecureFilesController(database as never, storage), database, response };
+    return { controller: new SecureFilesController(database as never, storage, recordingAudit()), database, response };
   }
 
   it("sirve evidencia por receiptId con headers privados e inline", async () => {

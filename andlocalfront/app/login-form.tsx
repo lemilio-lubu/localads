@@ -7,7 +7,7 @@ import { FormEvent, useState } from "react";
 import Button from "./components/atoms/button";
 import BrandLogo from "./components/atoms/brand-logo";
 import PwaInstallButton from "./components/molecules/pwa-install-button";
-import FormError from "./components/atoms/form-error";
+import FormError from "./components/molecules/form-error";
 import FormField from "./components/molecules/form-field";
 import form from "./components/molecules/form-layout.module.css";
 import { login, type AuthUser, type MfaStep } from "./lib/auth-api";

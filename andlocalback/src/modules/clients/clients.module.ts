@@ -7,9 +7,11 @@ import { ClientsController } from "./presentation/clients.controller";
 import { RechargesModule } from "../recharges/recharges.module";
 import { AuthModule } from "../auth/auth.module";
 import { CredentialsService } from "../auth/credentials.service";
+import { AuditModule } from "../../common/audit/audit.module";
+import { SECURITY_AUDIT_LOG, SecurityAuditLog } from "../../common/audit/security-audit.port";
 
 @Module({
-  imports: [RechargesModule, AuthModule],
+  imports: [RechargesModule, AuthModule, AuditModule],
   controllers: [ClientsController],
   providers: [
     PrismaClientAdminRepository,
@@ -17,8 +19,8 @@ import { CredentialsService } from "../auth/credentials.service";
     { provide: CLIENT_CREDENTIALS_ISSUER, useExisting: CredentialsService },
     {
       provide: ManageClients,
-      inject: [CLIENT_ADMIN_REPOSITORY, CLIENT_CREDENTIALS_ISSUER],
-      useFactory: (clients: ClientAdminRepository, credentials: ClientCredentialsIssuer) => new ManageClients(clients, credentials),
+      inject: [CLIENT_ADMIN_REPOSITORY, CLIENT_CREDENTIALS_ISSUER, SECURITY_AUDIT_LOG],
+      useFactory: (clients: ClientAdminRepository, credentials: ClientCredentialsIssuer, audit: SecurityAuditLog) => new ManageClients(clients, credentials, audit),
     },
   ],
 })

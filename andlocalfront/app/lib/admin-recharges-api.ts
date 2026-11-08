@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "./api-error";
 import type { ActivationRequest, ClientTransactionDetail, PageResponse, RechargePlatform, TransactionListItem } from "./recharges-api";
 import { authenticatedFetch } from "./auth-api";
 
@@ -16,7 +17,7 @@ const apiUrl = "/api/v1";
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await authenticatedFetch(`${apiUrl}${path}`, { cache: "no-store", ...init });
   const payload = await response.json().catch(() => null) as T | { message?: string | string[] } | null;
-  if (!response.ok) { const message = payload && typeof payload === "object" && "message" in payload ? payload.message : null; throw new Error(Array.isArray(message) ? message.join(". ") : message || "No fue posible completar la operación"); }
+  if (!response.ok) throw new Error(apiErrorMessage(response, payload, "No fue posible completar la operación"));
   return payload as T;
 }
 

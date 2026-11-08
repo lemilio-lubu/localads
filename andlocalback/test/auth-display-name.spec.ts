@@ -1,3 +1,4 @@
+import { recordingAudit } from "./support/security-audit";
 import { describe, expect, it, vi } from "vitest";
 import { AuthController } from "../src/modules/auth/auth.controller";
 import { AuthService } from "../src/modules/auth/auth.service";
@@ -16,7 +17,7 @@ function service(clientRecord: { id: string; name: string; status: string } | nu
   };
   const passwords = { verify: vi.fn().mockResolvedValue(true), hash: vi.fn().mockResolvedValue("dummy") };
   const accessTokens = { sign: vi.fn().mockReturnValue({ token: "token", expiresIn: 900 }) };
-  return { database, auth: new AuthService(database as never, passwords as never, accessTokens as never, {} as never, { invalidate: vi.fn() } as never) };
+  return { database, auth: new AuthService(database as never, passwords as never, accessTokens as never, {} as never, { invalidate: vi.fn() } as never, recordingAudit()) };
 }
 
 describe("nombre que se muestra al entrar", () => {

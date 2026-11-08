@@ -450,3 +450,26 @@ model PaymentAccountAudit {
 
   @@index([accountId, createdAt])
 }
+
+/// Registro de eventos de seguridad (ISO 27001 8.15 · SOC 2 CC7.2). Solo se
+/// inserta: un trigger de la migracion rechaza UPDATE, DELETE y TRUNCATE.
+/// Sin claves foraneas a proposito: el evento sobrevive al usuario o al
+/// cliente que nombra, y un login fallido no tiene usuario al que apuntar.
+model SecurityAuditEvent {
+  id          String   @id @default(uuid())
+  occurredAt  DateTime @default(now())
+  action      String
+  outcome     String
+  actorUserId String?
+  targetType  String?
+  targetId    String?
+  ip          String?
+  userAgent   String?
+  requestId   String?
+  detail      Json?
+
+  @@index([occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([action, occurredAt])
+  @@index([targetType, targetId, occurredAt])
+}

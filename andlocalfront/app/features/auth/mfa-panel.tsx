@@ -5,7 +5,7 @@ import Image from "next/image";
 import QRCode from "qrcode";
 import { FormEvent, useEffect, useState } from "react";
 import Button from "../../components/atoms/button";
-import FormError from "../../components/atoms/form-error";
+import FormError from "../../components/molecules/form-error";
 import { TextInput } from "../../components/atoms/text-field";
 import TextButton from "../../components/atoms/text-button";
 import Checkbox from "../../components/molecules/checkbox";

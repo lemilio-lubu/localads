@@ -2,7 +2,7 @@
 
 import { AtSign, Briefcase, UserRound, KeyRound, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
-import FormError from "../../components/atoms/form-error";
+import FormError from "../../components/molecules/form-error";
 import ChoiceCard, { ChoiceGroup } from "../../components/molecules/choice-card";
 import FormField from "../../components/molecules/form-field";
 import FormHeader from "../../components/molecules/form-header";

@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "./api-error";
 import { authenticatedFetch, getCurrentUser, homeFor, type AuthUser } from "./auth-api";
 
 export type RechargePlatform = "META" | "GOOGLE" | "TIKTOK";
@@ -35,8 +36,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await authenticatedFetch(`${apiUrl}${path}`, { cache: "no-store", ...init });
   const payload = await response.json().catch(() => null) as T | { message?: string | string[] } | null;
   if (!response.ok) {
-    const message = payload && typeof payload === "object" && "message" in payload ? payload.message : null;
-    throw new Error(Array.isArray(message) ? message.join(". ") : message || "No fue posible completar la operación");
+    throw new Error(apiErrorMessage(response, payload, "No fue posible completar la operación"));
   }
   return payload as T;
 }

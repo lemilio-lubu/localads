@@ -1,0 +1,41 @@
+/* El registro solo se lee: no hay acciones por fila. */
+.module { width: min(100%, var(--layout-admin-content)); margin-top: var(--space-3); }
+.toolbar { display: grid; grid-template-columns: minmax(0, 1fr); }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin: var(--space-3) 0 var(--space-5); }
+.filterGroup { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+/* Seis tipos no caben en un móvil: el filtro se desplaza dentro de su carril
+   en vez de ensanchar la página. */
+.filterGroup { min-width: 0; max-width: 100%; }
+.filterGroup > [role="group"] { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.filterGroup > span:first-child { margin-right: var(--space-1); color: var(--color-text); font-size: var(--font-size-body-sm); }
+
+/* Cada evento es una frase que se entiende sola, agrupada bajo su día. Lo
+   técnico (IP, navegador, código) queda tras «ver detalles». */
+.day { display: grid; gap: var(--space-1); }
+.day + .day { margin-top: var(--space-4); }
+.day h3 { margin: 0; padding-inline: var(--space-1); color: var(--color-text); font-size: var(--font-size-card-title); }
+.list { display: grid; margin: 0; padding: 0; list-style: none; }
+.event { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--space-2); border-top: 1px solid var(--color-border); padding: var(--space-2) var(--space-1); }
+.event:last-child { border-bottom: 1px solid var(--color-border); }
+.icon { display: flex; padding-top: 2px; }
+.event[data-outcome="SUCCESS"] .icon { color: var(--color-teal-text); }
+.event[data-outcome="FAILURE"] .icon { color: var(--color-amber-text-strong); }
+.event[data-outcome="DENIED"] .icon { color: var(--color-danger); }
+.body { display: grid; min-width: 0; gap: var(--space-half); }
+.body p { margin: 0; overflow-wrap: anywhere; }
+.title { color: var(--color-text); font-size: var(--font-size-body); font-weight: var(--font-weight-semibold); }
+.detail { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+.time { padding-top: 2px; color: var(--color-text-muted); font-size: var(--font-size-body-sm); white-space: nowrap; }
+.more { margin-top: var(--space-half); }
+.moreSummary { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.facts { display: grid; gap: var(--space-half); margin: 0; }
+.facts div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1); }
+.facts dt { color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.facts dd { margin: 0; color: var(--color-text); font-size: var(--font-size-body-sm); }
+
+.listMeta { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); padding: 0 var(--space-3) var(--space-half); color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.skeleton { composes: base from "../../design-system/skeleton.module.css"; height: var(--space-20); border-radius: var(--radius-card); }
+.message { display: grid; justify-items: center; gap: var(--space-1); margin: var(--space-4); color: var(--color-text-muted); text-align: center; }
+.message p { margin: 0; max-width: 46ch; }
+.message strong { color: var(--color-text); font-size: var(--font-size-card-title); }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

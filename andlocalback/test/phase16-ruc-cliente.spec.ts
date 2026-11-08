@@ -1,3 +1,4 @@
+import { recordingAudit } from "./support/security-audit";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -68,28 +69,28 @@ describe("Fase 16 - RUC en el caso de uso", () => {
 
   it("crear guarda el RUC normalizado", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).create({ ...profile, ruc: "1712345675-001" }, {});
+    await new ManageClients(clients, issuer(), recordingAudit()).create({ ...profile, ruc: "1712345675-001" }, {});
     expect(clients.create).toHaveBeenCalledWith(expect.objectContaining({ ruc: "1712345675001" }), expect.anything(), null);
   });
 
   it("crear sin RUC o con uno inválido no llega a emitir credenciales", async () => {
     const clients = repository();
     const credentials = issuer();
-    await expect(new ManageClients(clients, credentials).create({ ...profile, ruc: "" }, {})).rejects.toMatchObject({ code: "INVALID_RUC" });
-    await expect(new ManageClients(clients, credentials).create({ ...profile, ruc: "1712345670001" }, {})).rejects.toMatchObject({ code: "INVALID_RUC" });
+    await expect(new ManageClients(clients, credentials, recordingAudit()).create({ ...profile, ruc: "" }, {})).rejects.toMatchObject({ code: "INVALID_RUC" });
+    await expect(new ManageClients(clients, credentials, recordingAudit()).create({ ...profile, ruc: "1712345670001" }, {})).rejects.toMatchObject({ code: "INVALID_RUC" });
     expect(credentials.prepare).not.toHaveBeenCalled();
     expect(clients.create).not.toHaveBeenCalled();
   });
 
   it("editar sin mandar RUC no lo toca", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).update("c1", { name: "Otro" }, {});
+    await new ManageClients(clients, issuer(), recordingAudit()).update("c1", { name: "Otro" }, {});
     expect(clients.update).toHaveBeenCalledWith("c1", { name: "Otro" });
   });
 
   it("editar valida el RUC nuevo y vacío no sirve para borrarlo", async () => {
     const clients = repository();
-    const manage = new ManageClients(clients, issuer());
+    const manage = new ManageClients(clients, issuer(), recordingAudit());
     await manage.update("c1", { ruc: "0912345675 001" }, {});
     expect(clients.update).toHaveBeenCalledWith("c1", { ruc: "0912345675001" });
     await expect(manage.update("c1", { ruc: "" }, {})).rejects.toMatchObject({ code: "INVALID_RUC" });
