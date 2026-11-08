@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "./api-error";
 import { authenticatedFetch } from "./auth-api";
 
 export type TeamRole = "ADMIN" | "GESTOR";
@@ -41,7 +42,7 @@ async function request<T>(path: string, init?: RequestInit) {
   const response = await authenticatedFetch(`${apiUrl}${path}`, init);
   const payload = await response.json().catch(() => null) as T | { message?: string } | null;
   if (!response.ok) {
-    throw new Error(payload && typeof payload === "object" && "message" in payload && payload.message ? payload.message : "No fue posible completar la operación");
+    throw new Error(apiErrorMessage(response, payload, "No fue posible completar la operación"));
   }
   return payload as T;
 }

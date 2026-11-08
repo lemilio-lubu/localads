@@ -3,7 +3,7 @@
 import { LockKeyhole, ShieldCheck, ShieldOff } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import Button from "../../components/atoms/button";
-import FormError from "../../components/atoms/form-error";
+import FormError from "../../components/molecules/form-error";
 import { TextInput } from "../../components/atoms/text-field";
 import FormField from "../../components/molecules/form-field";
 import form from "../../components/molecules/form-layout.module.css";

@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "./api-error";
 /* Tres roles. GESTOR comparte el portal administrativo con ADMIN; lo que los
    separa es el alcance de los datos, que decide el backend.
    `mustChangePassword` viene del login: con una clave temporal sin cambiar, el
@@ -20,7 +21,7 @@ let accessToken: string | null = null; let currentUser: AuthUser | null = null; 
 
 async function payload<T>(response: Response): Promise<T> {
   const body = await response.json().catch(() => null) as T | { message?: string | string[] } | null;
-  if (!response.ok) { const message = body && typeof body === "object" && "message" in body ? body.message : null; throw new Error(Array.isArray(message) ? message.join(". ") : message || "No fue posible autenticar la sesión"); }
+  if (!response.ok) throw new Error(apiErrorMessage(response, body, "No fue posible autenticar la sesión"));
   return body as T;
 }
 function accept(result: AuthResponse) { accessToken = result.accessToken; currentUser = result.user; return result.user; }

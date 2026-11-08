@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import MetricCard from "../../components/molecules/metric-card";
 import ModalShell from "../../components/organisms/modal-shell";
-import FormError from "../../components/atoms/form-error";
+import FormError from "../../components/molecules/form-error";
 import FormField, { SelectChevron } from "../../components/molecules/form-field";
 import { formatAmount, formatDateTime } from "../../lib/format";
 import { getAdminClients, type AdminClient } from "../../lib/admin-clients-api";

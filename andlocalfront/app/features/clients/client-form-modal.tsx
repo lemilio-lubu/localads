@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { BadgeCheck, CalendarClock, CircleAlert, IdCard, KeyRound, Mail, UserCog, UserPen, UserPlus, UserRound, Wallet, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
-import FormError from "../../components/atoms/form-error";
+import FormError from "../../components/molecules/form-error";
 import ChoiceCard, { ChoiceGroup } from "../../components/molecules/choice-card";
 import Field, { SelectChevron, fieldStyles } from "../../components/molecules/form-field";
 import FormHeader from "../../components/molecules/form-header";

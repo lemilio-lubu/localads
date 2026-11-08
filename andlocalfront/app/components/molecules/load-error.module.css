@@ -8,3 +8,4 @@
 .error[data-text="neutral"] { color: var(--color-text-muted); }
 /* Aspecto en Button (danger), como el reintentar de la ficha del equipo. */
 .retry { margin-top: var(--space-1); }
+.reference { justify-content: center; }

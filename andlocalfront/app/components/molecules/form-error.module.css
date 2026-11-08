@@ -1,2 +1,5 @@
 .formError { display: flex; align-items: center; gap: var(--space-1); margin: 0; color: var(--color-danger); font-size: var(--font-size-body-sm); }
 .formError svg { flex: none; }
+.group { display: grid; gap: var(--space-1); }
+/* Alineado con el texto, no con el icono. */
+.reference { padding-left: calc(16px + var(--space-1)); }

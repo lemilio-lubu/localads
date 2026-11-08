@@ -2,7 +2,7 @@
 
 import { Banknote, CreditCard, Hash, IdCard, Landmark, Mail, Phone, UserRound } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import FormError from "../../components/atoms/form-error";
+import FormError from "../../components/molecules/form-error";
 import Field from "../../components/molecules/form-field";
 import form from "../../components/molecules/form-layout.module.css";
 import PaymentAccountCard from "../../components/organisms/payment-account-card";
