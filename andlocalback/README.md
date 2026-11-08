@@ -121,6 +121,46 @@ Tesseract.js no procesa PDF directamente. Los PDF sí se reciben y conservan, pe
 
 `GET /api/v1/transactions?accountId=:accountId` devuelve las transacciones persistidas de la cuenta, incluyendo comprobante, resultado OCR e historial cronológico. Este endpoint alimenta el módulo Facturas del frontend.
 
+## Facturación electrónica (Migo)
+
+Al completarse una recarga se crea su factura y se pide la autorización al emisor configurado en `INVOICE_ISSUER`:
+
+| Valor | Uso |
+|---|---|
+| `simulado` | Desarrollo. Autoriza al instante con un PDF marcado «sin validez tributaria». Es el valor por defecto fuera de producción. |
+| `desactivado` | Las facturas quedan pendientes y se autorizan solas cuando se configura un emisor. Es el valor por defecto en producción. |
+| `migo` | Emisión real ante el SRI a través de la [API de Migo](https://apidocs.migo.com.ec). |
+
+Con `migo`:
+
+- Una línea por plataforma con la base completa (pauta + ISD + comisión) y su IVA, con el producto de esa plataforma («Servicio de Intermediación por Pauta Meta/Google/TikTok»), igual que las facturas que AND ya emitía a mano en Migo. Así el IVA que Migo recalcula línea a línea coincide al centavo con el cobrado. El desglose va en la información adicional de la factura.
+- Si el cliente no existe en Migo (se busca por RUC), se da de alta.
+- Migo responde `SENT_TO_SRI` y autoriza después: se guardan su id (`Invoice.externalReference`) y el número fiscal (`Invoice.fiscalNumber`), y el reintento de cada minuto consulta esa factura en vez de emitir otra. El `invoiceUuid` se deriva del número interno, así que un reintento tras una respuesta perdida manda el mismo.
+- Un rechazo del SRI queda en `Invoice.authorizationError` y la factura se sigue consultando por si se corrige en Migo.
+- Si falta configuración, el backend no arranca y el error lista todo lo que falta.
+
+**La cuenta de Migo de AND es la real: no hay entorno de pruebas.** Con `INVOICE_ISSUER=migo`, cada factura llega al SRI; en desarrollo se usa `simulado`.
+
+Variables (los ids salen del catálogo de la empresa en Migo: `/api/v1/emission-points/options`, `/api/v1/products?establishmentId=`, `/api/v1/taxes/options`, `/api/v1/identification-types/options`, `/api/v1/customer-groups/options`, `/api/v1/payment-methods/options?module=INVOICE`, `/api/v1/payment-terms/options`):
+
+| Variable | Obligatoria | Qué es | Valor de AND |
+|---|---|---|---|
+| `MIGO_CLIENT_ID`, `MIGO_CLIENT_SECRET` | Sí | Credencial de «Seguridad > Credenciales API» con permisos `SALES_INVOICE:CREATE`/`READ` y `CUSTOMER:READ`/`CREATE` | (secreto) |
+| `MIGO_EMISSION_POINT_ID` | Sí | Punto de emisión | `32739` (ELECTRONICO, 001) |
+| `MIGO_PRODUCT_ID_META`, `_GOOGLE`, `_TIKTOK` | Sí | Producto de cada plataforma, con IVA 15 % | `6644066`, `6644062`, `6644068` |
+| `MIGO_PRODUCT_CODE_META`, `_GOOGLE`, `_TIKTOK` | No | Código del producto (`referenceCode`) | `05`, `04`, `06` |
+| `MIGO_VAT_TAX_ID` | Sí | Id del IVA 15 % (el mismo de los productos) | `10` |
+| `MIGO_RUC_IDENTIFICATION_TYPE_ID` | Sí | Tipo de identificación RUC, para dar de alta clientes | `1` |
+| `MIGO_CUSTOMER_GROUP_ID` | Sí | Grupo de cliente para las altas | `25319` (FINALES) |
+| `MIGO_VENDOR_ID` | No | Vendedor de la factura | `27865` (el de las facturas actuales) |
+| `MIGO_ACTIVITY_ID` | No | Actividad económica, si la empresa la exige | — |
+| `MIGO_BASE_URL` | No | Por defecto `https://api.migo.com.ec`; admite `http://localhost` para un emulador | — |
+| `MIGO_PREPAID_PAYMENT_METHOD_ID`, `MIGO_CREDIT_PAYMENT_METHOD_ID` | No, los dos o ninguno | Forma de pago de prepago y de pospago | Sin definir: las facturas actuales no registran forma de pago (existen `6` Transferencia y `8` Cliente (Crédito)) |
+| `MIGO_CREDIT_PAYMENT_TERM_ID` | No | Plazo de crédito del pospago | `21297` (Crédito 30 días), si se definen las formas de pago |
+| `MIGO_TIMEOUT_MS` | No | Tiempo máximo por petición; por defecto 15000 | — |
+
+Las pruebas `test/migo-invoicing.integration.spec.ts` recorren el flujo completo contra un emulador de la API (`test/support/fake-migo-server.ts`).
+
 ## Administración de clientes
 
 El módulo administrativo usa las siguientes operaciones persistidas con Prisma:

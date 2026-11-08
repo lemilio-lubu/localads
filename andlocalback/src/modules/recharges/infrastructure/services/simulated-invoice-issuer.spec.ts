@@ -1,31 +1,42 @@
 import { describe, expect, it } from "vitest";
+import { InvoiceAuthorizationRequest, InvoiceIssuance } from "../../application/ports/invoice-issuer.ports";
 import { MonetaryAmount } from "../../domain/value-objects/monetary-amount";
 import { SimulatedInvoiceIssuer } from "./simulated-invoice-issuer";
 
 const money = (value: string) => MonetaryAmount.fromMajorUnits(value);
-const request = {
+const request: InvoiceAuthorizationRequest = {
   invoiceId: "invoice-1",
   invoiceNumber: "FAC-TX-1",
   transactionCode: "TX-1",
   issuedAt: new Date("2026-10-21T20:00:00.000Z"),
   customer: { name: "Comercializadora Año Ñandú", ruc: "1790012345001", email: "uno@example.test" },
-  lines: [{ description: "Recarga publicitaria Meta", amount: money("25.00") }],
+  lines: [{ platform: "META", description: "Recarga publicitaria Meta", amount: money("25.00"), vatBaseAmount: money("28.75"), vatAmount: money("4.31"), totalAmount: money("33.06") }],
   totals: { pautaAmount: money("25.00"), isdAmount: money("1.25"), agencyFeeAmount: money("2.50"), vatBaseAmount: money("28.75"), vatAmount: money("4.31"), totalAmount: money("33.06") },
+  payment: { mode: "PREPAID", creditDays: null },
+  externalReference: null,
 };
+
+function authorizedOf(issuance: InvoiceIssuance) {
+  if (issuance.status !== "AUTHORIZED") throw new Error(`esperaba AUTHORIZED, llegó ${issuance.status}`);
+  return issuance;
+}
 
 describe("emisor de facturas simulado", () => {
   const issuer = new SimulatedInvoiceIssuer(() => new Date("2026-10-21T21:00:00.000Z"));
 
   it("autoriza siempre con el mismo número para la misma factura", async () => {
-    const first = await issuer.authorize(request);
-    const again = await issuer.authorize(request);
-    expect(first.authorizationNumber).toMatch(/^SIM-[0-9A-F]{12}$/);
-    expect(again.authorizationNumber).toBe(first.authorizationNumber);
-    expect((await issuer.authorize({ ...request, invoiceNumber: "FAC-TX-2" })).authorizationNumber).not.toBe(first.authorizationNumber);
+    const first = authorizedOf(await issuer.authorize(request));
+    const again = authorizedOf(await issuer.authorize(request));
+    expect(first.authorization.authorizationNumber).toMatch(/^SIM-[0-9A-F]{12}$/);
+    expect(again.authorization.authorizationNumber).toBe(first.authorization.authorizationNumber);
+    expect(authorizedOf(await issuer.authorize({ ...request, invoiceNumber: "FAC-TX-2" })).authorization.authorizationNumber)
+      .not.toBe(first.authorization.authorizationNumber);
+    // Sin secuencia fiscal ni proveedor externo: no hay nada que consultar después.
+    expect(first).toMatchObject({ externalReference: null, authorization: { fiscalNumber: null } });
   });
 
   it("genera un PDF válido con número, cliente, tildes y total, marcado como prueba", async () => {
-    const authorization = await issuer.authorize(request);
+    const { authorization } = authorizedOf(await issuer.authorize(request));
     const document = await issuer.document(request, authorization);
     const text = Buffer.from(document.content).toString("latin1");
     expect(document.mimeType).toBe("application/pdf");
