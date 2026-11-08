@@ -21,6 +21,9 @@ import {
 } from "./application/ports/invoice-issuer.ports";
 import { PrismaInvoiceAuthorizationRepository } from "./infrastructure/persistence/prisma-invoice-authorization.repository";
 import { DisabledInvoiceIssuer, SimulatedInvoiceIssuer } from "./infrastructure/services/simulated-invoice-issuer";
+import { MigoApiClient } from "./infrastructure/services/migo/migo-api.client";
+import { migoConfigurationFromEnv } from "./infrastructure/services/migo/migo-config";
+import { MigoInvoiceIssuer } from "./infrastructure/services/migo/migo-invoice-issuer";
 import { InvoiceDocumentsController } from "./presentation/invoice-documents.controller";
 import { MarkOverduePayments } from "./application/use-cases/mark-overdue-payments";
 import { RequestPostpaidTransaction } from "./application/use-cases/request-postpaid-transaction";
@@ -116,15 +119,20 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
     InvoiceAuthorizationRunner,
     PrismaInvoiceAuthorizationRepository,
     { provide: INVOICE_AUTHORIZATION_PERSISTENCE, useExisting: PrismaInvoiceAuthorizationRepository },
-    /* Quién autoriza las facturas. INVOICE_ISSUER=simulado|desactivado (pronto
-       «sergei»). Sin valor: simulado en desarrollo y desactivado en
-       producción, para que nunca llegue a un cliente real una factura de
-       prueba. Desactivado, las facturas quedan pendientes y se autorizan
-       solas en cuanto se configure el emisor real. */
+    /* Quién autoriza las facturas. INVOICE_ISSUER=migo|simulado|desactivado.
+       Sin valor: simulado en desarrollo y desactivado en producción, para
+       que nunca llegue a un cliente real una factura de prueba. Desactivado,
+       las facturas quedan pendientes y se autorizan solas en cuanto se
+       configure el emisor real. Con migo, una configuración incompleta
+       impide arrancar (ver migo-config.ts). */
     {
       provide: INVOICE_ISSUER,
       useFactory: (): InvoiceIssuer => {
         const configured = process.env.INVOICE_ISSUER ?? (process.env.NODE_ENV === "production" ? "desactivado" : "simulado");
+        if (configured === "migo") {
+          const migo = migoConfigurationFromEnv();
+          return new MigoInvoiceIssuer(new MigoApiClient(migo.client), migo.settings);
+        }
         if (configured === "simulado") return new SimulatedInvoiceIssuer();
         if (configured === "desactivado") return new DisabledInvoiceIssuer();
         throw new Error(`INVOICE_ISSUER no reconocido: ${configured}`);

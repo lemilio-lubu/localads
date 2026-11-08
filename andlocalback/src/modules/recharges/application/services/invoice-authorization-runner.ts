@@ -47,6 +47,7 @@ export class InvoiceAuthorizationRunner implements OnModuleInit, OnModuleDestroy
     try {
       const result = await this.authorizePending.execute();
       if (result.authorized > 0) this.logger.log(`${result.authorized} factura(s) autorizada(s)`);
+      if (result.submitted > 0) this.logger.log(`${result.submitted} factura(s) esperan la autorización del SRI`);
       if (result.failed > 0) this.logger.warn(`${result.failed} factura(s) siguen pendientes de autorizar`);
     } catch (error) {
       this.logger.error(`No se pudieron autorizar las facturas pendientes: ${error instanceof Error ? error.message : String(error)}`);
