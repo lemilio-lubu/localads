@@ -12,7 +12,8 @@
    de la línea («p», «g»): 1.2 les deja sitio. */
 .identity h2 { overflow: hidden; margin: var(--space-1) 0; color: var(--color-text); font-size: var(--font-size-title); line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .platforms { display: flex; flex-wrap: wrap; gap: var(--space-half); }
-.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); }
+/* UX-05: cada tarjeta mide al menos su valor (un plazo como «vencido hace 3 días» invadía la vecina). */
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(min-content, 1fr)); gap: var(--space-1); }
 .metric { min-height: var(--space-9); border-radius: var(--radius-menu); padding: var(--space-2); }
 .metric strong { font-size: var(--font-size-card-title); }
 .consumptionSummary { display: grid; grid-template-columns: var(--space-20) var(--space-15) minmax(0, 1fr); align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
@@ -41,8 +42,11 @@
 .cycle small { font-size: var(--font-size-caption); }
 .cycle .payment { display: flex; min-height: auto; flex-direction: column; gap: var(--space-half); border-radius: var(--radius-menu); background: var(--color-surface-raised); padding: var(--space-2); color: var(--color-text); }
 .transactions { display: grid; gap: var(--space-1); }
-.transaction { display: grid; min-height: var(--space-6); grid-template-columns: 1.35fr 1fr .8fr 1fr; align-items: center; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-raised); padding: 0 var(--space-2); font-size: var(--font-size-micro); }
-.transaction > span, .transaction > time { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* UX-05: fecha, importe y estado miden su contenido y nunca se recortan; el
+   código, con su valor en `title`, es el único que cede. */
+.transaction { display: grid; min-height: var(--space-6); grid-template-columns: minmax(0, 1.35fr) max-content max-content minmax(max-content, 1fr); align-items: center; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-raised); padding: 0 var(--space-2); font-size: var(--font-size-micro); }
+.transaction > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.transaction > time, .transaction strong, .transaction em { white-space: nowrap; }
 .transaction strong { font-size: var(--font-size-caption); }
 .transaction em { color: var(--color-brand); font-style: normal; text-align: right; }
 .transaction em[data-status="RECHAZADA"] { color: var(--color-danger); }
@@ -60,7 +64,7 @@
 @media (max-width: 900px) {
   .modal { padding-block: var(--space-4); padding-inline-start: var(--space-4); }
   .summary { grid-template-columns: 1fr; }
-  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metrics { grid-template-columns: repeat(2, minmax(min-content, 1fr)); }
   .consumptionSummary { grid-template-columns: 1fr 1fr; }
   .platformTotals { grid-column: 1 / -1; }
   .detailGrid { grid-template-columns: 1fr; grid-template-rows: auto; }

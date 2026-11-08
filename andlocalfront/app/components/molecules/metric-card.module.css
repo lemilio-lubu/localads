@@ -1,6 +1,10 @@
 .card { display: flex; min-width: 0; min-height: var(--space-12); flex-direction: column; justify-content: center; gap: var(--space-1); border-radius: var(--radius-control); background: var(--color-surface-muted); padding: var(--space-2); color: var(--color-text); }
 .card small { font-size: var(--font-size-micro); font-weight: var(--font-weight-regular); }
-.card strong { overflow: hidden; color: inherit; font-size: var(--font-size-card-title); text-overflow: ellipsis; white-space: nowrap; }
+/* UX-05: un importe, un estado o un plazo nunca se recortan. El valor no
+   parte línea y la rejilla que contiene la tarjeta le reserva su ancho
+   (max-content). Solo el texto libre recorta, y con el valor en `title`. */
+.card strong { color: inherit; font-size: var(--font-size-card-title); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card strong.truncate { overflow: hidden; text-overflow: ellipsis; }
 .success { color: var(--color-brand); }
 .danger { color: var(--color-danger); }
 .small strong { font-size: var(--font-size-caption); }
