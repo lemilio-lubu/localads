@@ -7,19 +7,25 @@ import {
   InvoiceClaim,
   InvoiceDocumentSource,
 } from "../../application/ports/invoice-issuer.ports";
+import { AccountType } from "../../domain/recharge.types";
 import { decimalToMonetaryAmount } from "./prisma-multi-recharge.repository";
 
 const platformNames: Record<string, string> = { META: "Meta", GOOGLE: "Google", TIKTOK: "TikTok" };
 
 const requestSelect = {
-  id: true, invoiceNumber: true, issuedAt: true, authorizationNumber: true, authorizedAt: true,
+  id: true, invoiceNumber: true, issuedAt: true, authorizationNumber: true, authorizedAt: true, externalReference: true, fiscalNumber: true,
   pautaSubtotal: true, isdAmount: true, agencyFeeAmount: true, vatBaseAmount: true, vatAmount: true, totalAmount: true,
   transaction: {
     select: {
       code: true,
       clientId: true,
+      accountTypeSnapshot: true,
+      creditDaysSnapshot: true,
       client: { select: { name: true, ruc: true, email: true, managerId: true } },
-      details: { select: { platformSnapshot: true, requestedAmount: true }, orderBy: { id: "asc" as const } },
+      details: {
+        select: { platformSnapshot: true, requestedAmount: true, vatBaseAmount: true, vatAmount: true, totalAmount: true },
+        orderBy: { id: "asc" as const },
+      },
     },
   },
 } as const;
@@ -49,10 +55,28 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
       data: {
         authorizationNumber: command.authorization.authorizationNumber,
         authorizedAt: command.authorization.authorizedAt,
+        fiscalNumber: command.authorization.fiscalNumber,
+        externalReference: command.externalReference,
         issuer: command.issuer,
         documentUrl: command.documentUrl,
         authorizationClaimedUntil: null,
         authorizationError: null,
+        version: { increment: 1 },
+      },
+    });
+  }
+
+  /* Solo si sigue sin autorizar: un proceso rezagado no deshace una
+     autorización que otro ya guardó. */
+  async markSubmitted(command: Parameters<InvoiceAuthorizationPersistencePort["markSubmitted"]>[0]): Promise<void> {
+    await this.prisma.invoice.updateMany({
+      where: { id: command.invoiceId, authorizationNumber: null },
+      data: {
+        issuer: command.issuer,
+        externalReference: command.externalReference,
+        fiscalNumber: command.fiscalNumber,
+        authorizationClaimedUntil: null,
+        authorizationError: command.error?.slice(0, 500) ?? null,
         version: { increment: 1 },
       },
     });
@@ -81,7 +105,7 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
     return {
       request: toRequest(record),
       authorization: record.authorizationNumber && record.authorizedAt
-        ? { authorizationNumber: record.authorizationNumber, authorizedAt: record.authorizedAt }
+        ? { authorizationNumber: record.authorizationNumber, authorizedAt: record.authorizedAt, fiscalNumber: record.fiscalNumber }
         : null,
       owner: { clientId: record.transaction.clientId, managerId: record.transaction.client.managerId },
     };
@@ -91,7 +115,8 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
 type RequestRecord = Prisma.InvoiceGetPayload<{ select: typeof requestSelect }>;
 
 function toRequest(record: RequestRecord): InvoiceAuthorizationRequest {
-  const { client } = record.transaction;
+  const { client, accountTypeSnapshot, creditDaysSnapshot } = record.transaction;
+  const postpaid = accountTypeSnapshot === AccountType.POSTPAID;
   return {
     invoiceId: record.id,
     invoiceNumber: record.invoiceNumber,
@@ -99,9 +124,15 @@ function toRequest(record: RequestRecord): InvoiceAuthorizationRequest {
     issuedAt: record.issuedAt,
     customer: { name: client.name, ruc: client.ruc, email: client.email },
     lines: record.transaction.details.map((detail) => ({
+      platform: detail.platformSnapshot,
       description: `Recarga publicitaria ${platformNames[detail.platformSnapshot] ?? detail.platformSnapshot}`,
       amount: decimalToMonetaryAmount(detail.requestedAmount),
+      vatBaseAmount: decimalToMonetaryAmount(detail.vatBaseAmount),
+      vatAmount: decimalToMonetaryAmount(detail.vatAmount),
+      totalAmount: decimalToMonetaryAmount(detail.totalAmount),
     })),
+    payment: { mode: postpaid ? "POSTPAID" : "PREPAID", creditDays: postpaid ? creditDaysSnapshot : null },
+    externalReference: record.externalReference,
     totals: {
       pautaAmount: decimalToMonetaryAmount(record.pautaSubtotal),
       isdAmount: decimalToMonetaryAmount(record.isdAmount),
