@@ -23,6 +23,7 @@ import SearchField from "../../components/molecules/search-field";
 import Pagination from "../../components/molecules/pagination";
 import { TextInput } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
+import TruncatedText from "../../components/atoms/truncated-text";
 import ListCell from "../../components/atoms/list-cell";
 
 const PAGE_SIZE = 20;
@@ -117,7 +118,7 @@ export default function TransactionsDashboard() {
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>
       {transactions.map((item) => <article key={item.id} className={styles.row}>
-        <ListCell className={styles.cell} label="cliente"><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></ListCell>
+        <ListCell className={styles.cell} label="cliente"><TruncatedText className={styles.clientName}>{item.clientName}</TruncatedText></ListCell>
         <DateCell value={item.createdAt} />
         <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {accountTypeLabel(item.accountTypeSnapshot)}</strong>
           <CopyCode code={item.code} tone="strong" size="small" mono />

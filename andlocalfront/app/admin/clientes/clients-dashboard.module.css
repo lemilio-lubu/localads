@@ -31,7 +31,12 @@
    entre filas es de 32 y no de 16 — es lo único que separa un cliente del
    siguiente. */
 .clientList { display: grid; gap: var(--space-4); }
-.clientRow { position: relative; display: grid; min-height: var(--space-15); grid-template-columns: minmax(var(--space-20), 1.618fr) minmax(var(--space-12), 1fr) minmax(var(--space-10), .618fr) minmax(var(--space-15), 1.272fr) minmax(var(--space-10), .786fr) minmax(var(--space-10), .786fr) minmax(var(--space-15), 1fr); align-items: stretch; gap: var(--space-1); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-2); transform: scale(1); transform-origin: center; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out), opacity var(--duration-ui) var(--ease-out); }
+/* UX-05: el importe, el estado y el plazo miden lo que su valor y nunca se
+   recortan; a 1440 se leían «US$ 3.07…», «acti…» y «vencido h…» con la página
+   sobrada de ancho. Correo y gestor son texto libre: son los que ceden, con el
+   valor completo en `title`. Orden: cliente, recargado, estado, correo, plazo,
+   gestor, acciones. */
+.clientRow { position: relative; display: grid; min-height: var(--space-15); grid-template-columns: minmax(calc(var(--space-20) + var(--space-2)), 2fr) minmax(var(--space-15), max-content) max-content minmax(var(--space-20), 2fr) minmax(calc(var(--space-15) + var(--space-2)), max-content) minmax(var(--space-15), 1.272fr) minmax(var(--space-15), 1fr); align-items: stretch; gap: var(--space-1); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-2); transform: scale(1); transform-origin: center; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out), opacity var(--duration-ui) var(--ease-out); }
 .clientRow:has([data-row-opener]:active) { transform: scale(.99); }
 .clientRow > *:not([data-row-opener], .rowActions) { pointer-events: none; }
 .clientIdentity { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: var(--space-half); }
