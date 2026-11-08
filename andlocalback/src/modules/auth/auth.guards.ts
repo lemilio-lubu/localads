@@ -4,6 +4,7 @@ import { AccessTokenService } from "./access-token.service";
 import { ALLOWS_TEMPORARY_PASSWORD_KEY, IS_PUBLIC_KEY, ROLES_KEY } from "./auth.decorators";
 import { AccessPayload, AuthPrincipal, AuthRole } from "./auth.types";
 import { SessionStateService } from "./session-state.service";
+import { RequestContext } from "../../common/observability/request-context";
 
 /* Autentica y, ademas, comprueba que el token siga vigente para su usuario
    (activo, mismo rol, misma version): ver SessionStateService. */
@@ -29,6 +30,8 @@ export class JwtAuthGuard implements CanActivate {
     const authorization = request.headers.authorization; const value = Array.isArray(authorization) ? authorization[0] : authorization;
     if (!value?.startsWith("Bearer ")) throw new UnauthorizedException("Debes iniciar sesión");
     request.user = await this.current(value.slice(7));
+    /* Desde aqui, los logs y la auditoria de esta peticion saben quien es. */
+    RequestContext.setUser(request.user.userId);
     return true;
   }
 

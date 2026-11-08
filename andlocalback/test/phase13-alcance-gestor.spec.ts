@@ -1,3 +1,4 @@
+import { recordingAudit } from "./support/security-audit";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -32,19 +33,19 @@ describe("Fase 13 - alcance del gestor, en memoria", () => {
 
   it("un gestor se asigna a si mismo el cliente que crea", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).create(profile("uno@example.test"), { managerId: "gestor-1" });
+    await new ManageClients(clients, issuer(), recordingAudit()).create(profile("uno@example.test"), { managerId: "gestor-1" });
     expect(clients.create).toHaveBeenCalledWith(expect.anything(), expect.anything(), "gestor-1");
   });
 
   it("un admin crea el cliente sin gestor cuando no elige ninguno", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).create(profile("dos@example.test"), {});
+    await new ManageClients(clients, issuer(), recordingAudit()).create(profile("dos@example.test"), {});
     expect(clients.create).toHaveBeenCalledWith(expect.anything(), expect.anything(), null);
   });
 
   it("un admin puede elegir el gestor al crear el cliente", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).create(profile("tres@example.test"), {}, " gestor-7 ");
+    await new ManageClients(clients, issuer(), recordingAudit()).create(profile("tres@example.test"), {}, " gestor-7 ");
     expect(clients.create).toHaveBeenCalledWith(expect.anything(), expect.anything(), "gestor-7");
   });
 
@@ -52,7 +53,7 @@ describe("Fase 13 - alcance del gestor, en memoria", () => {
      otro. El token manda sobre lo que pida el request. */
   it("un gestor no puede asignar el cliente a otro desde el cuerpo", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).create(profile("cuatro@example.test"), { managerId: "gestor-1" }, "otro-gestor");
+    await new ManageClients(clients, issuer(), recordingAudit()).create(profile("cuatro@example.test"), { managerId: "gestor-1" }, "otro-gestor");
     expect(clients.create).toHaveBeenCalledWith(expect.anything(), expect.anything(), "gestor-1");
   });
 
@@ -60,7 +61,7 @@ describe("Fase 13 - alcance del gestor, en memoria", () => {
      no confirmar que existe ni de quien es. */
   it.each(["get", "update", "deactivate"] as const)("un cliente fuera de la cartera responde 404 en %s", async (operation) => {
     const clients = repository({ findById: vi.fn().mockResolvedValue(null) });
-    const manage = new ManageClients(clients, issuer());
+    const manage = new ManageClients(clients, issuer(), recordingAudit());
     const call = operation === "get" ? manage.get("ajeno", { managerId: "gestor-1" })
       : operation === "update" ? manage.update("ajeno", {}, { managerId: "gestor-1" })
       : manage.deactivate("ajeno", { managerId: "gestor-1" });
@@ -70,7 +71,7 @@ describe("Fase 13 - alcance del gestor, en memoria", () => {
 
   it("el alcance llega hasta la consulta, no se filtra despues en memoria", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).list({ managerId: "gestor-1" });
+    await new ManageClients(clients, issuer(), recordingAudit()).list({ managerId: "gestor-1" });
     expect(clients.list).toHaveBeenCalledWith({ managerId: "gestor-1" });
   });
 });

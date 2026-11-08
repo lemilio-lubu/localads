@@ -1,10 +1,11 @@
+import { SecurityAuditLog } from "../../../../common/audit/security-audit.port";
 import { ApplicationError } from "../../../../common/errors/application.error";
 import { normalizeName, normalizeUsername, TeamMemberInput, validateTeamEmail, validateTeamMember, validateTeamName, validateTeamRole } from "../../domain/team-member";
 import { TeamCredentialsIssuer } from "../ports/team-credentials.port";
-import { PortfolioDestination, TeamFilters, TeamRepository, UpdateTeamMemberInput } from "../ports/team.repository";
+import { PortfolioDestination, TeamFilters, TeamMemberView, TeamRepository, UpdateTeamMemberInput } from "../ports/team.repository";
 
 export class ManageTeam {
-  constructor(private readonly team: TeamRepository, private readonly credentials: TeamCredentialsIssuer) {}
+  constructor(private readonly team: TeamRepository, private readonly credentials: TeamCredentialsIssuer, private readonly audit: SecurityAuditLog) {}
 
   list(filters: TeamFilters) { return this.team.list(filters); }
 
@@ -21,6 +22,7 @@ export class ManageTeam {
     const username = normalizeUsername(input.username);
     const issued = await this.credentials.issue(username);
     const member = await this.team.create({ ...input, username, name: normalizeName(input.name) }, { username, passwordHash: issued.passwordHash }, createdById);
+    await this.audit.record({ action: "TEAM_MEMBER_CREATED", outcome: "SUCCESS", actorUserId: createdById, target: { type: "USER", id: member.id }, detail: { role: member.role } });
     return { ...member, credentials: { username, temporaryPassword: issued.temporaryPassword } };
   }
 
@@ -37,7 +39,19 @@ export class ManageTeam {
     if (input.status === "INACTIVE") return this.deactivate(id, input.portfolio);
     const updated = await this.team.update(id, { ...input, ...(input.username ? { username: normalizeUsername(input.username) } : {}), ...(input.name !== undefined ? { name: normalizeName(input.name) } : {}) });
     if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
+    await this.recordUpdate(current, updated, input);
     return updated;
+  }
+
+  /* Rol y reactivacion van aparte porque son los que cambian que puede hacer
+     alguien; el resto se registra como edicion, con los nombres de los
+     campos y no sus valores. */
+  private async recordUpdate(before: TeamMemberView, after: TeamMemberView, input: UpdateTeamMemberInput) {
+    const target = { type: "USER", id: after.id } as const;
+    if (after.role !== before.role) await this.audit.record({ action: "TEAM_ROLE_CHANGED", outcome: "SUCCESS", target, detail: { from: before.role, to: after.role } });
+    if (before.status === "INACTIVE" && after.status === "ACTIVE") await this.audit.record({ action: "TEAM_MEMBER_REACTIVATED", outcome: "SUCCESS", target });
+    const fields = (["username", "name"] as const).filter((field) => input[field] !== undefined && after[field] !== before[field]);
+    if (fields.length) await this.audit.record({ action: "TEAM_MEMBER_UPDATED", outcome: "SUCCESS", target, detail: { fields } });
   }
 
   /* Dar de baja a un gestor con cartera exige decir a donde va esa cartera.
@@ -60,6 +74,10 @@ export class ManageTeam {
     }
     const result = await this.team.deactivate(id, destination ?? { kind: "release" });
     if (!result) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
+    await this.audit.record({
+      action: "TEAM_MEMBER_DEACTIVATED", outcome: "SUCCESS", target: { type: "USER", id },
+      detail: { movedClients: result.movedClients, portfolioDestination: destination?.kind ?? "release", reassignedTo: destination?.kind === "reassign" ? destination.managerId : null },
+    });
     return { ...result.member, movedClients: result.movedClients, portfolioDestination: destination?.kind ?? "release" };
   }
 
@@ -68,6 +86,7 @@ export class ManageTeam {
     const issued = await this.credentials.issue(member.username);
     const updated = await this.team.resetPassword(id, issued.passwordHash);
     if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
+    await this.audit.record({ action: "TEAM_PASSWORD_RESET", outcome: "SUCCESS", target: { type: "USER", id } });
     return { ...updated, credentials: { username: member.username, temporaryPassword: issued.temporaryPassword } };
   }
 
@@ -78,6 +97,7 @@ export class ManageTeam {
     await this.get(id);
     const updated = await this.team.resetMfa(id);
     if (!updated) throw new ApplicationError("TEAM_MEMBER_NOT_FOUND", "El miembro del equipo no existe", 404);
+    await this.audit.record({ action: "TEAM_MFA_RESET", outcome: "SUCCESS", actorUserId: actorId, target: { type: "USER", id } });
     return updated;
   }
 }

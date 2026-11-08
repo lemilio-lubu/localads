@@ -78,6 +78,19 @@ RATE_LIMIT_PER_MINUTE=600
 LOGIN_RATE_LIMIT_PER_MINUTE=10
 ```
 
+## Logs y auditoría de seguridad
+
+- Cada línea del log es un JSON (pino) con `requestId` y, si la petición ya está autenticada, `userId`. El `requestId` vuelve en la cabecera `X-Request-Id` y en el cuerpo de cualquier 500: con él se encuentra el detalle del error en los logs de Railway.
+- Por petición se registran método, ruta (sin query), estado, duración, IP y user-agent; nunca cabeceras ni cuerpo. Claves, tokens, cookies y referencias bancarias se tapan aunque algún servicio los pase. De los errores de Prisma se guarda el código, no el mensaje (copia los argumentos de la consulta).
+- Un error no controlado responde `500 { code: "INTERNAL_ERROR", requestId }` con un mensaje genérico; el detalle queda solo en el servidor.
+- `SecurityAuditEvent` registra accesos (login correcto y fallido, bloqueo, cierre de sesión, reutilización de refresh), doble factor, cambios de clave, altas, ediciones y bajas del equipo y de clientes, cambios de rol, reasignación de cartera y apertura de comprobantes. Es de solo inserción: un trigger rechaza `UPDATE`, `DELETE` y `TRUNCATE`. No guarda claves, códigos, el correo tecleado en un login fallido ni valores de RUC o correo, solo los nombres de los campos que cambiaron.
+- El admin lo consulta en el portal, en **Auditoría de seguridad** del menú de perfil (`GET /api/v1/admin/security-events`), con filtros por tipo y por resultado. Se puede buscar por persona, por cliente o por el código de referencia de 8 caracteres que muestra un error 500.
+
+```dotenv
+# Nivel del log: fatal, error, warn, info (por defecto), debug, trace o silent
+LOG_LEVEL=info
+```
+
 El seed (`npm run prisma:seed`) crea las cuentas demo con clave `1234` y se niega a correr si el entorno es un despliegue o la base no es local. Para una demo sin datos reales se puede forzar con `ALLOW_DEMO_SEED=true`.
 
 En Cloudflare R2 crea un bucket privado y un token **Object Read & Write** limitado a ese bucket. El backend usa el endpoint S3 `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`; no hace falta exponer el bucket públicamente porque las descargas pasan por la API autenticada. Guarda el secreto únicamente en Railway. La comprobación de salud está en `/api/v1/health`.

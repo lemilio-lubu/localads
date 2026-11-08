@@ -1,3 +1,4 @@
+import { recordingAudit } from "./support/security-audit";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -33,7 +34,7 @@ describe("Fase 15 - restablecer la clave de un cliente, en memoria", () => {
   it("emite otra clave para el mismo usuario y la devuelve en claro una vez", async () => {
     const clients = repository();
     const credentials = issuer();
-    const result = await new ManageClients(clients, credentials).resetPassword("c1", {});
+    const result = await new ManageClients(clients, credentials, recordingAudit()).resetPassword("c1", {});
 
     expect(credentials.issue).toHaveBeenCalledWith("cliente");
     expect(clients.resetPassword).toHaveBeenCalledWith("c1", "cliente", "scrypt$nuevo$h");
@@ -43,7 +44,7 @@ describe("Fase 15 - restablecer la clave de un cliente, en memoria", () => {
 
   it("el gestor pasa su cartera como alcance a la consulta", async () => {
     const clients = repository();
-    await new ManageClients(clients, issuer()).resetPassword("c1", { managerId: "gestor-1" });
+    await new ManageClients(clients, issuer(), recordingAudit()).resetPassword("c1", { managerId: "gestor-1" });
     expect(clients.findById).toHaveBeenCalledWith("c1", { managerId: "gestor-1" });
   });
 
@@ -51,20 +52,20 @@ describe("Fase 15 - restablecer la clave de un cliente, en memoria", () => {
   it("un cliente ajeno o inexistente responde 404 sin tocar la clave", async () => {
     const clients = repository({ findById: vi.fn().mockResolvedValue(null) });
     const credentials = issuer();
-    await expect(new ManageClients(clients, credentials).resetPassword("c1", { managerId: "gestor-1" })).rejects.toMatchObject({ code: "CLIENT_NOT_FOUND", status: 404 });
+    await expect(new ManageClients(clients, credentials, recordingAudit()).resetPassword("c1", { managerId: "gestor-1" })).rejects.toMatchObject({ code: "CLIENT_NOT_FOUND", status: 404 });
     expect(credentials.issue).not.toHaveBeenCalled();
     expect(clients.resetPassword).not.toHaveBeenCalled();
   });
 
   it("un cliente sin usuario de acceso responde 409", async () => {
     const clients = repository({ findLoginUsername: vi.fn().mockResolvedValue(null) });
-    await expect(new ManageClients(clients, issuer()).resetPassword("c1", {})).rejects.toMatchObject({ code: "CLIENT_LOGIN_NOT_FOUND", status: 409 });
+    await expect(new ManageClients(clients, issuer(), recordingAudit()).resetPassword("c1", {})).rejects.toMatchObject({ code: "CLIENT_LOGIN_NOT_FOUND", status: 409 });
     expect(clients.resetPassword).not.toHaveBeenCalled();
   });
 
   it("si el usuario desaparece antes de escribir tambien responde 409", async () => {
     const clients = repository({ resetPassword: vi.fn().mockResolvedValue(false) });
-    await expect(new ManageClients(clients, issuer()).resetPassword("c1", {})).rejects.toMatchObject({ code: "CLIENT_LOGIN_NOT_FOUND", status: 409 });
+    await expect(new ManageClients(clients, issuer(), recordingAudit()).resetPassword("c1", {})).rejects.toMatchObject({ code: "CLIENT_LOGIN_NOT_FOUND", status: 409 });
   });
 });
 
@@ -91,7 +92,7 @@ describe("Fase 15 - restablecer la clave de un cliente contra la base", () => {
     const user = await prisma.authUser.update({ where: { username }, data: { mustChangePassword: false } });
     await prisma.refreshSession.create({ data: { userId: user.id, tokenHash: randomUUID(), familyId: randomUUID(), expiresAt: new Date(Date.now() + 86_400_000) } });
 
-    const result = await new ManageClients(clients, { prepare: vi.fn(), issue: async (name) => { const temporaryPassword = "Nueva2346Clav"; return { username: name, temporaryPassword, passwordHash: await passwords.hash(temporaryPassword) }; } }).resetPassword(client.id, {});
+    const result = await new ManageClients(clients, { prepare: vi.fn(), issue: async (name) => { const temporaryPassword = "Nueva2346Clav"; return { username: name, temporaryPassword, passwordHash: await passwords.hash(temporaryPassword) }; } }, recordingAudit()).resetPassword(client.id, {});
 
     const stored = await prisma.authUser.findUniqueOrThrow({ where: { username } });
     expect(result.credentials).toEqual({ username, temporaryPassword: "Nueva2346Clav" });
@@ -103,6 +104,6 @@ describe("Fase 15 - restablecer la clave de un cliente contra la base", () => {
 
   it("el gestor no alcanza a un cliente que no es de su cartera", async () => {
     const client = await clients.create(profile(`${randomUUID()}@example.test`), { username: `u-${randomUUID()}`, passwordHash: "scrypt$s$h" }, null);
-    await expect(new ManageClients(clients, issuer()).resetPassword(client.id, { managerId: "gestor-ajeno" })).rejects.toMatchObject({ code: "CLIENT_NOT_FOUND" });
+    await expect(new ManageClients(clients, issuer(), recordingAudit()).resetPassword(client.id, { managerId: "gestor-ajeno" })).rejects.toMatchObject({ code: "CLIENT_NOT_FOUND" });
   });
 });

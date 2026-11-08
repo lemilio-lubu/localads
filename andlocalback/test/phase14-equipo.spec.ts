@@ -1,3 +1,4 @@
+import { recordingAudit } from "./support/security-audit";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -43,13 +44,13 @@ describe("Fase 14 - reglas del equipo", () => {
 
   it("el nombre se guarda sin espacios sobrantes", async () => {
     const team = { create: vi.fn().mockResolvedValue(member) } as unknown as TeamRepository;
-    await new ManageTeam(team, issuer()).create({ username: "a@example.test", name: "  Marta   Pérez ", role: "GESTOR" }, "admin-1");
+    await new ManageTeam(team, issuer(), recordingAudit()).create({ username: "a@example.test", name: "  Marta   Pérez ", role: "GESTOR" }, "admin-1");
     expect(team.create).toHaveBeenCalledWith(expect.objectContaining({ name: "Marta Pérez" }), expect.anything(), "admin-1");
   });
 
   it("una cuenta sin nombre puede cambiar de rol sin que se le pida", async () => {
     const team = { findById: vi.fn().mockResolvedValue({ ...member, name: null }), update: vi.fn().mockResolvedValue(member) } as unknown as TeamRepository;
-    await new ManageTeam(team, issuer()).update("t1", { role: "ADMIN" });
+    await new ManageTeam(team, issuer(), recordingAudit()).update("t1", { role: "ADMIN" });
     expect(team.update).toHaveBeenCalled();
   });
 
@@ -71,14 +72,14 @@ describe("Fase 14 - reglas del equipo", () => {
 
   it("crear devuelve la clave temporal una vez y guarda quien lo creo", async () => {
     const team = repository();
-    const result = await new ManageTeam(team, issuer()).create({ username: "Gestor@Example.Test", name: "Gestor Uno", role: "GESTOR" }, "admin-1");
+    const result = await new ManageTeam(team, issuer(), recordingAudit()).create({ username: "Gestor@Example.Test", name: "Gestor Uno", role: "GESTOR" }, "admin-1");
     expect(result.credentials).toEqual({ username: "gestor@example.test", temporaryPassword: "Abcd2345Wxyz" });
     expect(team.create).toHaveBeenCalledWith({ username: "gestor@example.test", name: "Gestor Uno", role: "GESTOR" }, { username: "gestor@example.test", passwordHash: "scrypt$s$h" }, "admin-1");
   });
 
   it("crear rechaza un usuario que no es un correo y no guarda nada", async () => {
     const team = repository();
-    await expect(new ManageTeam(team, issuer()).create({ username: "gestor", name: "Gestor Uno", role: "GESTOR" }, "admin-1")).rejects.toMatchObject({ code: "INVALID_USERNAME" });
+    await expect(new ManageTeam(team, issuer(), recordingAudit()).create({ username: "gestor", name: "Gestor Uno", role: "GESTOR" }, "admin-1")).rejects.toMatchObject({ code: "INVALID_USERNAME" });
     expect(team.create).not.toHaveBeenCalled();
   });
 
@@ -87,13 +88,13 @@ describe("Fase 14 - reglas del equipo", () => {
      ha escrito: solo se valida cuando el correo cambia. */
   it("una cuenta con usuario antiguo cambia de rol sin que se le exija un correo", async () => {
     const team = repository();
-    await new ManageTeam(team, issuer()).update("t1", { username: "gestor", name: "Gestor Uno", role: "ADMIN" });
+    await new ManageTeam(team, issuer(), recordingAudit()).update("t1", { username: "gestor", name: "Gestor Uno", role: "ADMIN" });
     expect(team.update).toHaveBeenCalledWith("t1", expect.objectContaining({ username: "gestor", name: "Gestor Uno", role: "ADMIN" }));
   });
 
   it("al ponerle correo a una cuenta antigua, lo valida y lo guarda en minuscula", async () => {
     const team = repository();
-    const manage = new ManageTeam(team, issuer());
+    const manage = new ManageTeam(team, issuer(), recordingAudit());
     await expect(manage.update("t1", { username: "sin-correo" })).rejects.toMatchObject({ code: "INVALID_USERNAME" });
     expect(team.update).not.toHaveBeenCalled();
     await manage.update("t1", { username: "Nuevo@Example.Test" });
@@ -107,14 +108,14 @@ describe("Fase 14 - reglas del equipo", () => {
      hay que escribirlo. */
   it("desactivar a un gestor con cartera exige decir a donde va", async () => {
     const team = repositoryConCartera();
-    await expect(new ManageTeam(team, issuer()).update("t1", { status: "INACTIVE" }))
+    await expect(new ManageTeam(team, issuer(), recordingAudit()).update("t1", { status: "INACTIVE" }))
       .rejects.toMatchObject({ code: "PORTFOLIO_DESTINATION_REQUIRED", status: 409 });
     expect(team.deactivate).not.toHaveBeenCalled();
     expect(team.update).not.toHaveBeenCalled();
   });
 
   it("el error dice cuantos clientes hay en juego", async () => {
-    await expect(new ManageTeam(repositoryConCartera(), issuer()).deactivate("t1"))
+    await expect(new ManageTeam(repositoryConCartera(), issuer(), recordingAudit()).deactivate("t1"))
       .rejects.toMatchObject({ message: expect.stringContaining("2 clientes asignados") });
   });
 
@@ -123,7 +124,7 @@ describe("Fase 14 - reglas del equipo", () => {
     ["soltar", { kind: "release" } as const],
   ])("con destino explicito (%s) la baja sigue adelante", async (_label, portfolio) => {
     const team = repositoryConCartera();
-    const result = await new ManageTeam(team, issuer()).update("t1", { status: "INACTIVE", portfolio });
+    const result = await new ManageTeam(team, issuer(), recordingAudit()).update("t1", { status: "INACTIVE", portfolio });
     expect(team.deactivate).toHaveBeenCalledWith("t1", portfolio);
     expect(team.update).not.toHaveBeenCalled();
     expect(result).toMatchObject({ movedClients: 2, portfolioDestination: portfolio.kind });
@@ -133,20 +134,20 @@ describe("Fase 14 - reglas del equipo", () => {
      es el caso de cualquier admin y el de un gestor que nunca recibio nada. */
   it("sin cartera la baja no pide destino", async () => {
     const team = repository();
-    await expect(new ManageTeam(team, issuer()).deactivate("t1")).resolves.toBeDefined();
+    await expect(new ManageTeam(team, issuer(), recordingAudit()).deactivate("t1")).resolves.toBeDefined();
     expect(team.deactivate).toHaveBeenCalledWith("t1", { kind: "release" });
   });
 
   it("restablecer la clave devuelve una nueva y vuelve a exigir el cambio", async () => {
     const team = repository();
-    const result = await new ManageTeam(team, issuer()).resetPassword("t1");
+    const result = await new ManageTeam(team, issuer(), recordingAudit()).resetPassword("t1");
     expect(result.credentials.temporaryPassword).toBe("Abcd2345Wxyz");
     expect(team.resetPassword).toHaveBeenCalledWith("t1", "scrypt$s$h");
   });
 
   it("un usuario inexistente responde 404 en todas las operaciones", async () => {
     const team = repository({ findById: vi.fn().mockResolvedValue(null), deactivate: vi.fn().mockResolvedValue(null) });
-    const manage = new ManageTeam(team, issuer());
+    const manage = new ManageTeam(team, issuer(), recordingAudit());
     for (const call of [manage.get("x"), manage.update("x", { role: "GESTOR" }), manage.deactivate("x"), manage.resetPassword("x")]) {
       await expect(call).rejects.toMatchObject({ code: "TEAM_MEMBER_NOT_FOUND", status: 404 });
     }

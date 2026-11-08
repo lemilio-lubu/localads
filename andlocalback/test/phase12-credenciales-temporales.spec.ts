@@ -1,3 +1,4 @@
+import { recordingAudit } from "./support/security-audit";
 import { BadRequestException, ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { TemporaryPasswordGuard } from "../src/modules/auth/auth.guards";
@@ -65,7 +66,7 @@ describe("Fase 12 - clave temporal", () => {
   it("crear un cliente devuelve la clave en claro una vez y persiste solo el hash", async () => {
     const clients = repository();
     const credentials = { prepare: vi.fn().mockResolvedValue({ username: "cliente", temporaryPassword: "Abcd2345Wxyz", passwordHash: "scrypt$s$h" }), issue: vi.fn() };
-    const result = await new ManageClients(clients, credentials).create({
+    const result = await new ManageClients(clients, credentials, recordingAudit()).create({
       name: "Cliente", email: "cliente@example.test", ruc: "1712345675001", accountType: AccountType.PREPAID, platforms: [AdvertisingPlatform.META], creditDays: 0,
     }, {});
 
@@ -102,7 +103,7 @@ describe("Fase 12 - cambio de contraseña", () => {
     const authUser = { findUnique: vi.fn().mockResolvedValue({ id: "u1", passwordHash: stored }), update: vi.fn() };
     const refreshSession = { updateMany: vi.fn() };
     const database = { authUser, refreshSession, $transaction: vi.fn().mockResolvedValue([]) };
-    return { database, service: new AuthService(database as never, passwords, {} as never, {} as never, { invalidate: vi.fn() } as never) };
+    return { database, service: new AuthService(database as never, passwords, {} as never, {} as never, { invalidate: vi.fn() } as never, recordingAudit()) };
   }
 
   it("rechaza si la contraseña actual no coincide", async () => {

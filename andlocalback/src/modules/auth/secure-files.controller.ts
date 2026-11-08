@@ -5,6 +5,7 @@ import { PrismaService } from "../../database/prisma.service";
 import { CurrentUser } from "./auth.decorators";
 import { AuthPrincipal } from "./auth.types";
 import { RECEIPT_OBJECT_STORAGE, ReceiptObjectStorage } from "../storage/receipt-object-storage";
+import { SECURITY_AUDIT_LOG, SecurityAuditLog } from "../../common/audit/security-audit.port";
 
 type ReceiptOwner = Readonly<{ clientId: string; client: { managerId: string | null } }>;
 
@@ -29,7 +30,11 @@ const ownerSelect = { payment: { select: { transaction: { select: { clientId: tr
 
 @Controller("files")
 export class SecureFilesController {
-  constructor(private readonly database: PrismaService, @Inject(RECEIPT_OBJECT_STORAGE) private readonly storage: ReceiptObjectStorage) {}
+  constructor(
+    private readonly database: PrismaService,
+    @Inject(RECEIPT_OBJECT_STORAGE) private readonly storage: ReceiptObjectStorage,
+    @Inject(SECURITY_AUDIT_LOG) private readonly audit: SecurityAuditLog,
+  ) {}
 
   @Get("receipts/:receiptId/content")
   async receiptContent(@Param("receiptId") receiptId: string, @CurrentUser() user: AuthPrincipal, @Res() response: Response) {
@@ -43,7 +48,11 @@ export class SecureFilesController {
       },
     });
     if (!receipt) throw new NotFoundException("Comprobante no encontrado");
-    assertCanRead(user, receipt.payment.transaction);
+    /* Quien abre un comprobante bancario, y quien lo intenta sin permiso. */
+    const target = { type: "RECEIPT", id: receiptId } as const;
+    try { assertCanRead(user, receipt.payment.transaction); }
+    catch (error) { await this.audit.record({ action: "RECEIPT_ACCESS_DENIED", outcome: "DENIED", actorUserId: user.userId, target, detail: { role: user.role } }); throw error; }
+    await this.audit.record({ action: "RECEIPT_VIEWED", outcome: "SUCCESS", actorUserId: user.userId, target, detail: { role: user.role } });
     return this.sendReceipt(response, receipt.url, receipt.originalName, receipt.mimeType);
   }
 

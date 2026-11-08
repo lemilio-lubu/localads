@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { PrismaService } from "../../database/prisma.service";
 import { AccessTokenService } from "./access-token.service";
@@ -8,6 +8,7 @@ import { MfaSecretCipher } from "./mfa-secret-cipher";
 import { passwordProblem } from "./password-policy";
 import { lockoutUntil, refreshExpiry, refreshReuseGraceMs, sessionLimits } from "./session-policy";
 import { SessionStateService } from "./session-state.service";
+import { SECURITY_AUDIT_LOG, SecurityAuditLog } from "../../common/audit/security-audit.port";
 import { generateRecoveryCodes, generateTotpSecret, hashRecoveryCode, otpauthUri, verifyTotp } from "./totp";
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
@@ -45,6 +46,7 @@ export class AuthService {
     private readonly accessTokens: AccessTokenService,
     private readonly cipher: MfaSecretCipher,
     private readonly sessions: SessionStateService,
+    @Inject(SECURITY_AUDIT_LOG) private readonly audit: SecurityAuditLog,
   ) {
     this.dummyHash = this.passwords.hash(randomBytes(16).toString("hex"));
   }
@@ -53,18 +55,25 @@ export class AuthService {
     const user = await this.database.authUser.findUnique({ where: { username: username.trim().toLowerCase() } });
     if (!user || (user.lockedUntil && user.lockedUntil > new Date())) {
       await this.passwords.verify(password, await this.dummyHash);
+      await this.audit.record({ action: "LOGIN_FAILED", outcome: "FAILURE", actorUserId: null, ...(user ? { target: { type: "USER", id: user.id } } : {}), detail: { reason: user ? "LOCKED" : "UNKNOWN_USER" } });
       throw new UnauthorizedException(invalidCredentials);
     }
-    if (!(await this.passwords.verify(password, user.passwordHash)) || user.status !== "ACTIVE") {
+    const validPassword = await this.passwords.verify(password, user.passwordHash);
+    if (!validPassword || user.status !== "ACTIVE") {
+      await this.audit.record({ action: "LOGIN_FAILED", outcome: "FAILURE", actorUserId: null, target: { type: "USER", id: user.id }, detail: { reason: validPassword ? "INACTIVE_USER" : "BAD_PASSWORD" } });
       await this.registerFailure(user);
       throw new UnauthorizedException(invalidCredentials);
     }
-    await this.assertCommercialAccess(user.clientId, user.accountId);
+    try { await this.assertCommercialAccess(user.clientId, user.accountId); }
+    catch (error) {
+      await this.audit.record({ action: "LOGIN_FAILED", outcome: "FAILURE", actorUserId: null, target: { type: "USER", id: user.id }, detail: { reason: "INACTIVE_CLIENT" } });
+      throw error;
+    }
     /* Con el doble factor activo, la clave sola no abre sesion: devuelve un
        reto para el paso del codigo. Sin el, entra: activarlo es decision de
        cada uno, desde la pantalla de la cuenta. */
     if (user.mfaEnabledAt) return { kind: "mfa", challengeToken: this.accessTokens.signChallenge(user.id, "verify") };
-    return this.completeLogin(user);
+    return this.completeLogin(user, "PASSWORD");
   }
 
   /* Segundo paso: un codigo de la app o uno de recuperacion. Las escrituras
@@ -76,14 +85,18 @@ export class AuthService {
     const step = verifyTotp(this.cipher.decrypt(user.mfaSecret), code, user.mfaLastStep);
     if (step !== null) {
       const claimed = await this.database.authUser.updateMany({ where: { id: user.id, OR: [{ mfaLastStep: null }, { mfaLastStep: { lt: step } }] }, data: { mfaLastStep: step } });
-      if (claimed.count === 1) return this.completeLogin(user);
+      if (claimed.count === 1) return this.completeLogin(user, "TOTP");
     }
     const recovery = hashRecoveryCode(code);
     if (user.mfaRecoveryCodes.includes(recovery)) {
       const remaining = user.mfaRecoveryCodes.filter((hash) => hash !== recovery);
       const claimed = await this.database.authUser.updateMany({ where: { id: user.id, mfaRecoveryCodes: { has: recovery } }, data: { mfaRecoveryCodes: remaining } });
-      if (claimed.count === 1) return { ...(await this.completeLogin(user)), recoveryCodesLeft: remaining.length };
+      if (claimed.count === 1) {
+        await this.audit.record({ action: "MFA_RECOVERY_CODE_USED", outcome: "SUCCESS", actorUserId: user.id, target: { type: "USER", id: user.id }, detail: { recoveryCodesLeft: remaining.length } });
+        return { ...(await this.completeLogin(user, "RECOVERY_CODE")), recoveryCodesLeft: remaining.length };
+      }
     }
+    await this.audit.record({ action: "MFA_VERIFY_FAILED", outcome: "FAILURE", actorUserId: null, target: { type: "USER", id: user.id } });
     await this.registerFailure(user);
     throw new UnauthorizedException(invalidCode);
   }
@@ -109,6 +122,7 @@ export class AuthService {
     const recoveryCodes = generateRecoveryCodes();
     const claimed = await this.database.authUser.updateMany({ where: { id: user.id, mfaEnabledAt: null, mfaSecret: user.mfaSecret }, data: { mfaEnabledAt: new Date(), mfaLastStep: step, mfaRecoveryCodes: recoveryCodes.map(hashRecoveryCode) } });
     if (claimed.count !== 1) throw new BadRequestException(mfaAlreadyEnabled);
+    await this.audit.record({ action: "MFA_ENABLED", outcome: "SUCCESS", actorUserId: user.id, target: { type: "USER", id: user.id } });
     return { recoveryCodes };
   }
 
@@ -121,11 +135,13 @@ export class AuthService {
      abierta y desatendida no basta para dejar la cuenta solo con la clave. */
   async disableMfa(userId: string, password: string, code: string) {
     const user = await this.activeUser(userId);
-    if (!(await this.passwords.verify(password, user.passwordHash))) throw new UnauthorizedException("La contraseña no es correcta");
+    const denied = (reason: string) => this.audit.record({ action: "MFA_DISABLE_FAILED", outcome: "FAILURE", actorUserId: user.id, target: { type: "USER", id: user.id }, detail: { reason } });
+    if (!(await this.passwords.verify(password, user.passwordHash))) { await denied("BAD_PASSWORD"); throw new UnauthorizedException("La contraseña no es correcta"); }
     if (!user.mfaEnabledAt || !user.mfaSecret) return { enabled: false };
     const validCode = verifyTotp(this.cipher.decrypt(user.mfaSecret), code, user.mfaLastStep) !== null || user.mfaRecoveryCodes.includes(hashRecoveryCode(code));
-    if (!validCode) throw new BadRequestException("El código no es correcto");
+    if (!validCode) { await denied("BAD_CODE"); throw new BadRequestException("El código no es correcto"); }
     await this.database.authUser.update({ where: { id: user.id }, data: { mfaSecret: null, mfaEnabledAt: null, mfaLastStep: null, mfaRecoveryCodes: [] } });
+    await this.audit.record({ action: "MFA_DISABLED", outcome: "SUCCESS", actorUserId: user.id, target: { type: "USER", id: user.id } });
     return { enabled: false };
   }
 
@@ -140,6 +156,9 @@ export class AuthService {
       const concurrent = session.replacedById !== null && now.getTime() - session.revokedAt.getTime() < refreshReuseGraceMs;
       if (!concurrent) {
         await this.database.refreshSession.updateMany({ where: { familyId: session.familyId, revokedAt: null }, data: { revokedAt: now } });
+        /* Solo cuenta como reutilizacion si el token tenia sustituto: uno
+           revocado por logout o cambio de clave que vuelve no es un robo. */
+        if (session.replacedById !== null) await this.audit.record({ action: "REFRESH_TOKEN_REUSED", outcome: "DENIED", actorUserId: null, target: { type: "USER", id: session.userId }, detail: { familyId: session.familyId } });
         throw new UnauthorizedException("La sesión fue revocada");
       }
     }
@@ -151,6 +170,16 @@ export class AuthService {
     if (session.revokedAt) await create;
     else await this.database.$transaction([this.database.refreshSession.update({ where: { id: session.id }, data: { revokedAt: now, lastUsedAt: now, replacedById: nextId } }), create]);
     return this.session(principal, session.user.tokenVersion, nextRaw, session.familyCreatedAt);
+  }
+
+  /* Cerrar sesion: revoca el refresh de esta cookie y lo deja registrado si
+     de verdad habia una sesion abierta. */
+  async logout(rawToken: string | undefined) {
+    if (!rawToken) return;
+    const tokenHash = hashToken(rawToken);
+    const session = await this.database.refreshSession.findUnique({ where: { tokenHash }, select: { userId: true } });
+    const revoked = await this.database.refreshSession.updateMany({ where: { tokenHash, revokedAt: null }, data: { revokedAt: new Date() } });
+    if (session && revoked.count === 1) await this.audit.record({ action: "LOGOUT", outcome: "SUCCESS", actorUserId: session.userId, target: { type: "USER", id: session.userId } });
   }
 
   async revoke(rawToken: string | undefined) { if (!rawToken) return; await this.database.refreshSession.updateMany({ where: { tokenHash: hashToken(rawToken), revokedAt: null }, data: { revokedAt: new Date() } }); }
@@ -172,7 +201,10 @@ export class AuthService {
      use muere aqui, incluido el access token en curso. */
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await this.database.authUser.findUnique({ where: { id: userId } });
-    if (!user || !(await this.passwords.verify(currentPassword, user.passwordHash))) throw new UnauthorizedException("La contraseña actual no es correcta");
+    if (!user || !(await this.passwords.verify(currentPassword, user.passwordHash))) {
+      await this.audit.record({ action: "PASSWORD_CHANGE_FAILED", outcome: "FAILURE", actorUserId: userId, target: { type: "USER", id: userId }, detail: { reason: "BAD_CURRENT_PASSWORD" } });
+      throw new UnauthorizedException("La contraseña actual no es correcta");
+    }
     const problem = passwordProblem(newPassword, user.username);
     if (problem) throw new BadRequestException(problem);
     if (await this.passwords.verify(newPassword, user.passwordHash)) throw new BadRequestException("La contraseña nueva debe ser distinta de la actual");
@@ -182,6 +214,7 @@ export class AuthService {
       this.database.refreshSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } }),
     ]);
     this.sessions.invalidate(userId);
+    await this.audit.record({ action: "PASSWORD_CHANGED", outcome: "SUCCESS", actorUserId: userId, target: { type: "USER", id: userId }, detail: { wasTemporary: user.mustChangePassword } });
     return { success: true };
   }
 
@@ -201,12 +234,13 @@ export class AuthService {
     return user;
   }
 
-  private async completeLogin(user: UserRecord): Promise<IssuedSession> {
+  private async completeLogin(user: UserRecord, method: "PASSWORD" | "TOTP" | "RECOVERY_CODE"): Promise<IssuedSession> {
     const now = new Date();
     await this.database.authUser.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: now } });
     const principal = this.principal(user);
     const raw = randomBytes(48).toString("base64url");
     await this.database.refreshSession.create({ data: { userId: user.id, familyId: randomUUID(), familyCreatedAt: now, tokenHash: hashToken(raw), expiresAt: refreshExpiry(principal.role, now, now) } });
+    await this.audit.record({ action: "LOGIN_SUCCEEDED", outcome: "SUCCESS", actorUserId: user.id, target: { type: "USER", id: user.id }, detail: { method, role: principal.role } });
     return this.session(principal, user.tokenVersion, raw, now);
   }
 
@@ -222,7 +256,9 @@ export class AuthService {
   private async registerFailure(user: Pick<UserRecord, "id" | "failedLoginCount" | "lockedUntil">) {
     if (user.lockedUntil && user.lockedUntil > new Date()) return;
     const failedLoginCount = user.failedLoginCount + 1;
-    await this.database.authUser.update({ where: { id: user.id }, data: { failedLoginCount, lockedUntil: lockoutUntil(failedLoginCount) } });
+    const lockedUntil = lockoutUntil(failedLoginCount);
+    await this.database.authUser.update({ where: { id: user.id }, data: { failedLoginCount, lockedUntil } });
+    if (lockedUntil) await this.audit.record({ action: "ACCOUNT_LOCKED", outcome: "DENIED", actorUserId: null, target: { type: "USER", id: user.id }, detail: { failedLoginCount, lockedUntil: lockedUntil.toISOString() } });
   }
 
   /* El rol llega de la base como texto libre. Un valor que no sea uno de los

@@ -1,4 +1,5 @@
 import { ManagerScope } from "../../../../common/access/manager-scope";
+import { SecurityAuditLog } from "../../../../common/audit/security-audit.port";
 import { ApplicationError } from "../../../../common/errors/application.error";
 import { ClientProfileInput, validateClientProfile } from "../../domain/client-profile";
 import { validateRuc } from "../../domain/ruc";
@@ -6,7 +7,7 @@ import { ClientAdminRepository, UpdateClientInput } from "../ports/client-admin.
 import { ClientCredentialsIssuer } from "../ports/client-credentials.port";
 
 export class ManageClients {
-  constructor(private readonly clients: ClientAdminRepository, private readonly credentials: ClientCredentialsIssuer) {}
+  constructor(private readonly clients: ClientAdminRepository, private readonly credentials: ClientCredentialsIssuer, private readonly audit: SecurityAuditLog) {}
 
   list(scope: ManagerScope) { return this.clients.list(scope); }
 
@@ -35,6 +36,7 @@ export class ManageClients {
     const managerId = scope.managerId ?? requestedManagerId?.trim() ?? null;
     const { username, temporaryPassword, passwordHash } = await this.credentials.prepare(input.email);
     const client = await this.clients.create(input, { username, passwordHash }, managerId || null);
+    await this.audit.record({ action: "CLIENT_CREATED", outcome: "SUCCESS", target: { type: "CLIENT", id: client.id }, detail: { accountType: input.accountType, managerId: managerId || null } });
     return { ...client, credentials: { username, temporaryPassword } };
   }
 
@@ -54,16 +56,21 @@ export class ManageClients {
     });
     const updated = await this.clients.update(id, input.accountType === "PREPAGO" ? { ...input, creditDays: 0, creditLimit: 0 } : input);
     if (!updated) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
+    /* Los nombres de los campos, no sus valores: el registro no es otra copia
+       del RUC o del correo. */
+    const fields = Object.keys(changes).filter((field) => !["expectedPlatformsVersion", "administratorId"].includes(field) && changes[field as keyof UpdateClientInput] !== undefined).sort();
+    if (fields.length) await this.audit.record({ action: "CLIENT_UPDATED", outcome: "SUCCESS", target: { type: "CLIENT", id }, detail: { fields } });
     return updated;
   }
 
   /* Reasignar es cosa del admin: el alcance vacio no es un descuido, es que un
      gestor no puede mover clientes, ni suyos ni ajenos. */
   async assignManager(id: string, managerId: string | null) {
-    await this.get(id, {});
+    const current = await this.get(id, {});
     const updated = await this.clients.assignManager(id, managerId);
     if (updated === undefined) throw new ApplicationError("MANAGER_NOT_ACTIVE", "El gestor no existe o no esta activo", 409);
     if (!updated) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
+    await this.audit.record({ action: "CLIENT_MANAGER_ASSIGNED", outcome: "SUCCESS", target: { type: "CLIENT", id }, detail: { from: current.manager?.id ?? null, to: managerId } });
     return updated;
   }
 
@@ -77,6 +84,7 @@ export class ManageClients {
     if (!username) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene acceso al portal", 409);
     const { temporaryPassword, passwordHash } = await this.credentials.issue(username);
     if (!(await this.clients.resetPassword(id, username, passwordHash))) throw new ApplicationError("CLIENT_LOGIN_NOT_FOUND", "El cliente no tiene acceso al portal", 409);
+    await this.audit.record({ action: "CLIENT_PASSWORD_RESET", outcome: "SUCCESS", target: { type: "CLIENT", id } });
     return { ...client, credentials: { username, temporaryPassword } };
   }
 
@@ -84,6 +92,7 @@ export class ManageClients {
     await this.get(id, scope);
     const client = await this.clients.deactivate(id);
     if (!client) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
+    await this.audit.record({ action: "CLIENT_DEACTIVATED", outcome: "SUCCESS", target: { type: "CLIENT", id } });
     return client;
   }
 }

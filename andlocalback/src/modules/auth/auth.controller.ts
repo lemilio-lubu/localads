@@ -64,7 +64,7 @@ export class AuthController {
   @Throttle(passwordChangeRateLimit) @Post("mfa/enroll/confirm") confirmEnrollment(@CurrentUser() user: AuthPrincipal, @Body() body: MfaEnrollDto) { return this.auth.confirmEnrollment(user.userId, body.code); }
   @Throttle(passwordChangeRateLimit) @Post("mfa/disable") disableMfa(@CurrentUser() user: AuthPrincipal, @Body() body: MfaDisableDto) { return this.auth.disableMfa(user.userId, body.password, body.code); }
   @Public() @Post("refresh") async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); const token = readCookie(request); if (!token) return this.auth.refresh(""); const result = await this.auth.refresh(token); setRefreshCookie(response, result); return sessionBody(result); }
-  @Public() @Post("logout") async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); await this.auth.revoke(readCookie(request)); clearRefreshCookie(response); return { success: true }; }
+  @Public() @Post("logout") async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) { assertTrustedOrigin(request); await this.auth.logout(readCookie(request)); clearRefreshCookie(response); return { success: true }; }
   @AllowsTemporaryPassword() @Get("me") async me(@CurrentUser() user: AuthPrincipal) { return { user: { ...user, displayName: await this.auth.displayName(user) } }; }
   /* Unica ruta que una cuenta con clave temporal puede usar ademas de /me.
      Cierra la sesion despues de cambiarla: los refresh quedan revocados. */
