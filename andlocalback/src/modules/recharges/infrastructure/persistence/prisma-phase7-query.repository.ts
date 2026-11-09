@@ -455,6 +455,7 @@ function toInvoice(record: NonNullable<ClientDetailRecord["invoice"]>): InvoiceQ
     vatAmount: money(record.vatAmount),
     totalAmount: money(record.totalAmount),
     documentUrl: record.documentUrl,
+    fiscalNumber: record.fiscalNumber,
   };
 }
 

@@ -78,6 +78,8 @@ export type InvoiceClaim =
   | Readonly<{ kind: "NOT_FOUND" }>
   | Readonly<{ kind: "ALREADY_AUTHORIZED" }>
   | Readonly<{ kind: "IN_PROGRESS" }>
+  /** Facturada a mano por AND (anterior a la facturación electrónica): no se emite. */
+  | Readonly<{ kind: "MANUAL" }>
   | Readonly<{ kind: "CLAIMED"; request: InvoiceAuthorizationRequest }>;
 
 export type InvoiceDocumentSource = Readonly<{

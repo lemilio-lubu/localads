@@ -7,13 +7,14 @@ import {
   InvoiceClaim,
   InvoiceDocumentSource,
 } from "../../application/ports/invoice-issuer.ports";
+import { InvoiceStatus } from "../../domain/model/domain-status";
 import { AccountType } from "../../domain/recharge.types";
 import { decimalToMonetaryAmount } from "./prisma-multi-recharge.repository";
 
 const platformNames: Record<string, string> = { META: "Meta", GOOGLE: "Google", TIKTOK: "TikTok" };
 
 const requestSelect = {
-  id: true, invoiceNumber: true, issuedAt: true, authorizationNumber: true, authorizedAt: true, externalReference: true, fiscalNumber: true,
+  id: true, invoiceNumber: true, status: true, issuedAt: true, authorizationNumber: true, authorizedAt: true, externalReference: true, fiscalNumber: true,
   pautaSubtotal: true, isdAmount: true, agencyFeeAmount: true, vatBaseAmount: true, vatAmount: true, totalAmount: true,
   transaction: {
     select: {
@@ -39,12 +40,13 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
      simultáneos solo uno ve count = 1. */
   async claimForAuthorization(invoiceId: string, now: Date, claimUntil: Date): Promise<InvoiceClaim> {
     const claimed = await this.prisma.invoice.updateMany({
-      where: { id: invoiceId, authorizationNumber: null, OR: [{ authorizationClaimedUntil: null }, { authorizationClaimedUntil: { lte: now } }] },
+      where: { id: invoiceId, status: InvoiceStatus.ISSUED, authorizationNumber: null, OR: [{ authorizationClaimedUntil: null }, { authorizationClaimedUntil: { lte: now } }] },
       data: { authorizationClaimedUntil: claimUntil },
     });
     const record = await this.prisma.invoice.findUnique({ where: { id: invoiceId }, select: requestSelect });
     if (!record) return { kind: "NOT_FOUND" };
     if (record.authorizationNumber) return { kind: "ALREADY_AUTHORIZED" };
+    if (record.status === InvoiceStatus.MANUAL) return { kind: "MANUAL" };
     if (claimed.count !== 1) return { kind: "IN_PROGRESS" };
     return { kind: "CLAIMED", request: toRequest(record) };
   }
@@ -91,7 +93,7 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
 
   async listPendingAuthorization(now: Date, limit: number): Promise<readonly string[]> {
     const records = await this.prisma.invoice.findMany({
-      where: { authorizationNumber: null, OR: [{ authorizationClaimedUntil: null }, { authorizationClaimedUntil: { lte: now } }] },
+      where: { status: InvoiceStatus.ISSUED, authorizationNumber: null, OR: [{ authorizationClaimedUntil: null }, { authorizationClaimedUntil: { lte: now } }] },
       select: { id: true },
       orderBy: [{ issuedAt: "asc" }, { id: "asc" }],
       take: limit,

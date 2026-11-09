@@ -47,7 +47,10 @@ export function paymentVerificationMessage(verificationStatus: string, postpaid:
 
 /* Sin documento todavía. Si ya hay factura, está esperando la autorización
    fiscal del emisor (segundos, o hasta que vuelva si estaba caído). */
-export function pendingInvoiceLabel(rechargeStatus: string, invoiceCreated: boolean): string {
+/* MANUAL: recarga anterior a la facturación electrónica; si hace falta, AND
+   la factura por su cuenta y aquí no llega el documento. */
+export function pendingInvoiceLabel(rechargeStatus: string, invoiceCreated: boolean, invoiceStatus?: string, fiscalNumber?: string | null): string {
+  if (invoiceStatus === "MANUAL") return fiscalNumber ? `Factura ${fiscalNumber}, la envía AND` : "La envía AND aparte";
   if (invoiceCreated) return "Autorizando factura";
   if (rechargeStatus === "REJECTED") return "No aplica";
   return "Llega al acreditar tu recarga";

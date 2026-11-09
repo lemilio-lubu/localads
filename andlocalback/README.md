@@ -151,6 +151,7 @@ Con `migo`:
 - Migo responde `SENT_TO_SRI` y autoriza después: se guardan su id (`Invoice.externalReference`) y el número fiscal (`Invoice.fiscalNumber`), y el reintento de cada minuto consulta esa factura en vez de emitir otra. El `invoiceUuid` se deriva del número interno, así que un reintento tras una respuesta perdida manda el mismo.
 - Un rechazo del SRI queda en `Invoice.authorizationError` y la factura se sigue consultando por si se corrige en Migo.
 - Si falta configuración, el backend no arranca y el error lista todo lo que falta.
+- **Corte:** la facturación electrónica empieza con la migración `20261109000000_facturas_anteriores_a_migo`. Las facturas que seguían sin autorizar al aplicarla quedan en estado `MANUAL` («facturada a mano por AND»): el emisor no las toma nunca y, si hacen falta, AND las factura por su cuenta.
 
 **La cuenta de Migo de AND es la real: no hay entorno de pruebas.** Con `INVOICE_ISSUER=migo`, cada factura llega al SRI; en desarrollo se usa `simulado`.
 

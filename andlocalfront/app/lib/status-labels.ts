@@ -40,7 +40,7 @@ const verificationLabels: Labels = {
   RECHAZADA: "Rechazada",
 };
 
-const invoiceLabels: Labels = { ISSUED: "Emitida", EMITIDA: "Emitida" };
+const invoiceLabels: Labels = { ISSUED: "Emitida", EMITIDA: "Emitida", MANUAL: "Facturada a mano por AND" };
 
 /* El panel de activaciones mostraba el enum crudo en inglés («pending», «in
    review»). Los estados se traducen aquí, como todos los demás. */

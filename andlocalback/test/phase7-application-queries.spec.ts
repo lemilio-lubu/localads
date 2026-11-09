@@ -52,7 +52,7 @@ const detail: ClientTransactionDetailView = {
       status: "PROCESSED", createdAt: "2026-09-10T00:00:00.000Z" }] },
   invoice: { id: "i1", invoiceNumber: "F-1", status: InvoiceStatus.ISSUED, issuedAt: "2026-09-10T01:00:00.000Z",
     pautaSubtotal: 100, isdAmount: 5, agencyFeeAmount: 10, vatBaseAmount: 115, vatAmount: 17.25,
-    totalAmount: 132.25, documentUrl: null },
+    totalAmount: 132.25, documentUrl: null, fiscalNumber: null },
   verification: { status: VerificationStatus.UNDER_REVIEW, reviewReason: "Validar referencia", updatedAt: "2026-09-10T00:15:00.000Z" },
 };
 
