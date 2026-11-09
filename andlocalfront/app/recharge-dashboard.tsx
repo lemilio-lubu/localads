@@ -12,6 +12,7 @@ import { usePaymentAccount } from "./lib/use-payment-account";
 import type { AccountType } from "./design-system/types";
 import { accountContext, createActivationRequest, createPostpaidTransaction, createPrepaidTransaction, getActivationRequests, getRechargeContext, getMyPautas, type ActivationRequest, type PautaResponse, type RechargeContext, type RechargePlatform } from "./lib/recharges-api";
 import { formatAmount, formatPercent } from "./lib/format";
+import { createAttemptKeys } from "./lib/idempotency";
 import styles from "./recharge-dashboard.module.css";
 import { TextInput } from "./components/atoms/text-field";
 import TextButton from "./components/atoms/text-button";
@@ -53,6 +54,9 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
   const [activationError, setActivationError] = useState("");
   const [activation, setActivation] = useState({ requesterName: "", externalAccountId: "", phone: "", firstRechargeAmount: "" });
   const fileInput = useRef<HTMLInputElement>(null);
+  /* Una clave por intento: reintentar la misma recarga reutiliza la clave y el
+     servidor devuelve la que ya creó, en vez de crear otra. */
+  const [attemptKeys] = useState(createAttemptKeys);
   const closeActivation = useCallback(() => { if (!submitting) setActivationPlatform(null); }, [submitting]);
   const selectedPlatform = platforms.find(({ id }) => id === activationPlatform);
   const reactivating = pautas.find((pauta) => pauta.platform === activationPlatform)?.status === "INACTIVE";
@@ -114,10 +118,17 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
     if (!canSubmit || confirmStep !== "confirm") return;
     setConfirmStep("sending"); setConfirmError("");
     setSubmitting(true);
+    const signature = JSON.stringify({
+      accountId, isPrepaid,
+      lines: lines.map((line) => [line.pautaId, line.platform, line.amount.toFixed(2)]),
+      receipt: isPrepaid && receipt ? [receipt.name, receipt.size, receipt.lastModified, receipt.type] : null,
+    });
+    const idempotencyKey = attemptKeys.keyFor(signature);
     try {
       const transaction = isPrepaid && receipt
-        ? await createPrepaidTransaction(accountId, lines, receipt)
-        : await createPostpaidTransaction(accountId, lines);
+        ? await createPrepaidTransaction(accountId, lines, receipt, idempotencyKey)
+        : await createPostpaidTransaction(accountId, lines, idempotencyKey);
+      attemptKeys.settle();
       setMessage(`Transacción ${transaction.code} creada con ${transaction.details.length} ${transaction.details.length === 1 ? "pauta" : "pautas"}. Pago ${transaction.payment.status.toLowerCase().replaceAll("_", " ")}.`);
       setAmounts({ META: "", GOOGLE: "", TIKTOK: "" }); setAcceptedTerms(false); setReceipt(null);
       if (fileInput.current) fileInput.current.value = "";
