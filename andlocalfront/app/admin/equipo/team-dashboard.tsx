@@ -19,6 +19,7 @@ import ToolbarButton from "../../components/atoms/toolbar-button";
 import RowActionButton from "../../components/atoms/row-action-button";
 import RowOpener from "../../components/atoms/row-opener";
 import RowActions from "../../components/molecules/row-actions";
+import { matchesSearch } from "../../lib/text-search";
 
 /* Mismos iconos de lucide que el resto de filtros: pintan con `currentColor`,
    así que se vuelven blancos al activarse el segmento. Un escudo para quien
@@ -84,8 +85,7 @@ export default function TeamDashboard() {
      servidor por cada tecla. El endpoint acepta los mismos criterios si algún
      día crece lo bastante para necesitarlo. */
   const visible = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return members.filter((member) => (!normalized || member.username.toLowerCase().includes(normalized) || (member.name ?? "").toLowerCase().includes(normalized)) && (!role || member.role === role));
+    return members.filter((member) => matchesSearch(query, member.username, member.name) && (!role || member.role === role));
   }, [members, query, role]);
 
   function save(member: TeamMember) {

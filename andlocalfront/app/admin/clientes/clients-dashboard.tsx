@@ -22,6 +22,7 @@ import ToolbarButton from "../../components/atoms/toolbar-button";
 import RowActionButton from "../../components/atoms/row-action-button";
 import RowOpener from "../../components/atoms/row-opener";
 import RowActions from "../../components/molecules/row-actions";
+import { matchesSearch } from "../../lib/text-search";
 
 /* Los iconos son de lucide y no SVG de marca a propósito: pintan con
    `currentColor`, así que se vuelven blancos al activarse el segmento. Un
@@ -73,8 +74,7 @@ export default function ClientsDashboard() {
   function retry() { setLoading(true); setError(""); setReloadToken((token) => token + 1); }
 
   const visibleClients = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return clients.filter((client) => (!normalized || `${client.name} ${client.email} ${client.manager?.username ?? ""}`.toLowerCase().includes(normalized))
+    return clients.filter((client) => matchesSearch(query, client.name, client.email, client.manager?.username)
       && (!platform || client.account.platforms.includes(platform))
       && (!accountType || client.account.type === accountType)
      );
