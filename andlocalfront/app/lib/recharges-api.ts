@@ -30,8 +30,6 @@ export function accountContext(mode: AccountMode) {
     : { clientId: authenticated?.clientId ?? "", accountId: authenticated?.accountId ?? process.env.NEXT_PUBLIC_POSTPAID_ACCOUNT_ID ?? "account-postpaid-001" };
 }
 
-function newIdempotencyKey() { return `web-${Date.now()}-${crypto.randomUUID()}`; }
-
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await authenticatedFetch(`${apiUrl}${path}`, { cache: "no-store", ...init });
   const payload = await response.json().catch(() => null) as T | { message?: string | string[] } | null;
@@ -74,15 +72,17 @@ export const getMyTransactions = (filters: MyTransactionFilters = {}) => {
 };
 export const getMyTransactionDetail = (_clientId: string | undefined, transactionId: string) => api<ClientTransactionDetail>(`/me/transactions/${encodeURIComponent(transactionId)}`);
 
-export function createPrepaidTransaction(accountId: string, details: RechargeLineInput[], receipt: File) {
+/* `idempotencyKey` la pone quien llama, una por intento (ver lib/idempotency):
+   así un reintento tras perder la respuesta no crea una segunda recarga. */
+export function createPrepaidTransaction(accountId: string, details: RechargeLineInput[], receipt: File, idempotencyKey: string) {
   const body = new FormData();
   body.append("accountId", accountId);
   body.append("details", JSON.stringify(details.map((detail) => ({ ...detail, amount: detail.amount.toFixed(2) }))));
   body.append("receipt", receipt);
-  return api<CreatedTransaction>("/transactions/prepaid", { method: "POST", headers: { "Idempotency-Key": newIdempotencyKey() }, body });
+  return api<CreatedTransaction>("/transactions/prepaid", { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body });
 }
 
-export const createPostpaidTransaction = (accountId: string, details: RechargeLineInput[]) => api<CreatedTransaction>("/transactions/postpaid", { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": newIdempotencyKey() }, body: JSON.stringify({ accountId, details: details.map((detail) => ({ ...detail, amount: detail.amount.toFixed(2) })) }) });
+export const createPostpaidTransaction = (accountId: string, details: RechargeLineInput[], idempotencyKey: string) => api<CreatedTransaction>("/transactions/postpaid", { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, body: JSON.stringify({ accountId, details: details.map((detail) => ({ ...detail, amount: detail.amount.toFixed(2) })) }) });
 
 export const createActivationRequest = (input: { accountId: string; platform: RechargePlatform; requesterName: string; externalAccountId: string; phone: string; firstRechargeAmount: number }) => api<ActivationRequest>("/campaign-activation-requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, firstRechargeAmount: input.firstRechargeAmount.toFixed(2) }) });
 export const getActivationRequests = (accountId: string) => api<ActivationRequest[]>(`/campaign-activation-requests?accountId=${encodeURIComponent(accountId)}`);
