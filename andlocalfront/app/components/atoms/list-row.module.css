@@ -74,8 +74,8 @@
 /* UX-05: el dato de una celda —importe, estado, fecha— no parte línea y
    nunca se recorta; la columna le reserva su ancho. Recortaba cualquier
    `span`, también las pastillas de estado, y se leían «acti…» o «US$ 3.07…».
-   Solo el texto libre recorta, con `<TruncatedText>`, que pone el valor
-   completo en `title`. */
+   Solo el texto libre recorta, con `<TruncatedText>`; el valor completo
+   sale en el tooltip de OverflowTooltip. */
 .cell > span { white-space: nowrap; }
 
 .truncate {

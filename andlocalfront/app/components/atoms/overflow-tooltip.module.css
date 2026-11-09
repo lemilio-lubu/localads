@@ -1,0 +1,27 @@
+/* Tooltip del texto recortado: oscuro sobre cualquier fondo, letra de pie de
+   foto y con el ancho justo del texto. Un correo largo parte por donde haga
+   falta en vez de salirse. Por encima de los modales (z-index 100). */
+.tooltip {
+  position: fixed;
+  z-index: 200;
+  top: 0;
+  left: 0;
+  max-width: min(360px, calc(100vw - var(--space-4)));
+  border-radius: var(--radius-small);
+  background: var(--color-text);
+  padding: var(--space-half) var(--space-1);
+  box-shadow: var(--shadow-popover);
+  color: var(--color-text-on-fill);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  /* Se mide antes de colocarlo: hasta entonces no se ve. */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.tooltip[data-ready] { visibility: visible; opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) { .tooltip { transition-duration: 0ms; } }

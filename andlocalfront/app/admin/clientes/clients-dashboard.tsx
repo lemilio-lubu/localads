@@ -145,7 +145,7 @@ export default function ClientsDashboard() {
         {orderedClients.map((client) => (
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
             <RowOpener label={`Ver detalle de ${client.name}`} onClick={() => setSelectedClient(client)} />
-            <div className={styles.clientIdentity}><small>clientes</small><strong title={client.name}>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
+            <div className={styles.clientIdentity}><small>clientes</small><strong>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
             <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
             <MetricCard label="correo" valueSize="small" truncate>{client.email}</MetricCard>

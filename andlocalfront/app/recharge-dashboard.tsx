@@ -192,7 +192,7 @@ export default function RechargeDashboard({ accountType }: { accountType: Accoun
           {isPrepaid && breakdown && <div className={styles.paymentCard}><PaymentAccountView state={paymentAccount} retry={retryPaymentAccount} amount={breakdown.total} /></div>}
           {isPrepaid && <button type="button" className={`${styles.uploadArea} ${receipt ? styles.hasReceipt : ""}`} onClick={() => fileInput.current?.click()}>
             <input ref={fileInput} type="file" accept="image/*,.pdf" onChange={selectReceipt} tabIndex={-1} />
-            <Image src="/figma/attachment.svg" alt="" width={36} height={36} /><span title={receipt?.name}>{receipt?.name ?? "adjuntar comprobante"}</span><small className={styles.uploadHint}>JPG, PNG o PDF · hasta 5 MB</small>
+            <Image src="/figma/attachment.svg" alt="" width={36} height={36} /><span>{receipt?.name ?? "adjuntar comprobante"}</span><small className={styles.uploadHint}>JPG, PNG o PDF · hasta 5 MB</small>
           </button>}
 
           <Checkbox className={styles.terms} checked={acceptedTerms} onChange={setAcceptedTerms}>He leído términos y condiciones</Checkbox>
