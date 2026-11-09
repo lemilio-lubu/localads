@@ -33,12 +33,12 @@ const accountTypeSegments: SegmentOption<AdminAccountType | null>[] = [
   { value: "PREPAGO", label: "prepago", Icon: Wallet, tone: "brand" },
 ];
 
-/* Orden de la lista: activos primero y luego inactivos, cada grupo por nombre.
-   Sin distinguir mayúsculas ni tildes («codex» va junto a «CODEX») y con los
-   números en su orden natural («Cliente 2» antes de «Cliente 10»). */
-const nameOrder = new Intl.Collator("es", { sensitivity: "base", numeric: true });
+/* Orden de la lista: activos primero y luego inactivos, cada grupo del más
+   nuevo al más antiguo. Un cliente recién creado aparece arriba del todo, a la
+   vista de quien lo acaba de crear. `createdAt` es ISO 8601 en UTC, así que se
+   compara como texto. */
 function compareClients(a: AdminClient, b: AdminClient) {
-  return Number(a.status !== "ACTIVE") - Number(b.status !== "ACTIVE") || nameOrder.compare(a.name, b.name);
+  return Number(a.status !== "ACTIVE") - Number(b.status !== "ACTIVE") || b.createdAt.localeCompare(a.createdAt);
 }
 
 export default function ClientsDashboard() {
