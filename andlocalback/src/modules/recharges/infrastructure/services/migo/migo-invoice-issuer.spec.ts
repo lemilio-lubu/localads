@@ -108,12 +108,17 @@ describe("emisor de facturas Migo", () => {
     expect(noRuc.createInvoice).not.toHaveBeenCalled();
   });
 
-  it("el PDF lleva el número fiscal y la autorización del SRI, sin la marca de prueba", async () => {
+  it("el RIDE lleva el número fiscal, la clave con su código de barras, el emisor y el código de producto, sin la marca de prueba", async () => {
     const issuer = new MigoInvoiceIssuer(gateway(), settings, () => now);
     const document = await issuer.document(request, { authorizationNumber: accessKey, authorizedAt: now, fiscalNumber: "001-001-000000123" });
     const text = Buffer.from(document.content).toString("latin1");
     expect(document.mimeType).toBe("application/pdf");
-    for (const expected of ["Factura electrónica autorizada por el SRI", "Número: 001-001-000000123", `Autorización SRI: ${accessKey}`, "US$ 33.06"]) expect(text).toContain(expected);
+    for (const expected of [
+      "(No. 001-001-000000123)", `(${accessKey})`, "(ANDMD SAS)", "(R.U.C.: 1793224091001)", "(05)",
+      "(Ambiente: PRODUCCIÓN)", "(Emisión: NORMAL)", "(MIGO SISTEMA CONTABLE", "1891759106001)", "(33.06)", "(Representación impresa",
+    ]) expect(text).toContain(expected);
+    // Las barras del código son rectángulos rellenos.
+    expect(text.match(/ re f Q/g)?.length).toBeGreaterThan(50);
     expect(text).not.toContain("SIN VALIDEZ");
   });
 });

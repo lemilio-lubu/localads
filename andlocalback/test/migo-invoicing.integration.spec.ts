@@ -96,8 +96,8 @@ describe("integración: facturación electrónica con Migo", () => {
     // El cliente descarga el PDF con los datos fiscales.
     const pdf = await getDocument.execute({ invoiceId, viewer: { userId: "u", role: "CLIENT", clientId: "migo-client" } });
     const text = Buffer.from(pdf.content).toString("latin1");
-    expect(text).toContain("Número: 001-001-000000001");
-    expect(text).toContain(`Autorización SRI: ${authorized.authorizationNumber}`);
+    expect(text).toContain("(No. 001-001-000000001)");
+    expect(text).toContain(`(${authorized.authorizationNumber})`);
   });
 
   it("con Migo caído queda pendiente con el motivo; al volver se emite una sola vez y reutiliza el cliente", async () => {
