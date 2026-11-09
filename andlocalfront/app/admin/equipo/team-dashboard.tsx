@@ -32,6 +32,17 @@ const roleSegments: SegmentOption<TeamRole | null>[] = [
 
 const roleLabel = (role: TeamRole) => role === "ADMIN" ? "administrador" : "gestor";
 
+/* Orden de la lista: activos primero y los desactivados al final. Cada grupo
+   va por rol (administradores y luego gestores) y, dentro del rol, por usuario
+   en orden alfabético, sin distinguir mayúsculas ni tildes. */
+const roleOrder: Record<TeamRole, number> = { ADMIN: 0, GESTOR: 1 };
+const usernameOrder = new Intl.Collator("es", { sensitivity: "base", numeric: true });
+function compareMembers(a: TeamMember, b: TeamMember) {
+  return Number(a.status !== "ACTIVE") - Number(b.status !== "ACTIVE")
+    || roleOrder[a.role] - roleOrder[b.role]
+    || usernameOrder.compare(a.username, b.username);
+}
+
 export default function TeamDashboard() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [query, setQuery] = useState("");
@@ -87,6 +98,9 @@ export default function TeamDashboard() {
   const visible = useMemo(() => {
     return members.filter((member) => matchesSearch(query, member.username, member.name) && (!role || member.role === role));
   }, [members, query, role]);
+  /* Se ordena en pantalla: quien se desactiva baja al final en el momento, y
+     una persona recién creada aparece ya en su sitio. */
+  const orderedMembers = useMemo(() => [...visible].sort(compareMembers), [visible]);
 
   function save(member: TeamMember) {
     setMembers((current) => current.some((item) => item.id === member.id) ? current.map((item) => item.id === member.id ? member : item) : [member, ...current]);
@@ -162,7 +176,7 @@ export default function TeamDashboard() {
       </div>}
 
       <div className={styles.list} aria-live="polite" aria-busy={loading}>
-        {!loading && !error && visible.map((member) => (
+        {!loading && !error && orderedMembers.map((member) => (
           <article key={member.id} className={`${styles.row} ${member.status === "INACTIVE" ? styles.inactive : ""}`}>
             <RowOpener label={`Ver detalle de ${member.name || member.username}`} onClick={() => openMember(member.id)} />
             <div className={styles.identity}>
