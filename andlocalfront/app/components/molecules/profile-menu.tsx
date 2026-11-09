@@ -19,7 +19,7 @@ export default function ProfileMenu({ onLogout, userName = "user name", role, co
   return (
     <div className={`${styles.profileArea} ${compact ? styles.compact : ""} ${placement === "up" ? styles.dropUp : ""}`}>
       <button type="button" className={styles.trigger} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-haspopup="menu" title={userName}>
-        <span className={styles.identity}><strong title={userName}>{userName}</strong>{role && <small>{role}</small>}</span>
+        <span className={styles.identity}><strong>{userName}</strong>{role && <small>{role}</small>}</span>
         <span className={styles.avatar}>
           <Image src="/figma/avatar-bg.svg" alt="" width={72} height={72} />
           <Image className={styles.person} src="/figma/avatar-person.svg" alt="" width={39} height={39} />

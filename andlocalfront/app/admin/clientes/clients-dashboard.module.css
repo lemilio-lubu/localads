@@ -62,12 +62,13 @@
    solo su fila y descuadraba las demás; ahora todas miden lo que pide el valor
    más ancho de la lista y se leen alineadas como una tabla.
    Nombre, correo y gestor son texto libre: son los que ceden, con el valor
-   completo en `title`. Sus mínimos (160/96/80) dejan sitio a 1361 para
+   completo en el tooltip. El cliente pesa 3fr y el correo 2fr: a 1470 las tres
+   pastillas de plataforma (215px) caben en una línea y las filas miden igual. Sus mínimos (160/96/80) dejan sitio a 1361 para
    «US$ 999.999,99», «inactivo» y «vencido hace 117 días» sin que pisen la
    tarjeta vecina. Orden: cliente, recargado, estado, correo, plazo, gestor,
    acciones. Debajo de 1360 la fila va en tarjeta. */
 @media (width > 1360px) {
-  .clientList { grid-template-columns: minmax(var(--space-20), 2fr) minmax(var(--space-15), max-content) max-content minmax(var(--space-12), 2fr) minmax(calc(var(--space-15) + var(--space-2)), max-content) minmax(var(--space-10), 1.272fr) minmax(var(--space-15), 1fr); column-gap: var(--space-1); }
+  .clientList { grid-template-columns: minmax(var(--space-20), 3fr) minmax(var(--space-15), max-content) max-content minmax(var(--space-12), 2fr) minmax(calc(var(--space-15) + var(--space-2)), max-content) minmax(var(--space-10), 1.272fr) minmax(var(--space-15), 1fr); column-gap: var(--space-1); }
   .clientList > * { grid-column: 1 / -1; }
   .clientRow { grid-template-columns: subgrid; }
 }

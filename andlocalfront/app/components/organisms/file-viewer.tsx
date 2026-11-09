@@ -157,7 +157,7 @@ function Viewer({ file, loadFile, onClose }: { file: ViewerFile; loadFile: LoadF
   const percent = Math.round(view.scale * 100);
   return <div ref={dialog} className={styles.overlay} role="dialog" aria-modal="true" aria-label={`Visor de ${file.name}`}>
     <header className={styles.toolbar}>
-      <strong className={styles.name} title={file.name}>{file.name}</strong>
+      <strong className={styles.name}>{file.name}</strong>
       <div className={styles.tools}>
         {isImage && <>
           <button type="button" onClick={() => zoomAt(1 / STEP)} disabled={view.scale <= MIN_SCALE} aria-label="Alejar" title="Alejar (−)"><ZoomOut aria-hidden="true" /></button>

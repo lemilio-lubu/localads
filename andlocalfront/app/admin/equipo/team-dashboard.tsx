@@ -167,11 +167,11 @@ export default function TeamDashboard() {
             <RowOpener label={`Ver detalle de ${member.name || member.username}`} onClick={() => openMember(member.id)} />
             <div className={styles.identity}>
               <small>equipo</small>
-              <strong title={member.name || member.username}>{member.name || member.username}</strong>
+              <strong>{member.name || member.username}</strong>
               {/* El correo solo se repite aquí si hay nombre: sin él, el título ya es el correo. */}
               <div className={styles.identityMeta}>
                 <span data-role={member.role}>{roleLabel(member.role)}</span>
-                {member.name && <em title={member.username}>{member.username}</em>}
+                {member.name && <em>{member.username}</em>}
               </div>
             </div>
             {/* «no aplica» en tamaño pequeño, como en Clientes: es una ausencia,

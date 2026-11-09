@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import OverflowTooltip from "./components/atoms/overflow-tooltip";
 
 export const metadata: Metadata = {
   title: "Portal de clientes | AND Local Ads",
@@ -16,7 +17,7 @@ export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width"
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">{children}<OverflowTooltip /></body>
     </html>
   );
 }

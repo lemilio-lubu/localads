@@ -100,7 +100,7 @@ export default function TeamMemberModal({ memberId, onClose, onChanged, onResetP
         <header className={styles.summary}>
           <div className={styles.identity}>
             <span className={styles.accountBadge}>cuenta <b>{isManager ? "gestor" : "administrador"}</b></span>
-            <h2 id="team-member-title" title={member.name || member.username}>{member.name || member.username}</h2>
+            <h2 id="team-member-title">{member.name || member.username}</h2>
           </div>
           <div className={styles.metrics}>
             <MetricCard className={isManager ? styles.metric : styles.metricText} label="cuentas" valueSize={isManager ? "regular" : "small"}>{isManager ? String(member.metrics.clients) : "no aplica"}</MetricCard>
