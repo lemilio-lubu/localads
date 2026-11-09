@@ -91,6 +91,7 @@ class MemoryVerificationPersistence implements TransactionVerificationPersistenc
     this.discarded = receiptId;
     return this.discardResult;
   }
+  async listUnreadReceipts() { return []; }
   async approveAtomically(input: Parameters<TransactionVerificationPersistencePort["approveAtomically"]>[0]) {
     this.approved = input;
     return verification({ status: VerificationStatus.APPROVED, decidedBy: input.administratorId, decidedAt: input.decidedAt.toISOString() });

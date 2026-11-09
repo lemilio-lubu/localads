@@ -199,6 +199,16 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
     });
   }
 
+  async listUnreadReceipts(uploadedBefore: Date, limit: number) {
+    const receipts = await this.prisma.paymentReceipt.findMany({
+      where: { status: "LOADED", createdAt: { lte: uploadedBefore }, verification: { is: null }, payment: { status: "UNDER_REVIEW" } },
+      orderBy: { createdAt: "asc" },
+      take: limit,
+      select: { id: true },
+    });
+    return receipts.map((receipt) => receipt.id);
+  }
+
   async approveAtomically(input: Parameters<TransactionVerificationPersistencePort["approveAtomically"]>[0]) {
     return this.decide(input.context, async (database) => {
       // Re-check inside the same financial transaction. The application check

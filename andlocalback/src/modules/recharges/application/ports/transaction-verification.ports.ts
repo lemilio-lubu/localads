@@ -126,6 +126,14 @@ export interface TransactionVerificationPersistencePort {
    */
   discardFailedOcr(receiptId: string): Promise<boolean>;
 
+  /**
+   * Comprobantes que nadie llegó a leer: siguen en LOADED, sin verificación,
+   * con el pago en revisión y subidos antes de `uploadedBefore`. Ocurre si el
+   * backend se reinicia (un despliegue) entre la subida y el OCR, que se lanza
+   * fuera de la respuesta. Los más antiguos primero.
+   */
+  listUnreadReceipts(uploadedBefore: Date, limit: number): Promise<readonly string[]>;
+
   /** Rechecks expected versions/states and commits verification, payment, transaction and all details. */
   approveAtomically(input: Readonly<{
     context: VerificationDecisionContext;
