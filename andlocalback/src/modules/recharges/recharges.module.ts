@@ -10,6 +10,8 @@ import { RequestPrepaidTransaction } from "./application/use-cases/request-prepa
 import { TransactionReceiptOcrDispatcher } from "./application/services/transaction-receipt-ocr-dispatcher";
 import { OverduePaymentsRunner } from "./application/services/overdue-payments-runner";
 import { InvoiceAuthorizationRunner } from "./application/services/invoice-authorization-runner";
+import { ReceiptOcrRecoveryRunner } from "./application/services/receipt-ocr-recovery-runner";
+import { RecoverUnreadReceipts } from "./application/use-cases/recover-unread-receipts";
 import { AuthorizeInvoice } from "./application/use-cases/authorize-invoice";
 import { AuthorizePendingInvoices } from "./application/use-cases/authorize-pending-invoices";
 import { GetInvoiceDocument } from "./application/use-cases/get-invoice-document";
@@ -212,6 +214,17 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
         ids: IdGenerator,
         realtime: VerificationRealtimePublisher,
       ) => new ProcessTransactionReceiptOcr(persistence, ocr, ids, undefined, undefined, realtime),
+    },
+    {
+      provide: RecoverUnreadReceipts,
+      inject: [TRANSACTION_VERIFICATION_PERSISTENCE, ProcessTransactionReceiptOcr],
+      useFactory: (persistence: TransactionVerificationPersistencePort, processReceipt: ProcessTransactionReceiptOcr) =>
+        new RecoverUnreadReceipts(persistence, processReceipt),
+    },
+    {
+      provide: ReceiptOcrRecoveryRunner,
+      inject: [RecoverUnreadReceipts, TransactionReceiptOcrDispatcher],
+      useFactory: (recover: RecoverUnreadReceipts, dispatcher: TransactionReceiptOcrDispatcher) => new ReceiptOcrRecoveryRunner(recover, dispatcher),
     },
     {
       provide: ApproveTransactionVerification,

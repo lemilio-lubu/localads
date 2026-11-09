@@ -224,6 +224,21 @@ describe("PrismaTransactionVerificationRepository", () => {
     expect((await prisma.rechargeTransaction.findUnique({ where: { id: "transaction-review" } }))?.rechargeStatus).toBe("UNDER_REVIEW");
   });
 
+  it("lista solo los comprobantes sin leer, con el pago en revision y pasados de plazo", async () => {
+    await createPending("unread", "hash-unread");
+    await createPending("unread-read", "hash-unread-read");
+    await evaluate("unread-read", "UNREAD-READ");
+    await createPending("unread-paid", "hash-unread-paid");
+    await prisma.payment.update({ where: { id: "payment-unread-paid" }, data: { status: "PAID" } });
+    const later = new Date(Date.now() + 60_000);
+
+    const unread = await repository.listUnreadReceipts(later, 100);
+    expect(unread).toContain("receipt-unread");
+    expect(unread).not.toContain("receipt-unread-read");
+    expect(unread).not.toContain("receipt-unread-paid");
+    expect(await repository.listUnreadReceipts(new Date(Date.now() - 60 * 60_000), 100)).not.toContain("receipt-unread");
+  });
+
   async function evaluate(suffix: string, code: string) {
     const context = (await repository.loadReceiptContext(`receipt-${suffix}`))!;
     return repository.saveOcrEvaluation({
