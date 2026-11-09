@@ -1,12 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../database/prisma.service";
+import { idsMatchingText } from "../../../database/text-search";
 import { SecurityAuditOutcome } from "../../../common/audit/security-audit.port";
 import { SecurityEventFilters, SecurityEventPage, SecurityEventsQuery } from "../application/ports/security-events.query";
 
 /* Campos del detalle que guardan el id de una persona del equipo. */
 const personDetailKeys = ["from", "to", "managerId", "reassignedTo"] as const;
-const searchLimit = 200;
 
 @Injectable()
 export class PrismaSecurityEventsQuery implements SecurityEventsQuery {
@@ -72,16 +72,15 @@ export class PrismaSecurityEventsQuery implements SecurityEventsQuery {
   /* Busca por persona (del equipo o cliente, por nombre o correo) y por el
      codigo de referencia que se ve en un error: soporte lo pega tal cual. */
   private async searchCondition(search: string): Promise<Prisma.SecurityAuditEventWhereInput> {
-    const contains = { contains: search, mode: "insensitive" as const };
-    const [users, clients] = await Promise.all([
-      this.database.authUser.findMany({ where: { OR: [{ username: contains }, { name: contains }] }, select: { id: true }, take: searchLimit }),
-      this.database.client.findMany({ where: { OR: [{ name: contains }, { email: contains }] }, select: { id: true }, take: searchLimit }),
+    /* Nombres y correos sin mayúsculas ni tildes. */
+    const [userIds, clientIds] = await Promise.all([
+      idsMatchingText(this.database, "AuthUser", ["username", "name"], search),
+      idsMatchingText(this.database, "Client", ["name", "email"], search),
     ]);
-    const userIds = users.map((user) => user.id);
     return {
       OR: [
         { actorUserId: { in: userIds } },
-        { targetId: { in: [...userIds, ...clients.map((client) => client.id)] } },
+        { targetId: { in: [...userIds, ...clientIds] } },
         ...(/^[0-9a-f-]{6,36}$/i.test(search) ? [{ requestId: { startsWith: search.toLowerCase() } }] : []),
       ],
     };

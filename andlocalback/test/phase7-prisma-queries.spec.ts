@@ -133,6 +133,28 @@ describe("persistencia de consultas fase 7", () => {
     expect(noMatch.totals).toEqual({ pautaAmount: 0, totalAmount: 0 });
   });
 
+  it("busca sin distinguir mayúsculas ni tildes, en el término y en el dato", async () => {
+    const codes = async (search: string) => (await repository.listTransactions({ page: 1, pageSize: 20, search })).items.map((item) => item.code);
+    expect(await codes("f7-a2")).toEqual(["F7-A2"]);
+    expect(await codes("CLIENTE DÓS")).toEqual(["F7-B1"]);
+    expect(await codes("%")).toEqual([]);
+
+    await prisma.client.update({ where: { id: clientB }, data: { name: "Clienté Dos" } });
+    try {
+      expect(await codes("cliente dos")).toEqual(["F7-B1"]);
+      const own = await repository.listTransactionsByClient({ clientId: clientB, page: 1, pageSize: 20, search: "CLIENTE" });
+      expect(own.items.map((item) => item.code)).toEqual(["F7-B1"]);
+    } finally {
+      await prisma.client.update({ where: { id: clientB }, data: { name: "Cliente Dos" } });
+    }
+
+    const verifications = async (search: string, bank?: string) => (await repository.listVerifications({ scope: "ALL", page: 1, pageSize: 10, search, bank })).items.map((item) => item.id);
+    expect(await verifications("cliente uno")).toEqual(["phase7-verification"]);
+    expect(await verifications("BANCO PÍCHINCHA")).toEqual(["phase7-verification"]);
+    expect(await verifications("bank-f7")).toEqual(["phase7-verification"]);
+    expect(await verifications("f7-a1", "pichincha")).toEqual(["phase7-verification"]);
+  });
+
   it("los totales describen el filtro completo, no la página devuelta", async () => {
     // Cliente Uno tiene dos transacciones (500 y 200 de pauta); pidiendo una sola
     // por página, el resumen debe seguir sumando las dos.

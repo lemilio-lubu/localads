@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { ApplicationError } from "../../../common/errors/application.error";
 import { PrismaService } from "../../../database/prisma.service";
+import { idsMatchingText } from "../../../database/text-search";
 import { TEAM_ROLES, TeamMemberInput, TeamRole } from "../domain/team-member";
 import {
   PortfolioDestination,
@@ -23,11 +24,13 @@ export class PrismaTeamRepository implements TeamRepository {
   async list(filters: TeamFilters): Promise<readonly TeamMemberView[]> {
     /* Solo usuarios internos: el rol CLIENT queda fuera por construccion, no
        por un filtro que alguien pueda quitar desde la query. */
+    const term = filters.search?.trim();
     const records = await this.prisma.authUser.findMany({
       where: {
         role: filters.role ?? { in: [...TEAM_ROLES] },
         status: filters.status,
-        ...(filters.search ? { OR: [{ username: { contains: filters.search, mode: "insensitive" as const } }, { name: { contains: filters.search, mode: "insensitive" as const } }] } : {}),
+        /* Nombre o usuario, sin mayúsculas ni tildes. */
+        ...(term ? { id: { in: await idsMatchingText(this.prisma, "AuthUser", ["username", "name"], term) } } : {}),
       },
       orderBy: [{ role: "asc" }, { username: "asc" }],
     });

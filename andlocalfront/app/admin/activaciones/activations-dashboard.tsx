@@ -21,6 +21,7 @@ import Button from "../../components/atoms/button";
 import TruncatedText from "../../components/atoms/truncated-text";
 import ListCell from "../../components/atoms/list-cell";
 import TextButton from "../../components/atoms/text-button";
+import { matchesSearch } from "../../lib/text-search";
 
 export default function ActivationsDashboard() {
   const revision = usePlatformUpdates();
@@ -53,8 +54,7 @@ export default function ActivationsDashboard() {
   function retry() { setLoading(true); setError(""); setReloadToken((token) => token + 1); }
 
   const visible = useMemo(() => {
-    const value = query.trim().toLowerCase();
-    return items.filter((item) => !value || `${item.clientName ?? ""} ${item.clientRuc ?? ""} ${item.requesterName} ${item.externalAccountId} ${item.platform}`.toLowerCase().includes(value));
+    return items.filter((item) => matchesSearch(query, item.clientName, item.clientRuc, item.requesterName, item.externalAccountId, item.platform));
   }, [items, query]);
 
   async function act(item: ActivationRequest, action: "review" | "approve" | "reject") {

@@ -3,6 +3,7 @@ import { clientOwnershipWhere } from "../../../../common/access/manager-scope";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../../database/prisma.service";
+import { containsIgnoringCase, idsMatchingText } from "../../../../database/text-search";
 import {
   AdminTransactionDetailView,
   AdminTransactionFilters,
@@ -178,12 +179,21 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
     }));
   }
 
+  /* Por código (sin mayúsculas) o por nombre del cliente (sin mayúsculas ni
+     tildes): «perseo» encuentra «PERSEOSOFT S.A.». */
+  private async transactionSearch(value: string | undefined): Promise<Prisma.RechargeTransactionWhereInput> {
+    const term = value?.trim();
+    if (!term) return {};
+    const clientIds = await idsMatchingText(this.prisma, "Client", ["name"], term);
+    return { OR: [{ code: containsIgnoringCase(term) }, { clientId: { in: clientIds } }] };
+  }
+
   async listTransactionsByClient(
     input: ClientTransactionFilters,
   ): Promise<PageResult<TransactionListItemView>> {
     // El cliente sale del token: el filtro nunca puede ampliarse a otro.
     return this.listTransactionPage({
-      ...transactionSearch(input.search),
+      ...(await this.transactionSearch(input.search)),
       clientId: input.clientId,
       rechargeStatus: input.rechargeStatus,
       payment: input.paymentStatus ? { is: { status: input.paymentStatus } } : undefined,
@@ -205,7 +215,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
 
   async listTransactions(input: AdminTransactionFilters): Promise<AdminTransactionPage> {
     const where: Prisma.RechargeTransactionWhereInput = {
-      ...transactionSearch(input.search),
+      ...(await this.transactionSearch(input.search)),
       ...managedClient(input),
       clientId: input.clientId,
       rechargeStatus: input.rechargeStatus,
@@ -242,14 +252,23 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
   async listVerifications(
     input: VerificationFilters,
   ): Promise<PageResult<VerificationListItemView>> {
-    const search = input.search ? {
-      OR: [
-        { transaction: { is: { code: { contains: input.search } } } },
-        { transaction: { is: { client: { is: { name: { contains: input.search } } } } } },
-        { ocrResult: { is: { bank: { contains: input.search } } } },
-        { ocrResult: { is: { detectedTransactionCode: { contains: input.search } } } },
-      ],
-    } satisfies Prisma.TransactionVerificationWhereInput : {};
+    const term = input.search?.trim();
+    let search: Prisma.TransactionVerificationWhereInput = {};
+    if (term) {
+      /* Cliente y banco sin mayúsculas ni tildes; los códigos solo sin mayúsculas. */
+      const [clientIds, ocrIds] = await Promise.all([
+        idsMatchingText(this.prisma, "Client", ["name"], term),
+        idsMatchingText(this.prisma, "OcrResult", ["bank"], term),
+      ]);
+      search = {
+        OR: [
+          { transaction: { is: { code: containsIgnoringCase(term) } } },
+          { transaction: { is: { clientId: { in: clientIds } } } },
+          { ocrResult: { is: { id: { in: ocrIds } } } },
+          { ocrResult: { is: { detectedTransactionCode: containsIgnoringCase(term) } } },
+        ],
+      };
+    }
     /* Cliente y gestor se combinan dentro del mismo filtro de relacion: dos
        claves `transaction` separadas se pisarian y el recorte desapareceria. */
     const transactionFilter: Prisma.RechargeTransactionWhereInput = {
@@ -260,7 +279,7 @@ export class PrismaPhase7QueryRepository implements Phase7QueryPort {
       ...search,
       status: input.status ?? verificationStatusFilter(input.scope),
       transaction: Object.keys(transactionFilter).length ? { is: transactionFilter } : undefined,
-      ocrResult: input.bank ? { is: { bank: { contains: input.bank } } } : undefined,
+      ocrResult: input.bank ? { is: { bank: containsIgnoringCase(input.bank) } } : undefined,
       createdAt: dateRange(input.dateFrom, input.dateTo),
     };
     const [records, totalItems] = await Promise.all([
@@ -537,10 +556,6 @@ function managedClient(scope: Readonly<{ managerId?: string; unassigned?: boolea
   return Object.keys(where).length ? { client: { is: where as Prisma.ClientWhereInput } } : {};
 }
 
-function transactionSearch(value: string | undefined): Prisma.RechargeTransactionWhereInput {
-  if (!value) return {};
-  return { OR: [{ code: { contains: value } }, { client: { is: { name: { contains: value } } } }] };
-}
 function money(value: Prisma.Decimal): number { return Number(value.toFixed(2)); }
 /* Las tarifas se guardan como fraccion (0.05), no como porcentaje. */
 function rate(value: Prisma.Decimal): number { return Number(value.toString()); }
