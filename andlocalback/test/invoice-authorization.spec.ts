@@ -115,6 +115,15 @@ describe("autorizar una factura ante el emisor", () => {
     expect(store.markAuthorized).not.toHaveBeenCalled();
   });
 
+  it("una factura facturada a mano por AND no se envía al emisor", async () => {
+    const store = persistence({ kind: "MANUAL" });
+    const emitter = issuer();
+    const result = await new AuthorizeInvoice(store, emitter, () => now).execute({ invoiceId: "invoice-1" });
+    expect(result).toEqual({ status: "MANUAL" });
+    expect(emitter.authorize).not.toHaveBeenCalled();
+    expect(store.markAuthorized).not.toHaveBeenCalled();
+  });
+
   it("rechaza una factura inexistente", async () => {
     await expect(new AuthorizeInvoice(persistence({ kind: "NOT_FOUND" }), issuer(), () => now).execute({ invoiceId: "nope" }))
       .rejects.toMatchObject({ code: "INVOICE_NOT_FOUND", status: 404 });

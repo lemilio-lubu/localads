@@ -1,4 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaService } from "../src/database/prisma.service";
 import { TransactionDetailStatus, TransactionRechargeStatus } from "../src/modules/recharges/domain/model/domain-status";
@@ -104,7 +106,37 @@ describe("persistencia de la autorización de facturas", () => {
     expect(await repository.loadDocumentSource("no-existe")).toBeNull();
   });
 
-  async function invoice(id: string) {
+  /* Va al final: marca como manuales todas las pendientes que quedan (b, c y,
+     sin referencia externa, ninguna más) y comprueba que el emisor ya no las ve. */
+  it("la migración de corte deja fuera del emisor lo anterior a Migo, sin tocar autorizadas ni enviadas", async () => {
+    await invoice("f");
+    await invoice("h", "FAC-TX-760444e5-0b64-4c9c-a53d-3d9d462ece3c");
+    await repository.markSubmitted({ invoiceId: "fac-inv-f", issuer: "migo", externalReference: "migo-f", fiscalNumber: "001-001-000000009", error: null });
+    const migration = readFileSync(join(__dirname, "../prisma/migrations/20261109000000_facturas_anteriores_a_migo/migration.sql"), "utf8");
+    // Una sentencia por llamada: el protocolo extendido de PostgreSQL no admite varias.
+    const statements = migration.split("\n").filter((line) => !line.trim().startsWith("--")).join("\n").split(";").map((sql) => sql.trim()).filter(Boolean);
+    for (const sql of statements) await prisma.$executeRawUnsafe(sql);
+
+    const rows = await prisma.invoice.findMany({ select: { id: true, status: true }, orderBy: { id: "asc" } });
+    expect(Object.fromEntries(rows.map((row) => [row.id, row.status]))).toEqual({
+      "fac-inv-a": "ISSUED", "fac-inv-b": "MANUAL", "fac-inv-c": "MANUAL", "fac-inv-d": "ISSUED", "fac-inv-e": "ISSUED", "fac-inv-f": "ISSUED", "fac-inv-h": "MANUAL",
+    });
+    // La que AND facturó a mano guarda su número fiscal; las demás manuales, ninguno.
+    expect((await prisma.invoice.findUniqueOrThrow({ where: { id: "fac-inv-h" } })).fiscalNumber).toBe("001-001-000000608");
+    expect((await prisma.invoice.findUniqueOrThrow({ where: { id: "fac-inv-b" } })).fiscalNumber).toBeNull();
+    // e y f ya están en el proveedor: se siguen consultando. b y c no se emiten nunca.
+    const afterClaims = new Date(later.getTime() + 1);
+    expect(await repository.listPendingAuthorization(afterClaims, 10)).toEqual(["fac-inv-e", "fac-inv-f"]);
+    expect((await repository.claimForAuthorization("fac-inv-b", afterClaims, afterClaims)).kind).toBe("MANUAL");
+    expect((await prisma.invoice.findUniqueOrThrow({ where: { id: "fac-inv-b" } })).authorizationClaimedUntil).toBeNull();
+
+    // Una recarga nueva después del corte sí se emite.
+    await invoice("g");
+    expect(await repository.listPendingAuthorization(afterClaims, 10)).toContain("fac-inv-g");
+    expect((await repository.claimForAuthorization("fac-inv-g", afterClaims, later)).kind).toBe("CLAIMED");
+  });
+
+  async function invoice(id: string, invoiceNumber = `FAC-TX-FAC-${id}`) {
     const issuedAt = new Date(now.getTime() + id.charCodeAt(0));
     await prisma.rechargeTransaction.create({ data: {
       id: `fac-tx-${id}`, code: `TX-FAC-${id}`, idempotencyKey: `fac-${id}`, clientId: "fac-client", accountId: "fac-account",
@@ -112,7 +144,7 @@ describe("persistencia de la autorización de facturas", () => {
       pautaAmount: 25, isdAmount: 1.25, agencyFeeAmount: 2.5, vatBaseAmount: 28.75, vatAmount: 4.31, totalAmount: 33.06, completedAt: issuedAt,
       details: { create: { id: `fac-${id}-detail`, pautaId: "fac-meta", platformSnapshot: AdvertisingPlatform.META, requestedAmount: 25,
         isdAmount: 1.25, agencyFeeAmount: 2.5, vatBaseAmount: 28.75, vatAmount: 4.31, totalAmount: 33.06, status: TransactionDetailStatus.COMPLETED } },
-      invoice: { create: { id: `fac-inv-${id}`, invoiceNumber: `FAC-TX-FAC-${id}`, status: "ISSUED", issuedAt,
+      invoice: { create: { id: `fac-inv-${id}`, invoiceNumber, status: "ISSUED", issuedAt,
         pautaSubtotal: 25, isdAmount: 1.25, agencyFeeAmount: 2.5, vatBaseAmount: 28.75, vatAmount: 4.31, totalAmount: 33.06 } },
     } });
   }

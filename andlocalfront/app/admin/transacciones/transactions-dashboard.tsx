@@ -174,7 +174,7 @@ export default function TransactionsDashboard() {
               : <p>En proceso: registra en cada plataforma el monto recargado.</p>}
         </div>}
         {resumeError && <p className={`${styles.message} ${styles.errorMessage}`} role="alert">{resumeError}</p>}
-        <p className={styles.auditFooter}><span>Factura: {selected.invoice ? `${selected.invoice.invoiceNumber} · ${invoiceStatusLabel(selected.invoice.status)}` : "se emitirá al completar"}</span><span>{selected.verifications.length} {selected.verifications.length === 1 ? "verificación registrada" : "verificaciones registradas"}</span></p>
+        <p className={styles.auditFooter}><span>Factura: {selected.invoice ? `${selected.invoice.invoiceNumber} · ${invoiceStatusLabel(selected.invoice.status)}${selected.invoice.fiscalNumber ? ` · ${selected.invoice.fiscalNumber}` : ""}` : "se emitirá al completar"}</span><span>{selected.verifications.length} {selected.verifications.length === 1 ? "verificación registrada" : "verificaciones registradas"}</span></p>
       </>}
     />
   </div>;

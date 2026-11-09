@@ -40,4 +40,7 @@ export enum TransactionPaymentStatus {
 
 export enum InvoiceStatus {
   ISSUED = "ISSUED",
+  /* Recarga completada antes de activar la facturación electrónica: AND la
+     factura a mano si hace falta y el emisor nunca la toma. */
+  MANUAL = "MANUAL",
 }

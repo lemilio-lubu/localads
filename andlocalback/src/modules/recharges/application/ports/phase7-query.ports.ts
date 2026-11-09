@@ -128,6 +128,8 @@ export type InvoiceQueryView = Readonly<{
   vatAmount: number;
   totalAmount: number;
   documentUrl: string | null;
+  /** Número fiscal (001-001-000000123): el de Migo o el de la factura que AND hizo a mano. */
+  fiscalNumber: string | null;
 }>;
 
 export type ClientTransactionDetailView = Readonly<{

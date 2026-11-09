@@ -5,7 +5,7 @@ export type AuthorizeInvoiceCommand = Readonly<{ invoiceId: string }>;
 export type AuthorizeInvoiceResult =
   | Readonly<{ status: "AUTHORIZED"; authorizationNumber: string }>
   | Readonly<{ status: "SUBMITTED"; externalReference: string }>
-  | Readonly<{ status: "ALREADY_AUTHORIZED" | "IN_PROGRESS" | "DISABLED" }>
+  | Readonly<{ status: "ALREADY_AUTHORIZED" | "IN_PROGRESS" | "MANUAL" | "DISABLED" }>
   | Readonly<{ status: "FAILED"; reason: string }>;
 
 /* Lo que dura la reserva: si el proceso muere a mitad, pasado este tiempo el
