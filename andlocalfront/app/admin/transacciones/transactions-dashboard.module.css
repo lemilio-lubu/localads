@@ -1,5 +1,11 @@
 .module { width: min(100%, var(--layout-admin-content)); margin-top: var(--space-3); }
-.toolbar { display: grid; grid-template-columns: minmax(320px, 1fr) auto; align-items: center; gap: var(--space-4); }
+/* Con la pastilla «fecha» los filtros miden hasta ~780px. El buscador cede
+   de 320 a 280 (su placeholder sigue entrando entero) para que a 1440 todo
+   quepa en una línea; por debajo de 1360 no cabe de ninguna forma y la barra
+   pasa a la composición de tablet, buscador arriba y filtros debajo, en vez
+   de dejar la pastilla sola en una segunda fila. */
+.toolbar { display: grid; grid-template-columns: minmax(calc(var(--space-20) + var(--space-15)), 1fr) auto; align-items: center; gap: var(--space-4); }
+@media (max-width: 1360px) { .toolbar { grid-template-columns: 1fr; } }
 /* Etiqueta y control forman un grupo y wrappean juntos: sueltos, el «tipo de
    cuenta» se quedaba en una línea y su segmentado caía a la siguiente.
    8 de hueco + 8 de margen = 16 entre el texto y su control. */
@@ -30,7 +36,7 @@
 /* Alineadas arriba, no centradas: las celdas no miden lo mismo (la de cliente
    lleva una línea más) y centrarlas desalineaba las etiquetas, que es lo que
    hace legible una rejilla. Las piezas sin etiqueta sí se centran. */
-.row { composes: row from "../../components/atoms/list-row.module.css"; grid-template-columns: minmax(150px, 1.1fr) 150px minmax(160px, 1fr) 164px minmax(180px, 1fr) 104px 116px; }
+.row { composes: row from "../../components/atoms/list-row.module.css"; grid-template-columns: minmax(150px, 1.1fr) 150px minmax(160px, 1fr) minmax(calc(var(--space-20) + var(--space-half)), max-content) minmax(180px, 1fr) 104px 116px; }
 .cell { composes: cell from "../../components/atoms/list-row.module.css"; }
 .clientName { color: var(--color-text); font-size: var(--font-size-body); }
 /* La etiqueta carga el tipo de cuenta con su icono y su color: ahorra la línea
@@ -77,7 +83,9 @@
    mínimos son los del contenido real y lo que sobra se reparte en las mismas
    proporciones. A partir de 1521 la fila es la de siempre. */
 @media (min-width: 1181px) and (max-width: 1520px) {
-  .row { grid-template-columns: minmax(90px, 1.1fr) minmax(88px, .9fr) minmax(90px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(80px, .7fr) minmax(76px, .6fr); }
+  /* UX-05: importes y fecha miden su contenido y no se parten; cliente y
+     código, texto libre con `title`, son los que ceden. */
+  .row { grid-template-columns: minmax(var(--space-10), 1.1fr) max-content minmax(var(--space-10), 1fr) minmax(var(--space-12), max-content) minmax(var(--space-12), 1fr) minmax(var(--space-10), .7fr) max-content; }
 }
 @media (max-width: 1180px) { .toolbar { grid-template-columns: 1fr; } .filters { flex-wrap: wrap; } .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .platforms, .detailsButton { align-self: end; } }
 @media (max-width: 760px) { .overview { align-items: stretch; } .overview > div { min-width: 0; flex: 1; padding-inline: var(--space-2); } .row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-control); } }

@@ -43,12 +43,15 @@ describe("emisor de facturas simulado", () => {
     expect(text.startsWith("%PDF-1.4")).toBe(true);
     expect(text.trimEnd().endsWith("%%EOF")).toBe(true);
     // 20:00 UTC del 21 son las 15:00 del 21 en Guayaquil; 00:30 UTC del 22, aún el 21.
-    expect(text).toContain("Fecha de emisión: 2026-10-21");
+    expect(text).toContain("(21/10/2026) Tj");
     const late = Buffer.from((await issuer.document({ ...request, issuedAt: new Date("2026-10-22T00:30:00.000Z") }, authorization)).content).toString("latin1");
-    expect(late).toContain("Fecha de emisión: 2026-10-21");
-    for (const expected of ["FAC-TX-1", authorization.authorizationNumber, "Comercializadora Año Ñandú", "US$ 33.06", "SIN VALIDEZ TRIBUTARIA"]) {
+    expect(late).toContain("(21/10/2026) Tj");
+    expect(late).not.toContain("(22/10/2026) Tj");
+    for (const expected of ["(No. FAC-TX-1)", authorization.authorizationNumber, "Comercializadora Año Ñandú", "US$ 33.06", "SIN VALIDEZ TRIBUTARIA", "(Ambiente: PRUEBAS \\(emisor simulado\\))"]) {
       expect(text).toContain(expected);
     }
+    // Sin clave del SRI no hay código de barras ni proveedor.
+    expect(text).not.toContain("MIGO SISTEMA CONTABLE");
     // La tabla xref apunta al inicio exacto de cada objeto.
     const start = Number(text.match(/startxref\n(\d+)/)![1]);
     expect(text.slice(start, start + 4)).toBe("xref");

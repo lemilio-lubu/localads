@@ -134,12 +134,12 @@ export default function ClientsDashboard() {
         {visibleClients.map((client) => (
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
             <RowOpener label={`Ver detalle de ${client.name}`} onClick={() => setSelectedClient(client)} />
-            <div className={styles.clientIdentity}><small>clientes</small><strong>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
+            <div className={styles.clientIdentity}><small>clientes</small><strong title={client.name}>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
             <MetricCard label="recargado" tone="success">{formatAmount(client.totalRecharged)}</MetricCard>
             <MetricCard label="status">{client.status === "ACTIVE" ? "activo" : "inactivo"}</MetricCard>
-            <MetricCard label="correo" valueSize="small">{client.email}</MetricCard>
+            <MetricCard label="correo" valueSize="small" truncate>{client.email}</MetricCard>
             <MetricCard label="plazo" valueSize="small" tone={client.nextDueDate && daysUntil(client.nextDueDate) < 0 ? "danger" : "default"}>{client.account.type !== "POSTPAGO" ? "no aplica" : client.nextDueDate ? remainingLabel(daysUntil(client.nextDueDate)) : `${client.account.creditDays} días`}</MetricCard>
-            <MetricCard label="gestor" valueSize="small">{client.manager?.username ?? "sin asignar"}</MetricCard>
+            <MetricCard label="gestor" valueSize="small" truncate>{client.manager?.username ?? "sin asignar"}</MetricCard>
             <RowActions className={styles.rowActions}>
               <RowActionButton disabled={busyClientId === client.id} onClick={() => { setEditing(client); setFormOpen(true); }}><Pencil size={16} aria-hidden="true" />editar</RowActionButton>
               <RowActionButton disabled={busyClientId === client.id} onClick={() => toggleClient(client)}><Power size={16} aria-hidden="true" />{busyClientId === client.id ? "guardando…" : client.status === "ACTIVE" ? "desactivar" : "activar"}</RowActionButton>

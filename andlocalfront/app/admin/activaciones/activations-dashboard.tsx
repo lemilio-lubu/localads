@@ -18,6 +18,7 @@ import SearchField from "../../components/molecules/search-field";
 import LoadError from "../../components/molecules/load-error";
 import { TextArea } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
+import TruncatedText from "../../components/atoms/truncated-text";
 import ListCell from "../../components/atoms/list-cell";
 import TextButton from "../../components/atoms/text-button";
 
@@ -85,11 +86,11 @@ export default function ActivationsDashboard() {
       {!loading && !error && visible.map((item) => <article key={item.id} className={styles.row}>
         {/* Primero de qué cliente es: su nombre y RUC. Quien la pidió y su
             teléfono van debajo, para contactarle. */}
-        <ListCell className={styles.cell} label="cliente"><span className={styles.requester}>{item.clientName ?? "cliente sin nombre"}</span>{item.clientRuc && <span className={styles.subtle}>RUC {item.clientRuc}</span>}<span className={styles.subtle} title={`${item.requesterName} · ${item.phone}`}>{item.requesterName} · {item.phone}</span></ListCell>
+        <ListCell className={styles.cell} label="cliente"><TruncatedText className={styles.requester}>{item.clientName ?? "cliente sin nombre"}</TruncatedText>{item.clientRuc && <span className={styles.subtle}>RUC {item.clientRuc}</span>}<TruncatedText className={styles.subtle}>{`${item.requesterName} · ${item.phone}`}</TruncatedText></ListCell>
         <ListCell className={styles.cell} label="plataforma"><div className={styles.platformLine}><PlatformPill platform={item.platform.toLowerCase() as AdvertisingPlatform} size="compact" /></div><span className={styles.subtle}>{item.kind === "REACTIVATION" ? "reactivación" : "activación"}</span></ListCell>
-        <ListCell className={styles.cell} label="cuenta externa"><span title={item.externalAccountId}>{item.externalAccountId}</span></ListCell>
+        <ListCell className={styles.cell} label="cuenta externa"><TruncatedText>{item.externalAccountId}</TruncatedText></ListCell>
         <ListCell className={styles.cell} label="primera recarga"><span className={styles.amount}>{formatAmount(item.firstRechargeAmount)}</span></ListCell>
-        <ListCell className={styles.cell} label="estado"><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <span className={styles.holder}>por {item.reviewedByName}</span>}
+        <ListCell className={styles.cell} label="estado"><StatusPill tone={activationStatusTone(item.status)}>{activationStatusLabel(item.status)}</StatusPill>{item.reviewedByName && <TruncatedText className={styles.holder}>{`por ${item.reviewedByName}`}</TruncatedText>}
           {/* Tomar el caso no decide nada: marca quién lo lleva. Vive junto al
               estado, donde luego aparece «por …», y no entre los botones de
               decisión, donde parecía un paso obligatorio. Activar o rechazar

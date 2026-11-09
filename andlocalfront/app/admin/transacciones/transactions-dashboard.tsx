@@ -12,7 +12,7 @@ import PlatformPill from "../../components/atoms/platform-pill";
 import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
 import StatusPill from "../../components/atoms/status-pill";
 import type { AdvertisingPlatform } from "../../design-system/types";
-import { completeTransaction, completeTransactionDetail, getAdminTransactionDetail, getAdminTransactionsPage, resumeTransactionDetail, startTransactionRecharge, type AdminTransactionDetail } from "../../lib/admin-recharges-api";
+import { completeTransaction, completeTransactionDetail, getAdminTransactionDetail, getAdminTransactionsPage, resumeTransactionDetail, startTransactionRecharge, type AdminTransactionDetail, type AdminTransactionFilters } from "../../lib/admin-recharges-api";
 import type { TransactionListItem } from "../../lib/recharges-api";
 import { dueLabel, formatAmount, formatClock } from "../../lib/format";
 import { accountTypeLabel, invoiceStatusLabel, paymentStatusLabel, rechargeStatusLabel } from "../../lib/status-labels";
@@ -20,9 +20,12 @@ import CopyCode from "../../components/molecules/copy-code";
 import styles from "./transactions-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "../../lib/status-tone";
 import SearchField from "../../components/molecules/search-field";
+import DateRangeFilter from "../../components/molecules/date-range-filter";
+import { apiDayRange, emptyDayRange, type DayRange } from "../../lib/date-range";
 import Pagination from "../../components/molecules/pagination";
 import { TextInput } from "../../components/atoms/text-field";
 import Button from "../../components/atoms/button";
+import TruncatedText from "../../components/atoms/truncated-text";
 import ListCell from "../../components/atoms/list-cell";
 
 const PAGE_SIZE = 20;
@@ -64,10 +67,15 @@ export default function TransactionsDashboard() {
      su recorte y este filtro condicionan el mismo campo. */
   const isAdmin = getCurrentUser()?.role === "ADMIN";
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+  const [dates, setDates] = useState<DayRange>(emptyDayRange);
+  function changeDates(value: DayRange) { setDates(value); setPageNumber(1); }
+  /* Un solo sitio para los filtros: el refresco tras ejecutar un paso los
+     repetía a mano y un filtro nuevo se habría quedado fuera. */
+  const listFilters = useMemo((): AdminTransactionFilters => ({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, accountType: type ?? undefined, owner: unassignedOnly ? "unassigned" : undefined, ...apiDayRange(dates) }), [pageNumber, search, type, unassignedOnly, dates]);
 
   function changeType(value: "PREPAGO" | "POSTPAGO" | null) { setType(value); setPageNumber(1); }
 
-  useEffect(() => { let active = true; getAdminTransactionsPage({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, accountType: type ?? undefined, owner: unassignedOnly ? "unassigned" : undefined }).then((page) => { if (active) { setError(""); setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages, totals: page.totals }); setUpdatedAt(new Date()); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar las transacciones"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [pageNumber, search, type, revision, unassignedOnly]);
+  useEffect(() => { let active = true; getAdminTransactionsPage(listFilters).then((page) => { if (active) { setError(""); setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages, totals: page.totals }); setUpdatedAt(new Date()); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No fue posible consultar las transacciones"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [listFilters, revision]);
 
   const selectedId = selected?.id;
   useEffect(() => { if (!selectedId) return; let active = true; getAdminTransactionDetail(selectedId).then((next) => { if (active) setSelected(next); }).catch(() => undefined); return () => { active = false; }; }, [selectedId, revision]);
@@ -81,7 +89,7 @@ export default function TransactionsDashboard() {
       await action();
       const next = await getAdminTransactionDetail(transactionId);
       setSelected((current) => current?.id === transactionId ? next : current);
-      const page = await getAdminTransactionsPage({ page: pageNumber, limit: PAGE_SIZE, search: search || undefined, accountType: type ?? undefined, owner: unassignedOnly ? "unassigned" : undefined });
+      const page = await getAdminTransactionsPage(listFilters);
       setTransactions(page.items);
       setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages, totals: page.totals });
     } catch (reason) { setResumeError(reason instanceof Error ? reason.message : "No fue posible completar la operación"); }
@@ -112,12 +120,12 @@ export default function TransactionsDashboard() {
   async function open(id: string) { setDetailLoading(true); setError(""); setResumeError(""); try { setSelected(await getAdminTransactionDetail(id)); } catch (reason) { setError(reason instanceof Error ? reason.message : "No fue posible cargar el detalle"); } finally { setDetailLoading(false); } }
 
   return <div className={styles.module}>
-    <div className={styles.toolbar}><SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente o código" placeholderTone="strong" /><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}</div></div>
+    <div className={styles.toolbar}><SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente o código" placeholderTone="strong" /><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}<DateRangeFilter value={dates} onChange={changeDates} /></div></div>
     <div className={styles.overview}><div><small>transacciones</small><strong>{pageInfo.totalItems}</strong></div><div><small>inversión en pauta</small><strong>{formatAmount(pageInfo.totals.pautaAmount)}</strong></div><div><small>total facturable</small><strong>{formatAmount(pageInfo.totals.totalAmount)}</strong></div></div>
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>
       {transactions.map((item) => <article key={item.id} className={styles.row}>
-        <ListCell className={styles.cell} label="cliente"><span className={styles.clientName} title={item.clientName}>{item.clientName}</span></ListCell>
+        <ListCell className={styles.cell} label="cliente"><TruncatedText className={styles.clientName}>{item.clientName}</TruncatedText></ListCell>
         <DateCell value={item.createdAt} />
         <div className={`${styles.cell} ${styles.codeCell}`} data-account={item.accountTypeSnapshot}><strong>{item.accountTypeSnapshot === "POSTPAGO" ? <CalendarClock size={14} aria-hidden="true" /> : <Wallet size={14} aria-hidden="true" />}código {accountTypeLabel(item.accountTypeSnapshot)}</strong>
           <CopyCode code={item.code} tone="strong" size="small" mono />

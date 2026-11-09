@@ -31,7 +31,7 @@
    entre filas es de 32 y no de 16 — es lo único que separa un cliente del
    siguiente. */
 .clientList { display: grid; gap: var(--space-4); }
-.clientRow { position: relative; display: grid; min-height: var(--space-15); grid-template-columns: minmax(var(--space-20), 1.618fr) minmax(var(--space-12), 1fr) minmax(var(--space-10), .618fr) minmax(var(--space-15), 1.272fr) minmax(var(--space-10), .786fr) minmax(var(--space-10), .786fr) minmax(var(--space-15), 1fr); align-items: stretch; gap: var(--space-1); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-2); transform: scale(1); transform-origin: center; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out), opacity var(--duration-ui) var(--ease-out); }
+.clientRow { position: relative; display: grid; min-height: var(--space-15); align-items: stretch; gap: var(--space-1); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-2); transform: scale(1); transform-origin: center; transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-ui) var(--ease-out), opacity var(--duration-ui) var(--ease-out); }
 .clientRow:has([data-row-opener]:active) { transform: scale(.99); }
 .clientRow > *:not([data-row-opener], .rowActions) { pointer-events: none; }
 .clientIdentity { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: var(--space-half); }
@@ -56,6 +56,21 @@
    Equipo: buscador, filtros, botón. La columna 2 que el botón tiene en
    escritorio creaba aquí una columna implícita que llevaba la página a 512px
    de ancho y dejaba el botón fuera de la pantalla. */
+/* Columnas de escritorio, compartidas por todas las filas con `subgrid`.
+   UX-05: el importe, el estado y el plazo miden lo que su valor y nunca se
+   recortan. Cada fila era su propia rejilla, así que «US$ 3.070,00» ensanchaba
+   solo su fila y descuadraba las demás; ahora todas miden lo que pide el valor
+   más ancho de la lista y se leen alineadas como una tabla.
+   Nombre, correo y gestor son texto libre: son los que ceden, con el valor
+   completo en `title`. Sus mínimos (160/96/80) dejan sitio a 1361 para
+   «US$ 999.999,99», «inactivo» y «vencido hace 117 días» sin que pisen la
+   tarjeta vecina. Orden: cliente, recargado, estado, correo, plazo, gestor,
+   acciones. Debajo de 1360 la fila va en tarjeta. */
+@media (width > 1360px) {
+  .clientList { grid-template-columns: minmax(var(--space-20), 2fr) minmax(var(--space-15), max-content) max-content minmax(var(--space-12), 2fr) minmax(calc(var(--space-15) + var(--space-2)), max-content) minmax(var(--space-10), 1.272fr) minmax(var(--space-15), 1fr); column-gap: var(--space-1); }
+  .clientList > * { grid-column: 1 / -1; }
+  .clientRow { grid-template-columns: subgrid; }
+}
 @media (max-width: 650px) { .toolbar > .search { grid-row: 1; } .toolbar > .filters { grid-row: 2; } .toolbar > .createButton { grid-column: 1; grid-row: 3; justify-self: start; } }
 @media (max-width: 650px) { .filters { justify-content: start; } .filters > span { flex-basis: 100%; margin-right: 0; } .clientRow { grid-template-columns: 1fr 1fr; } .clientIdentity, .rowActions { grid-column: 1 / -1; grid-row: auto; } }
 @media (prefers-reduced-motion: reduce) { .filters button, .clientRow { transition-duration: 0ms; }

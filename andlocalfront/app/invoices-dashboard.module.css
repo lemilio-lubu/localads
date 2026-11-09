@@ -24,9 +24,11 @@
 /* Sin seleccion, todas valen igual. Con una activa, el resto se atenua
    para que el filtro aplicado se lea de un vistazo. */
 .invoiceList { composes: list from "./components/atoms/list-row.module.css"; padding-top: var(--space-3); }
-.invoiceRow { composes: row from "./components/atoms/list-row.module.css"; grid-template-columns: 100px minmax(140px, 1fr) 148px 168px 104px 80px; }
+/* UX-05: fecha, importes y estados llevan como mínimo su ancho de siempre y
+   crecen hasta su contenido; el código, que es lo único que recorta (con su
+   valor en `title`), cede el espacio. */
+.invoiceRow { composes: row from "./components/atoms/list-row.module.css"; grid-template-columns: minmax(calc(var(--space-12) + var(--space-half)), max-content) minmax(var(--space-15), 1fr) minmax(calc(var(--space-15) + var(--space-3) + var(--space-half)), max-content) minmax(calc(var(--space-20) + var(--space-1)), max-content) minmax(calc(var(--space-12) + var(--space-1)), max-content) minmax(var(--space-10), max-content); }
 .cell { composes: cell from "./components/atoms/list-row.module.css"; }
-.cell span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .codeCell strong { display: flex; align-items: center; color: var(--color-brand); }
 .codeCell strong img { width: var(--icon-size-xs); height: var(--icon-size-xs); margin-right: var(--space-1); transform: rotate(180deg); }
 .codeCell span { color: var(--color-text); font-size: var(--font-size-body-sm); text-transform: lowercase; }
@@ -74,8 +76,7 @@
 .dueDate { color: var(--color-text-muted); font-size: var(--font-size-micro); line-height: 1.272; text-wrap: balance; }
 .dueOverdue { color: var(--color-danger); font-weight: var(--font-weight-bold); }
 /* Un importe o un plazo no se recortan con «…»: lo que queda detrás no se
-   puede leer de ninguna forma. La regla de .cell > span (una línea, elipsis)
-   vale para el resto de valores; estos dos se parten en dos líneas cuando no
+   puede leer de ninguna forma. Estos dos se parten en dos líneas cuando no
    caben, que solo pasa en móvil. */
 .cell > .totalDue, .cell > .dueDate { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
 /* El importe tampoco: si no cabe (siete cifras en una columna estrecha), se

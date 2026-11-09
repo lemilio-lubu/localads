@@ -30,12 +30,7 @@ export class SimulatedInvoiceIssuer implements InvoiceIssuer {
   }
 
   async document(request: InvoiceAuthorizationRequest, authorization: InvoiceAuthorization): Promise<InvoiceDocument> {
-    return renderInvoicePdf(request, authorization, {
-      subtitle: "DOCUMENTO DE PRUEBA - SIN VALIDEZ TRIBUTARIA (emisor simulado)",
-      numberLabel: "Número",
-      number: request.invoiceNumber,
-      authorizationLabel: "Autorización",
-    });
+    return renderInvoicePdf(request, authorization, { test: true, provider: null });
   }
 }
 
