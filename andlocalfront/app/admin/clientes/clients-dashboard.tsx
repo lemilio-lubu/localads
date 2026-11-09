@@ -34,6 +34,14 @@ const accountTypeSegments: SegmentOption<AdminAccountType | null>[] = [
   { value: "PREPAGO", label: "prepago", Icon: Wallet, tone: "brand" },
 ];
 
+/* Orden de la lista: activos primero y luego inactivos, cada grupo del más
+   nuevo al más antiguo. Un cliente recién creado aparece arriba del todo, a la
+   vista de quien lo acaba de crear. `createdAt` es ISO 8601 en UTC, así que se
+   compara como texto. */
+function compareClients(a: AdminClient, b: AdminClient) {
+  return Number(a.status !== "ACTIVE") - Number(b.status !== "ACTIVE") || b.createdAt.localeCompare(a.createdAt);
+}
+
 export default function ClientsDashboard() {
   const revision = usePlatformUpdates();
   const [clients, setClients] = useState<AdminClient[]>([]);
@@ -79,6 +87,9 @@ export default function ClientsDashboard() {
       && (!accountType || client.account.type === accountType)
      );
   }, [accountType, clients, platform, query]);
+  /* Se ordena en pantalla, no en la consulta: al activar o desactivar un
+     cliente cambia de grupo en el momento, sin volver a pedir la lista. */
+  const orderedClients = useMemo(() => [...visibleClients].sort(compareClients), [visibleClients]);
 
   function openCreate() { setEditing(null); setFormOpen(true); }
   function saveClient(client: AdminClient) {
@@ -131,7 +142,7 @@ export default function ClientsDashboard() {
       </div>}
 
       <div className={styles.clientList} aria-live="polite" aria-busy={loading}>
-        {visibleClients.map((client) => (
+        {orderedClients.map((client) => (
           <article key={client.id} className={`${styles.clientRow} ${client.status === "INACTIVE" ? styles.inactive : ""}`}>
             <RowOpener label={`Ver detalle de ${client.name}`} onClick={() => setSelectedClient(client)} />
             <div className={styles.clientIdentity}><small>clientes</small><strong title={client.name}>{client.name}</strong><div>{client.account.platforms.map((item) => <PlatformPill key={item} platform={item.toLowerCase() as "meta" | "google" | "tiktok"} size="compact" />)}</div><span>{client.account.type === "POSTPAGO" ? <><b>pos</b>pago</> : <><b>pre</b>pago</>}</span></div>
