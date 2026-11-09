@@ -5,6 +5,7 @@ import {
   InvoiceIssuance,
   InvoiceIssuer,
 } from "../../../application/ports/invoice-issuer.ports";
+import { MIGO_PROVIDER } from "../and-emitter";
 import { renderInvoicePdf } from "../invoice-pdf";
 import { MigoApiClient, MigoApiError } from "./migo-api.client";
 import { MigoInvoiceResponse } from "./migo-api.types";
@@ -43,13 +44,13 @@ export class MigoInvoiceIssuer implements InvoiceIssuer {
   }
 
   /* La API de Migo no entrega el RIDE: se genera con los datos fiscales
-     reales (número del SRI y autorización). */
+     reales (número del SRI y clave de acceso) y los códigos de producto que
+     se enviaron a Migo. */
   async document(request: InvoiceAuthorizationRequest, authorization: InvoiceAuthorization): Promise<InvoiceDocument> {
     return renderInvoicePdf(request, authorization, {
-      subtitle: "Factura electrónica autorizada por el SRI",
-      numberLabel: "Número",
-      number: authorization.fiscalNumber ?? request.invoiceNumber,
-      authorizationLabel: "Autorización SRI",
+      test: false,
+      productCode: (platform) => this.settings.products[platform]?.code ?? null,
+      provider: MIGO_PROVIDER,
     });
   }
 
