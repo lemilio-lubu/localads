@@ -38,6 +38,13 @@ export class MigoPaymentTermCatalog {
     throw new MigoMappingError(`En Migo hay varios plazos de pago de ${days} días (${matches.map((term) => term.name).join(", ")}): deja solo uno.`);
   }
 
+  /** Los días de todos los plazos, leídos de nuevo: un plazo recién creado en
+      Migo aparece al momento en la ficha del cliente. */
+  async availableDays(): Promise<number[]> {
+    const days = (await this.load()).map((term) => paymentTermDays(term.name)).filter((value): value is number => value !== null);
+    return [...new Set(days)].sort((a, b) => a - b);
+  }
+
   private async load(): Promise<readonly MigoLookup[]> {
     const terms = await this.migo.listPaymentTerms();
     this.cache = { terms, loadedAt: this.now() };

@@ -74,6 +74,12 @@ export function getAdminClients(owner?: "unassigned") {
   return request<AdminClient[]>(`/admin/clients${query}`, { cache: "no-store" });
 }
 
+/* Días de crédito que se pueden facturar: los plazos de pago creados en
+   Migo. null cuando no hay restricción (emisor simulado o Migo sin responder). */
+export function getCreditTermOptions() {
+  return request<{ days: number[] | null }>("/admin/clients/credit-terms", { cache: "no-store" });
+}
+
 export function getAdminClientDetail(id: string) {
   return request<AdminClientDetail>(`/admin/clients/${encodeURIComponent(id)}`, { cache: "no-store" });
 }

@@ -105,7 +105,7 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
 
 @Module({
   imports: [AuthModule, StorageModule],
-  exports: [TransactionsGateway],
+  exports: [TransactionsGateway, INVOICE_ISSUER],
   controllers: [InvoiceDocumentsController, TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
   providers: [
     PrismaMultiRechargeRepository,

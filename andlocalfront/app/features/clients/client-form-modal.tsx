@@ -11,7 +11,7 @@ import FormHeader from "../../components/molecules/form-header";
 import Section from "../../components/molecules/form-section";
 import form from "../../components/molecules/form-layout.module.css";
 import ModalShell from "../../components/organisms/modal-shell";
-import { createAdminClient, resetAdminClientPassword, updateAdminClient, type AdminClient, type AdminClientWithCredentials, type AdminPlatform, type SaveAdminClient } from "../../lib/admin-clients-api";
+import { createAdminClient, getCreditTermOptions, resetAdminClientPassword, updateAdminClient, type AdminClient, type AdminClientWithCredentials, type AdminPlatform, type SaveAdminClient } from "../../lib/admin-clients-api";
 import { assignClientManager, getTeam, type TeamMember } from "../../lib/team-api";
 import { normalizeRuc, rucKind, validateClientFields, type ClientProfileField } from "../../lib/form-validation";
 import styles from "./client-form-modal.module.css";
@@ -61,6 +61,9 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
   const [creditLimit, setCreditLimit] = useState(client?.account.creditLimit?.toString() ?? "");
   const [managerId, setManagerId] = useState(client?.manager?.id ?? "");
   const [managers, setManagers] = useState<TeamMember[]>([]);
+  /* Con Migo, solo los días que tienen plazo de pago allí: otros dejarían la
+     factura pospago pendiente. null: número libre, como antes. */
+  const [creditTermDays, setCreditTermDays] = useState<number[] | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   /* Un campo muestra su error cuando se sale de él o al intentar guardar;
@@ -84,6 +87,18 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
     getTeam({ role: "GESTOR", status: "ACTIVE" }).then((team) => { if (active) setManagers(team); }).catch(() => undefined);
     return () => { active = false; };
   }, [isAdmin, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    getCreditTermOptions().then(({ days }) => {
+      if (!active || !days?.length) return;
+      setCreditTermDays(days);
+      // Un cliente nuevo arranca en un plazo que existe: 30 si está, si no el primero.
+      if (!client) setCreditDays((current) => days.includes(current) ? current : days.includes(30) ? 30 : days[0]);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [client, open]);
 
   function togglePlatform(platform: AdminPlatform) {
     setPlatforms((current) => current.includes(platform) ? current.filter((item) => item !== platform) : [...current, platform]);
@@ -175,12 +190,29 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
                   <Field className={styles.creditLimit} label="Línea de crédito" Icon={Wallet} error={shown("creditLimit")} hint="Monto máximo para financiar recargas">
                     {({ id, describedBy, invalid }) => <><TextInput id={id} type="number" min="0.01" step="0.01" inputMode="decimal" value={creditLimit} onChange={(event) => { setCreditLimit(event.target.value); setError(""); }} onBlur={touch("creditLimit")} aria-invalid={invalid} aria-describedby={describedBy} placeholder="1000.00" /><span className={styles.suffix}>USD</span></>}
                   </Field>
-                  <Field label="Días de crédito" Icon={CalendarClock} error={shown("creditDays")}>
-                    {({ id, describedBy, invalid }) => <><TextInput id={id} type="number" min={1} max={365} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy} /><span className={styles.suffix}>días</span></>}
-                  </Field>
-                  <div className={styles.presets} role="group" aria-label="Plazos frecuentes">
-                    {creditPresets.map((days) => <ToggleChip key={days} indicator="fill" pressed={creditDays === days} onClick={() => { setCreditDays(days); setError(""); }}>{days}</ToggleChip>)}
-                  </div>
+                  {creditTermDays ? (
+                    <Field label="Días de crédito" Icon={CalendarClock} error={shown("creditDays")} hint="Plazos de pago creados en Migo">
+                      {({ id, describedBy, invalid }) => (
+                        <>
+                          <Select id={id} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy}>
+                            {/* El plazo que ya tenía el cliente se conserva aunque falte en Migo, para no cambiarlo sin querer. */}
+                            {!creditTermDays.includes(creditDays) && <option value={creditDays}>{creditDays} días (sin plazo en Migo)</option>}
+                            {creditTermDays.map((days) => <option key={days} value={days}>{days} días</option>)}
+                          </Select>
+                          <SelectChevron />
+                        </>
+                      )}
+                    </Field>
+                  ) : (
+                    <>
+                      <Field label="Días de crédito" Icon={CalendarClock} error={shown("creditDays")}>
+                        {({ id, describedBy, invalid }) => <><TextInput id={id} type="number" min={1} max={365} value={creditDays} onChange={(event) => { setCreditDays(Number(event.target.value)); setError(""); }} onBlur={touch("creditDays")} aria-invalid={invalid} aria-describedby={describedBy} /><span className={styles.suffix}>días</span></>}
+                      </Field>
+                      <div className={styles.presets} role="group" aria-label="Plazos frecuentes">
+                        {creditPresets.map((days) => <ToggleChip key={days} indicator="fill" pressed={creditDays === days} onClick={() => { setCreditDays(days); setError(""); }}>{days}</ToggleChip>)}
+                      </div>
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}

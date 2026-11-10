@@ -18,6 +18,9 @@ export class ClientsController {
   @Get() list(@Query() query: ListClientsQueryDto, @CurrentUser() user: AuthPrincipal) {
     return this.clients.list(withUnassigned(scopeFor(user), query.owner === "unassigned"));
   }
+  /* Los días de crédito que se pueden facturar (plazos de Migo). Va antes de
+     :id para que «credit-terms» no se lea como un id. */
+  @Get("credit-terms") creditTerms() { return this.clients.creditTermOptions(); }
   /* El detalle añade el reparto por plataforma, que el listado no necesita. */
   @Get(":id") get(@Param("id") id: string, @CurrentUser() user: AuthPrincipal) { return this.clients.detail(id, scopeFor(user)); }
   @Post() create(@Body() body: CreateClientDto, @CurrentUser() user: AuthPrincipal) { return this.clients.create(body, scopeFor(user), body.managerId); }

@@ -40,6 +40,14 @@ describe("plazos de pago de Migo", () => {
     await expect(catalog.termIdFor(30)).rejects.toThrow(/varios plazos de pago de 30 días \(Crédito 30 días, 30 dias\): deja solo uno/);
   });
 
+  it("lista los días disponibles, sin repetir, ordenados y leídos de nuevo cada vez", async () => {
+    const migo = { listPaymentTerms: vi.fn(async () => [term(1, "Crédito 45 días"), ...AND_TERMS, term(2, "Contado"), term(3, "45 DIAS")]) };
+    const catalog = new MigoPaymentTermCatalog(migo, () => 0);
+    expect(await catalog.availableDays()).toEqual([2, 30, 45]);
+    await catalog.availableDays();
+    expect(migo.listPaymentTerms).toHaveBeenCalledTimes(2);
+  });
+
   it("pasados 10 minutos vuelve a leer el catálogo", async () => {
     let now = 0;
     const migo = { listPaymentTerms: vi.fn(async () => AND_TERMS) };

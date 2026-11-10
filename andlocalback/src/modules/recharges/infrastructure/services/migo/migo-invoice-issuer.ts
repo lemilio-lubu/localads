@@ -65,6 +65,10 @@ export class MigoInvoiceIssuer implements InvoiceIssuer {
     });
   }
 
+  creditTermDays(): Promise<readonly number[]> {
+    return this.paymentTerms.availableDays();
+  }
+
   private toIssuance(invoice: MigoInvoiceResponse): InvoiceIssuance {
     const externalReference = String(invoice.id);
     const fiscalNumber = invoice.number?.trim() || null;
