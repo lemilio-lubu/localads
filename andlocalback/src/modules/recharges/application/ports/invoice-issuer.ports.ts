@@ -28,7 +28,9 @@ export type InvoiceAuthorizationRequest = Readonly<{
   invoiceNumber: string;
   transactionCode: string;
   issuedAt: Date;
-  customer: Readonly<{ name: string; ruc: string | null; email: string }>;
+  /* Dirección y teléfono son opcionales en el cliente; Migo los exige al dar
+     de alta a uno nuevo y el emisor pone un valor genérico si faltan. */
+  customer: Readonly<{ name: string; ruc: string | null; email: string; address?: string | null; phone?: string | null }>;
   lines: readonly InvoiceLine[];
   payment: Readonly<{ mode: InvoicePaymentMode; creditDays: number | null }>;
   /* Id de la factura en el proveedor, si ya se envió antes. Con él, el

@@ -17,6 +17,12 @@ export type MigoIssuerSettings = MigoInvoiceSettings & Readonly<{
   customerGroupId: number;
 }>;
 
+/* Para el cliente que aún no tiene dirección o teléfono en la app: Migo no
+   deja darlo de alta sin ellos, y la factura del SRI no los exige. Se
+   corrigen en Migo o, para las siguientes altas, en la ficha del cliente. */
+export const MIGO_FALLBACK_ADDRESS = "Ecuador";
+export const MIGO_FALLBACK_PHONE = "0000000000";
+
 export type MigoGateway = Pick<MigoApiClient, "findCustomerByIdentification" | "createCustomer" | "createInvoice" | "getInvoice">;
 
 /**
@@ -85,6 +91,8 @@ export class MigoInvoiceIssuer implements InvoiceIssuer {
         customerGroupId: this.settings.customerGroupId,
         socialReason: migoSocialReason(request.customer.name),
         email: request.customer.email,
+        address: request.customer.address?.trim() || MIGO_FALLBACK_ADDRESS,
+        phone: request.customer.phone?.trim() || MIGO_FALLBACK_PHONE,
       });
       return created.id;
     } catch (error) {

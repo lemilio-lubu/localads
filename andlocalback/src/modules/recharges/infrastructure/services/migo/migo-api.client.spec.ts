@@ -129,8 +129,8 @@ describe("cliente de la API de Migo", () => {
 
   it("crea cliente y factura enviando JSON", async () => {
     const { impl, calls } = fakeFetch({ "POST /oauth2/token": [token()], "POST /api/v1/customers": [{ status: 201, body: { id: 7 } }] });
-    await new MigoApiClient(config, impl).createCustomer({ identificationNumber: "1790012345001", identificationTypeId: 4, customerGroupId: 1, socialReason: "Cliente" });
+    await new MigoApiClient(config, impl).createCustomer({ identificationNumber: "1790012345001", identificationTypeId: 4, customerGroupId: 1, socialReason: "Cliente", address: "Quito", phone: "022456789" });
     expect(calls[1]).toMatchObject({ method: "POST", headers: { "Content-Type": "application/json" } });
-    expect(JSON.parse(calls[1].body!)).toEqual({ identificationNumber: "1790012345001", identificationTypeId: 4, customerGroupId: 1, socialReason: "Cliente" });
+    expect(JSON.parse(calls[1].body!)).toEqual({ identificationNumber: "1790012345001", identificationTypeId: 4, customerGroupId: 1, socialReason: "Cliente", address: "Quito", phone: "022456789" });
   });
 });

@@ -3,7 +3,7 @@ import { InvoiceAuthorizationRequest } from "../../../application/ports/invoice-
 import { MonetaryAmount } from "../../../domain/value-objects/monetary-amount";
 import { MigoApiError } from "./migo-api.client";
 import { MigoInvoiceResponse } from "./migo-api.types";
-import { MigoGateway, MigoInvoiceIssuer, MigoIssuerSettings } from "./migo-invoice-issuer";
+import { MIGO_FALLBACK_ADDRESS, MIGO_FALLBACK_PHONE, MigoGateway, MigoInvoiceIssuer, MigoIssuerSettings } from "./migo-invoice-issuer";
 import { migoInvoiceUuid } from "./migo-invoice.mapper";
 
 const money = (value: string) => MonetaryAmount.fromMajorUnits(value);
@@ -84,11 +84,17 @@ describe("emisor de facturas Migo", () => {
     }
   });
 
-  it("da de alta en Migo al cliente que no existe, con RUC, grupo, razón social y correo", async () => {
+  it("da de alta en Migo al cliente que no existe, con RUC, grupo, razón social, correo, dirección y teléfono", async () => {
     const migo = gateway({ findCustomerByIdentification: vi.fn(async () => null) });
-    await new MigoInvoiceIssuer(migo, settings, () => now).authorize(request);
-    expect(migo.createCustomer).toHaveBeenCalledWith({ identificationNumber: "1790012345001", identificationTypeId: 1, customerGroupId: 2, socialReason: "Cliente Uno S.A.", email: "uno@example.test" });
+    await new MigoInvoiceIssuer(migo, settings, () => now).authorize({ ...request, customer: { ...request.customer, address: " Av. Amazonas N35-17, Quito ", phone: "02 245 6789" } });
+    expect(migo.createCustomer).toHaveBeenCalledWith({ identificationNumber: "1790012345001", identificationTypeId: 1, customerGroupId: 2, socialReason: "Cliente Uno S.A.", email: "uno@example.test", address: "Av. Amazonas N35-17, Quito", phone: "02 245 6789" });
     expect(migo.createInvoice).toHaveBeenCalledWith(expect.objectContaining({ customer: expect.objectContaining({ id: 8 }) }));
+  });
+
+  it("sin dirección ni teléfono en la app, da de alta al cliente con un valor genérico: Migo los rechaza vacíos", async () => {
+    const migo = gateway({ findCustomerByIdentification: vi.fn(async () => null) });
+    await new MigoInvoiceIssuer(migo, settings, () => now).authorize({ ...request, customer: { ...request.customer, address: null, phone: "  " } });
+    expect(migo.createCustomer).toHaveBeenCalledWith(expect.objectContaining({ address: MIGO_FALLBACK_ADDRESS, phone: MIGO_FALLBACK_PHONE }));
   });
 
   it("si otro proceso dio de alta al cliente a la vez, lo vuelve a buscar en vez de fallar", async () => {
