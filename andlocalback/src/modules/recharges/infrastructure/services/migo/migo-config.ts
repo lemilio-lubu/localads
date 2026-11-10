@@ -54,13 +54,11 @@ export function migoConfigurationFromEnv(env: NodeJS.ProcessEnv = process.env): 
   const customerGroupId = id("MIGO_CUSTOMER_GROUP_ID", true);
   const vendorId = id("MIGO_VENDOR_ID", false);
   const activityId = id("MIGO_ACTIVITY_ID", false);
-  const prepaidMethodId = id("MIGO_PREPAID_PAYMENT_METHOD_ID", false);
-  const creditMethodId = id("MIGO_CREDIT_PAYMENT_METHOD_ID", false);
-  const creditTermId = id("MIGO_CREDIT_PAYMENT_TERM_ID", false);
-  if ((prepaidMethodId === null) !== (creditMethodId === null)) {
-    problems.push("MIGO_PREPAID_PAYMENT_METHOD_ID y MIGO_CREDIT_PAYMENT_METHOD_ID van juntos: los dos o ninguno");
-  }
-  if (creditTermId !== null && creditMethodId === null) problems.push("MIGO_CREDIT_PAYMENT_TERM_ID necesita MIGO_CREDIT_PAYMENT_METHOD_ID");
+  /* Obligatorias: sin ellas Migo rechaza la factura («el valor total en
+     formas de pago no puede ser inferior al valor total de la factura»). El
+     plazo del crédito no se configura: sale de los días de cada cliente. */
+  const prepaidMethodId = id("MIGO_PREPAID_PAYMENT_METHOD_ID", true);
+  const creditMethodId = id("MIGO_CREDIT_PAYMENT_METHOD_ID", true);
 
   if (problems.length) throw new Error(`Configuración de Migo incompleta (INVOICE_ISSUER=migo):\n- ${problems.join("\n- ")}`);
 
@@ -74,7 +72,7 @@ export function migoConfigurationFromEnv(env: NodeJS.ProcessEnv = process.env): 
       activityId,
       rucIdentificationTypeId: rucIdentificationTypeId!,
       customerGroupId: customerGroupId!,
-      payments: prepaidMethodId !== null && creditMethodId !== null ? { prepaidMethodId, creditMethodId, creditTermId } : null,
+      payments: { prepaidMethodId: prepaidMethodId!, creditMethodId: creditMethodId! },
     },
   };
 }

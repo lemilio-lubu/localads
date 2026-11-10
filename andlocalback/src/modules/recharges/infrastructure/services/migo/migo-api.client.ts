@@ -4,6 +4,7 @@ import {
   MigoErrorBody,
   MigoInvoiceRequest,
   MigoInvoiceResponse,
+  MigoLookup,
   MigoPage,
 } from "./migo-api.types";
 
@@ -69,6 +70,12 @@ export class MigoApiClient {
 
   getInvoice(id: string): Promise<MigoInvoiceResponse> {
     return this.request<MigoInvoiceResponse>("GET", `/api/v1/invoices/${encodeURIComponent(id)}`);
+  }
+
+  /* Los plazos de pago de la empresa (Crédito 30 días…): la forma de pago
+     «Cliente (Crédito)» no se acepta sin uno. */
+  listPaymentTerms(): Promise<MigoLookup[]> {
+    return this.request<MigoLookup[]>("GET", "/api/v1/payment-terms/options");
   }
 
   private async request<T>(method: "GET" | "POST", path: string, body?: unknown, renewed = false): Promise<T> {

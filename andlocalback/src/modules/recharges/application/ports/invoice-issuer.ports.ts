@@ -72,6 +72,9 @@ export interface InvoiceIssuer {
   readonly enabled: boolean;
   authorize(request: InvoiceAuthorizationRequest): Promise<InvoiceIssuance>;
   document(request: InvoiceAuthorizationRequest, authorization: InvoiceAuthorization): Promise<InvoiceDocument>;
+  /** Días de crédito que el proveedor sabe facturar (Migo: sus plazos de
+      pago). Sin el método, cualquier número sirve. */
+  creditTermDays?(): Promise<readonly number[]>;
 }
 
 /* Reservar una factura para autorizarla es atómico: dos procesos (el aviso al

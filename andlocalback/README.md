@@ -170,9 +170,10 @@ Variables (los ids salen del catálogo de la empresa en Migo: `/api/v1/emission-
 | `MIGO_VENDOR_ID` | No | Vendedor de la factura | `27865` (el de las facturas actuales) |
 | `MIGO_ACTIVITY_ID` | No | Actividad económica, si la empresa la exige | — |
 | `MIGO_BASE_URL` | No | Por defecto `https://api.migo.com.ec`; admite `http://localhost` para un emulador | — |
-| `MIGO_PREPAID_PAYMENT_METHOD_ID`, `MIGO_CREDIT_PAYMENT_METHOD_ID` | No, los dos o ninguno | Forma de pago de prepago y de pospago | Sin definir: las facturas actuales no registran forma de pago (existen `6` Transferencia y `8` Cliente (Crédito)) |
-| `MIGO_CREDIT_PAYMENT_TERM_ID` | No | Plazo de crédito del pospago | `21297` (Crédito 30 días), si se definen las formas de pago |
+| `MIGO_PREPAID_PAYMENT_METHOD_ID`, `MIGO_CREDIT_PAYMENT_METHOD_ID` | Sí | Forma de pago de prepago y de pospago. Migo rechaza la factura sin ellas, aunque su documentación las marque opcionales | `6` (Transferencia Bancaria) y `8` (Cliente (Crédito)) |
 | `MIGO_TIMEOUT_MS` | No | Tiempo máximo por petición; por defecto 15000 | — |
+
+**Plazo del pospago:** Migo exige un plazo de pago con la forma «Cliente (Crédito)». No se configura: la factura usa el plazo de Migo cuyo nombre lleva los días de crédito del cliente al pedir la recarga («Crédito 30 días», «5 días»…). Si no hay ninguno con esos días, la factura queda pendiente con el motivo en `authorizationError`; basta con crear el plazo en Migo y se emite sola en el siguiente intento.
 
 Las pruebas `test/migo-invoicing.integration.spec.ts` recorren el flujo completo contra un emulador de la API (`test/support/fake-migo-server.ts`).
 

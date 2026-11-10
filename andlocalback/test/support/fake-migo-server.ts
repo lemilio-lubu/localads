@@ -6,6 +6,7 @@ import type {
   MigoInvoiceRequest,
   MigoInvoiceResponse,
   MigoInvoiceStatus,
+  MigoLookup,
 } from "../../src/modules/recharges/infrastructure/services/migo/migo-api.types";
 
 /**
@@ -28,6 +29,8 @@ export type FakeMigo = Readonly<{
     tokensIssued: number;
     invoicePosts: number;
     customers: MigoCustomer[];
+    /* Plazos de pago de la empresa; el test puede crear más. */
+    paymentTerms: MigoLookup[];
     invoices: (MigoInvoiceResponse & { request: MigoInvoiceRequest })[];
     /* Peticiones que fallan a propósito: «caído» responde 503 a todo. */
     down: boolean;
@@ -42,12 +45,19 @@ export const FAKE_MIGO_VAT_TAX_ID = 4;
 export const FAKE_MIGO_EMISSION_POINT_ID = 239;
 /* Los productos «Servicio de Intermediación por Pauta …» de AND en Migo. */
 export const FAKE_MIGO_PRODUCTS = { META: 6644066, GOOGLE: 6644062, TIKTOK: 6644068 } as const;
+/* Transferencia Bancaria y Cliente (Crédito), con los ids de AND. */
+export const FAKE_MIGO_PAYMENT_METHODS = { TRANSFER: 6, CREDIT: 8 } as const;
+/* Los plazos que tiene AND en Migo. */
+export const FAKE_MIGO_PAYMENT_TERMS: readonly MigoLookup[] = [
+  { id: 21299, code: null, name: "2 DIAS" },
+  { id: 21297, code: null, name: "Crédito 30 días" },
+];
 
 export async function startFakeMigo(): Promise<FakeMigo> {
   const credentials = { clientId: "localads-test", clientSecret: "secreto-de-prueba" };
   const validTokens = new Set<string>();
   let sequence = 0;
-  const state: FakeMigo["state"] = { tokensIssued: 0, invoicePosts: 0, customers: [], invoices: [], down: false };
+  const state: FakeMigo["state"] = { tokensIssued: 0, invoicePosts: 0, customers: [], paymentTerms: [...FAKE_MIGO_PAYMENT_TERMS], invoices: [], down: false };
 
   const server: Server = createServer((request, response) => {
     void handle(request, response).catch((error: unknown) => send(response, 500, { status: 500, error: "INTERNAL_SERVER_ERROR", message: String(error) }));
@@ -100,12 +110,14 @@ export async function startFakeMigo(): Promise<FakeMigo> {
       return send(response, 201, created);
     }
 
+    if (request.method === "GET" && url.pathname === "/api/v1/payment-terms/options") return send(response, 200, state.paymentTerms);
+
     if (request.method === "POST" && url.pathname === "/api/v1/invoices") {
       state.invoicePosts++;
       const invoice = JSON.parse(body) as MigoInvoiceRequest;
       const duplicate = state.invoices.find((existing) => existing.request.invoiceUuid === invoice.invoiceUuid);
       if (duplicate) return send(response, 201, presenter(duplicate));
-      const problem = validateInvoice(invoice, state.customers);
+      const problem = validateInvoice(invoice, state.customers, state.paymentTerms);
       if (problem) return send(response, problem.status, problem.body);
       sequence++;
       const stored = { id: 4500 + sequence, number: `001-001-${String(sequence).padStart(9, "0")}`, status: "SENT_TO_SRI" as MigoInvoiceStatus, issueDate: invoice.issueDate, request: invoice };
@@ -152,7 +164,7 @@ export async function startFakeMigo(): Promise<FakeMigo> {
 }
 
 /* Las reglas que documenta Migo para emitir. */
-function validateInvoice(invoice: MigoInvoiceRequest, customers: MigoCustomer[]) {
+function validateInvoice(invoice: MigoInvoiceRequest, customers: MigoCustomer[], paymentTerms: MigoLookup[]) {
   const required = ["documentType", "invoiceUuid", "emissionPointId", "subtotalAmount", "taxAmount", "totalAmount", "tipAmount", "customer"] as const;
   const errors: { field: string; message: string }[] = required
     .filter((field) => invoice[field] === undefined || invoice[field] === null)
@@ -168,6 +180,15 @@ function validateInvoice(invoice: MigoInvoiceRequest, customers: MigoCustomer[])
     if (!(Object.values(FAKE_MIGO_PRODUCTS) as number[]).includes(line.product?.id)) business.push(`Línea ${index + 1}: producto inexistente`);
     if (line.tax?.id !== FAKE_MIGO_VAT_TAX_ID) business.push(`Línea ${index + 1}: el impuesto no coincide con el del producto`);
   });
+  /* Como la Migo real (visto en producción el 2026-11-09): las formas de pago
+     se exigen y la de crédito no va sin plazo. */
+  const paid = (invoice.payments ?? []).reduce((total, payment) => total + Math.round(payment.amount * 100), 0);
+  if (paid < Math.round(invoice.totalAmount * 100)) business.push("El valor total en formas de pago no puede ser inferior al valor total de la factura.");
+  for (const payment of invoice.payments ?? []) {
+    if (!(Object.values(FAKE_MIGO_PAYMENT_METHODS) as number[]).includes(payment.paymentMethod?.id)) business.push("Forma de pago inexistente");
+    if (payment.paymentMethod?.id === FAKE_MIGO_PAYMENT_METHODS.CREDIT && !payment.paymentTerm) business.push("Debe seleccionar el término de pago para la forma de pago Cliente Crédito.");
+    if (payment.paymentTerm && !paymentTerms.some((term) => term.id === payment.paymentTerm!.id)) business.push("Plazo de pago inexistente");
+  }
   if (business.length) return { status: 422, body: { status: 422, error: "UNPROCESSABLE_ENTITY", message: "Se encontraron errores de validación de negocio", details: business } };
 
   const cents = (value: number) => Math.round(value * 100);
@@ -186,8 +207,6 @@ function validateInvoice(invoice: MigoInvoiceRequest, customers: MigoCustomer[])
   if (subtotal !== cents(invoice.subtotalAmount)) mismatches.push({ field: "subtotalAmount", expected: subtotal / 100, actual: invoice.subtotalAmount });
   if (tax !== cents(invoice.taxAmount)) mismatches.push({ field: "taxAmount", expected: tax / 100, actual: invoice.taxAmount });
   if (subtotal + tax !== cents(invoice.totalAmount)) mismatches.push({ field: "totalAmount", expected: (subtotal + tax) / 100, actual: invoice.totalAmount });
-  const paid = (invoice.payments ?? []).reduce((total, payment) => total + cents(payment.amount), 0);
-  if (invoice.payments?.length && paid !== cents(invoice.totalAmount)) mismatches.push({ field: "payments", expected: invoice.totalAmount, actual: paid / 100 });
   if (mismatches.length) {
     return { status: 422, body: { status: 422, error: "TOTALS_MISMATCH", message: "Los totales calculados no coinciden con los enviados", details: mismatches } };
   }

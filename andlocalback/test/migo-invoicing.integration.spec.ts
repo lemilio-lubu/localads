@@ -11,7 +11,7 @@ import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/mo
 import { PrismaInvoiceAuthorizationRepository } from "../src/modules/recharges/infrastructure/persistence/prisma-invoice-authorization.repository";
 import { MigoApiClient } from "../src/modules/recharges/infrastructure/services/migo/migo-api.client";
 import { MigoInvoiceIssuer, MigoIssuerSettings } from "../src/modules/recharges/infrastructure/services/migo/migo-invoice-issuer";
-import { FAKE_MIGO_EMISSION_POINT_ID, FAKE_MIGO_PRODUCTS, FAKE_MIGO_VAT_TAX_ID, FakeMigo, startFakeMigo } from "./support/fake-migo-server";
+import { FAKE_MIGO_EMISSION_POINT_ID, FAKE_MIGO_PAYMENT_METHODS, FAKE_MIGO_PRODUCTS, FAKE_MIGO_VAT_TAX_ID, FakeMigo, startFakeMigo } from "./support/fake-migo-server";
 import { createTestDatabase } from "./support/postgres-test-database";
 
 /*
@@ -34,7 +34,7 @@ describe("integración: facturación electrónica con Migo", () => {
     emissionPointId: FAKE_MIGO_EMISSION_POINT_ID, vatTaxId: FAKE_MIGO_VAT_TAX_ID,
     products: { META: { id: FAKE_MIGO_PRODUCTS.META, code: "05" }, GOOGLE: { id: FAKE_MIGO_PRODUCTS.GOOGLE, code: "04" }, TIKTOK: { id: FAKE_MIGO_PRODUCTS.TIKTOK, code: "06" } },
     vendorId: null, activityId: null, rucIdentificationTypeId: 1, customerGroupId: 1,
-    payments: { prepaidMethodId: 3, creditMethodId: 7, creditTermId: 2 },
+    payments: { prepaidMethodId: FAKE_MIGO_PAYMENT_METHODS.TRANSFER, creditMethodId: FAKE_MIGO_PAYMENT_METHODS.CREDIT },
   };
 
   beforeAll(async () => {
@@ -80,7 +80,7 @@ describe("integración: facturación electrónica con Migo", () => {
     ]);
     expect([sent.subtotalAmount, sent.taxAmount, sent.totalAmount]).toEqual([49.95, 7.49, 57.44]);
     expect([submitted.vatBaseAmount.toString(), submitted.vatAmount.toString(), submitted.totalAmount.toString()]).toEqual(["49.95", "7.49", "57.44"]);
-    expect(sent.payments).toEqual([{ amount: 57.44, paymentMethod: { id: 3 } }]);
+    expect(sent.payments).toEqual([{ amount: 57.44, paymentMethod: { id: 6 } }]);
 
     // El SRI aún no responde: sigue pendiente.
     expect(await authorizePending.execute()).toEqual({ authorized: 0, submitted: 1, failed: 0 });
@@ -123,12 +123,12 @@ describe("integración: facturación electrónica con Migo", () => {
     expect(migo.state.tokensIssued).toBe(issued + 1);
   });
 
-  it("pospago: crédito con plazo; si el SRI la rechaza guarda el motivo y el reintento solo la consulta", async () => {
+  it("pospago: crédito con el plazo de Migo de los días del cliente; si el SRI la rechaza guarda el motivo y el reintento solo la consulta", async () => {
     const invoiceId = await completedRecharge({ META: "500.00" }, AccountType.POSTPAID);
     expect(await authorize.execute({ invoiceId })).toMatchObject({ status: "SUBMITTED" });
     const { externalReference } = await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } });
     const sent = migo.state.invoices.find((invoice) => String(invoice.id) === externalReference)!;
-    expect(sent.request.payments).toEqual([{ amount: 661.25, paymentMethod: { id: 7 }, paymentTerm: { id: 2 } }]);
+    expect(sent.request.payments).toEqual([{ amount: 661.25, paymentMethod: { id: 8 }, paymentTerm: { id: 21297 } }]);
 
     migo.reject(sent.id, "IDENTIFICACION DEL COMPRADOR INVALIDA");
     const posts = migo.state.invoicePosts;
@@ -137,6 +137,20 @@ describe("integración: facturación electrónica con Migo", () => {
     expect(await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } })).toMatchObject({
       externalReference, authorizationNumber: null, authorizationError: "El SRI no autorizó la factura: IDENTIFICACION DEL COMPRADOR INVALIDA",
     });
+  });
+
+  it("pospago con días sin plazo en Migo: queda pendiente con el motivo y sale sola cuando se crea el plazo", async () => {
+    const invoiceId = await completedRecharge({ GOOGLE: "120.00" }, AccountType.POSTPAID, 5);
+    const posts = migo.state.invoicePosts;
+    expect(await authorize.execute({ invoiceId })).toEqual({ status: "FAILED", reason: expect.stringMatching(/no hay un plazo de pago de 5 días/) });
+    expect(migo.state.invoicePosts).toBe(posts);
+    expect(await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } })).toMatchObject({ externalReference: null, authorizationError: expect.stringMatching(/Crédito 5 días/) });
+
+    migo.state.paymentTerms.push({ id: 30005, code: null, name: "Crédito 5 días" });
+    expect(await authorize.execute({ invoiceId })).toMatchObject({ status: "SUBMITTED" });
+    const { externalReference } = await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } });
+    const sent = migo.state.invoices.find((invoice) => String(invoice.id) === externalReference)!;
+    expect(sent.request.payments).toEqual([{ amount: sent.request.totalAmount, paymentMethod: { id: 8 }, paymentTerm: { id: 30005 } }]);
   });
 
   it("Migo acepta sin descuadres facturas de montos con redondeo difícil y varias plataformas", async () => {
@@ -154,7 +168,7 @@ describe("integración: facturación electrónica con Migo", () => {
 
   /* Una recarga completada con su factura, con los montos de AndPricingPolicy
      tal como los guarda el flujo real (detalle por plataforma, totales como suma). */
-  async function completedRecharge(pautas: Partial<Record<keyof typeof AdvertisingPlatform, string>>, accountType = AccountType.PREPAID): Promise<string> {
+  async function completedRecharge(pautas: Partial<Record<keyof typeof AdvertisingPlatform, string>>, accountType = AccountType.PREPAID, creditDays = 30): Promise<string> {
     const id = `migo-${++counter}`;
     const details = Object.entries(pautas).map(([platform, value], index) => ({ platform, index, ...pricing.calculate(MonetaryAmount.fromMajorUnits(value!)) }));
     const total = (pick: (detail: (typeof details)[number]) => MonetaryAmount) =>
@@ -165,7 +179,7 @@ describe("integración: facturación electrónica con Migo", () => {
     };
     await prisma.rechargeTransaction.create({ data: {
       id: `${id}-tx`, code: `TX-${id.toUpperCase()}`, idempotencyKey: id, clientId: "migo-client", accountId: "migo-account",
-      accountTypeSnapshot: accountType, creditDaysSnapshot: accountType === AccountType.POSTPAID ? 30 : null,
+      accountTypeSnapshot: accountType, creditDaysSnapshot: accountType === AccountType.POSTPAID ? creditDays : null,
       rechargeStatus: TransactionRechargeStatus.COMPLETED, completedAt: now, ...totals,
       details: { create: details.map((detail) => ({
         id: `${id}-d${detail.index}`, pautaId: `migo-${detail.platform}`, platformSnapshot: detail.platform, requestedAmount: detail.pautaAmount.toMajorUnits(),

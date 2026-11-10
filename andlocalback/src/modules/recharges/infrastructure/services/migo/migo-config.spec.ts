@@ -11,16 +11,18 @@ const minimal = {
   MIGO_VAT_TAX_ID: "4",
   MIGO_RUC_IDENTIFICATION_TYPE_ID: "1",
   MIGO_CUSTOMER_GROUP_ID: "2",
+  MIGO_PREPAID_PAYMENT_METHOD_ID: "6",
+  MIGO_CREDIT_PAYMENT_METHOD_ID: "8",
 };
 
 describe("configuración de Migo", () => {
-  it("con lo mínimo usa la API de producción y no envía formas de pago, vendedor ni actividad", () => {
+  it("con lo mínimo usa la API de producción, con las formas de pago y sin vendedor ni actividad", () => {
     expect(migoConfigurationFromEnv(minimal)).toEqual({
       client: { baseUrl: "https://api.migo.com.ec", clientId: "id", clientSecret: "secret" },
       settings: {
         emissionPointId: 239, vatTaxId: 4, vendorId: null, activityId: null,
         products: { META: { id: 6644066, code: null }, GOOGLE: { id: 6644062, code: null }, TIKTOK: { id: 6644068, code: null } },
-        rucIdentificationTypeId: 1, customerGroupId: 2, payments: null,
+        rucIdentificationTypeId: 1, customerGroupId: 2, payments: { prepaidMethodId: 6, creditMethodId: 8 },
       },
     });
   });
@@ -28,25 +30,25 @@ describe("configuración de Migo", () => {
   it("lee los opcionales", () => {
     const configuration = migoConfigurationFromEnv({
       ...minimal, MIGO_BASE_URL: "http://localhost:4010", MIGO_TIMEOUT_MS: "5000", MIGO_PRODUCT_CODE_META: " 05 ", MIGO_VENDOR_ID: "12", MIGO_ACTIVITY_ID: "1",
-      MIGO_PREPAID_PAYMENT_METHOD_ID: "3", MIGO_CREDIT_PAYMENT_METHOD_ID: "7", MIGO_CREDIT_PAYMENT_TERM_ID: "2",
+      MIGO_PREPAID_PAYMENT_METHOD_ID: "3", MIGO_CREDIT_PAYMENT_METHOD_ID: "7",
     });
     expect(configuration.client).toEqual({ baseUrl: "http://localhost:4010", clientId: "id", clientSecret: "secret", timeoutMs: 5000 });
-    expect(configuration.settings).toMatchObject({ products: { META: { id: 6644066, code: "05" }, GOOGLE: { code: null } }, vendorId: 12, activityId: 1, payments: { prepaidMethodId: 3, creditMethodId: 7, creditTermId: 2 } });
+    expect(configuration.settings).toMatchObject({ products: { META: { id: 6644066, code: "05" }, GOOGLE: { code: null } }, vendorId: 12, activityId: 1, payments: { prepaidMethodId: 3, creditMethodId: 7 } });
   });
 
   it("sin nada, dice todo lo que falta de una vez (el backend no arranca)", () => {
-    expect(() => migoConfigurationFromEnv({})).toThrow(/MIGO_CLIENT_ID es obligatorio[\s\S]*MIGO_CLIENT_SECRET[\s\S]*MIGO_EMISSION_POINT_ID[\s\S]*MIGO_PRODUCT_ID_META[\s\S]*MIGO_PRODUCT_ID_GOOGLE[\s\S]*MIGO_PRODUCT_ID_TIKTOK[\s\S]*MIGO_VAT_TAX_ID[\s\S]*MIGO_RUC_IDENTIFICATION_TYPE_ID[\s\S]*MIGO_CUSTOMER_GROUP_ID/);
+    expect(() => migoConfigurationFromEnv({})).toThrow(/MIGO_CLIENT_ID es obligatorio[\s\S]*MIGO_CLIENT_SECRET[\s\S]*MIGO_EMISSION_POINT_ID[\s\S]*MIGO_PRODUCT_ID_META[\s\S]*MIGO_PRODUCT_ID_GOOGLE[\s\S]*MIGO_PRODUCT_ID_TIKTOK[\s\S]*MIGO_VAT_TAX_ID[\s\S]*MIGO_RUC_IDENTIFICATION_TYPE_ID[\s\S]*MIGO_CUSTOMER_GROUP_ID[\s\S]*MIGO_PREPAID_PAYMENT_METHOD_ID[\s\S]*MIGO_CREDIT_PAYMENT_METHOD_ID/);
   });
 
-  it("rechaza ids no numéricos, http fuera de localhost, timeout corto y formas de pago a medias", () => {
+  it("rechaza ids no numéricos, http fuera de localhost, timeout corto y formas de pago que faltan", () => {
     const cases: [Record<string, string>, RegExp][] = [
       [{ MIGO_PRODUCT_ID_TIKTOK: "abc" }, /MIGO_PRODUCT_ID_TIKTOK debe ser un id entero positivo/],
       [{ MIGO_VAT_TAX_ID: "0" }, /MIGO_VAT_TAX_ID debe ser un id entero positivo/],
       [{ MIGO_BASE_URL: "http://api.migo.com.ec" }, /MIGO_BASE_URL debe ser https/],
       [{ MIGO_BASE_URL: "no es url" }, /MIGO_BASE_URL debe ser https/],
       [{ MIGO_TIMEOUT_MS: "10" }, /MIGO_TIMEOUT_MS/],
-      [{ MIGO_PREPAID_PAYMENT_METHOD_ID: "3" }, /los dos o ninguno/],
-      [{ MIGO_CREDIT_PAYMENT_TERM_ID: "2" }, /necesita MIGO_CREDIT_PAYMENT_METHOD_ID/],
+      [{ MIGO_PREPAID_PAYMENT_METHOD_ID: "" }, /MIGO_PREPAID_PAYMENT_METHOD_ID es obligatorio/],
+      [{ MIGO_CREDIT_PAYMENT_METHOD_ID: "ocho" }, /MIGO_CREDIT_PAYMENT_METHOD_ID debe ser un id entero positivo/],
     ];
     for (const [overrides, message] of cases) expect(() => migoConfigurationFromEnv({ ...minimal, ...overrides })).toThrow(message);
   });

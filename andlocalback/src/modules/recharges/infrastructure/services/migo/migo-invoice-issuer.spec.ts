@@ -20,7 +20,8 @@ const request: InvoiceAuthorizationRequest = {
   externalReference: null,
 };
 const settings: MigoIssuerSettings = {
-  emissionPointId: 239, products: { META: { id: 6644066, code: "05" } }, vatTaxId: 4, vendorId: null, activityId: null, payments: null,
+  emissionPointId: 239, products: { META: { id: 6644066, code: "05" } }, vatTaxId: 4, vendorId: null, activityId: null,
+  payments: { prepaidMethodId: 6, creditMethodId: 8 },
   rucIdentificationTypeId: 1, customerGroupId: 2,
 };
 const accessKey = "0711202601179001234500120010010000001231234567811";
@@ -32,6 +33,7 @@ function gateway(overrides: Partial<MigoGateway> = {}) {
     createCustomer: vi.fn(async () => ({ id: 8, socialReason: "Cliente Uno S.A.", identificationNumber: "1790012345001", active: true })),
     createInvoice: vi.fn(async () => migoInvoice()),
     getInvoice: vi.fn(async () => migoInvoice()),
+    listPaymentTerms: vi.fn(async () => [{ id: 21299, code: null, name: "2 DIAS" }, { id: 21297, code: null, name: "Crédito 30 días" }]),
     ...overrides,
   } satisfies MigoGateway;
 }
@@ -102,6 +104,21 @@ describe("emisor de facturas Migo", () => {
     const migo = gateway({ findCustomerByIdentification: find, createCustomer: vi.fn(async () => { throw new MigoApiError(422, "UNPROCESSABLE_ENTITY", "ya existe"); }) });
     await new MigoInvoiceIssuer(migo, settings, () => now).authorize(request);
     expect(migo.createInvoice).toHaveBeenCalledWith(expect.objectContaining({ customer: expect.objectContaining({ id: 9 }) }));
+  });
+
+  it("pospago: envía el crédito con el plazo de Migo de los días del cliente", async () => {
+    const migo = gateway();
+    await new MigoInvoiceIssuer(migo, settings).authorize({ ...request, payment: { mode: "POSTPAID", creditDays: 30 } });
+    expect(migo.createInvoice).toHaveBeenCalledWith(expect.objectContaining({ payments: [{ amount: 33.06, paymentMethod: { id: 8 }, paymentTerm: { id: 21297 } }] }));
+  });
+
+  it("pospago sin plazo de esos días en Migo o sin días: no emite y explica qué falta", async () => {
+    const migo = gateway();
+    const issuer = new MigoInvoiceIssuer(migo, settings);
+    await expect(issuer.authorize({ ...request, payment: { mode: "POSTPAID", creditDays: 15 } })).rejects.toThrow(/no hay un plazo de pago de 15 días. Créalo en Migo con un nombre como «Crédito 15 días»/);
+    await expect(issuer.authorize({ ...request, payment: { mode: "POSTPAID", creditDays: null } })).rejects.toThrow(/es pospago y no tiene días de crédito/);
+    expect(migo.createInvoice).not.toHaveBeenCalled();
+    expect(migo.createCustomer).not.toHaveBeenCalled();
   });
 
   it("propaga los errores de Migo y de mapeo sin emitir nada: el caso de uso los deja pendientes", async () => {

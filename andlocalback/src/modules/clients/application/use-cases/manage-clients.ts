@@ -5,9 +5,18 @@ import { ClientProfileInput, optionalContact, validateClientProfile } from "../.
 import { validateRuc } from "../../domain/ruc";
 import { ClientAdminRepository, UpdateClientInput } from "../ports/client-admin.repository";
 import { ClientCredentialsIssuer } from "../ports/client-credentials.port";
+import { ANY_CREDIT_DAYS, CreditTermsCatalog } from "../ports/credit-terms.port";
 
 export class ManageClients {
-  constructor(private readonly clients: ClientAdminRepository, private readonly credentials: ClientCredentialsIssuer, private readonly audit: SecurityAuditLog) {}
+  constructor(
+    private readonly clients: ClientAdminRepository,
+    private readonly credentials: ClientCredentialsIssuer,
+    private readonly audit: SecurityAuditLog,
+    private readonly creditTerms: CreditTermsCatalog = ANY_CREDIT_DAYS,
+  ) {}
+
+  /* Los días que ofrece la ficha del cliente pospago; null, número libre. */
+  async creditTermOptions() { return { days: await this.creditTerms.allowedDays() }; }
 
   list(scope: ManagerScope) { return this.clients.list(scope); }
 
@@ -33,6 +42,7 @@ export class ManageClients {
   async create(profile: ClientProfileInput, scope: ManagerScope, requestedManagerId?: string | null) {
     const input = { ...profile, ruc: validateRuc(profile.ruc), creditLimit: profile.creditLimit ?? 0, address: optionalContact(profile.address) ?? null, phone: optionalContact(profile.phone) ?? null };
     validateClientProfile(input, { requirePostpaidLimit: true });
+    if (input.accountType === "POSTPAGO") await this.assertBillableCreditDays(input.creditDays);
     const managerId = scope.managerId ?? requestedManagerId?.trim() ?? null;
     const { username, temporaryPassword, passwordHash } = await this.credentials.prepare(input.email);
     const client = await this.clients.create(input, { username, passwordHash }, managerId || null);
@@ -57,6 +67,12 @@ export class ManageClients {
       address: input.address,
       phone: input.phone,
     });
+    /* Solo si cambian los días o pasa a pospago: un cliente que ya existía
+       sigue editándose aunque su plazo falte en Migo. */
+    const becomesPostpaid = input.accountType === "POSTPAGO" && current.account.type !== "POSTPAGO";
+    if ((input.accountType ?? current.account.type) === "POSTPAGO" && (becomesPostpaid || (input.creditDays !== undefined && input.creditDays !== current.account.creditDays))) {
+      await this.assertBillableCreditDays(input.creditDays ?? current.account.creditDays);
+    }
     const updated = await this.clients.update(id, input.accountType === "PREPAGO" ? { ...input, creditDays: 0, creditLimit: 0 } : input);
     if (!updated) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
     /* Los nombres de los campos, no sus valores: el registro no es otra copia
@@ -97,5 +113,14 @@ export class ManageClients {
     if (!client) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);
     await this.audit.record({ action: "CLIENT_DEACTIVATED", outcome: "SUCCESS", target: { type: "CLIENT", id } });
     return client;
+  }
+
+  /* Con Migo, una factura pospago necesita un plazo de pago con esos días:
+     sin él se quedaría pendiente. */
+  private async assertBillableCreditDays(days: number) {
+    const allowed = await this.creditTerms.allowedDays();
+    if (allowed === null || allowed.includes(days)) return;
+    const options = allowed.length ? `Elige uno de estos: ${allowed.join(", ")} días, o` : "Primero";
+    throw new ApplicationError("CREDIT_DAYS_WITHOUT_TERM", `En Migo no hay un plazo de pago de ${days} días. ${options} crea «Crédito ${days} días» en Migo.`, 409);
   }
 }
