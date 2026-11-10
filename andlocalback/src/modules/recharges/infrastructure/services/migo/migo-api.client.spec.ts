@@ -127,6 +127,13 @@ describe("cliente de la API de Migo", () => {
     expect(Object.fromEntries(query)).toEqual({ search: "1790012345001", includeInactive: "true", page: "0", size: "50" });
   });
 
+  it("lista los plazos de pago de la empresa", async () => {
+    const terms = [{ id: 21297, code: null, name: "Crédito 30 días" }];
+    const { impl, calls } = fakeFetch({ "POST /oauth2/token": [token()], "GET /api/v1/payment-terms/options": [{ status: 200, body: terms }] });
+    expect(await new MigoApiClient(config, impl).listPaymentTerms()).toEqual(terms);
+    expect(calls[1]).toMatchObject({ url: "https://api.migo.test/api/v1/payment-terms/options", method: "GET" });
+  });
+
   it("crea cliente y factura enviando JSON", async () => {
     const { impl, calls } = fakeFetch({ "POST /oauth2/token": [token()], "POST /api/v1/customers": [{ status: 201, body: { id: 7 } }] });
     await new MigoApiClient(config, impl).createCustomer({ identificationNumber: "1790012345001", identificationTypeId: 4, customerGroupId: 1, socialReason: "Cliente", address: "Quito", phone: "022456789" });

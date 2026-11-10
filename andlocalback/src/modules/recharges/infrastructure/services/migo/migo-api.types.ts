@@ -75,6 +75,9 @@ export type MigoCustomerRequest = {
   phone: string;
 };
 
+/* Opciones de un catálogo (GET /api/v1/…/options): formas y plazos de pago. */
+export type MigoLookup = { id: number; code: string | null; name: string };
+
 export type MigoPage<T> = {
   data: T[];
   pagination: { page: number; size: number; totalElements: number; totalPages: number };

@@ -10,6 +10,7 @@ import { renderInvoicePdf } from "../invoice-pdf";
 import { MigoApiClient, MigoApiError } from "./migo-api.client";
 import { MigoInvoiceResponse } from "./migo-api.types";
 import { buildMigoInvoice, MigoInvoiceSettings, MigoMappingError, migoSocialReason } from "./migo-invoice.mapper";
+import { MigoPaymentTermCatalog } from "./migo-payment-terms";
 
 export type MigoIssuerSettings = MigoInvoiceSettings & Readonly<{
   /* Para dar de alta en Migo al cliente que aún no existe. */
@@ -23,7 +24,7 @@ export type MigoIssuerSettings = MigoInvoiceSettings & Readonly<{
 export const MIGO_FALLBACK_ADDRESS = "Ecuador";
 export const MIGO_FALLBACK_PHONE = "0000000000";
 
-export type MigoGateway = Pick<MigoApiClient, "findCustomerByIdentification" | "createCustomer" | "createInvoice" | "getInvoice">;
+export type MigoGateway = Pick<MigoApiClient, "findCustomerByIdentification" | "createCustomer" | "createInvoice" | "getInvoice" | "listPaymentTerms">;
 
 /**
  * Emisor real: Migo firma la factura y la envía al SRI. La autorización
@@ -36,17 +37,21 @@ export type MigoGateway = Pick<MigoApiClient, "findCustomerByIdentification" | "
 export class MigoInvoiceIssuer implements InvoiceIssuer {
   readonly name = "migo";
   readonly enabled = true;
+  private readonly paymentTerms: MigoPaymentTermCatalog;
 
   constructor(
     private readonly migo: MigoGateway,
     private readonly settings: MigoIssuerSettings,
     private readonly now: () => Date = () => new Date(),
-  ) {}
+  ) {
+    this.paymentTerms = new MigoPaymentTermCatalog(migo);
+  }
 
   async authorize(request: InvoiceAuthorizationRequest): Promise<InvoiceIssuance> {
     if (request.externalReference) return this.toIssuance(await this.migo.getInvoice(request.externalReference));
+    const creditTermId = await this.creditTermId(request);
     const customerId = await this.customerId(request);
-    return this.toIssuance(await this.migo.createInvoice(buildMigoInvoice(request, customerId, this.settings)));
+    return this.toIssuance(await this.migo.createInvoice(buildMigoInvoice(request, customerId, this.settings, creditTermId)));
   }
 
   /* La API de Migo no entrega el RIDE: se genera con los datos fiscales
@@ -77,6 +82,15 @@ export class MigoInvoiceIssuer implements InvoiceIssuer {
       default:
         return { status: "SUBMITTED", externalReference, fiscalNumber };
     }
+  }
+
+  /* Pospago: el plazo de Migo con los días de crédito que tenía el cliente al
+     pedir la recarga, los mismos que imprime el RIDE. */
+  private async creditTermId(request: InvoiceAuthorizationRequest): Promise<number | null> {
+    if (request.payment.mode !== "POSTPAID") return null;
+    const days = request.payment.creditDays;
+    if (!days || days <= 0) throw new MigoMappingError(`La factura ${request.invoiceNumber} es pospago y no tiene días de crédito`);
+    return this.paymentTerms.termIdFor(days);
   }
 
   private async customerId(request: InvoiceAuthorizationRequest): Promise<number> {

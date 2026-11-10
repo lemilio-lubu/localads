@@ -16,8 +16,10 @@ export type MigoInvoiceSettings = Readonly<{
   vatTaxId: number;
   vendorId: number | null;
   activityId: number | null;
-  /* Sin formas de pago configuradas no se envían: Migo no las exige. */
-  payments: Readonly<{ prepaidMethodId: number; creditMethodId: number; creditTermId: number | null }> | null;
+  /* Migo rechaza la factura si las formas de pago suman menos que el total,
+     aunque su documentación las marque opcionales. El plazo de la forma a
+     crédito depende de los días del cliente: lo elige MigoPaymentTermCatalog. */
+  payments: Readonly<{ prepaidMethodId: number; creditMethodId: number }>;
 }>;
 
 /* Espacio de nombres propio de localads para el UUID v5 de cada factura. */
@@ -67,6 +69,8 @@ export function buildMigoInvoice(
   request: InvoiceAuthorizationRequest,
   customerId: number,
   settings: MigoInvoiceSettings,
+  /* El plazo de Migo para los días de crédito del cliente; solo en pospago. */
+  creditTermId: number | null = null,
 ): MigoInvoiceRequest {
   if (!request.customer.ruc) throw new MigoMappingError(`La factura ${request.invoiceNumber} no tiene RUC del cliente`);
   if (request.lines.length === 0) throw new MigoMappingError(`La factura ${request.invoiceNumber} no tiene líneas`);
@@ -126,7 +130,7 @@ export function buildMigoInvoice(
         tax: { id: settings.vatTaxId, rate: VAT_RATE_PERCENT },
       };
     }),
-    ...(settings.payments ? { payments: [payment(request, settings.payments)] } : {}),
+    payments: [payment(request, settings.payments, creditTermId)],
     additionalInfo: [
       { label: "Transacción", value: request.transactionCode },
       { label: "Pauta", value: `US$ ${totals.pautaAmount.toMajorUnits()}` },
@@ -136,12 +140,10 @@ export function buildMigoInvoice(
   };
 }
 
-function payment(request: InvoiceAuthorizationRequest, methods: NonNullable<MigoInvoiceSettings["payments"]>): MigoPaymentRequest {
+function payment(request: InvoiceAuthorizationRequest, methods: MigoInvoiceSettings["payments"], creditTermId: number | null): MigoPaymentRequest {
   const total = amount(request.totals.totalAmount);
   if (request.payment.mode === "PREPAID") return { amount: total, paymentMethod: { id: methods.prepaidMethodId } };
-  return {
-    amount: total,
-    paymentMethod: { id: methods.creditMethodId },
-    ...(methods.creditTermId !== null ? { paymentTerm: { id: methods.creditTermId } } : {}),
-  };
+  // Migo: «Debe seleccionar el término de pago para la forma de pago Cliente Crédito».
+  if (creditTermId === null) throw new MigoMappingError(`La factura ${request.invoiceNumber} es pospago y no tiene plazo de pago de Migo`);
+  return { amount: total, paymentMethod: { id: methods.creditMethodId }, paymentTerm: { id: creditTermId } };
 }

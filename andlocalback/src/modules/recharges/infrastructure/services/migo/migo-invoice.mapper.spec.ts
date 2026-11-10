@@ -14,7 +14,7 @@ const settings: MigoInvoiceSettings = {
   vatTaxId: 4,
   vendorId: null,
   activityId: null,
-  payments: { prepaidMethodId: 3, creditMethodId: 7, creditTermId: 2 },
+  payments: { prepaidMethodId: 3, creditMethodId: 7 },
 };
 
 /* Una factura como la arma el repositorio: cada línea con el desglose que
@@ -140,16 +140,15 @@ describe("factura de localads → InvoiceRequest de Migo", () => {
     }
   });
 
-  it("pospago: forma de pago a crédito con su plazo; sin plazo configurado, solo el método", () => {
+  it("pospago: forma de pago a crédito con el plazo elegido; sin plazo no la envía (Migo la rechazaría)", () => {
     const postpaid = invoiceFor({ META: "25.00" }, { payment: { mode: "POSTPAID", creditDays: 30 } });
-    expect(buildMigoInvoice(postpaid, 1, settings).payments).toEqual([{ amount: 33.06, paymentMethod: { id: 7 }, paymentTerm: { id: 2 } }]);
-    const withoutTerm = { ...settings, payments: { ...settings.payments!, creditTermId: null } };
-    expect(buildMigoInvoice(postpaid, 1, withoutTerm).payments).toEqual([{ amount: 33.06, paymentMethod: { id: 7 } }]);
+    expect(buildMigoInvoice(postpaid, 1, settings, 21297).payments).toEqual([{ amount: 33.06, paymentMethod: { id: 7 }, paymentTerm: { id: 21297 } }]);
+    expect(() => buildMigoInvoice(postpaid, 1, settings)).toThrow(/es pospago y no tiene plazo de pago de Migo/);
   });
 
-  it("sin formas de pago, vendedor ni actividad configurados no los envía (Migo no los exige)", () => {
-    const invoice = buildMigoInvoice(invoiceFor({ META: "25.00" }), 1, { ...settings, payments: null, products: { META: { id: 6644066, code: null } } });
-    expect(invoice).not.toHaveProperty("payments");
+  it("sin vendedor, actividad ni código de producto configurados no los envía", () => {
+    const invoice = buildMigoInvoice(invoiceFor({ META: "25.00" }), 1, { ...settings, products: { META: { id: 6644066, code: null } } });
+    expect(invoice.payments).toEqual([{ amount: 33.06, paymentMethod: { id: 3 } }]);
     expect(invoice).not.toHaveProperty("vendorId");
     expect(invoice).not.toHaveProperty("activityId");
     expect(invoice.details[0]).not.toHaveProperty("referenceCode");
