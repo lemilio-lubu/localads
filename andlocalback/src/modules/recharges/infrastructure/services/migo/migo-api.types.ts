@@ -70,6 +70,9 @@ export type MigoCustomerRequest = {
   customerGroupId: number;
   socialReason: string;
   email?: string;
+  /* Migo los rechaza vacíos al dar de alta: «No puede estar en blanco». */
+  address: string;
+  phone: string;
 };
 
 export type MigoPage<T> = {

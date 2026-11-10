@@ -1,7 +1,7 @@
 import { ManagerScope } from "../../../../common/access/manager-scope";
 import { SecurityAuditLog } from "../../../../common/audit/security-audit.port";
 import { ApplicationError } from "../../../../common/errors/application.error";
-import { ClientProfileInput, validateClientProfile } from "../../domain/client-profile";
+import { ClientProfileInput, optionalContact, validateClientProfile } from "../../domain/client-profile";
 import { validateRuc } from "../../domain/ruc";
 import { ClientAdminRepository, UpdateClientInput } from "../ports/client-admin.repository";
 import { ClientCredentialsIssuer } from "../ports/client-credentials.port";
@@ -31,7 +31,7 @@ export class ManageClients {
      token; lo que pida el cuerpo se ignora. Un admin elige gestor o lo deja
      sin asignar. */
   async create(profile: ClientProfileInput, scope: ManagerScope, requestedManagerId?: string | null) {
-    const input = { ...profile, ruc: validateRuc(profile.ruc), creditLimit: profile.creditLimit ?? 0 };
+    const input = { ...profile, ruc: validateRuc(profile.ruc), creditLimit: profile.creditLimit ?? 0, address: optionalContact(profile.address) ?? null, phone: optionalContact(profile.phone) ?? null };
     validateClientProfile(input, { requirePostpaidLimit: true });
     const managerId = scope.managerId ?? requestedManagerId?.trim() ?? null;
     const { username, temporaryPassword, passwordHash } = await this.credentials.prepare(input.email);
@@ -44,7 +44,8 @@ export class ManageClients {
      igual que al crear: vacio no es una forma de borrarlo. */
   async update(id: string, changes: UpdateClientInput, scope: ManagerScope) {
     const current = await this.get(id, scope);
-    const input = changes.ruc === undefined ? changes : { ...changes, ruc: validateRuc(changes.ruc) };
+    const withContact = { ...changes, address: optionalContact(changes.address), phone: optionalContact(changes.phone) };
+    const input = withContact.ruc === undefined ? withContact : { ...withContact, ruc: validateRuc(withContact.ruc) };
     validateClientProfile({
       name: input.name ?? current.name,
       email: input.email ?? current.email,
@@ -53,6 +54,8 @@ export class ManageClients {
       platforms: input.platforms ?? current.account.platforms,
       creditDays: input.accountType === "PREPAGO" ? 0 : input.creditDays ?? current.account.creditDays,
       creditLimit: input.accountType === "PREPAGO" ? 0 : input.creditLimit ?? current.account.creditLimit ?? 0,
+      address: input.address,
+      phone: input.phone,
     });
     const updated = await this.clients.update(id, input.accountType === "PREPAGO" ? { ...input, creditDays: 0, creditLimit: 0 } : input);
     if (!updated) throw new ApplicationError("CLIENT_NOT_FOUND", "El cliente no existe", 404);

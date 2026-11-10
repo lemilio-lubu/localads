@@ -87,6 +87,9 @@ export async function startFakeMigo(): Promise<FakeMigo> {
         !customer.identificationTypeId && { field: "identificationTypeId", message: "no debe ser nulo" },
         !customer.customerGroupId && { field: "customerGroupId", message: "no debe ser nulo" },
         (customer.socialReason?.length ?? 0) > 80 && { field: "socialReason", message: "el tamaño debe estar entre 0 y 80" },
+        /* Como la Migo real (visto en producción el 2026-11-09). */
+        !customer.address?.trim() && { field: "address", message: "No puede estar en blanco" },
+        !customer.phone?.trim() && { field: "phone", message: "No puede estar en blanco" },
       ].filter(Boolean);
       if (errors.length) return send(response, 400, { status: 400, error: "BAD_REQUEST", message: `Validación fallida en ${errors.length} campo(s)`, errors });
       if (state.customers.some((existing) => existing.identificationNumber === customer.identificationNumber)) {

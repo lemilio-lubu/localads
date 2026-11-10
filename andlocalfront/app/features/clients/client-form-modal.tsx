@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BadgeCheck, CalendarClock, CircleAlert, IdCard, KeyRound, Mail, UserCog, UserPen, UserPlus, UserRound, Wallet, type LucideIcon } from "lucide-react";
+import { BadgeCheck, CalendarClock, CircleAlert, IdCard, KeyRound, Mail, MapPin, Phone, UserCog, UserPen, UserPlus, UserRound, Wallet, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import FormError from "../../components/molecules/form-error";
@@ -51,6 +51,8 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
   const [name, setName] = useState(client?.name ?? "");
   const [email, setEmail] = useState(client?.email ?? "");
   const [ruc, setRuc] = useState(client?.ruc ?? "");
+  const [address, setAddress] = useState(client?.address ?? "");
+  const [phone, setPhone] = useState(client?.phone ?? "");
   const [accountType, setAccountType] = useState<SaveAdminClient["accountType"]>(client?.account.type ?? "PREPAGO");
   const [platforms, setPlatforms] = useState<AdminPlatform[]>(client?.account.platforms ?? ["META"]);
   // Una cuenta pospago necesita al menos un dia de credito (BR-029), asi que
@@ -68,7 +70,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
   const [resetStep, setResetStep] = useState<"idle" | "confirm" | "pending">("idle");
   const [resetError, setResetError] = useState("");
 
-  const fieldErrors = validateClientFields({ name, email, ruc, accountType, creditDays, creditLimit: Number(creditLimit) });
+  const fieldErrors = validateClientFields({ name, email, ruc, address, phone, accountType, creditDays, creditLimit: Number(creditLimit) });
   const shown = (field: ClientProfileField) => (submitted || touched[field]) ? fieldErrors[field] : undefined;
   const touch = (field: ClientProfileField) => () => setTouched((current) => ({ ...current, [field]: true }));
   const kind = rucKind(ruc);
@@ -99,7 +101,7 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
       return;
     }
     setPending(true); setError("");
-    const input = { name, email, ruc: normalizeRuc(ruc), accountType, platforms, creditDays: accountType === "PREPAGO" ? 0 : creditDays, creditLimit: accountType === "PREPAGO" ? 0 : Number(creditLimit) };
+    const input = { name, email, ruc: normalizeRuc(ruc), address: address.trim(), phone: phone.trim(), accountType, platforms, creditDays: accountType === "PREPAGO" ? 0 : creditDays, creditLimit: accountType === "PREPAGO" ? 0 : Number(creditLimit) };
     try {
       if (client) {
         const saved = await updateAdminClient(client.id, { ...input, expectedPlatformsVersion: client.platformsVersion });
@@ -148,6 +150,14 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
             </Field>
             <Field label="Correo" Icon={Mail} error={shown("email")}>
               {({ id, describedBy, invalid }) => <TextInput id={id} type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} onBlur={touch("email")} autoComplete="email" placeholder="facturacion@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
+            </Field>
+            {/* Opcionales: solo los usa Migo al dar de alta al cliente para
+                facturar. Sin ellos se envía un valor genérico. */}
+            <Field label="Dirección" Icon={MapPin} error={shown("address")} hint="Opcional · para la facturación">
+              {({ id, describedBy, invalid }) => <TextInput id={id} value={address} onChange={(event) => { setAddress(event.target.value); setError(""); }} onBlur={touch("address")} maxLength={200} autoComplete="street-address" placeholder="Av. Amazonas N35-17, Quito" aria-invalid={invalid} aria-describedby={describedBy} />}
+            </Field>
+            <Field label="Teléfono" Icon={Phone} error={shown("phone")} hint="Opcional · para la facturación">
+              {({ id, describedBy, invalid }) => <TextInput id={id} type="tel" value={phone} onChange={(event) => { setPhone(event.target.value); setError(""); }} onBlur={touch("phone")} maxLength={20} inputMode="tel" autoComplete="tel" placeholder="0991234567" aria-invalid={invalid} aria-describedby={describedBy} />}
             </Field>
           </div>
         </Section>

@@ -39,7 +39,7 @@ describe("persistencia de la autorización de facturas", () => {
   it("entrega cliente, líneas y totales en centavos exactos", async () => {
     const claim = await repository.claimForAuthorization("fac-inv-b", now, later);
     if (claim.kind !== "CLAIMED") throw new Error(`esperaba CLAIMED, llegó ${claim.kind}`);
-    expect(claim.request.customer).toEqual({ name: "Cliente Factura", ruc: "1790012345001", email: "factura@example.test" });
+    expect(claim.request.customer).toEqual({ name: "Cliente Factura", ruc: "1790012345001", email: "factura@example.test", address: null, phone: null });
     expect(claim.request.lines.map((line) => [line.description, line.amount.toMajorUnits()])).toEqual([["Recarga publicitaria Meta", "25.00"]]);
     expect(claim.request.totals.totalAmount.toMajorUnits()).toBe("33.06");
     expect(claim.request.invoiceNumber).toBe("FAC-TX-FAC-b");

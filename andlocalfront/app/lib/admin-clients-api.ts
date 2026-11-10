@@ -9,6 +9,9 @@ export type AdminClient = {
   name: string;
   email: string;
   ruc: string | null;
+  /* Opcionales: Migo los pide para dar de alta al cliente en la factura. */
+  address: string | null;
+  phone: string | null;
   status: "ACTIVE" | "INACTIVE";
   createdAt: string;
   /* Gestor responsable. `null` es la bandeja de sin asignar que reparte el
@@ -36,6 +39,9 @@ export type SaveAdminClient = {
   name: string;
   email: string;
   ruc: string;
+  /* Vacío borra el dato. */
+  address: string;
+  phone: string;
   accountType: AdminAccountType;
   platforms: AdminPlatform[];
   creditDays: number;

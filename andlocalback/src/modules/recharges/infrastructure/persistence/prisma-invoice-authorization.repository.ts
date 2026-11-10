@@ -22,7 +22,7 @@ const requestSelect = {
       clientId: true,
       accountTypeSnapshot: true,
       creditDaysSnapshot: true,
-      client: { select: { name: true, ruc: true, email: true, managerId: true } },
+      client: { select: { name: true, ruc: true, email: true, address: true, phone: true, managerId: true } },
       details: {
         select: { platformSnapshot: true, requestedAmount: true, vatBaseAmount: true, vatAmount: true, totalAmount: true },
         orderBy: { id: "asc" as const },
@@ -124,7 +124,7 @@ function toRequest(record: RequestRecord): InvoiceAuthorizationRequest {
     invoiceNumber: record.invoiceNumber,
     transactionCode: record.transaction.code,
     issuedAt: record.issuedAt,
-    customer: { name: client.name, ruc: client.ruc, email: client.email },
+    customer: { name: client.name, ruc: client.ruc, email: client.email, address: client.address, phone: client.phone },
     lines: record.transaction.details.map((detail) => ({
       platform: detail.platformSnapshot,
       description: `Recarga publicitaria ${platformNames[detail.platformSnapshot] ?? detail.platformSnapshot}`,

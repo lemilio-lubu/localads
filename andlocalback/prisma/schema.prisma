@@ -80,6 +80,10 @@ model Client {
   // (AND-3F9A1C7B). No es unica a proposito: solo sirve para reconocer el pago,
   // y una coincidencia improbable no debe poder tumbar un alta ni un despliegue.
   paymentReference     String?
+  // Dirección y teléfono del cliente. Opcionales: solo los pide Migo al dar
+  // de alta al cliente para facturar; sin ellos se envía un valor genérico.
+  address              String?
+  phone                String?
   status               String
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt
