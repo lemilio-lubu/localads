@@ -151,14 +151,6 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
             <Field label="Correo" Icon={Mail} error={shown("email")}>
               {({ id, describedBy, invalid }) => <TextInput id={id} type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} onBlur={touch("email")} autoComplete="email" placeholder="facturacion@empresa.ec" aria-invalid={invalid} aria-describedby={describedBy} />}
             </Field>
-            {/* Opcionales: solo los usa Migo al dar de alta al cliente para
-                facturar. Sin ellos se envía un valor genérico. */}
-            <Field label="Dirección" Icon={MapPin} error={shown("address")} hint="Opcional · para la facturación">
-              {({ id, describedBy, invalid }) => <TextInput id={id} value={address} onChange={(event) => { setAddress(event.target.value); setError(""); }} onBlur={touch("address")} maxLength={200} autoComplete="street-address" placeholder="Av. Amazonas N35-17, Quito" aria-invalid={invalid} aria-describedby={describedBy} />}
-            </Field>
-            <Field label="Teléfono" Icon={Phone} error={shown("phone")} hint="Opcional · para la facturación">
-              {({ id, describedBy, invalid }) => <TextInput id={id} type="tel" value={phone} onChange={(event) => { setPhone(event.target.value); setError(""); }} onBlur={touch("phone")} maxLength={20} inputMode="tel" autoComplete="tel" placeholder="0991234567" aria-invalid={invalid} aria-describedby={describedBy} />}
-            </Field>
           </div>
         </Section>
 
@@ -207,6 +199,20 @@ export default function ClientFormModal({ client, open, isAdmin = false, onClose
               )}
             </Field>
           )}
+        </Section>
+
+        {/* Opcionales: solo los usa Migo al dar de alta al cliente para
+            facturar; sin ellos se envía un valor genérico. Grupo propio a todo
+            el ancho para que Identidad y Cuenta midan lo mismo. */}
+        <Section title="Facturación" className={styles.wide}>
+          <div className={`${form.grid} ${styles.billing}`}>
+              <Field label="Dirección" Icon={MapPin} error={shown("address")} hint="Opcional">
+                {({ id, describedBy, invalid }) => <TextInput id={id} value={address} onChange={(event) => { setAddress(event.target.value); setError(""); }} onBlur={touch("address")} maxLength={200} autoComplete="street-address" placeholder="Av. Amazonas N35-17, Quito" aria-invalid={invalid} aria-describedby={describedBy} />}
+              </Field>
+              <Field label="Teléfono" Icon={Phone} error={shown("phone")} hint="Opcional">
+                {({ id, describedBy, invalid }) => <TextInput id={id} type="tel" value={phone} onChange={(event) => { setPhone(event.target.value); setError(""); }} onBlur={touch("phone")} maxLength={20} inputMode="tel" autoComplete="tel" placeholder="0991234567" aria-invalid={invalid} aria-describedby={describedBy} />}
+              </Field>
+          </div>
         </Section>
 
         <Section title="Plataformas" className={styles.wide}>
