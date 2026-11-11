@@ -153,6 +153,25 @@ describe("integración: facturación electrónica con Migo", () => {
     expect(sent.request.payments).toEqual([{ amount: sent.request.totalAmount, paymentMethod: { id: 8 }, paymentTerm: { id: 30005 } }]);
   });
 
+  it("una factura que se reintenta al día siguiente sale con la fecha del envío: Migo no acepta fechas pasadas", async () => {
+    migo.state.today = "2026-11-07";
+    try {
+      const invoiceId = await completedRecharge({ META: "80.00" }, AccountType.PREPAID, 30, new Date("2026-11-06T22:00:00.000Z"));
+      expect(await authorize.execute({ invoiceId })).toMatchObject({ status: "SUBMITTED" });
+      const { externalReference } = await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } });
+      const sent = migo.state.invoices.find((invoice) => String(invoice.id) === externalReference)!.request;
+      expect(sent.issueDate).toBe("2026-11-07");
+      expect(sent.additionalInfo).toContainEqual({ label: "Fecha de la recarga", value: "06/11/2026" });
+      // La app muestra la misma fecha que el SRI, también una vez autorizada.
+      expect((await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } })).issuedAt).toEqual(new Date("2026-11-07T17:00:00.000Z"));
+      migo.authorizeAll();
+      expect(await authorize.execute({ invoiceId })).toMatchObject({ status: "AUTHORIZED" });
+      expect((await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } })).issuedAt).toEqual(new Date("2026-11-07T17:00:00.000Z"));
+    } finally {
+      migo.state.today = null;
+    }
+  });
+
   it("Migo acepta sin descuadres facturas de montos con redondeo difícil y varias plataformas", async () => {
     const combos: Record<string, string>[] = [
       { META: "0.01" }, { META: "0.03", GOOGLE: "0.07" }, { TIKTOK: "1.11", META: "2.22", GOOGLE: "3.33" }, { META: "19.99" },
@@ -168,7 +187,7 @@ describe("integración: facturación electrónica con Migo", () => {
 
   /* Una recarga completada con su factura, con los montos de AndPricingPolicy
      tal como los guarda el flujo real (detalle por plataforma, totales como suma). */
-  async function completedRecharge(pautas: Partial<Record<keyof typeof AdvertisingPlatform, string>>, accountType = AccountType.PREPAID, creditDays = 30): Promise<string> {
+  async function completedRecharge(pautas: Partial<Record<keyof typeof AdvertisingPlatform, string>>, accountType = AccountType.PREPAID, creditDays = 30, issuedAt = now): Promise<string> {
     const id = `migo-${++counter}`;
     const details = Object.entries(pautas).map(([platform, value], index) => ({ platform, index, ...pricing.calculate(MonetaryAmount.fromMajorUnits(value!)) }));
     const total = (pick: (detail: (typeof details)[number]) => MonetaryAmount) =>
@@ -187,7 +206,7 @@ describe("integración: facturación electrónica con Migo", () => {
         vatAmount: detail.vatAmount.toMajorUnits(), totalAmount: detail.totalAmount.toMajorUnits(), status: TransactionDetailStatus.COMPLETED,
       })) },
       invoice: { create: {
-        id: `${id}-inv`, invoiceNumber: `FAC-${id.toUpperCase()}`, status: "ISSUED", issuedAt: now,
+        id: `${id}-inv`, invoiceNumber: `FAC-${id.toUpperCase()}`, status: "ISSUED", issuedAt,
         pautaSubtotal: totals.pautaAmount, isdAmount: totals.isdAmount, agencyFeeAmount: totals.agencyFeeAmount,
         vatBaseAmount: totals.vatBaseAmount, vatAmount: totals.vatAmount, totalAmount: totals.totalAmount,
       } },

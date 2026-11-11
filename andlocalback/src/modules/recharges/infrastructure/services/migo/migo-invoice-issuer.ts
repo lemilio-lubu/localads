@@ -9,7 +9,7 @@ import { MIGO_PROVIDER } from "../and-emitter";
 import { renderInvoicePdf } from "../invoice-pdf";
 import { MigoApiClient, MigoApiError } from "./migo-api.client";
 import { MigoInvoiceResponse } from "./migo-api.types";
-import { buildMigoInvoice, MigoInvoiceSettings, MigoMappingError, migoSocialReason } from "./migo-invoice.mapper";
+import { buildMigoInvoice, ecuadorDate, MigoInvoiceSettings, MigoMappingError, migoSocialReason } from "./migo-invoice.mapper";
 import { MigoPaymentTermCatalog } from "./migo-payment-terms";
 
 export type MigoIssuerSettings = MigoInvoiceSettings & Readonly<{
@@ -48,10 +48,12 @@ export class MigoInvoiceIssuer implements InvoiceIssuer {
   }
 
   async authorize(request: InvoiceAuthorizationRequest): Promise<InvoiceIssuance> {
-    if (request.externalReference) return this.toIssuance(await this.migo.getInvoice(request.externalReference));
+    if (request.externalReference) return this.toIssuance(request, await this.migo.getInvoice(request.externalReference));
     const creditTermId = await this.creditTermId(request);
     const customerId = await this.customerId(request);
-    return this.toIssuance(await this.migo.createInvoice(buildMigoInvoice(request, customerId, this.settings, creditTermId)));
+    // La fecha se toma justo antes de enviar: Migo rechaza las pasadas.
+    const sentAt = this.now();
+    return this.toIssuance(request, await this.migo.createInvoice(buildMigoInvoice(request, customerId, this.settings, { creditTermId, sentAt })), sentAt);
   }
 
   /* La API de Migo no entrega el RIDE: se genera con los datos fiscales
@@ -69,22 +71,25 @@ export class MigoInvoiceIssuer implements InvoiceIssuer {
     return this.paymentTerms.availableDays();
   }
 
-  private toIssuance(invoice: MigoInvoiceResponse): InvoiceIssuance {
+  private toIssuance(request: InvoiceAuthorizationRequest, invoice: MigoInvoiceResponse, sentAt?: Date): InvoiceIssuance {
     const externalReference = String(invoice.id);
     const fiscalNumber = invoice.number?.trim() || null;
     const authorizationNumber = invoice.authorizationKey?.trim() || invoice.accessKey?.trim();
+    // Solo viaja cuando hay que corregir la fecha guardada.
+    const fiscalDate = fiscalIssuedAt(request, invoice, sentAt);
+    const issued = fiscalDate ? { issuedAt: fiscalDate } : {};
     switch (invoice.status) {
       case "AUTHORIZED":
         // Autorizada sin clave todavía: se espera a la siguiente consulta.
-        if (!authorizationNumber) return { status: "SUBMITTED", externalReference, fiscalNumber };
-        return { status: "AUTHORIZED", authorization: { authorizationNumber, authorizedAt: this.now(), fiscalNumber }, externalReference };
+        if (!authorizationNumber) return { status: "SUBMITTED", externalReference, fiscalNumber, ...issued };
+        return { status: "AUTHORIZED", authorization: { authorizationNumber, authorizedAt: this.now(), fiscalNumber }, externalReference, ...issued };
       case "NOT_AUTHORIZED":
       case "ERROR":
-        return { status: "REJECTED", externalReference, fiscalNumber, reason: rejectionReason(invoice) };
+        return { status: "REJECTED", externalReference, fiscalNumber, reason: rejectionReason(invoice), ...issued };
       case "VOIDED":
-        return { status: "REJECTED", externalReference, fiscalNumber, reason: "La factura fue anulada en Migo" };
+        return { status: "REJECTED", externalReference, fiscalNumber, reason: "La factura fue anulada en Migo", ...issued };
       default:
-        return { status: "SUBMITTED", externalReference, fiscalNumber };
+        return { status: "SUBMITTED", externalReference, fiscalNumber, ...issued };
     }
   }
 
@@ -122,6 +127,15 @@ export class MigoInvoiceIssuer implements InvoiceIssuer {
       throw error;
     }
   }
+}
+
+/* La fecha de emisión que tiene Migo (la que responde o, recién enviada, la
+   que se mandó), solo si no es el día de la factura interna. Se guarda a
+   mediodía de Ecuador para que ninguna zona horaria la mueva de día. */
+function fiscalIssuedAt(request: InvoiceAuthorizationRequest, invoice: MigoInvoiceResponse, sentAt?: Date): Date | null {
+  const day = /^\d{4}-\d{2}-\d{2}/.exec(invoice.issueDate ?? "")?.[0] ?? (sentAt ? ecuadorDate(sentAt) : null);
+  if (!day || day === ecuadorDate(request.issuedAt)) return null;
+  return new Date(`${day}T12:00:00-05:00`);
 }
 
 function rejectionReason(invoice: MigoInvoiceResponse): string {

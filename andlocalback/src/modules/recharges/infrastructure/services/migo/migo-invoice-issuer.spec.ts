@@ -106,6 +106,27 @@ describe("emisor de facturas Migo", () => {
     expect(migo.createInvoice).toHaveBeenCalledWith(expect.objectContaining({ customer: expect.objectContaining({ id: 9 }) }));
   });
 
+  it("emite con la fecha de su reloj; si no es el día de la recarga, devuelve la fecha fiscal para guardarla", async () => {
+    const sameDay = gateway();
+    const issued = await new MigoInvoiceIssuer(sameDay, settings, () => now).authorize(request);
+    expect(sameDay.createInvoice).toHaveBeenCalledWith(expect.objectContaining({ issueDate: "2026-11-07" }));
+    expect(issued.issuedAt).toBeUndefined();
+
+    // Reintento tres días después: 02:00 UTC del 11 son las 21:00 del 10 en Ecuador.
+    const later = gateway();
+    const retried = await new MigoInvoiceIssuer(later, settings, () => new Date("2026-11-11T02:00:00.000Z")).authorize(request);
+    expect(later.createInvoice).toHaveBeenCalledWith(expect.objectContaining({ issueDate: "2026-11-10" }));
+    expect(retried.issuedAt).toEqual(new Date("2026-11-10T17:00:00.000Z"));
+  });
+
+  it("al consultar una ya enviada, la fecha fiscal es la que responde Migo", async () => {
+    const migo = gateway({ getInvoice: vi.fn(async () => migoInvoice({ status: "AUTHORIZED", accessKey, issueDate: "2026-11-09" })) });
+    const result = await new MigoInvoiceIssuer(migo, settings, () => now).authorize({ ...request, externalReference: "4521" });
+    expect(result).toMatchObject({ status: "AUTHORIZED", issuedAt: new Date("2026-11-09T17:00:00.000Z") });
+    const sinFecha = gateway({ getInvoice: vi.fn(async () => migoInvoice({ issueDate: null })) });
+    expect((await new MigoInvoiceIssuer(sinFecha, settings, () => now).authorize({ ...request, externalReference: "4521" })).issuedAt).toBeUndefined();
+  });
+
   it("pospago: envía el crédito con el plazo de Migo de los días del cliente", async () => {
     const migo = gateway();
     await new MigoInvoiceIssuer(migo, settings).authorize({ ...request, payment: { mode: "POSTPAID", creditDays: 30 } });

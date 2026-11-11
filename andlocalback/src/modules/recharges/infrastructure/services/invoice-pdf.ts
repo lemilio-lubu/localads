@@ -41,13 +41,14 @@ export const rideDate = (value: Date) => part(value, { day: "2-digit", month: "2
 const rideTime = (value: Date) => part(value, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
 /**
- * La clave de acceso del SRI (49 dígitos) lleva dentro el ambiente, el
- * número de la factura y el tipo de emisión. Sin clave válida (el emisor
- * simulado) no hay nada que leer.
+ * La clave de acceso del SRI (49 dígitos) lleva dentro la fecha de emisión,
+ * el ambiente, el número de la factura y el tipo de emisión. Sin clave válida
+ * (el emisor simulado) no hay nada que leer.
  */
-export function readAccessKey(key: string): { environment: string; emission: string; number: string } | null {
+export function readAccessKey(key: string): { issueDate: string; environment: string; emission: string; number: string } | null {
   if (!/^\d{49}$/.test(key)) return null;
   return {
+    issueDate: `${key.slice(0, 2)}/${key.slice(2, 4)}/${key.slice(4, 8)}`,
     environment: key[23] === "2" ? "PRODUCCIÓN" : "PRUEBAS",
     emission: key[47] === "1" ? "NORMAL" : `Tipo ${key[47]}`,
     number: `${key.slice(24, 27)}-${key.slice(27, 30)}-${key.slice(30, 39)}`,
@@ -124,7 +125,9 @@ export function renderInvoicePdf(
   page.text(margin + 12, y, "Cliente", muted());
   nameLines.forEach((line, index) => page.text(margin + 90, y + index * 12, line, body()));
   page.text(330, y, "Fecha emisión", muted());
-  page.text(410, y, rideDate(request.issuedAt), body());
+  // La fecha que tiene el SRI: Migo emite con la del día en que se envía,
+  // que puede ser posterior a la de la recarga.
+  page.text(410, y, parsed?.issueDate ?? rideDate(request.issuedAt), body());
   y += nameLines.length * 12 + 3;
   page.text(margin + 12, y, "RUC / CI", muted());
   page.text(margin + 90, y, request.customer.ruc ?? "—", body());

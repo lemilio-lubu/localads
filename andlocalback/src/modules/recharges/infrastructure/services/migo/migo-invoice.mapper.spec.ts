@@ -83,6 +83,11 @@ function migoTotalsMismatch(invoice: MigoInvoiceRequest): string[] {
   return problems;
 }
 
+/* Enviada el mismo día que la recarga, salvo que el caso diga otra cosa. */
+const SENT_AT = new Date("2026-11-07T16:00:00.000Z");
+const build = (request: InvoiceAuthorizationRequest, customerId: number, invoiceSettings: MigoInvoiceSettings, creditTermId: number | null = null, sentAt = SENT_AT) =>
+  buildMigoInvoice(request, customerId, invoiceSettings, { creditTermId, sentAt });
+
 describe("UUID de la factura ante Migo", () => {
   it("sigue el RFC 4122 v5 (vector de prueba conocido)", () => {
     expect(uuidV5("www.example.com", "6ba7b810-9dad-11d1-80b4-00c04fd430c8")).toBe("2ed6657d-e927-568b-95e1-2665a8aea6a2");
@@ -98,7 +103,7 @@ describe("UUID de la factura ante Migo", () => {
 describe("factura de localads → InvoiceRequest de Migo", () => {
   it("una línea por plataforma con la base completa y su IVA, y los totales cobrados", () => {
     const request = invoiceFor({ META: "25.00", TIKTOK: "10.10" });
-    expect(buildMigoInvoice(request, 1532, settings)).toEqual({
+    expect(build(request, 1532, settings)).toEqual({
       documentType: "INVOICE",
       invoiceUuid: migoInvoiceUuid("FAC-TX-1"),
       issueDate: "2026-11-07",
@@ -132,41 +137,49 @@ describe("factura de localads → InvoiceRequest de Migo", () => {
     for (let cents = 1; cents <= 10_000; cents += 7) amounts.push((cents / 100).toFixed(2));
     amounts.push("10.10", "33.33", "999999.99", "1234567.89");
     for (const value of amounts) {
-      expect(migoTotalsMismatch(buildMigoInvoice(invoiceFor({ META: value }), 1, settings)), value).toEqual([]);
+      expect(migoTotalsMismatch(build(invoiceFor({ META: value }), 1, settings)), value).toEqual([]);
     }
     for (let index = 0; index + 2 < amounts.length; index += 13) {
       const request = invoiceFor({ META: amounts[index], GOOGLE: amounts[index + 1], TIKTOK: amounts[index + 2] });
-      expect(migoTotalsMismatch(buildMigoInvoice(request, 1, settings)), amounts.slice(index, index + 3).join("+")).toEqual([]);
+      expect(migoTotalsMismatch(build(request, 1, settings)), amounts.slice(index, index + 3).join("+")).toEqual([]);
     }
   });
 
   it("pospago: forma de pago a crédito con el plazo elegido; sin plazo no la envía (Migo la rechazaría)", () => {
     const postpaid = invoiceFor({ META: "25.00" }, { payment: { mode: "POSTPAID", creditDays: 30 } });
-    expect(buildMigoInvoice(postpaid, 1, settings, 21297).payments).toEqual([{ amount: 33.06, paymentMethod: { id: 7 }, paymentTerm: { id: 21297 } }]);
-    expect(() => buildMigoInvoice(postpaid, 1, settings)).toThrow(/es pospago y no tiene plazo de pago de Migo/);
+    expect(build(postpaid, 1, settings, 21297).payments).toEqual([{ amount: 33.06, paymentMethod: { id: 7 }, paymentTerm: { id: 21297 } }]);
+    expect(() => build(postpaid, 1, settings)).toThrow(/es pospago y no tiene plazo de pago de Migo/);
   });
 
   it("sin vendedor, actividad ni código de producto configurados no los envía", () => {
-    const invoice = buildMigoInvoice(invoiceFor({ META: "25.00" }), 1, { ...settings, products: { META: { id: 6644066, code: null } } });
+    const invoice = build(invoiceFor({ META: "25.00" }), 1, { ...settings, products: { META: { id: 6644066, code: null } } });
     expect(invoice.payments).toEqual([{ amount: 33.06, paymentMethod: { id: 3 } }]);
     expect(invoice).not.toHaveProperty("vendorId");
     expect(invoice).not.toHaveProperty("activityId");
     expect(invoice.details[0]).not.toHaveProperty("referenceCode");
-    const configured = buildMigoInvoice(invoiceFor({ META: "25.00" }), 1, { ...settings, vendorId: 12, activityId: 1 });
+    const configured = build(invoiceFor({ META: "25.00" }), 1, { ...settings, vendorId: 12, activityId: 1 });
     expect(configured).toMatchObject({ vendorId: 12, activityId: 1 });
   });
 
-  it("recorta la razón social a los 80 caracteres de Migo y fecha la factura en hora de Ecuador", () => {
+  it("recorta la razón social a los 80 caracteres de Migo y fecha la factura el día del envío, en hora de Ecuador", () => {
     const longName = `${"Distribuidora ".repeat(8)}S.A.`;
+    const request = invoiceFor({ META: "25.00" }, { customer: { name: longName, ruc: "1790012345001", email: "x@example.test" }, issuedAt: new Date("2026-11-05T15:00:00.000Z") });
     // 00:30 UTC del 8 son las 19:30 del 7 en Guayaquil.
-    const invoice = buildMigoInvoice(invoiceFor({ META: "25.00" }, { customer: { name: longName, ruc: "1790012345001", email: "x@example.test" }, issuedAt: new Date("2026-11-08T00:30:00.000Z") }), 1, settings);
+    const invoice = build(request, 1, settings, null, new Date("2026-11-08T00:30:00.000Z"));
     expect(invoice.customer.socialReason.length).toBeLessThanOrEqual(80);
     expect(longName.startsWith(invoice.customer.socialReason)).toBe(true);
+    // No la del 5, cuando se completó la recarga: Migo rechaza fechas pasadas.
     expect(invoice.issueDate).toBe("2026-11-07");
+    // Y deja constancia de cuándo fue la recarga.
+    expect(invoice.additionalInfo).toContainEqual({ label: "Fecha de la recarga", value: "05/11/2026" });
+  });
+
+  it("emitida el mismo día de la recarga no añade la fecha de la recarga", () => {
+    expect(build(invoiceFor({ META: "25.00" }), 1, settings).additionalInfo?.map((info) => info.label)).not.toContain("Fecha de la recarga");
   });
 
   it("usa el producto de cada plataforma, como las facturas que AND ya emite en Migo", () => {
-    const invoice = buildMigoInvoice(invoiceFor({ GOOGLE: "1500.00", TIKTOK: "500.00", META: "200.00" }), 1, settings);
+    const invoice = build(invoiceFor({ GOOGLE: "1500.00", TIKTOK: "500.00", META: "200.00" }), 1, settings);
     expect(invoice.details.map((line) => [line.product.id, line.referenceCode, line.description])).toEqual([
       [6644062, "04", "Servicio de Intermediación por Pauta Google"],
       [6644068, "06", "Servicio de Intermediación por Pauta TikTok"],
@@ -178,24 +191,24 @@ describe("factura de localads → InvoiceRequest de Migo", () => {
 
   it("no envía una línea de una plataforma sin producto configurado", () => {
     const onlyMeta = { ...settings, products: { META: settings.products.META } };
-    expect(() => buildMigoInvoice(invoiceFor({ META: "10.00", TIKTOK: "10.00" }), 1, onlyMeta)).toThrow(/no hay producto de Migo configurado para la plataforma TIKTOK/);
+    expect(() => build(invoiceFor({ META: "10.00", TIKTOK: "10.00" }), 1, onlyMeta)).toThrow(/no hay producto de Migo configurado para la plataforma TIKTOK/);
   });
 
   it("no envía una factura sin RUC ni sin líneas", () => {
-    expect(() => buildMigoInvoice(invoiceFor({ META: "25.00" }, { customer: { name: "X", ruc: null, email: "x@example.test" } }), 1, settings)).toThrow(MigoMappingError);
-    expect(() => buildMigoInvoice(invoiceFor({ META: "25.00" }, { lines: [] }), 1, settings)).toThrow(/no tiene líneas/);
+    expect(() => build(invoiceFor({ META: "25.00" }, { customer: { name: "X", ruc: null, email: "x@example.test" } }), 1, settings)).toThrow(MigoMappingError);
+    expect(() => build(invoiceFor({ META: "25.00" }, { lines: [] }), 1, settings)).toThrow(/no tiene líneas/);
   });
 
   it("no envía una factura cuyas líneas no cuadran con lo cobrado", () => {
     const request = invoiceFor({ META: "25.00" });
     const [line] = request.lines;
     const wrongVat = { ...request, lines: [{ ...line, vatAmount: money("4.32"), totalAmount: money("33.07") }] };
-    expect(() => buildMigoInvoice(wrongVat, 1, settings)).toThrow(/IVA 4.32 no es el 15% de 28.75/);
+    expect(() => build(wrongVat, 1, settings)).toThrow(/IVA 4.32 no es el 15% de 28.75/);
     const wrongLineTotal = { ...request, lines: [{ ...line, totalAmount: money("33.07") }] };
-    expect(() => buildMigoInvoice(wrongLineTotal, 1, settings)).toThrow(/base más IVA no da el total/);
+    expect(() => build(wrongLineTotal, 1, settings)).toThrow(/base más IVA no da el total/);
     const wrongInvoiceTotal = { ...request, totals: { ...request.totals, totalAmount: money("40.00") } };
-    expect(() => buildMigoInvoice(wrongInvoiceTotal, 1, settings)).toThrow(/Descuadre en total: las líneas suman 33.06 y la factura dice 40.00/);
+    expect(() => build(wrongInvoiceTotal, 1, settings)).toThrow(/Descuadre en total: las líneas suman 33.06 y la factura dice 40.00/);
     const missingLine = invoiceFor({ META: "25.00", GOOGLE: "5.00" });
-    expect(() => buildMigoInvoice({ ...missingLine, lines: missingLine.lines.slice(0, 1) }, 1, settings)).toThrow(/Descuadre en base imponible/);
+    expect(() => build({ ...missingLine, lines: missingLine.lines.slice(0, 1) }, 1, settings)).toThrow(/Descuadre en base imponible/);
   });
 });

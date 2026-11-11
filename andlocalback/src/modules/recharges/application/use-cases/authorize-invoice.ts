@@ -48,6 +48,7 @@ export class AuthorizeInvoice {
           issuer: this.issuer.name,
           authorization: issuance.authorization,
           externalReference: issuance.externalReference,
+          issuedAt: issuance.issuedAt,
           documentUrl: `/files/invoices/${command.invoiceId}/content`,
         });
         return { status: "AUTHORIZED", authorizationNumber: issuance.authorization.authorizationNumber };
@@ -58,6 +59,7 @@ export class AuthorizeInvoice {
         issuer: this.issuer.name,
         externalReference: issuance.externalReference,
         fiscalNumber: issuance.fiscalNumber,
+        issuedAt: issuance.issuedAt,
         error: rejected ? issuance.reason : null,
       });
       return rejected

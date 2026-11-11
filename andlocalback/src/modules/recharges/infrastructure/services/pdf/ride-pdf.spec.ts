@@ -62,8 +62,8 @@ describe("logo vectorial", () => {
 });
 
 describe("clave de acceso del SRI", () => {
-  it("de la clave salen el ambiente, el número y el tipo de emisión", () => {
-    expect(readAccessKey(ACCESS_KEY)).toEqual({ environment: "PRODUCCIÓN", emission: "NORMAL", number: "001-001-000000664" });
+  it("de la clave salen la fecha de emisión, el ambiente, el número y el tipo de emisión", () => {
+    expect(readAccessKey(ACCESS_KEY)).toEqual({ issueDate: "05/11/2026", environment: "PRODUCCIÓN", emission: "NORMAL", number: "001-001-000000664" });
     expect(readAccessKey(`${ACCESS_KEY.slice(0, 23)}1${ACCESS_KEY.slice(24)}`)?.environment).toBe("PRUEBAS");
     expect(readAccessKey("SIM-1A2B3C4D5E6F")).toBeNull();
   });
@@ -94,6 +94,13 @@ describe("RIDE", () => {
       // 20:42 UTC son las 15:42 en Ecuador.
       "(Fecha y hora de autorización: 05/11/2026 15:42)", "(Plazo: 30 días)", "(1058.00)", "(US$ 40.00)",
     ]) expect(text).toContain(expected);
+  });
+
+  it("la fecha de emisión es la del SRI (la de la clave), no la de la recarga", () => {
+    const sentNextDay = `1011${ACCESS_KEY.slice(4)}`;
+    const text = pdfText(renderInvoicePdf(request, { authorizationNumber: sentNextDay, authorizedAt: new Date("2026-11-10T15:00:00.000Z"), fiscalNumber: null }, { test: false, provider: null }).content);
+    expect(text).toContain("(10/11/2026)");
+    expect(text).not.toContain("(05/11/2026)");
   });
 
   it("el prepago no lleva plazo", () => {
