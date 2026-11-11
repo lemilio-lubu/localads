@@ -58,10 +58,13 @@ export type InvoiceAuthorization = Readonly<{ authorizationNumber: string; autho
  *   se guarda la referencia para no emitir otra igual al reintentar.
  * Un error lanzado significa que no se sabe si llegó: se reintenta igual.
  */
+/* issuedAt: la fecha de emisión que registró el proveedor, solo cuando no es
+   el día de la factura interna (se emitió otro día por reintentos). Se guarda
+   para que la app muestre la misma fecha que el SRI. */
 export type InvoiceIssuance =
-  | Readonly<{ status: "AUTHORIZED"; authorization: InvoiceAuthorization; externalReference: string | null }>
-  | Readonly<{ status: "SUBMITTED"; externalReference: string; fiscalNumber: string | null }>
-  | Readonly<{ status: "REJECTED"; externalReference: string; fiscalNumber: string | null; reason: string }>;
+  | Readonly<{ status: "AUTHORIZED"; authorization: InvoiceAuthorization; externalReference: string | null; issuedAt?: Date | null }>
+  | Readonly<{ status: "SUBMITTED"; externalReference: string; fiscalNumber: string | null; issuedAt?: Date | null }>
+  | Readonly<{ status: "REJECTED"; externalReference: string; fiscalNumber: string | null; reason: string; issuedAt?: Date | null }>;
 
 export type InvoiceDocument = Readonly<{ content: Uint8Array; mimeType: "application/pdf" }>;
 
@@ -97,10 +100,13 @@ export interface InvoiceAuthorizationPersistencePort {
   claimForAuthorization(invoiceId: string, now: Date, claimUntil: Date): Promise<InvoiceClaim>;
   markAuthorized(command: Readonly<{
     invoiceId: string; issuer: string; authorization: InvoiceAuthorization; externalReference: string | null; documentUrl: string;
+    /** Fecha fiscal de emisión, si cambió respecto a la interna. */
+    issuedAt?: Date | null;
   }>): Promise<void>;
   /** Enviada o rechazada: guarda la referencia del proveedor y libera la reserva. */
   markSubmitted(command: Readonly<{
     invoiceId: string; issuer: string; externalReference: string; fiscalNumber: string | null; error: string | null;
+    issuedAt?: Date | null;
   }>): Promise<void>;
   releaseAfterFailure(command: Readonly<{ invoiceId: string; reason: string }>): Promise<void>;
   /** Facturas sin autorizar y sin reserva vigente, las más antiguas primero. */

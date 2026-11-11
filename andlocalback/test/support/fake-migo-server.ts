@@ -32,6 +32,9 @@ export type FakeMigo = Readonly<{
     /* Plazos de pago de la empresa; el test puede crear más. */
     paymentTerms: MigoLookup[];
     invoices: (MigoInvoiceResponse & { request: MigoInvoiceRequest })[];
+    /* Fecha de hoy para Migo (aaaa-mm-dd): con ella rechaza fechas de emisión
+       anteriores, como la Migo real. Sin ella no comprueba la fecha. */
+    today: string | null;
     /* Peticiones que fallan a propósito: «caído» responde 503 a todo. */
     down: boolean;
   };
@@ -57,7 +60,7 @@ export async function startFakeMigo(): Promise<FakeMigo> {
   const credentials = { clientId: "localads-test", clientSecret: "secreto-de-prueba" };
   const validTokens = new Set<string>();
   let sequence = 0;
-  const state: FakeMigo["state"] = { tokensIssued: 0, invoicePosts: 0, customers: [], paymentTerms: [...FAKE_MIGO_PAYMENT_TERMS], invoices: [], down: false };
+  const state: FakeMigo["state"] = { tokensIssued: 0, invoicePosts: 0, customers: [], paymentTerms: [...FAKE_MIGO_PAYMENT_TERMS], invoices: [], today: null, down: false };
 
   const server: Server = createServer((request, response) => {
     void handle(request, response).catch((error: unknown) => send(response, 500, { status: 500, error: "INTERNAL_SERVER_ERROR", message: String(error) }));
@@ -117,7 +120,7 @@ export async function startFakeMigo(): Promise<FakeMigo> {
       const invoice = JSON.parse(body) as MigoInvoiceRequest;
       const duplicate = state.invoices.find((existing) => existing.request.invoiceUuid === invoice.invoiceUuid);
       if (duplicate) return send(response, 201, presenter(duplicate));
-      const problem = validateInvoice(invoice, state.customers, state.paymentTerms);
+      const problem = validateInvoice(invoice, state.customers, state.paymentTerms, state.today);
       if (problem) return send(response, problem.status, problem.body);
       sequence++;
       const stored = { id: 4500 + sequence, number: `001-001-${String(sequence).padStart(9, "0")}`, status: "SENT_TO_SRI" as MigoInvoiceStatus, issueDate: invoice.issueDate, request: invoice };
@@ -164,7 +167,7 @@ export async function startFakeMigo(): Promise<FakeMigo> {
 }
 
 /* Las reglas que documenta Migo para emitir. */
-function validateInvoice(invoice: MigoInvoiceRequest, customers: MigoCustomer[], paymentTerms: MigoLookup[]) {
+function validateInvoice(invoice: MigoInvoiceRequest, customers: MigoCustomer[], paymentTerms: MigoLookup[], today: string | null) {
   const required = ["documentType", "invoiceUuid", "emissionPointId", "subtotalAmount", "taxAmount", "totalAmount", "tipAmount", "customer"] as const;
   const errors: { field: string; message: string }[] = required
     .filter((field) => invoice[field] === undefined || invoice[field] === null)
@@ -180,6 +183,11 @@ function validateInvoice(invoice: MigoInvoiceRequest, customers: MigoCustomer[],
     if (!(Object.values(FAKE_MIGO_PRODUCTS) as number[]).includes(line.product?.id)) business.push(`Línea ${index + 1}: producto inexistente`);
     if (line.tax?.id !== FAKE_MIGO_VAT_TAX_ID) business.push(`Línea ${index + 1}: el impuesto no coincide con el del producto`);
   });
+  /* Como la Migo real (visto en producción el 2026-11-10). */
+  if (today && invoice.issueDate < today) {
+    const ddmmyyyy = (value: string) => value.split("-").reverse().join("/");
+    business.push(`La fecha de emisión ${ddmmyyyy(invoice.issueDate)} no es válida. Debe ser igual o posterior al ${ddmmyyyy(today)}.`);
+  }
   /* Como la Migo real (visto en producción el 2026-11-09): las formas de pago
      se exigen y la de crédito no va sin plazo. */
   const paid = (invoice.payments ?? []).reduce((total, payment) => total + Math.round(payment.amount * 100), 0);

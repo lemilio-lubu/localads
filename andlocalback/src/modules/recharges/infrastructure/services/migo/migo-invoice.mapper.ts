@@ -69,9 +69,18 @@ export function buildMigoInvoice(
   request: InvoiceAuthorizationRequest,
   customerId: number,
   settings: MigoInvoiceSettings,
-  /* El plazo de Migo para los días de crédito del cliente; solo en pospago. */
-  creditTermId: number | null = null,
+  options: Readonly<{
+    /* El plazo de Migo para los días de crédito del cliente; solo en pospago. */
+    creditTermId: number | null;
+    /* Migo no acepta fechas pasadas («Debe ser igual o posterior al…»): la
+       factura sale con la fecha del día en que se envía, no con la de la
+       recarga, que puede ser de un día anterior si hubo reintentos. */
+    sentAt: Date;
+  }>,
 ): MigoInvoiceRequest {
+  const { creditTermId, sentAt } = options;
+  const issueDate = ecuadorDate(sentAt);
+  const rechargeDate = ecuadorDate(request.issuedAt);
   if (!request.customer.ruc) throw new MigoMappingError(`La factura ${request.invoiceNumber} no tiene RUC del cliente`);
   if (request.lines.length === 0) throw new MigoMappingError(`La factura ${request.invoiceNumber} no tiene líneas`);
 
@@ -103,7 +112,7 @@ export function buildMigoInvoice(
   return {
     documentType: "INVOICE",
     invoiceUuid: migoInvoiceUuid(request.invoiceNumber),
-    issueDate: ecuadorDate(request.issuedAt),
+    issueDate,
     emissionPointId: settings.emissionPointId,
     ...(settings.vendorId !== null ? { vendorId: settings.vendorId } : {}),
     ...(settings.activityId !== null ? { activityId: settings.activityId } : {}),
@@ -133,6 +142,8 @@ export function buildMigoInvoice(
     payments: [payment(request, settings.payments, creditTermId)],
     additionalInfo: [
       { label: "Transacción", value: request.transactionCode },
+      // Emitida otro día (reintentos): queda constancia de cuándo fue la recarga.
+      ...(rechargeDate !== issueDate ? [{ label: "Fecha de la recarga", value: rechargeDate.split("-").reverse().join("/") }] : []),
       { label: "Pauta", value: `US$ ${totals.pautaAmount.toMajorUnits()}` },
       { label: "ISD", value: `US$ ${totals.isdAmount.toMajorUnits()}` },
       { label: "Comisión de agencia", value: `US$ ${totals.agencyFeeAmount.toMajorUnits()}` },
