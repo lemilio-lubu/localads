@@ -216,6 +216,14 @@ describe("reintento manual de una factura", () => {
     expect(authorize.execute).toHaveBeenCalledWith({ invoiceId: "invoice-1" });
   });
 
+  it("si vuelve a fallar, devuelve el motivo dicho claro, no el del proveedor", async () => {
+    const store = persistence({ kind: "CLAIMED", request });
+    const failed: AuthorizeInvoiceResult = { status: "FAILED", reason: "Migo 503 SERVICE_UNAVAILABLE en POST /api/v1/invoices: Migo en mantenimiento", invoiceNumber: "FAC-TX-1", attempt: 1, nextAttemptAt: minutesLater(1) };
+    const authorize = { execute: vi.fn(async () => failed) };
+    expect(await new RetryInvoiceAuthorization(store, authorize as never).execute({ invoiceId: "invoice-1" }))
+      .toMatchObject({ status: "FAILED", reason: "Migo no está disponible en este momento. El sistema lo reintenta solo.", attempt: 1 });
+  });
+
   it("rechaza una factura inexistente, una ya autorizada o manual, y un id vacío, sin pedir nada", async () => {
     const authorize = { execute: vi.fn() };
     const missing = { ...persistence({ kind: "NOT_FOUND" }), resetAuthorizationRetry: vi.fn(async (): Promise<RetryReset> => "NOT_FOUND") };
@@ -231,7 +239,7 @@ describe("facturas sin autorizar para el admin", () => {
   it("dice en qué está cada una: fallando con su motivo, esperando al SRI o en cola", async () => {
     const base = { invoiceNumber: "FAC-1", transactionCode: "TX-1", clientName: "Cliente Uno", totalAmount: "33.06", fiscalNumber: null, attempts: 0, nextAttemptAt: null };
     const store = { ...persistence({ kind: "NOT_FOUND" }), listUnauthorized: vi.fn(async (): Promise<UnauthorizedInvoice[]> => [
-      { ...base, invoiceId: "a", createdAt: new Date(now.getTime() - 26 * 3_600_000), externalReference: null, reason: "Migo 422: falta el plazo", attempts: 5, nextAttemptAt: minutesLater(60) },
+      { ...base, invoiceId: "a", createdAt: new Date(now.getTime() - 26 * 3_600_000), externalReference: null, reason: "Migo 422 UNPROCESSABLE_ENTITY en POST /api/v1/invoices: Se encontraron errores de validación de negocio · [\"Debe seleccionar el término de pago para la forma de pago Cliente Crédito.\"]", attempts: 5, nextAttemptAt: minutesLater(60) },
       { ...base, invoiceId: "b", createdAt: new Date(now.getTime() - 90 * 60_000), externalReference: "4521", fiscalNumber: "001-001-000000677", reason: null },
       { ...base, invoiceId: "c", createdAt: now, externalReference: null, reason: null },
     ]) };
@@ -241,7 +249,8 @@ describe("facturas sin autorizar para el admin", () => {
       { invoiceId: "b", state: "WAITING_SRI", pendingHours: 1 },
       { invoiceId: "c", state: "QUEUED", pendingHours: 0 },
     ]);
-    expect(result[0]).toMatchObject({ reason: "Migo 422: falta el plazo", attempts: 5, nextAttemptAt: minutesLater(60).toISOString(), clientName: "Cliente Uno", totalAmount: "33.06" });
+    // El admin lee la frase de Migo, sin el código ni la ruta.
+    expect(result[0]).toMatchObject({ reason: "Migo rechazó la factura: Debe seleccionar el término de pago para la forma de pago Cliente Crédito.", attempts: 5, nextAttemptAt: minutesLater(60).toISOString(), clientName: "Cliente Uno", totalAmount: "33.06" });
     expect(result[0]).not.toHaveProperty("externalReference");
     expect(store.listUnauthorized).toHaveBeenCalledWith(100);
   });

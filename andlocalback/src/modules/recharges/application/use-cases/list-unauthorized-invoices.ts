@@ -1,4 +1,5 @@
 import { InvoiceAuthorizationPersistencePort, UnauthorizedInvoice } from "../ports/invoice-issuer.ports";
+import { describeInvoiceFailure } from "../services/invoice-failure-message";
 
 const LIMIT = 100;
 
@@ -26,6 +27,8 @@ export class ListUnauthorizedInvoices {
     const now = this.now().getTime();
     return (await this.persistence.listUnauthorized(LIMIT)).map(({ externalReference, createdAt, nextAttemptAt, ...invoice }) => ({
       ...invoice,
+      // El motivo técnico se queda en la base y en el log.
+      reason: describeInvoiceFailure(invoice.reason),
       state: invoice.reason ? "FAILING" : externalReference ? "WAITING_SRI" : "QUEUED",
       createdAt: createdAt.toISOString(),
       nextAttemptAt: nextAttemptAt?.toISOString() ?? null,
