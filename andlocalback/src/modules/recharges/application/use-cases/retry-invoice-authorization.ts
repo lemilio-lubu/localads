@@ -1,5 +1,6 @@
 import { ApplicationError } from "../../../../common/errors/application.error";
 import { InvoiceAuthorizationPersistencePort } from "../ports/invoice-issuer.ports";
+import { describeInvoiceFailure } from "../services/invoice-failure-message";
 import { AuthorizeInvoice, AuthorizeInvoiceResult } from "./authorize-invoice";
 
 /**
@@ -21,6 +22,8 @@ export class RetryInvoiceAuthorization {
     const reset = await this.persistence.resetAuthorizationRetry(command.invoiceId);
     if (reset === "NOT_FOUND") throw new ApplicationError("INVOICE_NOT_FOUND", "La factura no existe", 404);
     if (reset === "NOT_PENDING") throw new ApplicationError("INVOICE_NOT_PENDING", "La factura ya está autorizada o no se emite por el sistema", 409);
-    return this.authorizeInvoice.execute({ invoiceId: command.invoiceId });
+    const result = await this.authorizeInvoice.execute({ invoiceId: command.invoiceId });
+    // Lo ve el admin en pantalla: el motivo, dicho claro.
+    return result.status === "FAILED" ? { ...result, reason: describeInvoiceFailure(result.reason) ?? result.reason } : result;
   }
 }
