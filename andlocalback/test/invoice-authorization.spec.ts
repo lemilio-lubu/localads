@@ -6,10 +6,15 @@ import {
   InvoiceDocumentSource,
   InvoiceIssuance,
   InvoiceIssuer,
+  RetryReset,
+  UnauthorizedInvoice,
 } from "../src/modules/recharges/application/ports/invoice-issuer.ports";
 import { AuthorizeInvoice, AuthorizeInvoiceResult } from "../src/modules/recharges/application/use-cases/authorize-invoice";
 import { GetInvoiceDocument } from "../src/modules/recharges/application/use-cases/get-invoice-document";
 import { AuthorizePendingInvoices } from "../src/modules/recharges/application/use-cases/authorize-pending-invoices";
+import { ListUnauthorizedInvoices } from "../src/modules/recharges/application/use-cases/list-unauthorized-invoices";
+import { RetryInvoiceAuthorization } from "../src/modules/recharges/application/use-cases/retry-invoice-authorization";
+import { InvoiceRetryPolicy } from "../src/modules/recharges/domain/policies/invoice-retry.policy";
 import { MonetaryAmount } from "../src/modules/recharges/domain/value-objects/monetary-amount";
 
 const now = new Date("2026-10-21T20:00:00.000Z");
@@ -25,6 +30,9 @@ const request: InvoiceAuthorizationRequest = {
   payment: { mode: "PREPAID", creditDays: null },
   externalReference: null,
 };
+const minutesLater = (minutes: number) => new Date(now.getTime() + minutes * 60_000);
+/* Primer fallo: el barrido la retoma al minuto. */
+const firstFailure = { invoiceNumber: "FAC-TX-1", attempt: 1, nextAttemptAt: minutesLater(1) };
 const authorization = { authorizationNumber: "AUT-1", authorizedAt: now, fiscalNumber: "001-001-000000001" };
 const authorized: InvoiceIssuance = { status: "AUTHORIZED", authorization, externalReference: "4521" };
 
@@ -35,6 +43,8 @@ function persistence(claim: InvoiceClaim, source: InvoiceDocumentSource | null =
     markSubmitted: vi.fn(async () => undefined),
     releaseAfterFailure: vi.fn(async () => undefined),
     listPendingAuthorization: vi.fn(async () => []),
+    resetAuthorizationRetry: vi.fn(async (): Promise<RetryReset> => "RESET"),
+    listUnauthorized: vi.fn(async (): Promise<UnauthorizedInvoice[]> => []),
     loadDocumentSource: vi.fn(async () => source),
   } satisfies InvoiceAuthorizationPersistencePort;
 }
@@ -77,8 +87,8 @@ describe("autorizar una factura ante el emisor", () => {
     const store = persistence({ kind: "CLAIMED", request });
     const emitter = issuer({ authorize: vi.fn(async (): Promise<InvoiceIssuance> => ({ status: "REJECTED", externalReference: "4521", fiscalNumber: null, reason: "SRI: RUC inexistente" })) });
     const result = await new AuthorizeInvoice(store, emitter, () => now).execute({ invoiceId: "invoice-1" });
-    expect(result).toEqual({ status: "FAILED", reason: "SRI: RUC inexistente" });
-    expect(store.markSubmitted).toHaveBeenCalledWith({ invoiceId: "invoice-1", issuer: "simulado", externalReference: "4521", fiscalNumber: null, error: "SRI: RUC inexistente" });
+    expect(result).toEqual({ status: "FAILED", reason: "SRI: RUC inexistente", ...firstFailure });
+    expect(store.markSubmitted).toHaveBeenCalledWith({ invoiceId: "invoice-1", issuer: "simulado", externalReference: "4521", fiscalNumber: null, error: "SRI: RUC inexistente", nextAttemptAt: minutesLater(1) });
     expect(store.releaseAfterFailure).not.toHaveBeenCalled();
   });
 
@@ -86,8 +96,8 @@ describe("autorizar una factura ante el emisor", () => {
     const store = { ...persistence({ kind: "CLAIMED", request }), markSubmitted: vi.fn(async () => { throw new Error("base caída"); }) };
     const emitter = issuer({ authorize: vi.fn(async (): Promise<InvoiceIssuance> => ({ status: "SUBMITTED", externalReference: "4521", fiscalNumber: null })) });
     const result = await new AuthorizeInvoice(store, emitter, () => now).execute({ invoiceId: "invoice-1" });
-    expect(result).toEqual({ status: "FAILED", reason: "base caída" });
-    expect(store.releaseAfterFailure).toHaveBeenCalledWith({ invoiceId: "invoice-1", reason: "base caída" });
+    expect(result).toEqual({ status: "FAILED", reason: "base caída", ...firstFailure });
+    expect(store.releaseAfterFailure).toHaveBeenCalledWith({ invoiceId: "invoice-1", reason: "base caída", nextAttemptAt: minutesLater(1) });
   });
 
   it("no vuelve a pedir una factura ya autorizada ni una que otro proceso está pidiendo", async () => {
@@ -110,9 +120,18 @@ describe("autorizar una factura ante el emisor", () => {
     const store = persistence({ kind: "CLAIMED", request });
     const emitter = issuer({ authorize: vi.fn(async () => { throw new Error("Serguéi no responde"); }) });
     const result = await new AuthorizeInvoice(store, emitter, () => now).execute({ invoiceId: "invoice-1" });
-    expect(result).toEqual({ status: "FAILED", reason: "Serguéi no responde" });
-    expect(store.releaseAfterFailure).toHaveBeenCalledWith({ invoiceId: "invoice-1", reason: "Serguéi no responde" });
+    expect(result).toEqual({ status: "FAILED", reason: "Serguéi no responde", ...firstFailure });
+    expect(store.releaseAfterFailure).toHaveBeenCalledWith({ invoiceId: "invoice-1", reason: "Serguéi no responde", nextAttemptAt: minutesLater(1) });
     expect(store.markAuthorized).not.toHaveBeenCalled();
+  });
+
+  it("cada fallo seguido aleja el siguiente intento: 1, 2, 5, 15 y 60 minutos como máximo", async () => {
+    expect([1, 2, 3, 4, 5, 6, 40].map((attempt) => (InvoiceRetryPolicy.nextAttemptAt(attempt, now).getTime() - now.getTime()) / 60_000)).toEqual([1, 2, 5, 15, 60, 60, 60]);
+    const store = persistence({ kind: "CLAIMED", request, attempts: 3 });
+    const emitter = issuer({ authorize: vi.fn(async () => { throw new Error("Migo 422: falta el plazo"); }) });
+    const result = await new AuthorizeInvoice(store, emitter, () => now).execute({ invoiceId: "invoice-1" });
+    expect(result).toEqual({ status: "FAILED", reason: "Migo 422: falta el plazo", invoiceNumber: "FAC-TX-1", attempt: 4, nextAttemptAt: minutesLater(15) });
+    expect(store.releaseAfterFailure).toHaveBeenCalledWith({ invoiceId: "invoice-1", reason: "Migo 422: falta el plazo", nextAttemptAt: minutesLater(15) });
   });
 
   it("una factura facturada a mano por AND no se envía al emisor", async () => {
@@ -171,18 +190,59 @@ describe("reintento de facturas pendientes", () => {
     const store = { ...persistence({ kind: "CLAIMED", request }), listPendingAuthorization: vi.fn(async () => ["invoice-1", "invoice-2", "invoice-3"]) };
     const outcomes: Record<string, AuthorizeInvoiceResult> = {
       "invoice-1": { status: "AUTHORIZED", authorizationNumber: "A" },
-      "invoice-2": { status: "FAILED", reason: "caído" },
+      "invoice-2": { status: "FAILED", reason: "caído", invoiceNumber: "FAC-TX-2", attempt: 2, nextAttemptAt: minutesLater(2) },
       "invoice-3": { status: "SUBMITTED", externalReference: "77" },
     };
     const authorize = { execute: vi.fn(async ({ invoiceId }: { invoiceId: string }) => outcomes[invoiceId]) };
     const result = await new AuthorizePendingInvoices(store, issuer(), authorize as never, () => now).execute();
-    expect(result).toEqual({ authorized: 1, submitted: 1, failed: 1 });
+    // Cada fallo viaja con su motivo, para que el log diga qué factura y por qué.
+    expect(result).toEqual({ authorized: 1, submitted: 1, failed: 1, failures: [{ invoiceNumber: "FAC-TX-2", reason: "caído", attempt: 2, nextAttemptAt: minutesLater(2) }] });
     expect(store.listPendingAuthorization).toHaveBeenCalledWith(now, 20);
   });
 
   it("con el emisor desactivado ni siquiera consulta la base", async () => {
     const store = persistence({ kind: "NOT_FOUND" });
-    expect(await new AuthorizePendingInvoices(store, issuer({ enabled: false }), {} as never, () => now).execute()).toEqual({ authorized: 0, submitted: 0, failed: 0 });
+    expect(await new AuthorizePendingInvoices(store, issuer({ enabled: false }), {} as never, () => now).execute()).toEqual({ authorized: 0, submitted: 0, failed: 0, failures: [] });
     expect(store.listPendingAuthorization).not.toHaveBeenCalled();
+  });
+});
+
+describe("reintento manual de una factura", () => {
+  it("pone la espera a cero y la pide ahora", async () => {
+    const store = persistence({ kind: "CLAIMED", request });
+    const authorize = { execute: vi.fn(async (): Promise<AuthorizeInvoiceResult> => ({ status: "SUBMITTED", externalReference: "4521" })) };
+    expect(await new RetryInvoiceAuthorization(store, authorize as never).execute({ invoiceId: "invoice-1" })).toEqual({ status: "SUBMITTED", externalReference: "4521" });
+    expect(store.resetAuthorizationRetry).toHaveBeenCalledWith("invoice-1");
+    expect(authorize.execute).toHaveBeenCalledWith({ invoiceId: "invoice-1" });
+  });
+
+  it("rechaza una factura inexistente, una ya autorizada o manual, y un id vacío, sin pedir nada", async () => {
+    const authorize = { execute: vi.fn() };
+    const missing = { ...persistence({ kind: "NOT_FOUND" }), resetAuthorizationRetry: vi.fn(async (): Promise<RetryReset> => "NOT_FOUND") };
+    await expect(new RetryInvoiceAuthorization(missing, authorize as never).execute({ invoiceId: "x" })).rejects.toMatchObject({ code: "INVOICE_NOT_FOUND", status: 404 });
+    const done = { ...persistence({ kind: "ALREADY_AUTHORIZED" }), resetAuthorizationRetry: vi.fn(async (): Promise<RetryReset> => "NOT_PENDING") };
+    await expect(new RetryInvoiceAuthorization(done, authorize as never).execute({ invoiceId: "invoice-1" })).rejects.toMatchObject({ code: "INVOICE_NOT_PENDING", status: 409 });
+    await expect(new RetryInvoiceAuthorization(done, authorize as never).execute({ invoiceId: " " })).rejects.toMatchObject({ code: "INVOICE_REQUIRED" });
+    expect(authorize.execute).not.toHaveBeenCalled();
+  });
+});
+
+describe("facturas sin autorizar para el admin", () => {
+  it("dice en qué está cada una: fallando con su motivo, esperando al SRI o en cola", async () => {
+    const base = { invoiceNumber: "FAC-1", transactionCode: "TX-1", clientName: "Cliente Uno", totalAmount: "33.06", fiscalNumber: null, attempts: 0, nextAttemptAt: null };
+    const store = { ...persistence({ kind: "NOT_FOUND" }), listUnauthorized: vi.fn(async (): Promise<UnauthorizedInvoice[]> => [
+      { ...base, invoiceId: "a", createdAt: new Date(now.getTime() - 26 * 3_600_000), externalReference: null, reason: "Migo 422: falta el plazo", attempts: 5, nextAttemptAt: minutesLater(60) },
+      { ...base, invoiceId: "b", createdAt: new Date(now.getTime() - 90 * 60_000), externalReference: "4521", fiscalNumber: "001-001-000000677", reason: null },
+      { ...base, invoiceId: "c", createdAt: now, externalReference: null, reason: null },
+    ]) };
+    const result = await new ListUnauthorizedInvoices(store, () => now).execute();
+    expect(result.map(({ invoiceId, state, pendingHours }) => ({ invoiceId, state, pendingHours }))).toEqual([
+      { invoiceId: "a", state: "FAILING", pendingHours: 26 },
+      { invoiceId: "b", state: "WAITING_SRI", pendingHours: 1 },
+      { invoiceId: "c", state: "QUEUED", pendingHours: 0 },
+    ]);
+    expect(result[0]).toMatchObject({ reason: "Migo 422: falta el plazo", attempts: 5, nextAttemptAt: minutesLater(60).toISOString(), clientName: "Cliente Uno", totalAmount: "33.06" });
+    expect(result[0]).not.toHaveProperty("externalReference");
+    expect(store.listUnauthorized).toHaveBeenCalledWith(100);
   });
 });

@@ -99,6 +99,30 @@ describe("persistencia de la autorización de facturas", () => {
     expect(await repository.listPendingAuthorization(new Date(later.getTime() + 1), 10)).toEqual(["fac-inv-b", "fac-inv-c", "fac-inv-e"]);
   });
 
+  it("cada fallo suma un intento y el barrido no la ofrece hasta que toca; el reintento manual pone la espera a cero", async () => {
+    const afterClaims = new Date(later.getTime() + 1);
+    const nextAttemptAt = new Date(afterClaims.getTime() + 15 * 60_000);
+    await repository.releaseAfterFailure({ invoiceId: "fac-inv-b", reason: "Migo 422: falta el plazo", nextAttemptAt });
+    const stored = await prisma.invoice.findUniqueOrThrow({ where: { id: "fac-inv-b" } });
+    expect(stored).toMatchObject({ authorizationAttempts: 2, authorizationNextAttemptAt: nextAttemptAt });
+    expect(await repository.listPendingAuthorization(afterClaims, 10)).not.toContain("fac-inv-b");
+    expect(await repository.listPendingAuthorization(nextAttemptAt, 10)).toContain("fac-inv-b");
+    // La reserva le pasa al caso de uso cuántos fallos lleva.
+    const claim = await repository.claimForAuthorization("fac-inv-b", afterClaims, new Date(afterClaims.getTime() + 1000));
+    expect(claim).toMatchObject({ kind: "CLAIMED", attempts: 2 });
+    await repository.releaseAfterFailure({ invoiceId: "fac-inv-b", reason: "Migo 422: falta el plazo", nextAttemptAt });
+
+    const listed = (await repository.listUnauthorized(50)).find((invoice) => invoice.invoiceId === "fac-inv-b");
+    expect(listed).toMatchObject({ reason: "Migo 422: falta el plazo", attempts: 3, nextAttemptAt, clientName: expect.any(String), transactionCode: expect.any(String), totalAmount: expect.stringMatching(/^\d+\.\d{2}$/) });
+    expect((await repository.listUnauthorized(50)).map((invoice) => invoice.invoiceId)).not.toContain("fac-inv-a");
+
+    expect(await repository.resetAuthorizationRetry("fac-inv-b")).toBe("RESET");
+    expect(await prisma.invoice.findUniqueOrThrow({ where: { id: "fac-inv-b" } })).toMatchObject({ authorizationAttempts: 0, authorizationNextAttemptAt: null, authorizationError: "Migo 422: falta el plazo" });
+    expect(await repository.listPendingAuthorization(afterClaims, 10)).toContain("fac-inv-b");
+    expect(await repository.resetAuthorizationRetry("fac-inv-a")).toBe("NOT_PENDING");
+    expect(await repository.resetAuthorizationRetry("no-existe")).toBe("NOT_FOUND");
+  });
+
   it("el origen del documento lleva al dueño y la autorización", async () => {
     const source = await repository.loadDocumentSource("fac-inv-a");
     expect(source?.owner).toEqual({ clientId: "fac-client", managerId: null });

@@ -1,0 +1,25 @@
+/* Aviso ámbar: pide atención sin ser un error de la pantalla. */
+.notice { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); border: 1px solid var(--color-amber-border); border-radius: var(--radius-menu); margin: var(--space-3) 0 0; background: var(--color-amber-surface); padding: var(--space-2) var(--space-3); color: var(--color-amber-text-strong); font-size: var(--font-size-body-sm); line-height: 1.4; }
+.notice svg { flex-shrink: 0; }
+.notice span { font-weight: var(--font-weight-bold); }
+
+.modal { width: min(100%, calc(var(--space-20) * 4)); }
+.modal h2 { margin: 0; color: var(--color-text); font-size: var(--font-size-title); }
+.lead { margin: var(--space-1) 0 var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.5; }
+.subtitle { margin: var(--space-3) 0 var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-regular); text-transform: lowercase; }
+.empty { margin: 0; border-radius: var(--radius-menu); background: var(--color-surface-muted); padding: var(--space-2) var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+
+.issues { display: grid; gap: var(--space-2); }
+.issue { display: grid; gap: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-control); padding: var(--space-2); }
+.owner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-half) var(--space-2); }
+.owner strong { color: var(--color-text); font-size: var(--font-size-body-sm); }
+.owner span { color: var(--color-text-muted); font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
+/* El motivo llega del proveedor y puede ser largo o no tener espacios. */
+.reason { margin: 0; border-radius: var(--radius-menu); background: var(--color-danger-surface); padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-body-sm); line-height: 1.4; overflow-wrap: anywhere; }
+.waiting { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1.4; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-caption); }
+.outcome { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+.settled { margin: 0; border-radius: var(--radius-menu); background: var(--color-brand-surface); padding: var(--space-1) var(--space-2); color: var(--color-brand); font-size: var(--font-size-body-sm); line-height: 1.4; }
+/* Resueltas arriba, separadas de las que siguen con fallo. */
+.issues + .issues, .issues + .empty { margin-top: var(--space-2); }
+.outcomeError { margin: 0; color: var(--color-danger); font-size: var(--font-size-body-sm); overflow-wrap: anywhere; }

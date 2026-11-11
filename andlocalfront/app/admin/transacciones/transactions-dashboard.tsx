@@ -1,11 +1,13 @@
 "use client";
 
 import { CalendarClock, Layers, Wallet, UserMinus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ToggleChip from "../../components/atoms/toggle-chip";
 import DateCell from "../../components/atoms/date-cell";
 import RowDetailLink from "../../components/atoms/row-detail-link";
 import InvoiceDetailModal from "../../features/payments/invoice-detail-modal";
+import UnissuedInvoices, { TransactionInvoiceIssue } from "../../features/payments/unissued-invoices";
+import { getUnissuedInvoices, type UnissuedInvoice } from "../../lib/admin-invoices-api";
 import { getCurrentUser } from "../../lib/auth-api";
 import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import PlatformPill from "../../components/atoms/platform-pill";
@@ -67,6 +69,15 @@ export default function TransactionsDashboard() {
      su recorte y este filtro condicionan el mismo campo. */
   const isAdmin = getCurrentUser()?.role === "ADMIN";
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+  /* Facturas que no logran emitirse. Es operación del sistema, no de cartera:
+     solo las ve el admin. Si la consulta falla no se muestra nada; el aviso
+     no debe tapar la pantalla de transacciones. */
+  const [unissued, setUnissued] = useState<{ invoices: UnissuedInvoice[]; checkedAt: Date }>({ invoices: [], checkedAt: new Date(0) });
+  const reloadUnissued = useCallback(() => {
+    if (!isAdmin) return;
+    getUnissuedInvoices().then((invoices) => setUnissued({ invoices, checkedAt: new Date() })).catch(() => undefined);
+  }, [isAdmin]);
+  useEffect(() => { reloadUnissued(); }, [reloadUnissued, revision]);
   const [dates, setDates] = useState<DayRange>(emptyDayRange);
   function changeDates(value: DayRange) { setDates(value); setPageNumber(1); }
   /* Un solo sitio para los filtros: el refresco tras ejecutar un paso los
@@ -121,6 +132,7 @@ export default function TransactionsDashboard() {
 
   return <div className={styles.module}>
     <div className={styles.toolbar}><SearchField value={query} onChange={changeQuery} placeholder="Buscar por cliente o código" placeholderTone="strong" /><div className={styles.filters}><div className={styles.filterGroup}><span>tipo de cuenta</span><SegmentedFilter label="Tipo de cuenta" options={accountSegments} value={type} onChange={changeType} /></div>{isAdmin && <div className={styles.filterGroup}><span>gestor</span><ToggleChip className={styles.managerFilter} pressed={unassignedOnly} onClick={() => setUnassignedOnly((current) => !current)}><UserMinus size={15} aria-hidden="true" />sin asignar</ToggleChip></div>}<DateRangeFilter value={dates} onChange={changeDates} /></div></div>
+    <UnissuedInvoices invoices={unissued.invoices} checkedAt={unissued.checkedAt} onChanged={reloadUnissued} />
     <div className={styles.overview}><div><small>transacciones</small><strong>{pageInfo.totalItems}</strong></div><div><small>inversión en pauta</small><strong>{formatAmount(pageInfo.totals.pautaAmount)}</strong></div><div><small>total facturable</small><strong>{formatAmount(pageInfo.totals.totalAmount)}</strong></div></div>
     <div className={styles.listMeta}><span>{rangeLabel}</span><span>{updatedAt ? `actualizado a las ${formatClock(updatedAt)}` : "consultando…"}</span></div>
     <div className={styles.list} aria-live="polite" aria-busy={loading || detailLoading}>
@@ -174,6 +186,7 @@ export default function TransactionsDashboard() {
               : <p>En proceso: registra en cada plataforma el monto recargado.</p>}
         </div>}
         {resumeError && <p className={`${styles.message} ${styles.errorMessage}`} role="alert">{resumeError}</p>}
+        {selected.invoice && <TransactionInvoiceIssue key={selected.invoice.id} invoices={unissued.invoices} invoiceId={selected.invoice.id} checkedAt={unissued.checkedAt} onChanged={reloadUnissued} />}
         <p className={styles.auditFooter}><span>Factura: {selected.invoice ? `${selected.invoice.invoiceNumber} · ${invoiceStatusLabel(selected.invoice.status)}${selected.invoice.fiscalNumber ? ` · ${selected.invoice.fiscalNumber}` : ""}` : "se emitirá al completar"}</span><span>{selected.verifications.length} {selected.verifications.length === 1 ? "verificación registrada" : "verificaciones registradas"}</span></p>
       </>}
     />

@@ -27,6 +27,9 @@ describe("integración: facturación electrónica con Migo", () => {
   let authorizePending: AuthorizePendingInvoices;
   let getDocument: GetInvoiceDocument;
   const now = new Date("2026-11-07T16:00:00.000Z");
+  /* El reloj de los casos de uso; un test lo adelanta para dejar pasar la
+     espera entre reintentos. */
+  let clock = now;
   const pricing = new AndPricingPolicy();
   let counter = 0;
 
@@ -43,8 +46,8 @@ describe("integración: facturación electrónica con Migo", () => {
     migo = await startFakeMigo();
     const repository = new PrismaInvoiceAuthorizationRepository(prisma as PrismaService);
     const issuer = new MigoInvoiceIssuer(new MigoApiClient({ baseUrl: migo.url, ...migo.credentials, timeoutMs: 5000 }), settings, () => now);
-    authorize = new AuthorizeInvoice(repository, issuer, () => now);
-    authorizePending = new AuthorizePendingInvoices(repository, issuer, authorize, () => now);
+    authorize = new AuthorizeInvoice(repository, issuer, () => clock);
+    authorizePending = new AuthorizePendingInvoices(repository, issuer, authorize, () => clock);
     getDocument = new GetInvoiceDocument(repository, issuer);
 
     await prisma.client.create({ data: { id: "migo-client", name: "Comercializadora Año Ñandú S.A.", email: "migo@example.test", ruc: "1790012345001", status: "ACTIVE", managerId: null } });
@@ -83,15 +86,15 @@ describe("integración: facturación electrónica con Migo", () => {
     expect(sent.payments).toEqual([{ amount: 57.44, paymentMethod: { id: 6 } }]);
 
     // El SRI aún no responde: sigue pendiente.
-    expect(await authorizePending.execute()).toEqual({ authorized: 0, submitted: 1, failed: 0 });
+    expect(await authorizePending.execute()).toMatchObject({ authorized: 0, submitted: 1, failed: 0 });
     migo.authorizeAll();
-    expect(await authorizePending.execute()).toEqual({ authorized: 1, submitted: 0, failed: 0 });
+    expect(await authorizePending.execute()).toMatchObject({ authorized: 1, submitted: 0, failed: 0 });
 
     const authorized = await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } });
     expect(authorized.authorizationNumber).toBe(migo.state.invoices[0].accessKey);
     expect(authorized).toMatchObject({ authorizedAt: now, fiscalNumber: "001-001-000000001", documentUrl: `/files/invoices/${invoiceId}/content` });
     expect(migo.state.invoicePosts).toBe(1);
-    expect(await authorizePending.execute()).toEqual({ authorized: 0, submitted: 0, failed: 0 });
+    expect(await authorizePending.execute()).toMatchObject({ authorized: 0, submitted: 0, failed: 0 });
 
     // El cliente descarga el PDF con los datos fiscales.
     const pdf = await getDocument.execute({ invoiceId, viewer: { userId: "u", role: "CLIENT", clientId: "migo-client" } });
@@ -109,7 +112,15 @@ describe("integración: facturación electrónica con Migo", () => {
 
     migo.state.down = false;
     const posts = migo.state.invoicePosts;
-    expect(await authorizePending.execute()).toMatchObject({ submitted: 1 });
+    // Tras un fallo espera un minuto: el barrido inmediato no la toca.
+    expect(await authorizePending.execute()).toMatchObject({ submitted: 0, failed: 0 });
+    expect(migo.state.invoicePosts).toBe(posts);
+    clock = new Date(now.getTime() + 60_000);
+    try {
+      expect(await authorizePending.execute()).toMatchObject({ submitted: 1 });
+    } finally {
+      clock = now;
+    }
     expect(migo.state.invoicePosts).toBe(posts + 1);
     expect(migo.state.customers).toHaveLength(1);
     expect(await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } })).toMatchObject({ externalReference: expect.any(String), authorizationError: null });
@@ -132,7 +143,7 @@ describe("integración: facturación electrónica con Migo", () => {
 
     migo.reject(sent.id, "IDENTIFICACION DEL COMPRADOR INVALIDA");
     const posts = migo.state.invoicePosts;
-    expect(await authorizePending.execute()).toEqual({ authorized: 0, submitted: 0, failed: 1 });
+    expect(await authorizePending.execute()).toMatchObject({ authorized: 0, submitted: 0, failed: 1 });
     expect(migo.state.invoicePosts).toBe(posts);
     expect(await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } })).toMatchObject({
       externalReference, authorizationNumber: null, authorizationError: "El SRI no autorizó la factura: IDENTIFICACION DEL COMPRADOR INVALIDA",
@@ -142,7 +153,7 @@ describe("integración: facturación electrónica con Migo", () => {
   it("pospago con días sin plazo en Migo: queda pendiente con el motivo y sale sola cuando se crea el plazo", async () => {
     const invoiceId = await completedRecharge({ GOOGLE: "120.00" }, AccountType.POSTPAID, 5);
     const posts = migo.state.invoicePosts;
-    expect(await authorize.execute({ invoiceId })).toEqual({ status: "FAILED", reason: expect.stringMatching(/no hay un plazo de pago de 5 días/) });
+    expect(await authorize.execute({ invoiceId })).toMatchObject({ status: "FAILED", reason: expect.stringMatching(/no hay un plazo de pago de 5 días/) });
     expect(migo.state.invoicePosts).toBe(posts);
     expect(await prisma.invoice.findUniqueOrThrow({ where: { id: invoiceId } })).toMatchObject({ externalReference: null, authorizationError: expect.stringMatching(/Crédito 5 días/) });
 

@@ -6,6 +6,8 @@ import {
   InvoiceAuthorizationRequest,
   InvoiceClaim,
   InvoiceDocumentSource,
+  RetryReset,
+  UnauthorizedInvoice,
 } from "../../application/ports/invoice-issuer.ports";
 import { InvoiceStatus } from "../../domain/model/domain-status";
 import { AccountType } from "../../domain/recharge.types";
@@ -14,7 +16,7 @@ import { decimalToMonetaryAmount } from "./prisma-multi-recharge.repository";
 const platformNames: Record<string, string> = { META: "Meta", GOOGLE: "Google", TIKTOK: "TikTok" };
 
 const requestSelect = {
-  id: true, invoiceNumber: true, status: true, issuedAt: true, authorizationNumber: true, authorizedAt: true, externalReference: true, fiscalNumber: true,
+  id: true, invoiceNumber: true, status: true, issuedAt: true, authorizationAttempts: true, authorizationNumber: true, authorizedAt: true, externalReference: true, fiscalNumber: true,
   pautaSubtotal: true, isdAmount: true, agencyFeeAmount: true, vatBaseAmount: true, vatAmount: true, totalAmount: true,
   transaction: {
     select: {
@@ -48,7 +50,7 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
     if (record.authorizationNumber) return { kind: "ALREADY_AUTHORIZED" };
     if (record.status === InvoiceStatus.MANUAL) return { kind: "MANUAL" };
     if (claimed.count !== 1) return { kind: "IN_PROGRESS" };
-    return { kind: "CLAIMED", request: toRequest(record) };
+    return { kind: "CLAIMED", request: toRequest(record), attempts: record.authorizationAttempts };
   }
 
   async markAuthorized(command: Parameters<InvoiceAuthorizationPersistencePort["markAuthorized"]>[0]): Promise<void> {
@@ -64,6 +66,8 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
         documentUrl: command.documentUrl,
         authorizationClaimedUntil: null,
         authorizationError: null,
+        authorizationAttempts: 0,
+        authorizationNextAttemptAt: null,
         version: { increment: 1 },
       },
     });
@@ -81,21 +85,73 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
         ...(command.issuedAt ? { issuedAt: command.issuedAt } : {}),
         authorizationClaimedUntil: null,
         authorizationError: command.error?.slice(0, 500) ?? null,
+        /* Rechazada: cuenta como fallo y espera. Enviada y a la espera del
+           SRI: se consulta en cada ciclo. */
+        ...(command.error
+          ? { authorizationAttempts: { increment: 1 }, authorizationNextAttemptAt: command.nextAttemptAt ?? null }
+          : { authorizationAttempts: 0, authorizationNextAttemptAt: null }),
         version: { increment: 1 },
       },
     });
   }
 
-  async releaseAfterFailure(command: Readonly<{ invoiceId: string; reason: string }>): Promise<void> {
+  async releaseAfterFailure(command: Parameters<InvoiceAuthorizationPersistencePort["releaseAfterFailure"]>[0]): Promise<void> {
     await this.prisma.invoice.updateMany({
       where: { id: command.invoiceId, authorizationNumber: null },
-      data: { authorizationClaimedUntil: null, authorizationError: command.reason.slice(0, 500) },
+      data: {
+        authorizationClaimedUntil: null,
+        authorizationError: command.reason.slice(0, 500),
+        authorizationAttempts: { increment: 1 },
+        authorizationNextAttemptAt: command.nextAttemptAt ?? null,
+      },
     });
+  }
+
+  async resetAuthorizationRetry(invoiceId: string): Promise<RetryReset> {
+    const reset = await this.prisma.invoice.updateMany({
+      where: { id: invoiceId, status: InvoiceStatus.ISSUED, authorizationNumber: null },
+      data: { authorizationAttempts: 0, authorizationNextAttemptAt: null },
+    });
+    if (reset.count === 1) return "RESET";
+    return (await this.prisma.invoice.findUnique({ where: { id: invoiceId }, select: { id: true } })) ? "NOT_PENDING" : "NOT_FOUND";
+  }
+
+  async listUnauthorized(limit: number): Promise<readonly UnauthorizedInvoice[]> {
+    const records = await this.prisma.invoice.findMany({
+      where: { status: InvoiceStatus.ISSUED, authorizationNumber: null },
+      select: {
+        id: true, invoiceNumber: true, totalAmount: true, createdAt: true, externalReference: true, fiscalNumber: true,
+        authorizationError: true, authorizationAttempts: true, authorizationNextAttemptAt: true,
+        transaction: { select: { code: true, client: { select: { name: true } } } },
+      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: limit,
+    });
+    return records.map((record) => ({
+      invoiceId: record.id,
+      invoiceNumber: record.invoiceNumber,
+      transactionCode: record.transaction.code,
+      clientName: record.transaction.client.name,
+      totalAmount: decimalToMonetaryAmount(record.totalAmount).toMajorUnits(),
+      createdAt: record.createdAt,
+      externalReference: record.externalReference,
+      fiscalNumber: record.fiscalNumber,
+      reason: record.authorizationError,
+      attempts: record.authorizationAttempts,
+      nextAttemptAt: record.authorizationNextAttemptAt,
+    }));
   }
 
   async listPendingAuthorization(now: Date, limit: number): Promise<readonly string[]> {
     const records = await this.prisma.invoice.findMany({
-      where: { status: InvoiceStatus.ISSUED, authorizationNumber: null, OR: [{ authorizationClaimedUntil: null }, { authorizationClaimedUntil: { lte: now } }] },
+      where: {
+        status: InvoiceStatus.ISSUED,
+        authorizationNumber: null,
+        AND: [
+          { OR: [{ authorizationClaimedUntil: null }, { authorizationClaimedUntil: { lte: now } }] },
+          { OR: [{ authorizationNextAttemptAt: null }, { authorizationNextAttemptAt: { lte: now } }] },
+        ],
+      },
       select: { id: true },
       orderBy: [{ issuedAt: "asc" }, { id: "asc" }],
       take: limit,

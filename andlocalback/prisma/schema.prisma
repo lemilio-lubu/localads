@@ -386,6 +386,10 @@ model Invoice {
   issuer                    String?
   authorizationClaimedUntil DateTime?
   authorizationError        String?
+  /* Fallos seguidos al pedir la autorización y cuándo toca el siguiente
+     intento del barrido (espera creciente). Nulo: en el próximo ciclo. */
+  authorizationAttempts      Int       @default(0)
+  authorizationNextAttemptAt DateTime?
   /* Id de la factura en el proveedor (Migo) y número fiscal que asignó
      (001-001-000000123). Se guardan al enviarla, antes de que el SRI la
      autorice: con ellos el reintento consulta su estado en vez de emitirla
