@@ -88,7 +88,26 @@ export type InvoiceClaim =
   | Readonly<{ kind: "IN_PROGRESS" }>
   /** Facturada a mano por AND (anterior a la facturación electrónica): no se emite. */
   | Readonly<{ kind: "MANUAL" }>
-  | Readonly<{ kind: "CLAIMED"; request: InvoiceAuthorizationRequest }>;
+  /** attempts: fallos seguidos que ya lleva (0 si falta el dato). */
+  | Readonly<{ kind: "CLAIMED"; request: InvoiceAuthorizationRequest; attempts?: number }>;
+
+/* Una factura que sigue sin autorizar, para que el admin vea por qué. */
+export type UnauthorizedInvoice = Readonly<{
+  invoiceId: string;
+  invoiceNumber: string;
+  transactionCode: string;
+  clientName: string;
+  totalAmount: string;
+  createdAt: Date;
+  /* Con referencia, el proveedor ya la tiene y se espera al SRI. */
+  externalReference: string | null;
+  fiscalNumber: string | null;
+  reason: string | null;
+  attempts: number;
+  nextAttemptAt: Date | null;
+}>;
+
+export type RetryReset = "RESET" | "NOT_FOUND" | "NOT_PENDING";
 
 export type InvoiceDocumentSource = Readonly<{
   request: InvoiceAuthorizationRequest;
@@ -107,10 +126,18 @@ export interface InvoiceAuthorizationPersistencePort {
   markSubmitted(command: Readonly<{
     invoiceId: string; issuer: string; externalReference: string; fiscalNumber: string | null; error: string | null;
     issuedAt?: Date | null;
+    /** Con error (rechazada): cuenta un fallo y espera hasta esta fecha. */
+    nextAttemptAt?: Date | null;
   }>): Promise<void>;
-  releaseAfterFailure(command: Readonly<{ invoiceId: string; reason: string }>): Promise<void>;
-  /** Facturas sin autorizar y sin reserva vigente, las más antiguas primero. */
+  /** Cuenta un fallo y no la vuelve a ofrecer al barrido hasta nextAttemptAt. */
+  releaseAfterFailure(command: Readonly<{ invoiceId: string; reason: string; nextAttemptAt?: Date | null }>): Promise<void>;
+  /** Facturas sin autorizar, sin reserva vigente y a las que ya les toca
+      reintento, las más antiguas primero. */
   listPendingAuthorization(now: Date, limit: number): Promise<readonly string[]>;
+  /** Pone a cero la espera de una factura pendiente (reintento manual). */
+  resetAuthorizationRetry(invoiceId: string): Promise<RetryReset>;
+  /** Todas las que siguen sin autorizar, con su motivo. */
+  listUnauthorized(limit: number): Promise<readonly UnauthorizedInvoice[]>;
   loadDocumentSource(invoiceId: string): Promise<InvoiceDocumentSource | null>;
 }
 

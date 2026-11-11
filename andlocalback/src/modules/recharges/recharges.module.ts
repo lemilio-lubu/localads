@@ -15,6 +15,9 @@ import { RecoverUnreadReceipts } from "./application/use-cases/recover-unread-re
 import { AuthorizeInvoice } from "./application/use-cases/authorize-invoice";
 import { AuthorizePendingInvoices } from "./application/use-cases/authorize-pending-invoices";
 import { GetInvoiceDocument } from "./application/use-cases/get-invoice-document";
+import { ListUnauthorizedInvoices } from "./application/use-cases/list-unauthorized-invoices";
+import { RetryInvoiceAuthorization } from "./application/use-cases/retry-invoice-authorization";
+import { AdminInvoicesController } from "./presentation/admin-invoices.controller";
 import {
   INVOICE_AUTHORIZATION_PERSISTENCE,
   INVOICE_ISSUER,
@@ -106,7 +109,7 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
 @Module({
   imports: [AuthModule, StorageModule],
   exports: [TransactionsGateway, INVOICE_ISSUER],
-  controllers: [InvoiceDocumentsController, TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
+  controllers: [InvoiceDocumentsController, AdminInvoicesController, TransactionsController, TransactionVerificationsController, TransactionExecutionController, CampaignActivationRequestsController, AdminCampaignActivationRequestsController, MyRechargeQueriesController, AdminRechargeQueriesController],
   providers: [
     PrismaMultiRechargeRepository,
     PrismaPostpaidTransactionRepository,
@@ -150,6 +153,16 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
       inject: [INVOICE_AUTHORIZATION_PERSISTENCE, INVOICE_ISSUER, AuthorizeInvoice],
       useFactory: (persistence: InvoiceAuthorizationPersistencePort, issuer: InvoiceIssuer, authorize: AuthorizeInvoice) =>
         new AuthorizePendingInvoices(persistence, issuer, authorize),
+    },
+    {
+      provide: RetryInvoiceAuthorization,
+      inject: [INVOICE_AUTHORIZATION_PERSISTENCE, AuthorizeInvoice],
+      useFactory: (persistence: InvoiceAuthorizationPersistencePort, authorize: AuthorizeInvoice) => new RetryInvoiceAuthorization(persistence, authorize),
+    },
+    {
+      provide: ListUnauthorizedInvoices,
+      inject: [INVOICE_AUTHORIZATION_PERSISTENCE],
+      useFactory: (persistence: InvoiceAuthorizationPersistencePort) => new ListUnauthorizedInvoices(persistence),
     },
     {
       provide: GetInvoiceDocument,

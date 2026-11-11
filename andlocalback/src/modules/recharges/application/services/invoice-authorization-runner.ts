@@ -36,7 +36,7 @@ export class InvoiceAuthorizationRunner implements OnModuleInit, OnModuleDestroy
   dispatch(invoiceId: string): void {
     setImmediate(() => {
       void this.authorizeInvoice.execute({ invoiceId })
-        .then((result) => { if (result.status === "FAILED") this.logger.warn(`Factura ${invoiceId} sin autorizar: ${result.reason}`); })
+        .then((result) => { if (result.status === "FAILED") this.logger.warn(failureLine(result)); })
         .catch((error: unknown) => this.logger.error(`No fue posible autorizar la factura ${invoiceId}: ${error instanceof Error ? error.message : String(error)}`));
     });
   }
@@ -48,7 +48,9 @@ export class InvoiceAuthorizationRunner implements OnModuleInit, OnModuleDestroy
       const result = await this.authorizePending.execute();
       if (result.authorized > 0) this.logger.log(`${result.authorized} factura(s) autorizada(s)`);
       if (result.submitted > 0) this.logger.log(`${result.submitted} factura(s) esperan la autorización del SRI`);
-      if (result.failed > 0) this.logger.warn(`${result.failed} factura(s) siguen pendientes de autorizar`);
+      /* Una línea por factura con su motivo: la espera creciente ya evita
+         repetirla cada minuto. */
+      for (const failure of result.failures) this.logger.warn(failureLine(failure));
     } catch (error) {
       this.logger.error(`No se pudieron autorizar las facturas pendientes: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
@@ -61,3 +63,6 @@ export class InvoiceAuthorizationRunner implements OnModuleInit, OnModuleDestroy
     return Number.isFinite(configured) && configured >= MINIMUM_INTERVAL_MS ? configured : DEFAULT_INTERVAL_MS;
   }
 }
+
+const failureLine = (failure: Readonly<{ invoiceNumber: string; reason: string; attempt: number; nextAttemptAt: Date }>) =>
+  `Factura ${failure.invoiceNumber} sin autorizar (intento ${failure.attempt}, próximo ${failure.nextAttemptAt.toISOString()}): ${failure.reason}`;
