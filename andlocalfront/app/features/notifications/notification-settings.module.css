@@ -14,7 +14,16 @@
 .hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.5; }
 .block > button { margin-top: var(--space-1); }
 .loading { margin: var(--space-4) 0 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); text-align: center; }
-.groups { display: grid; gap: var(--space-1); margin: var(--space-1) 0 0; padding: 0; list-style: none; }
+/* Etiqueta y una casilla por canal. Las filas no tienen caja propia
+   (display: contents): todas comparten la rejilla de .groups, así cada
+   casilla queda bajo su encabezado aunque «dispositivo» sea más ancho. */
+.groups { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) var(--hit-target); align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
+.withEmail { grid-template-columns: minmax(0, 1fr) max-content max-content; column-gap: var(--space-2); }
+.groupRow, .columns { display: contents; }
+.columns span { color: var(--color-text-muted); font-size: var(--font-size-caption); text-align: center; }
+.groupLabel { font-size: var(--font-size-body-sm); }
+.groupRow > label { justify-self: center; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .saving { opacity: .6; }
 .error { margin: 0; color: var(--color-danger); font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
 .back { margin: var(--space-3) 0 0; text-align: center; }
