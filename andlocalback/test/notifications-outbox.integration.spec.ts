@@ -118,15 +118,17 @@ describe("outbox y bandeja de avisos", () => {
     expect(await prisma.pushSubscription.count()).toBe(0);
   });
 
-  it("solo se guarda lo apagado: encender vuelve al valor por defecto", async () => {
+  it("solo se guarda lo apagado: con los dos canales encendidos, la fila desaparece", async () => {
     const preferences = new PrismaNotificationPreferenceStore(prisma as PrismaService);
-    await preferences.setPush("auth-gestor", ["payment.approved", "recharge.postpaid_requested"], false);
-    await preferences.setPush("auth-gestor", ["payment.approved", "recharge.postpaid_requested"], false);
-    expect([...((await preferences.disabledTypes(["auth-gestor", "auth-prepago"])).get("auth-gestor") ?? [])].sort()).toEqual(["payment.approved", "recharge.postpaid_requested"]);
+    await preferences.setEnabled("auth-prepago", ["payment.rejected", "payment.approved"], "push", false);
+    await preferences.setEnabled("auth-prepago", ["payment.rejected"], "email", false);
+    const disabled = (await preferences.disabledTypes(["auth-prepago", "auth-gestor"])).get("auth-prepago");
+    expect([...(disabled?.push ?? [])].sort()).toEqual(["payment.approved", "payment.rejected"]);
+    expect([...(disabled?.email ?? [])]).toEqual(["payment.rejected"]);
 
-    await preferences.setPush("auth-gestor", ["payment.approved"], true);
-    const after = await preferences.disabledTypes(["auth-gestor"]);
-    expect([...(after.get("auth-gestor") ?? [])]).toEqual(["recharge.postpaid_requested"]);
+    await preferences.setEnabled("auth-prepago", ["payment.approved", "payment.rejected"], "push", true);
     expect(await prisma.notificationPreference.count()).toBe(1);
+    await preferences.setEnabled("auth-prepago", ["payment.rejected"], "email", true);
+    expect(await prisma.notificationPreference.count()).toBe(0);
   });
 });

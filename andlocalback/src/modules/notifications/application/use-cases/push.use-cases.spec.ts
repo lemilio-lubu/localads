@@ -10,7 +10,7 @@ const now = new Date("2026-11-24T12:00:00.000Z");
 const endpoint = "https://fcm.googleapis.com/fcm/send/abc";
 
 const notification = (overrides: Partial<CreatedNotification> = {}): CreatedNotification => ({
-  id: "n-1", recipientUserId: "user-1", type: "payment.approved", title: "Tu pago fue aprobado", body: "Estamos procesando tu recarga.", linkPath: "/prepago/facturas", ...overrides,
+  id: "n-1", recipientUserId: "user-1", type: "payment.approved", title: "Tu pago fue aprobado", body: "Estamos procesando tu recarga.", linkPath: "/prepago/facturas", dedupeKey: "outbox:evt-1", ...overrides,
 });
 const subscription = (overrides: Partial<StoredPushSubscription> = {}): StoredPushSubscription => ({ id: "s-1", userId: "user-1", endpoint, p256dh: "key", auth: "auth", ...overrides });
 
@@ -24,10 +24,11 @@ function subscriptionStore(subscriptions: readonly StoredPushSubscription[] = []
   } satisfies PushSubscriptionStorePort;
 }
 
-function preferenceStore(disabled: Record<string, string[]> = {}) {
+function preferenceStore(push: Record<string, string[]> = {}, email: Record<string, string[]> = {}) {
+  const users = new Set([...Object.keys(push), ...Object.keys(email)]);
   return {
-    disabledTypes: vi.fn(async () => new Map(Object.entries(disabled).map(([userId, types]) => [userId, new Set(types)]))),
-    setPush: vi.fn(async () => undefined),
+    disabledTypes: vi.fn(async () => new Map([...users].map((userId) => [userId, { push: new Set(push[userId] ?? []), email: new Set(email[userId] ?? []) }]))),
+    setEnabled: vi.fn(async () => undefined),
   } satisfies NotificationPreferenceStorePort;
 }
 
@@ -42,6 +43,7 @@ function notificationStore() {
     countUnread: vi.fn(async () => 0),
     markRead: vi.fn(async () => 0),
     markPushSent: vi.fn(async () => undefined),
+    markEmailSent: vi.fn(async () => undefined),
   } satisfies NotificationStorePort;
 }
 
@@ -97,25 +99,42 @@ describe("canal push", () => {
 });
 
 describe("preferencias", () => {
-  it("muestra los grupos del rol: un grupo está encendido si ninguno de sus tipos está apagado", async () => {
-    const result = await new GetNotificationPreferences(preferenceStore({ "user-1": ["payment.rejected"] }), sender()).execute({ userId: "user-1", role: "CLIENT" });
-    expect(result.pushAvailable).toBe(true);
-    expect(result.publicKey).toBe("public-key");
-    expect(result.groups.find((group) => group.key === "payments")).toEqual({ key: "payments", label: "Pago aprobado o rechazado", push: false });
-    expect(result.groups.find((group) => group.key === "recharges")?.push).toBe(true);
+  it("muestra los grupos del rol: un canal está encendido si ninguno de sus tipos está apagado", async () => {
+    const email = { enabled: true, send: vi.fn() };
+    const result = await new GetNotificationPreferences(preferenceStore({ "user-1": ["payment.rejected"] }, { "user-1": ["invoice.authorized"] }), sender(), email)
+      .execute({ userId: "user-1", role: "CLIENT" });
+    expect(result).toMatchObject({ pushAvailable: true, publicKey: "public-key", emailAvailable: true });
+    expect(result.groups.find((group) => group.key === "payments")).toEqual({ key: "payments", label: "Pago aprobado o rechazado", push: false, email: true });
+    expect(result.groups.find((group) => group.key === "invoices")).toMatchObject({ push: true, email: false });
+    // Recarga completada no tiene correo.
+    expect(result.groups.find((group) => group.key === "recharges")?.email).toBeNull();
   });
 
-  it("apagar un grupo apaga todos sus tipos", async () => {
-    const preferences = preferenceStore();
-    await new UpdateNotificationPreference(preferences).execute({ userId: "user-1", role: "GESTOR", key: "to_execute", push: false });
-    expect(preferences.setPush).toHaveBeenCalledWith("user-1", ["payment.approved", "recharge.postpaid_requested"], false);
+  it("el equipo no tiene correo en ningún grupo", async () => {
+    const result = await new GetNotificationPreferences(preferenceStore(), sender(), { enabled: true, send: vi.fn() }).execute({ userId: "user-1", role: "ADMIN" });
+    expect(result.groups.every((group) => group.email === null)).toBe(true);
   });
 
-  it("rechaza un grupo que no es del rol", async () => {
+  it("apagar el push de un grupo apaga todos sus tipos", async () => {
     const preferences = preferenceStore();
-    await expect(new UpdateNotificationPreference(preferences).execute({ userId: "user-1", role: "GESTOR", key: "invoice_failures", push: false }))
+    await new UpdateNotificationPreference(preferences).execute({ userId: "user-1", role: "GESTOR", key: "to_execute", channel: "push", enabled: false });
+    expect(preferences.setEnabled).toHaveBeenCalledWith("user-1", ["payment.approved", "recharge.postpaid_requested"], "push", false);
+  });
+
+  it("apagar el correo de un grupo solo toca sus tipos con correo", async () => {
+    const preferences = preferenceStore();
+    await new UpdateNotificationPreference(preferences).execute({ userId: "user-1", role: "CLIENT", key: "payments", channel: "email", enabled: false });
+    expect(preferences.setEnabled).toHaveBeenCalledWith("user-1", ["payment.rejected"], "email", false);
+  });
+
+  it("rechaza un grupo que no es del rol o un correo que ese grupo no tiene", async () => {
+    const preferences = preferenceStore();
+    const update = new UpdateNotificationPreference(preferences);
+    await expect(update.execute({ userId: "user-1", role: "GESTOR", key: "invoice_failures", channel: "push", enabled: false }))
       .rejects.toMatchObject({ code: "NOTIFICATION_PREFERENCE_UNKNOWN", status: 400 });
-    expect(preferences.setPush).not.toHaveBeenCalled();
+    await expect(update.execute({ userId: "user-1", role: "CLIENT", key: "recharges", channel: "email", enabled: false }))
+      .rejects.toMatchObject({ code: "NOTIFICATION_PREFERENCE_UNKNOWN", status: 400 });
+    expect(preferences.setEnabled).not.toHaveBeenCalled();
   });
 
   it("cada tipo que recibe un rol se puede apagar desde su pantalla", () => {

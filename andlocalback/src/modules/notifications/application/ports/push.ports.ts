@@ -2,7 +2,7 @@
    un canal (push hoy, correo en la fase 3) es una copia de cortesía: si
    falla, el aviso sigue en la campana. */
 
-export type CreatedNotification = Readonly<{ id: string; recipientUserId: string; type: string; title: string; body: string; linkPath: string | null }>;
+export type CreatedNotification = Readonly<{ id: string; recipientUserId: string; type: string; title: string; body: string; linkPath: string | null; dedupeKey: string }>;
 
 export type ChannelResult = Readonly<{ sent: number; failed: number }>;
 
@@ -25,10 +25,13 @@ export interface PushSubscriptionStorePort {
 }
 export const PUSH_SUBSCRIPTION_STORE = Symbol("PUSH_SUBSCRIPTION_STORE");
 
+/* Tipos que un usuario apagó, por canal. */
+export type DisabledChannels = Readonly<{ push: ReadonlySet<string>; email: ReadonlySet<string> }>;
+
 export interface NotificationPreferenceStorePort {
-  /* Tipos que cada usuario apagó del push. Sin entrada: todo encendido. */
-  disabledTypes(userIds: readonly string[]): Promise<ReadonlyMap<string, ReadonlySet<string>>>;
-  setPush(userId: string, types: readonly string[], push: boolean): Promise<void>;
+  /* Sin entrada para un usuario: todo encendido. */
+  disabledTypes(userIds: readonly string[]): Promise<ReadonlyMap<string, DisabledChannels>>;
+  setEnabled(userId: string, types: readonly string[], channel: "push" | "email", enabled: boolean): Promise<void>;
 }
 export const NOTIFICATION_PREFERENCE_STORE = Symbol("NOTIFICATION_PREFERENCE_STORE");
 

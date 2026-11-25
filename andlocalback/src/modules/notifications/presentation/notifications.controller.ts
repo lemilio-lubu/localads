@@ -43,7 +43,7 @@ export class NotificationsController {
     return this.markRead.execute({ userId: user.userId, ids: body.all ? "ALL" : body.ids ?? [] });
   }
 
-  /* Los grupos que puede apagar su rol, y si el push está disponible (con la clave pública). */
+  /* Los grupos que puede apagar su rol por push y por correo, y qué canales están disponibles. */
   @Get("preferences")
   preferences(@CurrentUser() user: AuthPrincipal) {
     return this.getPreferences.execute({ userId: user.userId, role: user.role });
@@ -52,7 +52,7 @@ export class NotificationsController {
   @Put("preferences")
   @HttpCode(HttpStatus.NO_CONTENT)
   async setPreference(@Body() body: UpdateNotificationPreferenceDto, @CurrentUser() user: AuthPrincipal) {
-    await this.updatePreference.execute({ userId: user.userId, role: user.role, key: body.key, push: body.push });
+    await this.updatePreference.execute({ userId: user.userId, role: user.role, key: body.key, channel: body.channel, enabled: body.enabled });
   }
 
   @Post("push-subscriptions")

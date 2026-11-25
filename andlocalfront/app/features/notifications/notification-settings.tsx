@@ -11,7 +11,7 @@ import Checkbox from "../../components/molecules/checkbox";
 import InlineNotice from "../../components/molecules/inline-notice";
 import { enterTransition } from "../../design-system/motion";
 import { getCurrentUser, refreshSession, type AuthUser } from "../../lib/auth-api";
-import { getNotificationPreferences, setNotificationPreference, type NotificationPreferences } from "../../lib/push-api";
+import { getNotificationPreferences, setNotificationPreference, type NotificationChannel, type NotificationPreferences } from "../../lib/push-api";
 import { currentPushState, disablePush, enablePush, isIosWithoutInstall, type PushDeviceState } from "../../lib/push-device";
 import { landingFor } from "../../lib/recharges-api";
 import styles from "./notification-settings.module.css";
@@ -24,7 +24,8 @@ const deviceText: Record<PushDeviceState, string> = {
 };
 
 /** Pantalla «Avisos» de los tres roles: activar el push en este dispositivo
- *  y elegir qué tipos llegan por push. La campana recibe todo siempre. */
+ *  y elegir qué tipos llegan por push y, lo crítico del cliente, por correo.
+ *  La campana recibe todo siempre. */
 export default function NotificationSettings() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
@@ -76,11 +77,11 @@ export default function NotificationSettings() {
   }
 
   /* Se guarda al marcar: la casilla cambia cuando el backend confirma. */
-  async function toggleGroup(key: string, push: boolean) {
-    setSaving(key); setSaveError("");
+  async function toggleGroup(key: string, channel: NotificationChannel, enabled: boolean) {
+    setSaving(`${key}:${channel}`); setSaveError("");
     try {
-      await setNotificationPreference(key, push);
-      setPreferences((current) => current && { ...current, groups: current.groups.map((group) => (group.key === key ? { ...group, push } : group)) });
+      await setNotificationPreference(key, channel, enabled);
+      setPreferences((current) => current && { ...current, groups: current.groups.map((group) => (group.key === key ? { ...group, [channel]: enabled } : group)) });
     } catch (reason) {
       setSaveError(reason instanceof Error ? reason.message : "No fue posible guardar la preferencia");
     } finally {
@@ -89,6 +90,8 @@ export default function NotificationSettings() {
   }
 
   const pushReady = preferences?.pushAvailable === true;
+  /* La columna de correo solo aparece si algún aviso del rol lo tiene (hoy, el cliente). */
+  const hasEmail = preferences?.groups.some((group) => group.email !== null) === true;
   const canToggle = pushReady && (device === "on" || device === "off");
 
   return <main className={styles.page}>
@@ -100,7 +103,7 @@ export default function NotificationSettings() {
       <div className={styles.heading}>
         <p>tu cuenta</p>
         <h1 id="notifications-title">avisos</h1>
-        <span>La campana recibe todos tus avisos. Aquí eliges cuáles te llegan también al dispositivo.</span>
+        <span>La campana recibe todos tus avisos. Aquí eliges cuáles te llegan también fuera de la app.</span>
       </div>
 
       {loadError && <div className={styles.block}><InlineNotice onRetry={() => void load()}>{loadError}</InlineNotice></div>}
@@ -110,7 +113,7 @@ export default function NotificationSettings() {
         <section className={styles.block} aria-labelledby="device-title">
           <h2 id="device-title">Este dispositivo</h2>
           <p className={styles.status} role="status">{pushReady ? deviceText[device] : "Los avisos en el dispositivo todavía no están disponibles."}</p>
-          {iosHint && <p className={styles.hint}>En iPhone y iPad, primero instala la app con el botón «Instalar» y ábrela desde la pantalla de inicio.</p>}
+          {iosHint && <p className={styles.hint}>En iPhone y iPad, primero instala la app con el botón Instalar de arriba y ábrela desde la pantalla de inicio.</p>}
           {canToggle && <Button variant={device === "on" ? "secondary" : "elevated"} onClick={() => void toggleDevice()} disabled={deviceBusy}>
             {device === "on" ? <BellOff size={16} aria-hidden="true" /> : <BellRing size={16} aria-hidden="true" />}
             {deviceBusy ? "un momento…" : device === "on" ? "desactivar en este dispositivo" : "activar avisos en este dispositivo"}
@@ -120,12 +123,24 @@ export default function NotificationSettings() {
 
         <section className={styles.block} aria-labelledby="types-title">
           <h2 id="types-title">Qué te avisamos</h2>
-          <p className={styles.hint}>Vale para todos tus dispositivos con avisos activados.</p>
-          <ul className={styles.groups}>
-            {preferences.groups.map((group) => <li key={group.key}>
-              <Checkbox checked={group.push} onChange={(push) => { if (!saving) void toggleGroup(group.key, push); }} className={saving === group.key ? styles.saving : ""}>{group.label}</Checkbox>
-            </li>)}
-          </ul>
+          <p className={styles.hint}>
+            {hasEmail ? "Lo que marques en la columna dispositivo te llega como notificación al celular o la computadora donde activaste los avisos. Por correo solo va lo importante, al correo de tu empresa." : "Lo marcado te llega como notificación al celular o la computadora donde activaste los avisos."}
+            {hasEmail && !preferences.emailAvailable && " Los correos todavía no están activos: tu elección se guarda para cuando lo estén."}
+          </p>
+          <div className={`${styles.groups} ${hasEmail ? styles.withEmail : ""}`} role="group" aria-labelledby="types-title">
+            {hasEmail && <div className={styles.columns} aria-hidden="true"><span /><span>dispositivo</span><span>correo</span></div>}
+            {preferences.groups.map((group) => <div key={group.key} className={styles.groupRow}>
+              <span className={styles.groupLabel}>{group.label}</span>
+              <Checkbox checked={group.push} onChange={(enabled) => { if (!saving) void toggleGroup(group.key, "push", enabled); }} className={saving === `${group.key}:push` ? styles.saving : ""}>
+                <span className={styles.srOnly}>{group.label}: en el dispositivo</span>
+              </Checkbox>
+              {hasEmail && (group.email === null
+                ? <span aria-hidden="true" />
+                : <Checkbox checked={group.email} onChange={(enabled) => { if (!saving) void toggleGroup(group.key, "email", enabled); }} className={saving === `${group.key}:email` ? styles.saving : ""}>
+                  <span className={styles.srOnly}>{group.label}: por correo</span>
+                </Checkbox>)}
+            </div>)}
+          </div>
           {saveError && <p className={styles.error} role="alert">{saveError}</p>}
         </section>
       </>}

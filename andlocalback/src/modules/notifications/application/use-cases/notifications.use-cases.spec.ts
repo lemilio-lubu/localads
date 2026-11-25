@@ -9,12 +9,13 @@ const context: RecipientContext = { clientName: "Migo", clientUsers: [{ userId: 
 
 function store(overrides: Partial<NotificationStorePort> = {}) {
   return {
-    insert: vi.fn(async (type: string, _key: string, items: readonly PlannedNotification[]) =>
-      items.map((item, index) => ({ id: `n-${index}`, recipientUserId: item.recipientUserId, type, title: item.title, body: item.body, linkPath: item.linkPath }))),
+    insert: vi.fn(async (type: string, dedupeKey: string, items: readonly PlannedNotification[]) =>
+      items.map((item, index) => ({ id: `n-${index}`, recipientUserId: item.recipientUserId, type, title: item.title, body: item.body, linkPath: item.linkPath, dedupeKey }))),
     list: vi.fn(async () => ({ items: [], nextCursor: null })),
     countUnread: vi.fn(async () => 2),
     markRead: vi.fn(async () => 1),
     markPushSent: vi.fn(async () => undefined),
+    markEmailSent: vi.fn(async () => undefined),
     ...overrides,
   };
 }
