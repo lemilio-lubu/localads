@@ -113,7 +113,7 @@ export default function NotificationSettings() {
         <section className={styles.block} aria-labelledby="device-title">
           <h2 id="device-title">Este dispositivo</h2>
           <p className={styles.status} role="status">{pushReady ? deviceText[device] : "Los avisos en el dispositivo todavía no están disponibles."}</p>
-          {iosHint && <p className={styles.hint}>En iPhone y iPad, primero instala la app con el botón «Instalar» y ábrela desde la pantalla de inicio.</p>}
+          {iosHint && <p className={styles.hint}>En iPhone y iPad, primero instala la app con el botón Instalar de arriba y ábrela desde la pantalla de inicio.</p>}
           {canToggle && <Button variant={device === "on" ? "secondary" : "elevated"} onClick={() => void toggleDevice()} disabled={deviceBusy}>
             {device === "on" ? <BellOff size={16} aria-hidden="true" /> : <BellRing size={16} aria-hidden="true" />}
             {deviceBusy ? "un momento…" : device === "on" ? "desactivar en este dispositivo" : "activar avisos en este dispositivo"}
@@ -124,7 +124,7 @@ export default function NotificationSettings() {
         <section className={styles.block} aria-labelledby="types-title">
           <h2 id="types-title">Qué te avisamos</h2>
           <p className={styles.hint}>
-            {hasEmail ? "Lo marcado en «dispositivo» te llega como notificación al celular o la computadora donde activaste los avisos. Por correo solo va lo importante, al correo de tu empresa." : "Lo marcado te llega como notificación al celular o la computadora donde activaste los avisos."}
+            {hasEmail ? "Lo que marques en la columna dispositivo te llega como notificación al celular o la computadora donde activaste los avisos. Por correo solo va lo importante, al correo de tu empresa." : "Lo marcado te llega como notificación al celular o la computadora donde activaste los avisos."}
             {hasEmail && !preferences.emailAvailable && " Los correos todavía no están activos: tu elección se guarda para cuando lo estén."}
           </p>
           <div className={`${styles.groups} ${hasEmail ? styles.withEmail : ""}`} role="group" aria-labelledby="types-title">

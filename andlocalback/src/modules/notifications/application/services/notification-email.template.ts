@@ -8,7 +8,7 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({ "&"
 export type NotificationEmailContent = Readonly<{ title: string; body: string; url: string | null }>;
 
 export function renderNotificationEmail(content: NotificationEmailContent): Readonly<{ subject: string; text: string; html: string }> {
-  const footer = "Recibes este correo por los avisos de tu cuenta en AND Local Ads. Puedes apagarlos en la pantalla «avisos» de tu perfil.";
+  const footer = "Recibes este correo por los avisos de tu cuenta en AND Local Ads. Puedes apagarlos en la pantalla de avisos de tu perfil.";
   const text = [content.title, "", content.body, ...(content.url ? ["", `Ábrelo aquí: ${content.url}`] : []), "", footer].join("\n");
   const button = content.url
     ? `<p style="margin:24px 0 0"><a href="${escapeHtml(content.url)}" style="display:inline-block;background:#0b5901;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:999px">Abrir en AND Local Ads</a></p>`
