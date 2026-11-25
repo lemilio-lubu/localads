@@ -58,26 +58,29 @@ describe("Fase 5 - endpoints de ejecucion", () => {
       })),
     };
     const invoiceAuthorization = { dispatch: vi.fn() };
+    const realtime = { publishPlatforms: vi.fn(), publishTransaction: vi.fn() };
     const controller = new TransactionExecutionController(
       start as unknown as StartTransactionRecharge,
       detail as unknown as CompleteTransactionDetail,
       complete as unknown as CompleteTransaction,
       {} as never,
-      {} as never,
+      realtime as never,
       sinRecorte,
       invoiceAuthorization as never,
     );
-    return { controller, start, detail, complete, invoiceAuthorization };
+    return { controller, start, detail, complete, invoiceAuthorization, realtime };
   }
 
   it("inicia una transaccion sin aceptar un estado desde HTTP", async () => {
-    const { controller, start } = setup();
+    const { controller, start, realtime } = setup();
     await controller.start("tx-001", administrador);
     expect(start.execute).toHaveBeenCalledWith({ transactionId: "tx-001" });
+    // El cliente ve que su recarga arranco sin esperar al sondeo.
+    expect(realtime.publishTransaction).toHaveBeenCalledWith("tx-001");
   });
 
   it("completa un detalle con monto numerico y fecha efectiva", async () => {
-    const { controller, detail } = setup();
+    const { controller, detail, realtime } = setup();
     await controller.completeDetail("tx-001", "detail-001", {
       effectiveAmount: "475.25",
       effectiveRechargeDate: "2026-09-10T15:30:00.000Z",
@@ -94,14 +97,16 @@ describe("Fase 5 - endpoints de ejecucion", () => {
       effectiveAmount: 475.25,
       effectiveRechargeDate: new Date("2026-09-10T15:30:00.000Z"),
     });
+    expect(realtime.publishTransaction).toHaveBeenCalledWith("tx-001");
   });
 
   it("cierra la transaccion y devuelve el resultado con su factura", async () => {
-    const { controller, complete, invoiceAuthorization } = setup();
+    const { controller, complete, invoiceAuthorization, realtime } = setup();
     const result = await controller.complete("tx-001", administrador);
     expect(complete.execute).toHaveBeenCalledWith({ transactionId: "tx-001" });
     // La autorización fiscal se pide aparte, con la factura recién creada.
     expect(invoiceAuthorization.dispatch).toHaveBeenCalledWith("invoice-001");
+    expect(realtime.publishTransaction).toHaveBeenCalledWith("tx-001");
     expect(result).toMatchObject({
       transaction: { status: "COMPLETED" },
       invoice: { id: "invoice-001", status: "ISSUED" },

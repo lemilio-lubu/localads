@@ -41,7 +41,8 @@ export interface PostpaidTransactionPersistencePort {
   loadPostpaidContext(accountId: string): Promise<PostpaidRechargeContext>;
   findPostpaidByIdempotencyKey(clientId: string, idempotencyKey: string): Promise<PostpaidTransactionView | null>;
   savePostpaid(record: PostpaidTransactionRecord): Promise<PostpaidTransactionView>;
-  markOverduePayments(asOf: Date): Promise<number>;
+  /* clientIds: los clientes de los pagos marcados, para avisar a sus pantallas. */
+  markOverduePayments(asOf: Date): Promise<Readonly<{ count: number; clientIds: readonly string[] }>>;
 }
 
 export const POSTPAID_TRANSACTION_PERSISTENCE = Symbol("POSTPAID_TRANSACTION_PERSISTENCE");

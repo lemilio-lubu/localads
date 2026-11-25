@@ -59,6 +59,30 @@ function issuer(overrides: Partial<InvoiceIssuer> = {}) {
   };
 }
 
+describe("aviso en tiempo real al cambiar la factura", () => {
+  const realtime = () => ({ publishPlatforms: vi.fn(), publishTransaction: vi.fn(), publishInvoice: vi.fn() });
+
+  it("avisa al autorizarla, al enviarla y al fallar", async () => {
+    for (const authorize of [
+      vi.fn(async (): Promise<InvoiceIssuance> => authorized),
+      vi.fn(async (): Promise<InvoiceIssuance> => ({ status: "SUBMITTED", externalReference: "4521", fiscalNumber: null })),
+      vi.fn(async (): Promise<InvoiceIssuance> => { throw new Error("caído"); }),
+    ]) {
+      const publisher = realtime();
+      await new AuthorizeInvoice(persistence({ kind: "CLAIMED", request }), issuer({ authorize }), () => now, publisher).execute({ invoiceId: "invoice-1" });
+      expect(publisher.publishInvoice).toHaveBeenCalledWith("invoice-1");
+    }
+  });
+
+  it("no avisa si la factura no cambió: ya autorizada, en curso o emisor apagado", async () => {
+    const publisher = realtime();
+    await new AuthorizeInvoice(persistence({ kind: "ALREADY_AUTHORIZED" }), issuer(), () => now, publisher).execute({ invoiceId: "invoice-1" });
+    await new AuthorizeInvoice(persistence({ kind: "IN_PROGRESS" }), issuer(), () => now, publisher).execute({ invoiceId: "invoice-1" });
+    await new AuthorizeInvoice(persistence({ kind: "NOT_FOUND" }), issuer({ enabled: false }), () => now, publisher).execute({ invoiceId: "invoice-1" });
+    expect(publisher.publishInvoice).not.toHaveBeenCalled();
+  });
+});
+
 describe("autorizar una factura ante el emisor", () => {
   it("la reserva, la autoriza y guarda número, emisor y enlace al documento", async () => {
     const store = persistence({ kind: "CLAIMED", request });

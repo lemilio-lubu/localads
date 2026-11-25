@@ -42,7 +42,9 @@ export class TransactionExecutionController {
   @HttpCode(HttpStatus.OK)
   async start(@Param("transactionId") transactionId: string, @CurrentUser() user: AuthPrincipal) {
     await this.scope.transaction(transactionId, scopeFor(user));
-    return this.startTransactionRecharge.execute({ transactionId });
+    const started = await this.startTransactionRecharge.execute({ transactionId });
+    this.realtime.publishTransaction(transactionId);
+    return started;
   }
 
   @Patch(":transactionId/details/:detailId/complete")
@@ -54,7 +56,7 @@ export class TransactionExecutionController {
     @CurrentUser() user: AuthPrincipal,
   ) {
     await this.scope.transaction(transactionId, scopeFor(user));
-    return this.completeTransactionDetail.execute({
+    const completed = await this.completeTransactionDetail.execute({
       transactionId,
       detailId,
       executedBy: user.userId,
@@ -66,6 +68,8 @@ export class TransactionExecutionController {
         ? new Date(body.effectiveRechargeDate)
         : new Date(),
     });
+    this.realtime.publishTransaction(transactionId);
+    return completed;
   }
 
   @Post(":transactionId/complete")
@@ -76,6 +80,7 @@ export class TransactionExecutionController {
     // La autorización fiscal va aparte: si el emisor tarda o falla, la recarga
     // ya quedó completada y el reintento periódico se encarga de la factura.
     this.invoiceAuthorization.dispatch(completed.invoice.id);
+    this.realtime.publishTransaction(transactionId);
     return completed;
   }
 }

@@ -69,6 +69,7 @@ class MemoryPostpaidPersistence implements PostpaidTransactionPersistencePort {
   existing: PostpaidTransactionView | null = null;
   overdueCalls: Date[] = [];
   markedCount = 0;
+  markedClientIds: string[] = [];
   loadCalls = 0;
   findCalls = 0;
 
@@ -89,9 +90,9 @@ class MemoryPostpaidPersistence implements PostpaidTransactionPersistencePort {
     return presentPostpaidTransaction(record);
   }
 
-  async markOverduePayments(asOf: Date): Promise<number> {
+  async markOverduePayments(asOf: Date) {
     this.overdueCalls.push(asOf);
-    return this.markedCount;
+    return { count: this.markedCount, clientIds: this.markedClientIds };
   }
 }
 
@@ -277,6 +278,18 @@ describe("MarkOverduePayments", () => {
 
     expect(result).toEqual({ markedCount: 3, processedAt: now.toISOString() });
     expect(persistence.overdueCalls).toEqual([now]);
+  });
+
+  it("avisa una vez a cada cliente con pagos recien vencidos", async () => {
+    const persistence = new MemoryPostpaidPersistence(activeContext());
+    persistence.markedCount = 3;
+    persistence.markedClientIds = ["client-a", "client-b", "client-a"];
+    const published: string[] = [];
+    const realtime = { publishPlatforms: (clientId: string) => { published.push(clientId); }, publishTransaction: () => undefined, publishInvoice: () => undefined };
+
+    await new MarkOverduePayments(persistence, () => now, realtime).execute();
+
+    expect(published).toEqual(["client-a", "client-b"]);
   });
 
   it("acepta un corte explicito para procesos reproducibles", async () => {

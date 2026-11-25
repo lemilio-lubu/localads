@@ -163,4 +163,30 @@ describe("TransactionsGateway · alcance del gestor", () => {
     expect(() => gatewayWith(scope, server).publishPlatforms("client-001")).not.toThrow();
     await vi.waitFor(() => expect(server.emit).toHaveBeenCalledWith("platforms:changed", { clientId: "client-001" }));
   });
+
+  it("resuelve el cliente de una transacción o factura y avisa a sus salas", async () => {
+    const server = serverDouble();
+    const lookup = { clientOfTransaction: vi.fn().mockResolvedValue("client-001"), clientOfInvoice: vi.fn().mockResolvedValue("client-002") };
+    const gateway = new TransactionsGateway({} as never, scopeOf(null) as never, liveSessions as never, lookup);
+    (gateway as unknown as { server: typeof server }).server = server;
+
+    gateway.publishTransaction("tx-001");
+    gateway.publishInvoice("invoice-001");
+
+    await vi.waitFor(() => expect(server.to).toHaveBeenCalledWith("platforms:client:client-002"));
+    expect(server.to).toHaveBeenCalledWith("platforms:client:client-001");
+    expect(lookup.clientOfTransaction).toHaveBeenCalledWith("tx-001");
+    expect(lookup.clientOfInvoice).toHaveBeenCalledWith("invoice-001");
+  });
+
+  it("si no encuentra el cliente o la consulta falla, no emite ni lanza", async () => {
+    const server = serverDouble();
+    const lookup = { clientOfTransaction: vi.fn().mockResolvedValue(null), clientOfInvoice: vi.fn().mockRejectedValue(new Error("base caida")) };
+    const gateway = new TransactionsGateway({} as never, scopeOf(null) as never, liveSessions as never, lookup);
+    (gateway as unknown as { server: typeof server }).server = server;
+
+    expect(() => { gateway.publishTransaction("tx-404"); gateway.publishInvoice("invoice-001"); }).not.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(server.emit).not.toHaveBeenCalled();
+  });
 });

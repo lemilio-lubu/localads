@@ -3,19 +3,18 @@
 import Image from "next/image";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { io } from "socket.io-client";
 import AccountShell from "./account-shell";
 import DateCell from "./components/atoms/date-cell";
 import InvoiceDetailModal from "./features/payments/invoice-detail-modal";
 import PlatformPill from "./components/atoms/platform-pill";
 import StatusPill from "./components/atoms/status-pill";
 import type { AccountType, AdvertisingPlatform } from "./design-system/types";
-import { getAccessToken, refreshSession } from "./lib/auth-api";
-import { accountContext, getMyTransactionDetail, getMyTransactions, transactionsRealtimeUrl, type ClientTransactionDetail, type TransactionListItem } from "./lib/recharges-api";
+import { accountContext, getMyTransactionDetail, getMyTransactions, type ClientTransactionDetail, type TransactionListItem } from "./lib/recharges-api";
 import { dueLabel, formatAmount, formatClock, formatDateTime } from "./lib/format";
 import { paymentStatusLabel, rechargeStatusLabel } from "./lib/status-labels";
 import type { VerificationRealtimeEvent } from "./lib/transaction-realtime";
 import { usePlatformUpdates } from "./lib/use-platform-updates";
+import { subscribeRealtime } from "./lib/realtime-socket";
 import CopyCode from "./components/molecules/copy-code";
 import styles from "./invoices-dashboard.module.css";
 import { paymentStatusTone, rechargeStatusTone } from "./lib/status-tone";
@@ -42,7 +41,7 @@ const PAGE_SIZE = 20;
 
 export default function InvoicesDashboard({ accountType }: { accountType: AccountType }) {
   const revision = usePlatformUpdates();
-  const { clientId, accountId } = accountContext(accountType === "prepago" ? "prepago" : "flex");
+  const { clientId } = accountContext(accountType === "prepago" ? "prepago" : "flex");
   const [fromDate, setFromDate] = useState(""); const [toDate, setToDate] = useState("");
   const [query, setQuery] = useState(""); const [search, setSearch] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
@@ -68,53 +67,25 @@ export default function InvoicesDashboard({ accountType }: { accountType: Accoun
   const detailId = detail?.id;
   useEffect(() => { if (!detailId) return; let active = true; getMyTransactionDetail(clientId, detailId).then((next) => { if (active) setDetail(next); }).catch(() => undefined); return () => { active = false; }; }, [clientId, detailId, revision]);
 
+  /* La reconexión y el sondeo ya los cubre usePlatformUpdates; aquí solo se
+     aplica el cambio de verificación al momento, sin esperar a la recarga. */
   useEffect(() => {
     let active = true;
-    let socket: ReturnType<typeof io> | null = null;
-    let refreshing = false;
-
-    async function connect() {
-      if (!getAccessToken()) await refreshSession();
-      const accessToken = getAccessToken();
-      if (!active || !accessToken) return;
-      socket = io(transactionsRealtimeUrl, { auth: { accessToken }, transports: ["websocket"] });
-      socket.on("connect", () => {
-        socket?.emit("transactions:subscribe", { accountId });
-        void getMyTransactions(filtersRef.current).then((page) => { if (active) { setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); } }).catch(() => undefined);
-      });
-      socket.io.on("reconnect_attempt", () => { if (socket) socket.auth = { accessToken: getAccessToken() }; });
-      const reconnect = () => {
-        if (refreshing) return;
-        refreshing = true;
-        void refreshSession().then((user) => {
-          if (active && user && socket) {
-            socket.auth = { accessToken: getAccessToken() };
-            socket.connect();
-          }
-        }).finally(() => { refreshing = false; });
-      };
-      socket.on("connect_error", reconnect);
-      /* El servidor corta el socket al vencer el token o la sesion; socket.io
-         no reintenta solo en ese caso, asi que se renueva y se vuelve a entrar. */
-      socket.on("disconnect", (reason) => { if (reason === "io server disconnect") reconnect(); });
-      socket.on("verification:changed", (event: VerificationRealtimeEvent) => {
-        setTransactions((current) => current.map((item) => item.id === event.transactionId ? { ...item, rechargeStatus: event.rechargeStatus, paymentStatus: event.paymentStatus } : item));
-        setDetail((current) => current?.id === event.transactionId ? {
-          ...current,
-          rechargeStatus: event.rechargeStatus,
-          payment: current.payment ? { ...current.payment, status: event.paymentStatus } : null,
-          verification: { status: event.status, reviewReason: event.reason, updatedAt: event.occurredAt },
-        } : current);
-        void getMyTransactions(filtersRef.current).then((page) => { if (active) { setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); } }).catch(() => undefined);
-        if (detailRef.current?.id === event.transactionId) {
-          void getMyTransactionDetail(clientId, event.transactionId).then((transaction) => { if (active) setDetail((current) => current?.id === event.transactionId ? transaction : current); }).catch(() => undefined);
-        }
-      });
-    }
-
-    void connect();
-    return () => { active = false; socket?.disconnect(); };
-  }, [accountId, clientId]);
+    const stop = subscribeRealtime<VerificationRealtimeEvent>("verification:changed", (event) => {
+      setTransactions((current) => current.map((item) => item.id === event.transactionId ? { ...item, rechargeStatus: event.rechargeStatus, paymentStatus: event.paymentStatus } : item));
+      setDetail((current) => current?.id === event.transactionId ? {
+        ...current,
+        rechargeStatus: event.rechargeStatus,
+        payment: current.payment ? { ...current.payment, status: event.paymentStatus } : null,
+        verification: { status: event.status, reviewReason: event.reason, updatedAt: event.occurredAt },
+      } : current);
+      void getMyTransactions(filtersRef.current).then((page) => { if (active) { setTransactions(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); } }).catch(() => undefined);
+      if (detailRef.current?.id === event.transactionId) {
+        void getMyTransactionDetail(clientId, event.transactionId).then((transaction) => { if (active) setDetail((current) => current?.id === event.transactionId ? transaction : current); }).catch(() => undefined);
+      }
+    });
+    return () => { active = false; stop(); };
+  }, [clientId]);
   // Ofrecer solo lo que el cliente tiene: filtrar por una plataforma sin
   // recargas solo produce un vacio sin explicacion.
   const availablePlatforms = useMemo(() => {

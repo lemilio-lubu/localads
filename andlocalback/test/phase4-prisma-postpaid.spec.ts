@@ -84,7 +84,7 @@ describe("persistencia POSTPAGO fase 4", () => {
       where: { transactionId: "transaction-first" }, data: { status: "COMPLETED" },
     });
 
-    expect(await postpaid.markOverduePayments(new Date("2026-09-10T00:00:00.000Z"))).toBe(1);
+    expect(await postpaid.markOverduePayments(new Date("2026-09-10T00:00:00.000Z"))).toEqual({ count: 1, clientIds: [clientId] });
     expect((await prisma.payment.findUnique({ where: { id: "payment-first" } }))?.status).toBe("OVERDUE");
     expect((await prisma.rechargeTransaction.findUnique({ where: { id: "transaction-first" } }))?.rechargeStatus).toBe("COMPLETED");
   });

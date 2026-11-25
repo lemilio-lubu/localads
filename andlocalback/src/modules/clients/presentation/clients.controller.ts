@@ -35,8 +35,12 @@ export class ClientsController {
   @Post(":id/manager")
   @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
-  assignManager(@Param("id") id: string, @Body() body: AssignManagerDto) {
-    return this.clients.assignManager(id, body.managerId ?? null);
+  async assignManager(@Param("id") id: string, @Body() body: AssignManagerDto) {
+    const result = await this.clients.assignManager(id, body.managerId ?? null);
+    /* Llega a la sala del gestor nuevo; el anterior lo deja de ver en su
+       siguiente recarga. */
+    this.realtime.publishPlatforms(id);
+    return result;
   }
 
   @Post(":id/password-reset")

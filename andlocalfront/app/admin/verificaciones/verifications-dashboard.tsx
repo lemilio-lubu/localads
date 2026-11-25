@@ -2,12 +2,11 @@
 
 import { Check, CircleAlert, Layers, UserMinus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { io } from "socket.io-client";
 import DateRangeFilter from "../../components/molecules/date-range-filter";
 import { apiDayRange, emptyDayRange, type DayRange } from "../../lib/date-range";
 import ToggleChip from "../../components/atoms/toggle-chip";
 import SegmentedFilter, { type SegmentOption } from "../../components/molecules/segmented-filter";
-import { getAccessToken, getCurrentUser, refreshSession } from "../../lib/auth-api";
+import { getCurrentUser } from "../../lib/auth-api";
 import {
   approveVerification,
   getAdminTransactionDetail,
@@ -17,7 +16,8 @@ import {
   type PendingVerification,
 } from "../../lib/admin-recharges-api";
 import { formatClock } from "../../lib/format";
-import { transactionsRealtimeUrl } from "../../lib/recharges-api";
+import { subscribeRealtime } from "../../lib/realtime-socket";
+import { usePlatformUpdates } from "../../lib/use-platform-updates";
 import type { VerificationRealtimeEvent } from "../../lib/transaction-realtime";
 import VerificationRow from "../../features/verifications/verification-row";
 import VerificationReviewModal, { type VerificationSelection } from "../../features/verifications/verification-review-modal";
@@ -43,6 +43,8 @@ function fetchVerifications(filter: VerificationFilter, search: string, pageNumb
 }
 
 export default function VerificationsDashboard() {
+  /* Sin esto, un evento perdido dejaba la lista vieja hasta recargar a mano. */
+  const revision = usePlatformUpdates();
   const [items, setItems] = useState<PendingVerification[]>([]);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
@@ -93,29 +95,13 @@ export default function VerificationsDashboard() {
       if (active) setError(cause instanceof Error ? cause.message : "No fue posible consultar las verificaciones");
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [search, filter, pageNumber, reloadToken, unassignedOnly, dates]);
+  }, [search, filter, pageNumber, reloadToken, unassignedOnly, dates, revision]);
 
+  /* La conexión es la compartida de la pestaña; la reconexión, el foco y el
+     sondeo los cubre usePlatformUpdates (revision). Aquí solo se aplica la
+     verificación que cambió, al momento. */
   useEffect(() => {
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    const socket = io(transactionsRealtimeUrl, { auth: { accessToken }, transports: ["websocket"] });
-    socket.on("connect", () => {
-      socket.emit("transactions:subscribe", { scope: "admin" });
-      void fetchVerifications(filterRef.current, searchRef.current, pageRef.current, unassignedRef.current, datesRef.current).then((page) => { setItems(page.items); setPageInfo({ totalItems: page.totalItems, totalPages: page.totalPages }); }).catch(() => undefined);
-    });
-    socket.io.on("reconnect_attempt", () => { socket.auth = { accessToken: getAccessToken() }; });
-    const reconnect = () => {
-      void refreshSession().then((user) => {
-        if (!user) return;
-        socket.auth = { accessToken: getAccessToken() };
-        socket.connect();
-      });
-    };
-    socket.on("connect_error", reconnect);
-    /* El servidor corta el socket al vencer el token o la sesion; socket.io
-       no reintenta solo en ese caso, asi que se renueva y se vuelve a entrar. */
-    socket.on("disconnect", (reason) => { if (reason === "io server disconnect") reconnect(); });
-    socket.on("verification:changed", (event: VerificationRealtimeEvent) => {
+    return subscribeRealtime<VerificationRealtimeEvent>("verification:changed", (event) => {
       setItems((current) => current.map((item) => item.id === event.verificationId ? { ...item, status: event.status, reviewReason: event.reason } : item));
       setSelected((current) => current?.detail.id === event.verificationId ? {
         ...current,
@@ -131,7 +117,6 @@ export default function VerificationsDashboard() {
         }).catch(() => undefined);
       }
     });
-    return () => { socket.disconnect(); };
   }, []);
 
   async function open(item: PendingVerification) {

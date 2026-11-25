@@ -17,6 +17,7 @@ import { RequestPrepaidTransaction } from "../application/use-cases/request-prep
 import { RequestPostpaidTransaction } from "../application/use-cases/request-postpaid-transaction";
 import { TransactionReceiptOcrDispatcher } from "../application/services/transaction-receipt-ocr-dispatcher";
 import { ApplicationErrorFilter } from "./application-error.filter";
+import { TransactionsGateway } from "./transactions.gateway";
 import { RequestPrepaidTransactionDto } from "./dto/request-prepaid-transaction.dto";
 import { RequestPostpaidTransactionDto } from "./dto/request-postpaid-transaction.dto";
 
@@ -29,6 +30,7 @@ export class TransactionsController {
     private readonly requestPrepaidTransaction: RequestPrepaidTransaction,
     private readonly ocrDispatcher: TransactionReceiptOcrDispatcher,
     private readonly requestPostpaidTransaction: RequestPostpaidTransaction,
+    private readonly realtime?: TransactionsGateway,
   ) {}
 
   @Post("prepaid")
@@ -70,6 +72,8 @@ export class TransactionsController {
       },
     });
     this.ocrDispatcher.dispatch(transaction.receipt.id);
+    /* El gestor y el admin ven la recarga nueva sin esperar al sondeo. */
+    this.realtime?.publishPlatforms(transaction.clientId);
     return transaction;
   }
 
@@ -81,7 +85,7 @@ export class TransactionsController {
     @CurrentUser() user?: AuthPrincipal,
   ) {
     const idempotencyKey = this.requireIdempotencyKey(rawIdempotencyKey);
-    return this.requestPostpaidTransaction.execute({
+    const transaction = await this.requestPostpaidTransaction.execute({
       accountId: requireOwnAccount(user, body.accountId),
       idempotencyKey,
       details: body.details.map((detail) => ({
@@ -90,6 +94,8 @@ export class TransactionsController {
         amount: Number(detail.amount),
       })),
     });
+    this.realtime?.publishPlatforms(transaction.clientId);
+    return transaction;
   }
 
   private requireIdempotencyKey(rawIdempotencyKey: string | undefined): string {
