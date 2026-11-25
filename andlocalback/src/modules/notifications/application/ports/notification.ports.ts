@@ -43,7 +43,9 @@ export interface NotificationStorePort {
   /* Solo marca las del propio usuario: devuelve cuántas cambió. */
   markRead(userId: string, ids: readonly string[] | "ALL", at: Date): Promise<number>;
   markPushSent(ids: readonly string[], at: Date): Promise<void>;
-  markEmailSent(ids: readonly string[], at: Date): Promise<void>;
+  /* Borra hasta `limit` avisos leídos creados antes de readBefore o sin leer
+     creados antes de unreadBefore. Devuelve cuántos borró. */
+  purgeOld(readBefore: Date, unreadBefore: Date, limit: number): Promise<number>;
 }
 export const NOTIFICATION_STORE = Symbol("NOTIFICATION_STORE");
 

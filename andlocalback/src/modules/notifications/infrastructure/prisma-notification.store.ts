@@ -52,9 +52,16 @@ export class PrismaNotificationStore implements NotificationStorePort {
     await this.prisma.notification.updateMany({ where: { id: { in: [...ids] } }, data: { pushSentAt: at } });
   }
 
-  async markEmailSent(ids: readonly string[], at: Date): Promise<void> {
-    if (ids.length === 0) return;
-    await this.prisma.notification.updateMany({ where: { id: { in: [...ids] } }, data: { emailSentAt: at } });
+  /* Por lotes: un primer barrido con muchos avisos viejos no bloquea la tabla. */
+  async purgeOld(readBefore: Date, unreadBefore: Date, limit: number): Promise<number> {
+    const old = await this.prisma.notification.findMany({
+      where: { OR: [{ readAt: { not: null }, createdAt: { lt: readBefore } }, { readAt: null, createdAt: { lt: unreadBefore } }] },
+      select: { id: true },
+      take: limit,
+    });
+    if (old.length === 0) return 0;
+    const deleted = await this.prisma.notification.deleteMany({ where: { id: { in: old.map((row) => row.id) } } });
+    return deleted.count;
   }
 }
 

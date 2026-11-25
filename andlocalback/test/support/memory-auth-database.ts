@@ -30,12 +30,19 @@ export function memoryDatabase(users: Row[]) {
     update: vi.fn(async ({ where, data }: { where: Row; data: Row }) => { const row = rows.find((candidate) => matches(candidate, where)); if (!row) throw new Error("P2025"); apply(row, data); return row; }),
     updateMany: vi.fn(async ({ where, data }: { where: Row; data: Row }) => { const hit = rows.filter((candidate) => matches(candidate, where)); hit.forEach((row) => apply(row, data)); return { count: hit.length }; }),
   });
-  return {
+  /* Hechos escritos en el outbox, para comprobar los avisos de seguridad. */
+  const events: Row[] = [];
+  const database = {
     sessions,
+    events,
     authUser: table(users),
     refreshSession: table(sessions, true),
     client: { findUnique: vi.fn(async () => null) },
     account: { findUnique: vi.fn(async () => null) },
-    $transaction: vi.fn(async (operations: Promise<unknown>[]) => Promise.all(operations)),
+    outboxEvent: { createMany: vi.fn(async ({ data }: { data: Row[] }) => { events.push(...data); return { count: data.length }; }) },
+    /* Acepta las dos formas de Prisma: lista de operaciones o función. */
+    $transaction: vi.fn(async (operations: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>)): Promise<unknown> =>
+      typeof operations === "function" ? operations(database) : Promise.all(operations)),
   };
+  return database;
 }

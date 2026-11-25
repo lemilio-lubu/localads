@@ -10,7 +10,8 @@ type EventType = BusinessEvent["type"];
    gestor): cada usuario tiene un solo rol, así que no chocan.
 
    Al añadir un aviso en el catálogo, añádelo aquí al grupo del rol que lo
-   recibe; si no, llega por push sin poder apagarse. */
+   recibe; si no, llega por push sin poder apagarse. Los de seguridad de la
+   cuenta (security.*) no están a propósito: no se apagan. */
 export type PreferenceGroup = Readonly<{ key: string; label: string; types: readonly EventType[] }>;
 
 const staffCommon: readonly PreferenceGroup[] = [
@@ -26,10 +27,14 @@ const groupsByRole: Record<Role, readonly PreferenceGroup[]> = {
     { key: "payments", label: "Pago aprobado o rechazado", types: ["payment.approved", "payment.rejected"] },
     { key: "recharges", label: "Recarga completada", types: ["recharge.completed"] },
     { key: "invoices", label: "Factura lista", types: ["invoice.authorized"] },
-    { key: "overdue", label: "Pago vencido", types: ["payment.overdue"] },
+    { key: "overdue", label: "Pago por vencer o vencido", types: ["payment.due_soon", "payment.overdue"] },
   ],
   GESTOR: [...staffCommon, { key: "portfolio", label: "Clientes asignados a tu cartera", types: ["client.manager_assigned"] }],
-  ADMIN: [...staffCommon, { key: "invoice_failures", label: "Facturas sin emitir", types: ["invoice.stuck"] }],
+  ADMIN: [
+    ...staffCommon,
+    { key: "invoice_failures", label: "Facturas sin emitir", types: ["invoice.stuck"] },
+    { key: "email_health", label: "Problemas con el envío de correos", types: ["email.quota_warning", "email.delivery_failing"] },
+  ],
 };
 
 export const preferenceGroupsFor = (role: Role): readonly PreferenceGroup[] => groupsByRole[role];

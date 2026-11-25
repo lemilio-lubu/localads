@@ -167,6 +167,24 @@ describe("persistencia POSTPAGO fase 4", () => {
     expect((await prisma.account.findUnique({ where: { id: accountId } }))?.creditUsed?.toFixed(2)).toBe("0.00");
   });
 
+  it("recuerda el vencimiento unos días antes y el mismo día, una sola vez cada uno", async () => {
+    const now = new Date("2026-09-10T15:00:00.000Z");
+    const result = await postpaid.savePostpaid(createPostpaidRecord("reminder", "idem-reminder", 10, 10));
+    await prisma.payment.update({ where: { transactionId: result.id }, data: { dueDate: new Date("2026-09-12T20:00:00.000Z") } });
+    const reminders = () => prisma.outboxEvent.findMany({ where: { type: "payment.due_soon" }, orderBy: { occurredAt: "asc" } });
+
+    expect(await postpaid.remindDuePayments(now)).toBe(1);
+    expect(await postpaid.remindDuePayments(now)).toBe(0);
+    expect((await reminders()).map((event) => event.payload)).toEqual([expect.objectContaining({ transactionId: result.id, daysLeft: 2 })]);
+
+    const dueDay = new Date("2026-09-12T14:00:00.000Z");
+    expect(await postpaid.remindDuePayments(dueDay)).toBe(1);
+    expect(await postpaid.remindDuePayments(dueDay)).toBe(0);
+    expect((await reminders()).at(-1)?.payload).toMatchObject({ daysLeft: 0 });
+    expect(await postpaid.markOverduePayments(new Date("2026-09-13T00:00:00.000Z"))).toMatchObject({ count: 1 });
+    expect(await postpaid.remindDuePayments(new Date("2026-09-13T00:00:00.000Z"))).toBe(0);
+  });
+
   function createPostpaidRecord(suffix: string, idempotencyKey: string, meta: number, google?: number) {
     const createdAt = new Date("2026-09-10T12:00:00.000Z");
     const details = [{

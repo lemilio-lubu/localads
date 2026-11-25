@@ -41,6 +41,13 @@ const clientBase = (user: ClientUser) => (user.accountType === "PREPAGO" ? "/pre
 
 type Message = Readonly<{ title: string; body: string }>;
 
+const unknownActivity = "avisa de inmediato a un administrador de AND.";
+
+function dueSoonMessage(daysLeft: number): Message {
+  if (daysLeft <= 0) return { title: "Tu pago vence hoy", body: "Págalo hoy para seguir recargando sin interrupciones." };
+  return { title: daysLeft === 1 ? "Tu pago vence mañana" : `Tu pago vence en ${daysLeft} días`, body: "Págalo a tiempo para seguir recargando sin interrupciones." };
+}
+
 export function planNotifications(event: BusinessEvent, context: RecipientContext): PlannedNotification[] {
   const actor = "actorUserId" in event ? event.actorUserId : null;
   const toClient = (message: Message, path: string, entityType: string, entityId: string) =>
@@ -48,8 +55,12 @@ export function planNotifications(event: BusinessEvent, context: RecipientContex
   /* El responsable del cliente: su gestor o, si no tiene, los admins. */
   const toStaff = (message: Message, linkPath: string, entityType: string, entityId: string) =>
     (context.managerId ? [context.managerId] : context.adminIds).map((recipientUserId) => ({ recipientUserId, ...message, linkPath, entityType, entityId }));
-  const toAdmins = (message: Message, linkPath: string, entityType: string, entityId: string) =>
+  const toAdmins = (message: Message, linkPath: string | null, entityType: string, entityId: string) =>
     context.adminIds.map((recipientUserId) => ({ recipientUserId, ...message, linkPath, entityType, entityId }));
+
+  /* Seguridad: lleva a la pantalla de contraseña y verificación en dos pasos. */
+  const toOwner = (userId: string, message: Message): PlannedNotification[] =>
+    [{ recipientUserId: userId, ...message, linkPath: "/cambiar-contrasena", entityType: "user", entityId: userId }];
 
   const planned = ((): PlannedNotification[] => {
     switch (event.type) {
@@ -86,6 +97,20 @@ export function planNotifications(event: BusinessEvent, context: RecipientContex
           ...toClient({ title: "Tienes un pago vencido", body: "Regulariza tu pago para seguir recargando." }, "/facturas", "payment", event.paymentId),
           ...toStaff({ title: "Pago vencido", body: `${context.clientName} tiene un pago pospago vencido.` }, "/admin/transacciones", "payment", event.paymentId),
         ];
+      case "payment.due_soon":
+        return toClient(dueSoonMessage(event.daysLeft), "/facturas", "payment", event.paymentId);
+      case "security.password_changed":
+        return toOwner(event.userId, { title: "Tu contraseña cambió", body: `Si no fuiste tú, ${unknownActivity}` });
+      case "security.mfa_enabled":
+        return toOwner(event.userId, { title: "Activaste la verificación en dos pasos", body: `Ahora tu cuenta pide un código al entrar. Si no fuiste tú, cambia tu contraseña y ${unknownActivity}` });
+      case "security.mfa_disabled":
+        return toOwner(event.userId, { title: "Se quitó la verificación en dos pasos", body: `Tu cuenta ya no pide código al entrar. Si no fuiste tú, cambia tu contraseña y ${unknownActivity}` });
+      case "security.sessions_revoked":
+        return toOwner(event.userId, { title: "Cerramos tus sesiones por seguridad", body: "Vimos un uso raro de tu sesión y la cerramos en todos tus dispositivos. Vuelve a entrar y, si no reconoces la actividad, cambia tu contraseña." });
+      case "email.quota_warning":
+        return toAdmins({ title: "Los correos están cerca del límite diario", body: `Hoy salieron ${event.sent} de ${event.limit} correos. Los que no quepan se reintentarán más tarde.` }, null, "email", event.day);
+      case "email.delivery_failing":
+        return toAdmins({ title: "Los correos están fallando", body: `Hoy fallaron ${event.failed} envíos de correo. Se reintentan solos; si sigue, revisa la cuenta de Brevo.` }, null, "email", event.day);
       case "client.manager_assigned":
         return [{ recipientUserId: event.managerId, title: "Te asignaron un cliente", body: `${context.clientName} ahora está en tu cartera.`, linkPath: "/admin/clientes", entityType: "client", entityId: event.clientId }];
       /* Un hecho que esta versión no conoce (escrito por una más nueva durante
@@ -104,9 +129,14 @@ export function planNotifications(event: BusinessEvent, context: RecipientContex
   });
 }
 
-/* Cliente al que se refiere el hecho, o cómo encontrarlo. */
-export type EventSubject = Readonly<{ clientId: string } | { transactionId: string }>;
+/* De quién es el hecho, o cómo encontrarlo: un cliente (directo o por su
+   transacción), un usuario (seguridad de su cuenta) o el sistema (solo
+   admins). */
+export type EventSubject = Readonly<{ clientId: string } | { transactionId: string } | { userId: string } | { system: true }>;
 
 export function subjectOf(event: BusinessEvent): EventSubject {
-  return "clientId" in event ? { clientId: event.clientId } : { transactionId: event.transactionId };
+  if ("clientId" in event) return { clientId: event.clientId };
+  if ("transactionId" in event) return { transactionId: event.transactionId };
+  if ("userId" in event) return { userId: event.userId };
+  return { system: true };
 }

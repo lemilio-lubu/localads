@@ -8,6 +8,15 @@ export class PrismaRecipientDirectory implements RecipientDirectoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
   async contextFor(subject: EventSubject): Promise<RecipientContext | null> {
+    /* La seguridad de una cuenta solo va a su dueño, si sigue activo. */
+    if ("userId" in subject) {
+      const owner = await this.prisma.authUser.findFirst({ where: { id: subject.userId, status: "ACTIVE" }, select: { id: true } });
+      return owner ? { clientName: "", clientUsers: [], managerId: null, adminIds: [] } : null;
+    }
+    if ("system" in subject) {
+      const admins = await this.prisma.authUser.findMany({ where: { role: "ADMIN", status: "ACTIVE" }, select: { id: true } });
+      return { clientName: "", clientUsers: [], managerId: null, adminIds: admins.map((admin) => admin.id) };
+    }
     const clientId = "clientId" in subject
       ? subject.clientId
       : (await this.prisma.rechargeTransaction.findUnique({ where: { id: subject.transactionId }, select: { clientId: true } }))?.clientId;

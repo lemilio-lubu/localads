@@ -3,9 +3,15 @@ import { PlatformRealtimePublisher, silentPlatformRealtime } from "../ports/plat
 
 export type MarkOverduePaymentsResult = Readonly<{
   markedCount: number;
+  remindedCount: number;
   processedAt: string;
 }>;
 
+/**
+ * Barrido de los pagos pospago en crédito: marca los vencidos y deja escritos
+ * los recordatorios que tocan (unos días antes y el mismo día). Ambos son
+ * idempotentes, así que repetirlo no duplica nada.
+ */
 export class MarkOverduePayments {
   constructor(
     private readonly persistence: PostpaidTransactionPersistencePort,
@@ -14,9 +20,11 @@ export class MarkOverduePayments {
   ) {}
 
   async execute(asOf = this.clock()): Promise<MarkOverduePaymentsResult> {
+    /* Primero los vencidos: un pago que venció no recibe además un «vence hoy». */
     const marked = await this.persistence.markOverduePayments(asOf);
     /* Un aviso por cliente, aunque tenga varios pagos vencidos a la vez. */
     for (const clientId of new Set(marked.clientIds)) this.realtime.publishPlatforms(clientId);
-    return { markedCount: marked.count, processedAt: asOf.toISOString() };
+    const remindedCount = await this.persistence.remindDuePayments(asOf);
+    return { markedCount: marked.count, remindedCount, processedAt: asOf.toISOString() };
   }
 }

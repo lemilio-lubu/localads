@@ -239,20 +239,23 @@ model PlatformLifecycleAudit {
 }
 
 model Payment {
-  id                String                    @id @default(cuid())
-  transactionId     String                    @unique
-  status            String                    @default("PENDING")
-  expectedAmount    Decimal
-  confirmedAmount   Decimal?
-  dueDate           DateTime?
-  confirmedAt       DateTime?
-  version           Int                       @default(0)
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
-  transaction       RechargeTransaction       @relation(fields: [transactionId], references: [id], onDelete: Restrict)
-  receipts          PaymentReceipt[]
-  verifications     TransactionVerification[]
-  confirmedEvidence ConfirmedPaymentEvidence?
+  id                 String                    @id @default(cuid())
+  transactionId      String                    @unique
+  status             String                    @default("PENDING")
+  expectedAmount     Decimal
+  confirmedAmount    Decimal?
+  dueDate            DateTime?
+  confirmedAt        DateTime?
+  // Recordatorios de vencimiento ya avisados (unos días antes y el mismo día).
+  dueSoonRemindedAt  DateTime?
+  dueTodayRemindedAt DateTime?
+  version            Int                       @default(0)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  transaction        RechargeTransaction       @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  receipts           PaymentReceipt[]
+  verifications      TransactionVerification[]
+  confirmedEvidence  ConfirmedPaymentEvidence?
 
   @@index([status, dueDate])
 }
@@ -526,9 +529,24 @@ model Notification {
   pushSentAt      DateTime?
   // Cuándo salió por correo (solo los tipos que tienen correo).
   emailSentAt     DateTime?
+  // Envíos por correo fallidos y cuándo toca reintentar (null: nada pendiente).
+  emailAttempts   Int       @default(0)
+  emailRetryAt    DateTime?
 
   @@unique([recipientUserId, dedupeKey])
   @@index([recipientUserId, readAt, createdAt])
+  @@index([emailRetryAt])
+  @@index([createdAt])
+}
+
+/// Correos enviados y fallidos por día (hora de Ecuador), para avisar al admin
+/// antes de llegar al límite diario del proveedor. Una fila por día.
+model EmailDailyUsage {
+  day               String    @id
+  sent              Int       @default(0)
+  failed            Int       @default(0)
+  quotaAlertedAt    DateTime?
+  failuresAlertedAt DateTime?
 }
 
 // Un navegador o PWA donde el usuario activó los avisos. El endpoint lo da el

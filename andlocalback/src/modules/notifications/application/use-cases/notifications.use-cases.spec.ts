@@ -15,7 +15,7 @@ function store(overrides: Partial<NotificationStorePort> = {}) {
     countUnread: vi.fn(async () => 2),
     markRead: vi.fn(async () => 1),
     markPushSent: vi.fn(async () => undefined),
-    markEmailSent: vi.fn(async () => undefined),
+    purgeOld: vi.fn(async () => 0),
     ...overrides,
   };
 }
