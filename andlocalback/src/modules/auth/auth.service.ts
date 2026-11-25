@@ -6,7 +6,7 @@ import { PasswordService } from "./password.service";
 import { AuthPrincipal, isAuthRole } from "./auth.types";
 import { MfaSecretCipher } from "./mfa-secret-cipher";
 import { passwordProblem } from "./password-policy";
-import { lockoutUntil, refreshExpiry, refreshReuseGraceMs, sessionLimits } from "./session-policy";
+import { isLostRotation, lockoutUntil, refreshExpiry, refreshReuseGraceMs, sessionLimits } from "./session-policy";
 import { SessionStateService } from "./session-state.service";
 import { SECURITY_AUDIT_LOG, SecurityAuditLog } from "../../common/audit/security-audit.port";
 import { appendBusinessEvents } from "../../common/events/outbox";
@@ -153,16 +153,22 @@ export class AuthService {
     return { enabled: false };
   }
 
-  async refresh(rawToken: string): Promise<IssuedSession> {
+  async refresh(rawToken: string, retried = false): Promise<IssuedSession> {
     const session = await this.database.refreshSession.findUnique({ where: { tokenHash: hashToken(rawToken) }, include: { user: true } });
     if (!session) throw new UnauthorizedException("Refresh token no válido");
     const now = new Date();
+    /* Sustituto que nunca llegó al navegador (ver isLostRotation). */
+    let lost: Readonly<{ id: string; expiresAt: Date }> | null = null;
     if (session.revokedAt) {
       /* Dos renovaciones casi simultaneas (recargar con una en vuelo) no son
          un robo. Fuera del margen, o si el token se revoco sin sustituto
          (logout, cambio de clave), reutilizarlo tumba toda la familia. */
       const concurrent = session.replacedById !== null && now.getTime() - session.revokedAt.getTime() < refreshReuseGraceMs;
-      if (!concurrent) {
+      if (!concurrent && session.replacedById !== null) {
+        const replacement = await this.database.refreshSession.findUnique({ where: { id: session.replacedById } });
+        if (replacement && isLostRotation(replacement)) lost = replacement;
+      }
+      if (!concurrent && !lost) {
         /* Solo cuenta como reutilizacion si el token tenia sustituto: uno
            revocado por logout o cambio de clave que vuelve no es un robo. */
         const reused = session.replacedById !== null;
@@ -175,13 +181,34 @@ export class AuthService {
         throw new UnauthorizedException("La sesión fue revocada");
       }
     }
-    if (session.expiresAt <= now || session.user.status !== "ACTIVE") { await this.revoke(rawToken); throw new UnauthorizedException("La sesión expiró"); }
+    /* Al recuperar una rotación perdida, la vigencia es la del sustituto, que
+       es lo que el usuario tenía de verdad. */
+    if ((lost?.expiresAt ?? session.expiresAt) <= now || session.user.status !== "ACTIVE") { await this.revoke(rawToken); throw new UnauthorizedException("La sesión expiró"); }
     await this.assertCommercialAccess(session.user.clientId, session.user.accountId);
     const principal = this.principal(session.user);
     const nextRaw = randomBytes(48).toString("base64url"); const nextId = randomUUID();
-    const create = this.database.refreshSession.create({ data: { id: nextId, userId: session.userId, familyId: session.familyId, familyCreatedAt: session.familyCreatedAt, tokenHash: hashToken(nextRaw), expiresAt: refreshExpiry(principal.role, session.familyCreatedAt, now) } });
-    if (session.revokedAt) await create;
-    else await this.database.$transaction([this.database.refreshSession.update({ where: { id: session.id }, data: { revokedAt: now, lastUsedAt: now, replacedById: nextId } }), create]);
+    const createData = { id: nextId, userId: session.userId, familyId: session.familyId, familyCreatedAt: session.familyCreatedAt, tokenHash: hashToken(nextRaw), expiresAt: refreshExpiry(principal.role, session.familyCreatedAt, now) };
+    if (lost) {
+      const replacement = lost;
+      /* El sustituto sin usar se retira apuntando al nuevo: si apareciera
+         después, sí habría dos poseedores y saltaría la alarma. El token
+         viejo queda como recién rotado, así una segunda pestaña con la
+         misma cookie cae en el margen de concurrencia. */
+      const recovered = await this.database.$transaction(async (database) => {
+        const claimed = await database.refreshSession.updateMany({ where: { id: replacement.id, revokedAt: null, lastUsedAt: null }, data: { revokedAt: now, replacedById: nextId } });
+        if (claimed.count === 0) return false;
+        await database.refreshSession.update({ where: { id: session.id }, data: { revokedAt: now, replacedById: nextId } });
+        await database.refreshSession.create({ data: createData });
+        return true;
+      });
+      /* Otra petición tocó el sustituto entre la lectura y aquí: se vuelve a
+         decidir con el estado nuevo, una sola vez. */
+      if (!recovered) {
+        if (retried) throw new UnauthorizedException("La sesión fue revocada");
+        return this.refresh(rawToken, true);
+      }
+    } else if (session.revokedAt) await this.database.refreshSession.create({ data: createData });
+    else await this.database.$transaction([this.database.refreshSession.update({ where: { id: session.id }, data: { revokedAt: now, lastUsedAt: now, replacedById: nextId } }), this.database.refreshSession.create({ data: createData })]);
     return this.session(principal, session.user.tokenVersion, nextRaw, session.familyCreatedAt);
   }
 

@@ -251,13 +251,48 @@ describe("2.2 eventos de acceso", () => {
     try {
       const { audit, auth, database } = await setup();
       const session = await auth.login("marta@andlocal.ec", password) as IssuedSession;
-      await auth.refresh(session.refreshToken);
+      const rotated = await auth.refresh(session.refreshToken);
       vi.advanceTimersByTime(31_000);
+      /* El dueño ya usó el sustituto: el token viejo en otras manos es un robo. */
+      await auth.refresh(rotated.refreshToken);
       await auth.refresh(session.refreshToken).catch(() => undefined);
       expect(audit.events.at(-1)).toMatchObject({ action: "REFRESH_TOKEN_REUSED", outcome: "DENIED", target: { type: "USER", id: "u1" } });
       /* Se cerraron sus sesiones: el dueño recibe un aviso; un segundo intento ya no cierra nada y no repite. */
       await auth.refresh(session.refreshToken).catch(() => undefined);
       expect(database.events.map((event) => event.type)).toEqual(["security.sessions_revoked"]);
+    } finally { vi.useRealTimers(); }
+  });
+  it("si la respuesta de la rotacion se perdio, el token anterior sigue valiendo y no hay alarma", async () => {
+    vi.useFakeTimers();
+    try {
+      const { audit, auth, database } = await setup();
+      const session = await auth.login("marta@andlocal.ec", password) as IssuedSession;
+      const lostReply = await auth.refresh(session.refreshToken);
+      vi.advanceTimersByTime(10 * 60_000);
+      /* El navegador nunca recibió el sustituto y vuelve con el token viejo. */
+      const recovered = await auth.refresh(session.refreshToken);
+      expect(actions(audit)).not.toContain("REFRESH_TOKEN_REUSED");
+      expect(database.events).toEqual([]);
+      /* La sesión sigue: el token recuperado se renueva con normalidad. */
+      vi.advanceTimersByTime(60_000);
+      await expect(auth.refresh(recovered.refreshToken)).resolves.toMatchObject({ kind: "session" });
+      /* Si el sustituto retirado aparece después, había dos poseedores. */
+      await auth.refresh(lostReply.refreshToken).catch(() => undefined);
+      expect(audit.events.at(-1)).toMatchObject({ action: "REFRESH_TOKEN_REUSED" });
+      expect(database.events.map((event) => event.type)).toEqual(["security.sessions_revoked"]);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("dos pestañas con la cookie vieja a la vez: la segunda cae en el margen", async () => {
+    vi.useFakeTimers();
+    try {
+      const { audit, auth } = await setup();
+      const session = await auth.login("marta@andlocal.ec", password) as IssuedSession;
+      await auth.refresh(session.refreshToken);
+      vi.advanceTimersByTime(10 * 60_000);
+      await auth.refresh(session.refreshToken);
+      await expect(auth.refresh(session.refreshToken)).resolves.toMatchObject({ kind: "session" });
+      expect(actions(audit)).not.toContain("REFRESH_TOKEN_REUSED");
     } finally { vi.useRealTimers(); }
   });
 });

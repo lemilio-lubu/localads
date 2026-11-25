@@ -23,6 +23,15 @@ export function refreshExpiry(role: AuthRole, familyCreatedAt: Date, now = new D
    recibe su propio token en vez de revocar toda la familia. */
 export const refreshReuseGraceMs = 30_000;
 
+/* Un token ya rotado que vuelve fuera del margen no siempre es un robo: si
+   la respuesta de la rotación nunca llegó al navegador (recarga, corte de red,
+   VPN), este sigue con el token anterior. Se reconoce porque el sustituto
+   sigue vigente y nadie lo ha usado. Si un ladrón se adelanta, el dueño
+   presentará después el sustituto retirado y ahí sí salta la alarma. */
+export function isLostRotation(replacement: Readonly<{ revokedAt: Date | null; lastUsedAt: Date | null }>): boolean {
+  return replacement.revokedAt === null && replacement.lastUsedAt === null;
+}
+
 /* Cinco fallos seguidos bloquean 15 minutos; cada fallo extra lo duplica,
    hasta un dia. */
 export const lockoutThreshold = 5;
