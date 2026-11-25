@@ -22,10 +22,13 @@
 .text span { color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.45; }
 .text small { color: var(--color-text-muted); font-size: var(--font-size-micro); }
 .more { min-height: var(--hit-target); border: 0; border-top: 1px solid var(--color-border); background: none; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
+.settings { display: grid; min-height: var(--hit-target); flex: none; place-items: center; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: var(--font-size-caption); text-decoration: none; }
+.settings:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: -3px; }
 .more:disabled { color: var(--color-text-subtle); cursor: default; }
 @media (hover: hover) and (pointer: fine) {
   .trigger:hover { border-color: var(--color-text-subtle); background: var(--color-surface-hover); }
   .item:hover { background: var(--color-surface-hover); }
+  .settings:hover { color: var(--color-text); text-decoration: underline; }
 }
 @media (prefers-reduced-motion: reduce) {
   .trigger { transition-duration: 0ms; }

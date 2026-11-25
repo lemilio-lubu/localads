@@ -4,7 +4,9 @@ import { appendBusinessEvents } from "../src/common/events/outbox";
 import { PrismaService } from "../src/database/prisma.service";
 import { PrismaClientAdminRepository } from "../src/modules/clients/infrastructure/prisma-client-admin.repository";
 import { DispatchBusinessEvents } from "../src/modules/notifications/application/use-cases/dispatch-business-events";
+import { PrismaNotificationPreferenceStore } from "../src/modules/notifications/infrastructure/prisma-notification-preference.store";
 import { PrismaNotificationStore } from "../src/modules/notifications/infrastructure/prisma-notification.store";
+import { PrismaPushSubscriptionStore } from "../src/modules/notifications/infrastructure/prisma-push-subscription.store";
 import { PrismaOutboxReader } from "../src/modules/notifications/infrastructure/prisma-outbox.reader";
 import { PrismaRecipientDirectory } from "../src/modules/notifications/infrastructure/prisma-recipient.directory";
 import { createTestDatabase } from "./support/postgres-test-database";
@@ -32,6 +34,8 @@ describe("outbox y bandeja de avisos", () => {
   beforeEach(async () => {
     await prisma.notification.deleteMany();
     await prisma.outboxEvent.deleteMany();
+    await prisma.pushSubscription.deleteMany();
+    await prisma.notificationPreference.deleteMany();
   });
 
   it("si la transacción se revierte, el hecho tampoco queda", async () => {
@@ -71,7 +75,7 @@ describe("outbox y bandeja de avisos", () => {
     const pushed: [string, number][] = [];
     const dispatch = new DispatchBusinessEvents(reader, new PrismaRecipientDirectory(prisma as PrismaService), store, { notifyUser: (userId, unread) => pushed.push([userId, unread]) });
 
-    expect(await dispatch.execute()).toEqual({ processed: 1, failed: 0, notified: 1 });
+    expect(await dispatch.execute()).toEqual({ processed: 1, failed: 0, notified: 1, deliveryFailed: 0 });
     const [notification] = await prisma.notification.findMany();
     expect(notification).toMatchObject({ recipientUserId: "auth-gestor", type: "activation.requested", linkPath: "/admin/activaciones" });
     expect(pushed).toEqual([["auth-gestor", 1]]);
@@ -99,5 +103,30 @@ describe("outbox y bandeja de avisos", () => {
     expect(await store.countUnread("auth-admin")).toBe(1);
     expect(await store.markRead("auth-prepago", "ALL", new Date())).toBe(2);
     expect(await store.countUnread("auth-prepago")).toBe(0);
+  });
+
+  it("un dispositivo pasa al usuario que activa los avisos en él, y cada uno solo borra el suyo", async () => {
+    const subscriptions = new PrismaPushSubscriptionStore(prisma as PrismaService);
+    const device = { endpoint: "https://fcm.googleapis.com/fcm/send/compartido", p256dh: "k", auth: "a", userAgent: null };
+    await subscriptions.upsert({ userId: "auth-prepago", ...device });
+    await subscriptions.upsert({ userId: "auth-gestor", ...device });
+    expect((await subscriptions.forUsers(["auth-prepago", "auth-gestor"])).map((item) => item.userId)).toEqual(["auth-gestor"]);
+
+    await subscriptions.remove("auth-prepago", device.endpoint);
+    expect(await prisma.pushSubscription.count()).toBe(1);
+    await subscriptions.remove("auth-gestor", device.endpoint);
+    expect(await prisma.pushSubscription.count()).toBe(0);
+  });
+
+  it("solo se guarda lo apagado: encender vuelve al valor por defecto", async () => {
+    const preferences = new PrismaNotificationPreferenceStore(prisma as PrismaService);
+    await preferences.setPush("auth-gestor", ["payment.approved", "recharge.postpaid_requested"], false);
+    await preferences.setPush("auth-gestor", ["payment.approved", "recharge.postpaid_requested"], false);
+    expect([...((await preferences.disabledTypes(["auth-gestor", "auth-prepago"])).get("auth-gestor") ?? [])].sort()).toEqual(["payment.approved", "recharge.postpaid_requested"]);
+
+    await preferences.setPush("auth-gestor", ["payment.approved"], true);
+    const after = await preferences.disabledTypes(["auth-gestor"]);
+    expect([...(after.get("auth-gestor") ?? [])]).toEqual(["recharge.postpaid_requested"]);
+    expect(await prisma.notificationPreference.count()).toBe(1);
   });
 });

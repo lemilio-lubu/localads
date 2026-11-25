@@ -33,6 +33,7 @@ export class BusinessEventsDispatcherRunner implements OnModuleInit, OnModuleDes
     try {
       const result = await this.dispatch.execute();
       if (result.failed > 0) this.logger.warn(`${result.failed} hecho(s) sin procesar; se reintentarán`);
+      if (result.deliveryFailed > 0) this.logger.warn(`${result.deliveryFailed} envío(s) push fallidos; los avisos siguen en la bandeja`);
     } catch (error) {
       this.logger.error(`No se pudieron despachar los avisos: ${error instanceof Error ? error.message : String(error)}`);
     } finally {

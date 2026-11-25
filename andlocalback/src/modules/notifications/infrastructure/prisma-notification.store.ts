@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../database/prisma.service";
 import { NotificationPage, NotificationStorePort, NotificationView } from "../application/ports/notification.ports";
+import { CreatedNotification } from "../application/ports/push.ports";
 import { PlannedNotification } from "../domain/notification-catalog";
 
 const viewSelect = { id: true, type: true, title: true, body: true, linkPath: true, entityType: true, entityId: true, readAt: true, createdAt: true } as const;
@@ -9,17 +10,16 @@ const viewSelect = { id: true, type: true, title: true, body: true, linkPath: tr
 export class PrismaNotificationStore implements NotificationStorePort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async insert(type: string, dedupeKey: string, notifications: readonly PlannedNotification[]): Promise<readonly string[]> {
+  async insert(type: string, dedupeKey: string, notifications: readonly PlannedNotification[]): Promise<readonly CreatedNotification[]> {
     if (notifications.length === 0) return [];
     /* skipDuplicates + RETURNING: un reintento del mismo hecho no duplica y
        solo devuelve lo que de verdad se creó ahora. */
     const createdAt = new Date();
-    const created = await this.prisma.notification.createManyAndReturn({
+    return this.prisma.notification.createManyAndReturn({
       data: notifications.map((item) => ({ ...item, type, dedupeKey, createdAt })),
       skipDuplicates: true,
-      select: { recipientUserId: true },
+      select: { id: true, recipientUserId: true, type: true, title: true, body: true, linkPath: true },
     });
-    return created.map((item) => item.recipientUserId);
   }
 
   async list(userId: string, options: Readonly<{ cursor: string | null; limit: number; unreadOnly: boolean }>): Promise<NotificationPage> {
@@ -45,6 +45,11 @@ export class PrismaNotificationStore implements NotificationStorePort {
       data: { readAt: at },
     });
     return updated.count;
+  }
+
+  async markPushSent(ids: readonly string[], at: Date): Promise<void> {
+    if (ids.length === 0) return;
+    await this.prisma.notification.updateMany({ where: { id: { in: [...ids] } }, data: { pushSentAt: at } });
   }
 }
 

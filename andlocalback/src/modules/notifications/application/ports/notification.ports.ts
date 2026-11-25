@@ -1,5 +1,6 @@
 import { BusinessEvent } from "../../../../common/events/business-events";
 import { EventSubject, PlannedNotification, RecipientContext } from "../../domain/notification-catalog";
+import { CreatedNotification } from "./push.ports";
 
 export type ClaimedOutboxEvent = Readonly<{ id: string; attempts: number; event: BusinessEvent }>;
 
@@ -35,12 +36,13 @@ export type NotificationView = Readonly<{
 export type NotificationPage = Readonly<{ items: readonly NotificationView[]; nextCursor: string | null }>;
 
 export interface NotificationStorePort {
-  /* Inserta sin duplicar (dedupeKey) y devuelve a quién se le creó algo nuevo. */
-  insert(type: string, dedupeKey: string, notifications: readonly PlannedNotification[]): Promise<readonly string[]>;
+  /* Inserta sin duplicar (dedupeKey) y devuelve solo lo que se creó ahora. */
+  insert(type: string, dedupeKey: string, notifications: readonly PlannedNotification[]): Promise<readonly CreatedNotification[]>;
   list(userId: string, options: Readonly<{ cursor: string | null; limit: number; unreadOnly: boolean }>): Promise<NotificationPage>;
   countUnread(userId: string): Promise<number>;
   /* Solo marca las del propio usuario: devuelve cuántas cambió. */
   markRead(userId: string, ids: readonly string[] | "ALL", at: Date): Promise<number>;
+  markPushSent(ids: readonly string[], at: Date): Promise<void>;
 }
 export const NOTIFICATION_STORE = Symbol("NOTIFICATION_STORE");
 
