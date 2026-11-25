@@ -35,9 +35,10 @@ export class OverduePaymentsRunner implements OnModuleInit, OnModuleDestroy {
       if (result.markedCount > 0) {
         this.logger.log(`${result.markedCount} pago(s) pospago marcado(s) como vencido(s)`);
       }
+      if (result.remindedCount > 0) this.logger.log(`${result.remindedCount} recordatorio(s) de vencimiento por avisar`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`No se pudieron marcar los pagos vencidos: ${message}`);
+      this.logger.error(`No se pudieron revisar los vencimientos: ${message}`);
     } finally {
       this.running = false;
     }

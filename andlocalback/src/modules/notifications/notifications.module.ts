@@ -18,7 +18,21 @@ import {
   PushSenderPort,
   PushSubscriptionStorePort,
 } from "./application/ports/push.ports";
-import { EMAIL_RECIPIENT_DIRECTORY, EMAIL_SENDER, EmailRecipientDirectoryPort, EmailSenderPort } from "./application/ports/email.ports";
+import {
+  EMAIL_DELIVERY_STORE,
+  EMAIL_RECIPIENT_DIRECTORY,
+  EMAIL_SENDER,
+  EMAIL_USAGE,
+  EmailDeliveryStorePort,
+  EmailRecipientDirectoryPort,
+  EmailSenderPort,
+  EmailUsagePort,
+} from "./application/ports/email.ports";
+import { NotificationsMaintenanceRunner } from "./application/services/notifications-maintenance.runner";
+import { PurgeOldNotifications } from "./application/use-cases/purge-old-notifications";
+import { emailDailyLimitFromEnvironment } from "./domain/email-health";
+import { PrismaEmailDeliveryStore } from "./infrastructure/prisma-email-delivery.store";
+import { PrismaEmailUsage } from "./infrastructure/prisma-email-usage";
 import { BusinessEventsDispatcherRunner } from "./application/services/business-events-dispatcher.runner";
 import { DispatchBusinessEvents } from "./application/use-cases/dispatch-business-events";
 import { DeliverEmailNotifications } from "./application/use-cases/deliver-email-notifications";
@@ -56,12 +70,19 @@ import { NotificationsController } from "./presentation/notifications.controller
     },
     { provide: EMAIL_SENDER, useFactory: () => new BrevoEmailSender() },
     { provide: EMAIL_RECIPIENT_DIRECTORY, useClass: PrismaEmailRecipientDirectory },
+    { provide: EMAIL_DELIVERY_STORE, useClass: PrismaEmailDeliveryStore },
+    { provide: EMAIL_USAGE, useClass: PrismaEmailUsage },
     {
       provide: DeliverEmailNotifications,
-      inject: [EMAIL_SENDER, EMAIL_RECIPIENT_DIRECTORY, NOTIFICATION_PREFERENCE_STORE, NOTIFICATION_STORE],
-      useFactory: (sender: EmailSenderPort, directory: EmailRecipientDirectoryPort, preferences: NotificationPreferenceStorePort, store: NotificationStorePort) =>
-        new DeliverEmailNotifications(sender, directory, preferences, store, process.env.FRONTEND_ORIGIN?.trim() || null),
+      inject: [EMAIL_SENDER, EMAIL_RECIPIENT_DIRECTORY, NOTIFICATION_PREFERENCE_STORE, EMAIL_DELIVERY_STORE, EMAIL_USAGE],
+      useFactory: (sender: EmailSenderPort, directory: EmailRecipientDirectoryPort, preferences: NotificationPreferenceStorePort, deliveries: EmailDeliveryStorePort, usage: EmailUsagePort) =>
+        new DeliverEmailNotifications(sender, directory, preferences, deliveries, usage, {
+          appUrl: process.env.FRONTEND_ORIGIN?.trim() || null,
+          dailyLimit: emailDailyLimitFromEnvironment(),
+        }),
     },
+    { provide: PurgeOldNotifications, inject: [NOTIFICATION_STORE], useFactory: (store: NotificationStorePort) => new PurgeOldNotifications(store) },
+    NotificationsMaintenanceRunner,
     {
       provide: DispatchBusinessEvents,
       inject: [OUTBOX_READER, RECIPIENT_DIRECTORY, NOTIFICATION_STORE, NOTIFICATION_REALTIME, DeliverPushNotifications, DeliverEmailNotifications],

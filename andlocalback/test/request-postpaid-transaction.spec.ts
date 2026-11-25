@@ -70,6 +70,8 @@ class MemoryPostpaidPersistence implements PostpaidTransactionPersistencePort {
   overdueCalls: Date[] = [];
   markedCount = 0;
   markedClientIds: string[] = [];
+  reminderCalls: Date[] = [];
+  remindedCount = 0;
   loadCalls = 0;
   findCalls = 0;
 
@@ -93,6 +95,11 @@ class MemoryPostpaidPersistence implements PostpaidTransactionPersistencePort {
   async markOverduePayments(asOf: Date) {
     this.overdueCalls.push(asOf);
     return { count: this.markedCount, clientIds: this.markedClientIds };
+  }
+
+  async remindDuePayments(now: Date) {
+    this.reminderCalls.push(now);
+    return this.remindedCount;
   }
 }
 
@@ -276,7 +283,8 @@ describe("MarkOverduePayments", () => {
 
     const result = await useCase.execute();
 
-    expect(result).toEqual({ markedCount: 3, processedAt: now.toISOString() });
+    expect(result).toEqual({ markedCount: 3, remindedCount: 0, processedAt: now.toISOString() });
+    expect(persistence.reminderCalls).toEqual([now]);
     expect(persistence.overdueCalls).toEqual([now]);
   });
 

@@ -24,6 +24,7 @@ import {
   TransactionRechargeStatus,
 } from "../../domain/model/domain-status";
 import { MonetaryAmount } from "../../domain/value-objects/monetary-amount";
+import { daysUntilDue, reminderWindows } from "../../domain/policies/payment-reminder.policy";
 import {
   decimalToMonetaryAmount,
   isUniqueConstraintError,
@@ -224,6 +225,30 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
       });
       await appendBusinessEvents(database, ...marked.map((payment) => ({ type: "payment.overdue" as const, paymentId: payment.id, transactionId: payment.transactionId })));
       return { count: marked.length, clientIds: marked.map((payment) => payment.transaction.clientId) };
+    });
+  }
+
+  /* No toca el estado ni la versión del pago: solo deja constancia del aviso. */
+  async remindDuePayments(now: Date) {
+    const windows = reminderWindows(now);
+    return this.prisma.$transaction(async (database) => {
+      const today = await database.payment.updateManyAndReturn({
+        where: { status: "IN_CREDIT", dueTodayRemindedAt: null, dueDate: { gte: windows.today.from, lt: windows.today.to } },
+        data: { dueTodayRemindedAt: now },
+        select: { id: true, transactionId: true },
+      });
+      /* El previo no sale si ya salió el del mismo día. */
+      const soon = await database.payment.updateManyAndReturn({
+        where: { status: "IN_CREDIT", dueSoonRemindedAt: null, dueTodayRemindedAt: null, dueDate: { gte: windows.soon.from, lt: windows.soon.to } },
+        data: { dueSoonRemindedAt: now },
+        select: { id: true, transactionId: true, dueDate: true },
+      });
+      await appendBusinessEvents(
+        database,
+        ...today.map((payment) => ({ type: "payment.due_soon" as const, paymentId: payment.id, transactionId: payment.transactionId, daysLeft: 0 })),
+        ...soon.map((payment) => ({ type: "payment.due_soon" as const, paymentId: payment.id, transactionId: payment.transactionId, daysLeft: daysUntilDue(payment.dueDate!, now) })),
+      );
+      return today.length + soon.length;
     });
   }
 }

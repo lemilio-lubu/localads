@@ -9,6 +9,7 @@ import { passwordProblem } from "./password-policy";
 import { lockoutUntil, refreshExpiry, refreshReuseGraceMs, sessionLimits } from "./session-policy";
 import { SessionStateService } from "./session-state.service";
 import { SECURITY_AUDIT_LOG, SecurityAuditLog } from "../../common/audit/security-audit.port";
+import { appendBusinessEvents } from "../../common/events/outbox";
 import { generateRecoveryCodes, generateTotpSecret, hashRecoveryCode, otpauthUri, verifyTotp } from "./totp";
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
@@ -120,8 +121,12 @@ export class AuthService {
     const step = verifyTotp(this.cipher.decrypt(user.mfaSecret), code, null);
     if (step === null) throw new BadRequestException("El código no es correcto. Revisa que la hora del móvil esté bien");
     const recoveryCodes = generateRecoveryCodes();
-    const claimed = await this.database.authUser.updateMany({ where: { id: user.id, mfaEnabledAt: null, mfaSecret: user.mfaSecret }, data: { mfaEnabledAt: new Date(), mfaLastStep: step, mfaRecoveryCodes: recoveryCodes.map(hashRecoveryCode) } });
-    if (claimed.count !== 1) throw new BadRequestException(mfaAlreadyEnabled);
+    const claimed = await this.database.$transaction(async (database) => {
+      const updated = await database.authUser.updateMany({ where: { id: user.id, mfaEnabledAt: null, mfaSecret: user.mfaSecret }, data: { mfaEnabledAt: new Date(), mfaLastStep: step, mfaRecoveryCodes: recoveryCodes.map(hashRecoveryCode) } });
+      if (updated.count === 1) await appendBusinessEvents(database, { type: "security.mfa_enabled", userId: user.id });
+      return updated.count;
+    });
+    if (claimed !== 1) throw new BadRequestException(mfaAlreadyEnabled);
     await this.audit.record({ action: "MFA_ENABLED", outcome: "SUCCESS", actorUserId: user.id, target: { type: "USER", id: user.id } });
     return { recoveryCodes };
   }
@@ -140,7 +145,10 @@ export class AuthService {
     if (!user.mfaEnabledAt || !user.mfaSecret) return { enabled: false };
     const validCode = verifyTotp(this.cipher.decrypt(user.mfaSecret), code, user.mfaLastStep) !== null || user.mfaRecoveryCodes.includes(hashRecoveryCode(code));
     if (!validCode) { await denied("BAD_CODE"); throw new BadRequestException("El código no es correcto"); }
-    await this.database.authUser.update({ where: { id: user.id }, data: { mfaSecret: null, mfaEnabledAt: null, mfaLastStep: null, mfaRecoveryCodes: [] } });
+    await this.database.$transaction(async (database) => {
+      await database.authUser.update({ where: { id: user.id }, data: { mfaSecret: null, mfaEnabledAt: null, mfaLastStep: null, mfaRecoveryCodes: [] } });
+      await appendBusinessEvents(database, { type: "security.mfa_disabled", userId: user.id });
+    });
     await this.audit.record({ action: "MFA_DISABLED", outcome: "SUCCESS", actorUserId: user.id, target: { type: "USER", id: user.id } });
     return { enabled: false };
   }
@@ -155,10 +163,15 @@ export class AuthService {
          (logout, cambio de clave), reutilizarlo tumba toda la familia. */
       const concurrent = session.replacedById !== null && now.getTime() - session.revokedAt.getTime() < refreshReuseGraceMs;
       if (!concurrent) {
-        await this.database.refreshSession.updateMany({ where: { familyId: session.familyId, revokedAt: null }, data: { revokedAt: now } });
         /* Solo cuenta como reutilizacion si el token tenia sustituto: uno
            revocado por logout o cambio de clave que vuelve no es un robo. */
-        if (session.replacedById !== null) await this.audit.record({ action: "REFRESH_TOKEN_REUSED", outcome: "DENIED", actorUserId: null, target: { type: "USER", id: session.userId }, detail: { familyId: session.familyId } });
+        const reused = session.replacedById !== null;
+        await this.database.$transaction(async (database) => {
+          const revoked = await database.refreshSession.updateMany({ where: { familyId: session.familyId, revokedAt: null }, data: { revokedAt: now } });
+          /* Se avisa al dueño solo si de verdad se le cerró alguna sesión. */
+          if (reused && revoked.count > 0) await appendBusinessEvents(database, { type: "security.sessions_revoked", userId: session.userId });
+        });
+        if (reused) await this.audit.record({ action: "REFRESH_TOKEN_REUSED", outcome: "DENIED", actorUserId: null, target: { type: "USER", id: session.userId }, detail: { familyId: session.familyId } });
         throw new UnauthorizedException("La sesión fue revocada");
       }
     }
@@ -209,10 +222,12 @@ export class AuthService {
     if (problem) throw new BadRequestException(problem);
     if (await this.passwords.verify(newPassword, user.passwordHash)) throw new BadRequestException("La contraseña nueva debe ser distinta de la actual");
     const passwordHash = await this.passwords.hash(newPassword);
-    await this.database.$transaction([
-      this.database.authUser.update({ where: { id: userId }, data: { passwordHash, mustChangePassword: false, tokenVersion: { increment: 1 }, failedLoginCount: 0, lockedUntil: null } }),
-      this.database.refreshSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } }),
-    ]);
+    await this.database.$transaction(async (database) => {
+      await database.authUser.update({ where: { id: userId }, data: { passwordHash, mustChangePassword: false, tokenVersion: { increment: 1 }, failedLoginCount: 0, lockedUntil: null } });
+      await database.refreshSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
+      /* Cambiar la temporal es el primer acceso, no algo que avisar. */
+      if (!user.mustChangePassword) await appendBusinessEvents(database, { type: "security.password_changed", userId });
+    });
     this.sessions.invalidate(userId);
     await this.audit.record({ action: "PASSWORD_CHANGED", outcome: "SUCCESS", actorUserId: userId, target: { type: "USER", id: userId }, detail: { wasTemporary: user.mustChangePassword } });
     return { success: true };

@@ -182,9 +182,21 @@ describe("2.2 eventos de acceso", () => {
       mfaSecret: null, mfaEnabledAt: null, mfaLastStep: null, mfaRecoveryCodes: [], ...extra,
     };
     const audit = recordingAudit();
-    const auth = new AuthService(memoryDatabase([user]) as never, passwords, new AccessTokenService(), cipher, { invalidate: vi.fn() } as never, audit);
-    return { user, audit, auth };
+    const database = memoryDatabase([user]);
+    const auth = new AuthService(database as never, passwords, new AccessTokenService(), cipher, { invalidate: vi.fn() } as never, audit);
+    return { user, audit, auth, database };
   }
+
+  it("avisa al dueño de la cuenta: cambio de clave y alta y baja del doble factor", async () => {
+    const { auth, database } = await setup();
+    await auth.changePassword("u1", password, "otra frase bastante larga");
+    const { secret } = await auth.startEnrollment("u1");
+    const { recoveryCodes } = await auth.confirmEnrollment("u1", hotp(base32Decode(secret), totpStep()));
+    await auth.disableMfa("u1", "otra frase bastante larga", recoveryCodes[0]!);
+    expect(database.events.map((event) => [event.type, (event.payload as { userId: string }).userId])).toEqual([
+      ["security.password_changed", "u1"], ["security.mfa_enabled", "u1"], ["security.mfa_disabled", "u1"],
+    ]);
+  });
 
   it("un correo que no existe deja el fallo sin objetivo y sin el texto tecleado", async () => {
     const { audit, auth } = await setup();
@@ -237,12 +249,15 @@ describe("2.2 eventos de acceso", () => {
   it("reusar un refresh rotado fuera del margen queda como posible robo", async () => {
     vi.useFakeTimers();
     try {
-      const { audit, auth } = await setup();
+      const { audit, auth, database } = await setup();
       const session = await auth.login("marta@andlocal.ec", password) as IssuedSession;
       await auth.refresh(session.refreshToken);
       vi.advanceTimersByTime(31_000);
       await auth.refresh(session.refreshToken).catch(() => undefined);
       expect(audit.events.at(-1)).toMatchObject({ action: "REFRESH_TOKEN_REUSED", outcome: "DENIED", target: { type: "USER", id: "u1" } });
+      /* Se cerraron sus sesiones: el dueño recibe un aviso; un segundo intento ya no cierra nada y no repite. */
+      await auth.refresh(session.refreshToken).catch(() => undefined);
+      expect(database.events.map((event) => event.type)).toEqual(["security.sessions_revoked"]);
     } finally { vi.useRealTimers(); }
   });
 });

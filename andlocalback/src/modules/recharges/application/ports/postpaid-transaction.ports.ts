@@ -43,6 +43,9 @@ export interface PostpaidTransactionPersistencePort {
   savePostpaid(record: PostpaidTransactionRecord): Promise<PostpaidTransactionView>;
   /* clientIds: los clientes de los pagos marcados, para avisar a sus pantallas. */
   markOverduePayments(asOf: Date): Promise<Readonly<{ count: number; clientIds: readonly string[] }>>;
+  /* Marca los recordatorios de vencimiento que tocan ahora y escribe su hecho
+     en la misma transacción: cada uno sale una sola vez. Devuelve cuántos. */
+  remindDuePayments(now: Date): Promise<number>;
 }
 
 export const POSTPAID_TRANSACTION_PERSISTENCE = Symbol("POSTPAID_TRANSACTION_PERSISTENCE");

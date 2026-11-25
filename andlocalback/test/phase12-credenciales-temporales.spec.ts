@@ -100,9 +100,12 @@ describe("Fase 12 - cambio de contraseña", () => {
   const passwords = new PasswordService();
 
   async function service(stored: string) {
-    const authUser = { findUnique: vi.fn().mockResolvedValue({ id: "u1", passwordHash: stored }), update: vi.fn() };
+    const authUser = { findUnique: vi.fn().mockResolvedValue({ id: "u1", passwordHash: stored, mustChangePassword: true }), update: vi.fn() };
     const refreshSession = { updateMany: vi.fn() };
-    const database = { authUser, refreshSession, $transaction: vi.fn().mockResolvedValue([]) };
+    const outboxEvent = { createMany: vi.fn() };
+    const database: Record<string, unknown> & { authUser: typeof authUser; refreshSession: typeof refreshSession; outboxEvent: typeof outboxEvent; $transaction: ReturnType<typeof vi.fn> } = {
+      authUser, refreshSession, outboxEvent, $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(database)),
+    };
     return { database, service: new AuthService(database as never, passwords, {} as never, {} as never, { invalidate: vi.fn() } as never, recordingAudit()) };
   }
 
@@ -128,5 +131,7 @@ describe("Fase 12 - cambio de contraseña", () => {
     expect(database.authUser.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ mustChangePassword: false, tokenVersion: { increment: 1 } }) }));
     expect(database.refreshSession.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1", revokedAt: null } }));
     expect(database.$transaction).toHaveBeenCalledTimes(1);
+    /* Cambiar la temporal es el primer acceso: no se avisa. */
+    expect(database.outboxEvent.createMany).not.toHaveBeenCalled();
   });
 });

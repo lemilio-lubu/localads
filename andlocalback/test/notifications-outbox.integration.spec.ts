@@ -9,6 +9,8 @@ import { PrismaNotificationStore } from "../src/modules/notifications/infrastruc
 import { PrismaPushSubscriptionStore } from "../src/modules/notifications/infrastructure/prisma-push-subscription.store";
 import { PrismaOutboxReader } from "../src/modules/notifications/infrastructure/prisma-outbox.reader";
 import { PrismaRecipientDirectory } from "../src/modules/notifications/infrastructure/prisma-recipient.directory";
+import { PrismaEmailDeliveryStore } from "../src/modules/notifications/infrastructure/prisma-email-delivery.store";
+import { PrismaEmailUsage } from "../src/modules/notifications/infrastructure/prisma-email-usage";
 import { createTestDatabase } from "./support/postgres-test-database";
 
 /* PostgreSQL de verdad: la reserva con SKIP LOCKED, el ON CONFLICT de la
@@ -36,6 +38,7 @@ describe("outbox y bandeja de avisos", () => {
     await prisma.outboxEvent.deleteMany();
     await prisma.pushSubscription.deleteMany();
     await prisma.notificationPreference.deleteMany();
+    await prisma.emailDailyUsage.deleteMany();
   });
 
   it("si la transacción se revierte, el hecho tampoco queda", async () => {
@@ -130,5 +133,54 @@ describe("outbox y bandeja de avisos", () => {
     expect(await prisma.notificationPreference.count()).toBe(1);
     await preferences.setEnabled("auth-prepago", ["payment.rejected"], "email", true);
     expect(await prisma.notificationPreference.count()).toBe(0);
+  });
+  it("un correo fallido se reserva para reintentar una sola vez, aunque haya dos procesos", async () => {
+    const deliveries = new PrismaEmailDeliveryStore(prisma as PrismaService);
+    const created = await store.insert("payment.rejected", "outbox:correo", [{ recipientUserId: "auth-prepago", title: "Tu pago fue rechazado", body: "x", linkPath: null, entityType: "transaction", entityId: "tx-1" }]);
+    const ids = created.map((item) => item.id);
+    const now = new Date();
+    await deliveries.markFailed(ids, new Date(now.getTime() - 1_000));
+    const lock = new Date(now.getTime() + 600_000);
+    const other = new PrismaEmailDeliveryStore(new PrismaClient({ datasourceUrl: database.url }) as PrismaService);
+    const [first, second] = await Promise.all([deliveries.claimRetries(now, lock, 10), other.claimRetries(now, lock, 10)]);
+    expect([...first, ...second]).toEqual([expect.objectContaining({ id: ids[0], recipientUserId: "auth-prepago", dedupeKey: "outbox:correo", emailAttempts: 1 })]);
+    expect(await deliveries.claimRetries(now, lock, 10)).toEqual([]);
+
+    await deliveries.markSent(ids, now);
+    expect(await prisma.notification.findUnique({ where: { id: ids[0] } })).toMatchObject({ emailRetryAt: null, emailAttempts: 1 });
+    await deliveries.markFailed(ids, now);
+    expect((await prisma.notification.findUnique({ where: { id: ids[0] } }))?.emailAttempts).toBe(1);
+  });
+
+  it("la cuenta del día suma sin pisarse y cada alerta sale una vez al día", async () => {
+    const usage = new PrismaEmailUsage(prisma as PrismaService);
+    await Promise.all([usage.record("2026-11-25", 2, 0), usage.record("2026-11-25", 3, 1)]);
+    expect(await usage.record("2026-11-25", 0, 0)).toEqual({ sent: 5, failed: 1 });
+    const event = { type: "email.quota_warning" as const, day: "2026-11-25", sent: 5, limit: 6 };
+    expect(await usage.raiseAlert("2026-11-25", "quota", event)).toBe(true);
+    expect(await usage.raiseAlert("2026-11-25", "quota", event)).toBe(false);
+    expect(await usage.raiseAlert("2026-11-25", "failures", { type: "email.delivery_failing", day: "2026-11-25", failed: 1 })).toBe(true);
+    expect((await prisma.outboxEvent.findMany()).map((item) => item.type).sort()).toEqual(["email.delivery_failing", "email.quota_warning"]);
+  });
+
+  it("la alerta del correo llega a los admins y la de seguridad solo al dueño", async () => {
+    const directory = new PrismaRecipientDirectory(prisma as PrismaService);
+    expect((await directory.contextFor({ system: true }))?.adminIds).toContain("auth-admin");
+    expect(await directory.contextFor({ userId: "auth-gestor" })).toEqual({ clientName: "", clientUsers: [], managerId: null, adminIds: [] });
+    expect(await directory.contextFor({ userId: "no-existe" })).toBeNull();
+  });
+
+  it("borra lo leído pasados 90 días y lo no leído pasados 180", async () => {
+    const day = 86_400_000;
+    const now = Date.now();
+    const rows = [
+      { key: "leido-viejo", readAt: new Date(now - 91 * day), createdAt: new Date(now - 91 * day) },
+      { key: "leido-reciente", readAt: new Date(now - day), createdAt: new Date(now - 89 * day) },
+      { key: "sin-leer-viejo", readAt: null, createdAt: new Date(now - 181 * day) },
+      { key: "sin-leer-medio", readAt: null, createdAt: new Date(now - 100 * day) },
+    ];
+    await prisma.notification.createMany({ data: rows.map((row) => ({ recipientUserId: "auth-prepago", type: "recharge.completed", title: "t", body: "b", dedupeKey: row.key, readAt: row.readAt, createdAt: row.createdAt })) });
+    expect(await store.purgeOld(new Date(now - 90 * day), new Date(now - 180 * day), 100)).toBe(2);
+    expect((await prisma.notification.findMany({ orderBy: { dedupeKey: "asc" } })).map((row) => row.dedupeKey)).toEqual(["leido-reciente", "sin-leer-medio"]);
   });
 });
