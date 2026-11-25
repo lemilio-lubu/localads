@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ClaimedOutboxEvent, NotificationStorePort } from "../ports/notification.ports";
-import { RecipientContext } from "../../domain/notification-catalog";
+import { PlannedNotification, RecipientContext } from "../../domain/notification-catalog";
 import { DispatchBusinessEvents } from "./dispatch-business-events";
 import { ListInbox, MarkInboxRead } from "./manage-inbox";
 
@@ -9,10 +9,12 @@ const context: RecipientContext = { clientName: "Migo", clientUsers: [{ userId: 
 
 function store(overrides: Partial<NotificationStorePort> = {}) {
   return {
-    insert: vi.fn(async (_type: string, _key: string, items: readonly { recipientUserId: string }[]) => items.map((item) => item.recipientUserId)),
+    insert: vi.fn(async (type: string, _key: string, items: readonly PlannedNotification[]) =>
+      items.map((item, index) => ({ id: `n-${index}`, recipientUserId: item.recipientUserId, type, title: item.title, body: item.body, linkPath: item.linkPath }))),
     list: vi.fn(async () => ({ items: [], nextCursor: null })),
     countUnread: vi.fn(async () => 2),
     markRead: vi.fn(async () => 1),
+    markPushSent: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -26,9 +28,9 @@ describe("despacho de hechos del outbox", () => {
     const reader = outbox([{ id: "evt-1", attempts: 1, event: { type: "recharge.completed", transactionId: "tx-1" } }]);
     const inbox = store();
     const realtime = { notifyUser: vi.fn() };
-    const result = await new DispatchBusinessEvents(reader, { contextFor: async () => context }, inbox, realtime, () => now).execute();
+    const result = await new DispatchBusinessEvents(reader, { contextFor: async () => context }, inbox, realtime, [], () => now).execute();
 
-    expect(result).toEqual({ processed: 1, failed: 0, notified: 1 });
+    expect(result).toEqual({ processed: 1, failed: 0, notified: 1, deliveryFailed: 0 });
     expect(inbox.insert).toHaveBeenCalledWith("recharge.completed", "outbox:evt-1", [expect.objectContaining({ recipientUserId: "user-client" })]);
     expect(reader.markProcessed).toHaveBeenCalledWith("evt-1", now);
     expect(realtime.notifyUser).toHaveBeenCalledWith("user-client", 2);
@@ -37,7 +39,7 @@ describe("despacho de hechos del outbox", () => {
   it("si el cliente ya no existe, da el hecho por procesado sin avisar", async () => {
     const reader = outbox([{ id: "evt-1", attempts: 1, event: { type: "recharge.completed", transactionId: "tx-borrada" } }]);
     const realtime = { notifyUser: vi.fn() };
-    await new DispatchBusinessEvents(reader, { contextFor: async () => null }, store(), realtime, () => now).execute();
+    await new DispatchBusinessEvents(reader, { contextFor: async () => null }, store(), realtime, [], () => now).execute();
     expect(reader.markProcessed).toHaveBeenCalledWith("evt-1", now);
     expect(realtime.notifyUser).not.toHaveBeenCalled();
   });
@@ -48,7 +50,7 @@ describe("despacho de hechos del outbox", () => {
       { id: "evt-bueno", attempts: 1, event: { type: "recharge.completed", transactionId: "tx-2" } },
     ]);
     const directory = { contextFor: vi.fn().mockRejectedValueOnce(new Error("base caída")).mockResolvedValue(context) };
-    const result = await new DispatchBusinessEvents(reader, directory, store(), { notifyUser: vi.fn() }, () => now).execute();
+    const result = await new DispatchBusinessEvents(reader, directory, store(), { notifyUser: vi.fn() }, [], () => now).execute();
 
     expect(result).toMatchObject({ processed: 1, failed: 1 });
     // Segundo intento: 2^2 × 30 s = 2 min.
@@ -59,14 +61,33 @@ describe("despacho de hechos del outbox", () => {
   it("un reintento que no crea avisos nuevos no molesta a nadie en vivo", async () => {
     const reader = outbox([{ id: "evt-1", attempts: 2, event: { type: "recharge.completed", transactionId: "tx-1" } }]);
     const realtime = { notifyUser: vi.fn() };
-    await new DispatchBusinessEvents(reader, { contextFor: async () => context }, store({ insert: vi.fn(async () => []) }), realtime, () => now).execute();
+    await new DispatchBusinessEvents(reader, { contextFor: async () => context }, store({ insert: vi.fn(async () => []) }), realtime, [], () => now).execute();
     expect(realtime.notifyUser).not.toHaveBeenCalled();
+  });
+
+  it("pasa lo recién creado a los canales y cuenta sus fallos sin reintentar el hecho", async () => {
+    const reader = outbox([{ id: "evt-1", attempts: 1, event: { type: "recharge.completed", transactionId: "tx-1" } }]);
+    const push = { deliver: vi.fn(async () => ({ sent: 0, failed: 1 })) };
+    const broken = { deliver: vi.fn(async () => { throw new Error("caído"); }) };
+    const result = await new DispatchBusinessEvents(reader, { contextFor: async () => context }, store(), { notifyUser: vi.fn() }, [push, broken], () => now).execute();
+
+    expect(push.deliver).toHaveBeenCalledWith([expect.objectContaining({ id: "n-0", recipientUserId: "user-client", type: "recharge.completed" })]);
+    // 1 fallo del primero + el lote entero (1) del que lanzó.
+    expect(result).toMatchObject({ processed: 1, failed: 0, deliveryFailed: 2 });
+    expect(reader.markProcessed).toHaveBeenCalledWith("evt-1", now);
+  });
+
+  it("sin avisos nuevos no llama a los canales", async () => {
+    const reader = outbox([{ id: "evt-1", attempts: 2, event: { type: "recharge.completed", transactionId: "tx-1" } }]);
+    const push = { deliver: vi.fn(async () => ({ sent: 0, failed: 0 })) };
+    await new DispatchBusinessEvents(reader, { contextFor: async () => context }, store({ insert: vi.fn(async () => []) }), { notifyUser: vi.fn() }, [push], () => now).execute();
+    expect(push.deliver).not.toHaveBeenCalled();
   });
 
   it("si el contador en vivo falla, el despacho sigue siendo correcto", async () => {
     const reader = outbox([{ id: "evt-1", attempts: 1, event: { type: "recharge.completed", transactionId: "tx-1" } }]);
     const inbox = store({ countUnread: vi.fn(async () => { throw new Error("caída"); }) });
-    await expect(new DispatchBusinessEvents(reader, { contextFor: async () => context }, inbox, { notifyUser: vi.fn() }, () => now).execute()).resolves.toMatchObject({ processed: 1 });
+    await expect(new DispatchBusinessEvents(reader, { contextFor: async () => context }, inbox, { notifyUser: vi.fn() }, [], () => now).execute()).resolves.toMatchObject({ processed: 1 });
   });
 });
 

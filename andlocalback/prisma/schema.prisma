@@ -8,62 +8,64 @@ datasource db {
 }
 
 model AuthUser {
-  id           String           @id @default(cuid())
-  username     String           @unique
+  id                      String                   @id @default(cuid())
+  username                String                   @unique
   // Como se llama la persona del equipo. El usuario es su correo y solo sirve
   // para entrar; en pantalla se ve el nombre. Nulo en las cuentas anteriores.
-  name         String?
-  passwordHash String
-  role         String
-  clientId     String?
-  accountId    String?
-  accountType  String?
-  status       String           @default("ACTIVE")
+  name                    String?
+  passwordHash            String
+  role                    String
+  clientId                String?
+  accountId               String?
+  accountType             String?
+  status                  String                   @default("ACTIVE")
   // Una clave temporal obliga a cambiarla antes de operar: la bandera vive en
   // el usuario, no en la sesion, para que sobreviva al refresh del token.
-  mustChangePassword Boolean      @default(false)
+  mustChangePassword      Boolean                  @default(false)
   // Quien creo la cuenta. Un gestor solo puede crear clientes, y esto deja
   // rastro de quien lo hizo sin necesidad de una tabla de auditoria.
-  createdById  String?
+  createdById             String?
   // Se incrementa al cambiar o restablecer la clave y al restablecer el doble
   // factor: los tokens de acceso firmados antes dejan de valer al momento.
-  tokenVersion       Int        @default(0)
+  tokenVersion            Int                      @default(0)
   // Intentos fallidos seguidos; al quinto la cuenta se bloquea un rato que se
   // duplica con cada fallo extra. Un acceso correcto los pone a cero.
-  failedLoginCount   Int        @default(0)
-  lockedUntil        DateTime?
-  lastLoginAt        DateTime?
+  failedLoginCount        Int                      @default(0)
+  lockedUntil             DateTime?
+  lastLoginAt             DateTime?
   // Doble factor (TOTP). El secreto va cifrado con MFA_ENCRYPTION_KEY; los
   // codigos de recuperacion, solo como hash. mfaLastStep impide reutilizar un
   // codigo ya aceptado dentro de su ventana de 30 segundos.
-  mfaSecret          String?
-  mfaEnabledAt       DateTime?
-  mfaLastStep        Int?
-  mfaRecoveryCodes   String[]   @default([])
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  sessions     RefreshSession[]
-  managedClients Client[]       @relation("ClientManager")
-  notifications  Notification[]
+  mfaSecret               String?
+  mfaEnabledAt            DateTime?
+  mfaLastStep             Int?
+  mfaRecoveryCodes        String[]                 @default([])
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  sessions                RefreshSession[]
+  managedClients          Client[]                 @relation("ClientManager")
+  notifications           Notification[]
+  pushSubscriptions       PushSubscription[]
+  notificationPreferences NotificationPreference[]
 
   @@index([clientId])
   @@index([role, status])
 }
 
 model RefreshSession {
-  id           String    @id @default(cuid())
-  userId       String
-  tokenHash    String    @unique
-  familyId     String
+  id              String    @id @default(cuid())
+  userId          String
+  tokenHash       String    @unique
+  familyId        String
   // Cuando se abrio la sesion (el login), comun a toda la familia: marca el
   // tope absoluto, que la rotacion no puede alargar.
   familyCreatedAt DateTime  @default(now())
-  expiresAt    DateTime
-  revokedAt    DateTime?
-  replacedById String?
-  createdAt    DateTime  @default(now())
-  lastUsedAt   DateTime?
-  user         AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  replacedById    String?
+  createdAt       DateTime  @default(now())
+  lastUsedAt      DateTime?
+  user            AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
   @@index([familyId])
@@ -112,26 +114,20 @@ model Account {
   rechargeTransactions RechargeTransaction[]
 }
 
-
-
-
-
-
-
 // New persistence model for the multi-pauta recharge flow. Legacy Campaign,
 // Recharge, Receipt and Verification remain in place during the transition.
 model Pauta {
-  id                 String                     @id @default(cuid())
+  id                 String                      @id @default(cuid())
   clientId           String
   platform           String
   externalAccountId  String?
   status             String
-  currentBalance     Decimal                    @default(0)
+  currentBalance     Decimal                     @default(0)
   activatedAt        DateTime?
-  version            Int                        @default(0)
-  createdAt          DateTime                   @default(now())
-  updatedAt          DateTime                   @updatedAt
-  client             Client                     @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  version            Int                         @default(0)
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+  client             Client                      @relation(fields: [clientId], references: [id], onDelete: Restrict)
   activationRequests CampaignActivationRequest[]
   transactionDetails TransactionDetail[]
   balanceMovements   PautaBalanceMovement[]
@@ -231,13 +227,13 @@ model TransactionDetail {
 
 // Append-only application audit. IDs are retained even across legacy migrations.
 model PlatformLifecycleAudit {
-  id           String   @id @default(cuid())
-  clientId     String
-  pautaId      String
-  detailId     String?
-  action       String
-  actorId      String
-  createdAt    DateTime @default(now())
+  id        String   @id @default(cuid())
+  clientId  String
+  pautaId   String
+  detailId  String?
+  action    String
+  actorId   String
+  createdAt DateTime @default(now())
 
   @@index([clientId, createdAt])
 }
@@ -303,29 +299,29 @@ model OcrResult {
 }
 
 model TransactionVerification {
-  id                   String                     @id @default(cuid())
+  id                   String                      @id @default(cuid())
   transactionId        String
   paymentId            String
-  receiptId            String                     @unique
-  ocrResultId          String?                    @unique
-  status               String                     @default("PENDING")
+  receiptId            String                      @unique
+  ocrResultId          String?                     @unique
+  status               String                      @default("PENDING")
   expectedAmount       Decimal
   detectedAmount       Decimal?
   amountMatches        Boolean?
-  issues               String                     @default("[]")
-  requiresManualReview Boolean                    @default(true)
+  issues               String                      @default("[]")
+  requiresManualReview Boolean                     @default(true)
   decidedBy            String?
   decidedAt            DateTime?
   decisionNotes        String?
   reviewReason         String?
   rejectionReason      String?
-  version              Int                        @default(0)
-  createdAt            DateTime                   @default(now())
-  updatedAt            DateTime                   @updatedAt
-  transaction          RechargeTransaction        @relation(fields: [transactionId], references: [id], onDelete: Restrict)
-  payment              Payment                    @relation(fields: [paymentId], references: [id], onDelete: Restrict)
-  receipt              PaymentReceipt             @relation(fields: [receiptId], references: [id], onDelete: Restrict)
-  ocrResult            OcrResult?                 @relation(fields: [ocrResultId], references: [id], onDelete: Restrict)
+  version              Int                         @default(0)
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  transaction          RechargeTransaction         @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  payment              Payment                     @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  receipt              PaymentReceipt              @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  ocrResult            OcrResult?                  @relation(fields: [ocrResultId], references: [id], onDelete: Restrict)
   confirmedEvidence    ConfirmedPaymentEvidence?
   decisionAudits       VerificationDecisionAudit[]
 
@@ -368,39 +364,45 @@ model VerificationDecisionAudit {
 }
 
 model Invoice {
-  id              String              @id @default(cuid())
-  transactionId   String              @unique
-  invoiceNumber   String              @unique
-  status          String              @default("ISSUED")
-  issuedAt        DateTime            @default(now())
-  pautaSubtotal   Decimal
-  isdAmount       Decimal
-  agencyFeeAmount Decimal
-  vatBaseAmount   Decimal
-  vatAmount       Decimal
-  totalAmount     Decimal
-  documentUrl     String?
-  /* Autorización fiscal del emisor (Serguéi o el simulado). Nula mientras
-     está pendiente; la reserva evita pedirla dos veces a la vez. */
-  authorizationNumber       String?   @unique
-  authorizedAt              DateTime?
-  issuer                    String?
-  authorizationClaimedUntil DateTime?
-  authorizationError        String?
-  /* Fallos seguidos al pedir la autorización y cuándo toca el siguiente
-     intento del barrido (espera creciente). Nulo: en el próximo ciclo. */
-  authorizationAttempts      Int       @default(0)
+  id                         String              @id @default(cuid())
+  transactionId              String              @unique
+  invoiceNumber              String              @unique
+  status                     String              @default("ISSUED")
+  issuedAt                   DateTime            @default(now())
+  pautaSubtotal              Decimal
+  isdAmount                  Decimal
+  agencyFeeAmount            Decimal
+  vatBaseAmount              Decimal
+  vatAmount                  Decimal
+  totalAmount                Decimal
+  documentUrl                String?
+  /**
+   * Autorización fiscal del emisor (Serguéi o el simulado). Nula mientras
+   * está pendiente; la reserva evita pedirla dos veces a la vez.
+   */
+  authorizationNumber        String?             @unique
+  authorizedAt               DateTime?
+  issuer                     String?
+  authorizationClaimedUntil  DateTime?
+  authorizationError         String?
+  /**
+   * Fallos seguidos al pedir la autorización y cuándo toca el siguiente
+   * intento del barrido (espera creciente). Nulo: en el próximo ciclo.
+   */
+  authorizationAttempts      Int                 @default(0)
   authorizationNextAttemptAt DateTime?
-  /* Id de la factura en el proveedor (Migo) y número fiscal que asignó
-     (001-001-000000123). Se guardan al enviarla, antes de que el SRI la
-     autorice: con ellos el reintento consulta su estado en vez de emitirla
-     otra vez. */
-  externalReference         String?
-  fiscalNumber              String?
-  version         Int                 @default(0)
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  transaction     RechargeTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  /**
+   * Id de la factura en el proveedor (Migo) y número fiscal que asignó
+   * (001-001-000000123). Se guardan al enviarla, antes de que el SRI la
+   * autorice: con ellos el reintento consulta su estado en vez de emitirla
+   * otra vez.
+   */
+  externalReference          String?
+  fiscalNumber               String?
+  version                    Int                 @default(0)
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
+  transaction                RechargeTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
 
   @@index([status, issuedAt])
 }
@@ -413,9 +415,11 @@ model PautaBalanceMovement {
   amount              Decimal
   balanceBefore       Decimal
   balanceAfter        Decimal
-  /* Quien acredito el saldo. Es el unico punto donde el dinero se convierte en
-     credito y no guardaba autor: las verificaciones si anotan decidedBy, esto
-     no anotaba nada. Nullable porque el historico anterior no lo tiene. */
+  /**
+   * Quien acredito el saldo. Es el unico punto donde el dinero se convierte en
+   * credito y no guardaba autor: las verificaciones si anotan decidedBy, esto
+   * no anotaba nada. Nullable porque el historico anterior no lo tiene.
+   */
   executedBy          String?
   createdAt           DateTime          @default(now())
   pauta               Pauta             @relation(fields: [pautaId], references: [id], onDelete: Restrict)
@@ -518,7 +522,38 @@ model Notification {
   dedupeKey       String
   readAt          DateTime?
   createdAt       DateTime  @default(now())
+  // Cuándo salió por push a algún dispositivo del usuario (null: no salió).
+  pushSentAt      DateTime?
 
   @@unique([recipientUserId, dedupeKey])
   @@index([recipientUserId, readAt, createdAt])
+}
+
+// Un navegador o PWA donde el usuario activó los avisos. El endpoint lo da el
+// servicio push del navegador y es único por dispositivo: si otro usuario
+// inicia sesión ahí y activa avisos, la suscripción pasa a ser suya.
+model PushSubscription {
+  id            String    @id @default(uuid())
+  userId        String
+  user          AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  lastSuccessAt DateTime?
+
+  @@index([userId])
+}
+
+// Solo se guardan las elecciones: sin fila, el tipo llega por push. La
+// bandeja de la campana recibe todo siempre.
+model NotificationPreference {
+  userId    String
+  user      AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  push      Boolean
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, type])
 }
