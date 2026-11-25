@@ -9,6 +9,7 @@ import { PaymentAccountModule } from "./modules/payment-account/payment-account.
 import { AuthModule } from "./modules/auth/auth.module";
 import { HealthController } from "./health.controller";
 import { SecurityEventsModule } from "./modules/security-events/security-events.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
 
-@Module({ imports: [DatabaseModule, AuthModule, RechargesModule, ClientsModule, TeamModule, PaymentAccountModule, SecurityEventsModule], controllers: [HealthController], providers: [{ provide: APP_FILTER, useClass: UnhandledErrorFilter }] })
+@Module({ imports: [DatabaseModule, AuthModule, RechargesModule, ClientsModule, TeamModule, PaymentAccountModule, SecurityEventsModule, NotificationsModule], controllers: [HealthController], providers: [{ provide: APP_FILTER, useClass: UnhandledErrorFilter }] })
 export class AppModule {}

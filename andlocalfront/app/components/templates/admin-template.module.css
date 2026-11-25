@@ -49,3 +49,4 @@
 @media (max-width: 480px) {
   .workspace > header { align-items: flex-start; flex-direction: column; }
 }
+.headerActions { display: flex; flex: none; align-items: center; gap: var(--space-1); }

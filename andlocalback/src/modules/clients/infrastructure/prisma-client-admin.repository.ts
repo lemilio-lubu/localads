@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { ManagerScope, clientOwnershipWhere } from "../../../common/access/manager-scope";
 import { ApplicationError } from "../../../common/errors/application.error";
+import { appendBusinessEvents } from "../../../common/events/outbox";
 import { PrismaService } from "../../../database/prisma.service";
 import { AdminClientDetailView, ClientAdminRepository, ClientPlatformSummary, UpdateClientInput } from "../application/ports/client-admin.repository";
 import { PreparedCredentials } from "../application/ports/client-credentials.port";
@@ -214,8 +215,15 @@ export class PrismaClientAdminRepository implements ClientAdminRepository {
       const manager = await this.prisma.authUser.findFirst({ where: { id: managerId, role: "GESTOR", status: "ACTIVE" }, select: { id: true } });
       if (!manager) return undefined;
     }
-    const updated = await this.prisma.client.updateMany({ where: { id }, data: { managerId } });
-    return updated.count === 1 ? this.findById(id, {}) : null;
+    const updated = await this.prisma.$transaction(async (database) => {
+      const previous = await database.client.findUnique({ where: { id }, select: { managerId: true } });
+      if (!previous) return 0;
+      await database.client.update({ where: { id }, data: { managerId } });
+      /* Solo si cambia de manos: reasignar al mismo gestor no es noticia. */
+      if (managerId && previous.managerId !== managerId) await appendBusinessEvents(database, { type: "client.manager_assigned", clientId: id, managerId });
+      return 1;
+    });
+    return updated === 1 ? this.findById(id, {}) : null;
   }
 
   async deactivate(id: string) {

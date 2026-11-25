@@ -12,6 +12,8 @@ import {
 import { InvoiceStatus } from "../../domain/model/domain-status";
 import { AccountType } from "../../domain/recharge.types";
 import { decimalToMonetaryAmount } from "./prisma-multi-recharge.repository";
+import { appendBusinessEvents } from "../../../../common/events/outbox";
+import { INVOICE_STUCK_AFTER_ATTEMPTS } from "../../../../common/events/business-events";
 
 const platformNames: Record<string, string> = { META: "Meta", GOOGLE: "Google", TIKTOK: "TikTok" };
 
@@ -54,56 +56,68 @@ export class PrismaInvoiceAuthorizationRepository implements InvoiceAuthorizatio
   }
 
   async markAuthorized(command: Parameters<InvoiceAuthorizationPersistencePort["markAuthorized"]>[0]): Promise<void> {
-    await this.prisma.invoice.update({
-      where: { id: command.invoiceId },
-      data: {
-        authorizationNumber: command.authorization.authorizationNumber,
-        authorizedAt: command.authorization.authorizedAt,
-        fiscalNumber: command.authorization.fiscalNumber,
-        externalReference: command.externalReference,
-        ...(command.issuedAt ? { issuedAt: command.issuedAt } : {}),
-        issuer: command.issuer,
-        documentUrl: command.documentUrl,
-        authorizationClaimedUntil: null,
-        authorizationError: null,
-        authorizationAttempts: 0,
-        authorizationNextAttemptAt: null,
-        version: { increment: 1 },
-      },
+    await this.prisma.$transaction(async (database) => {
+      const invoice = await database.invoice.update({
+        where: { id: command.invoiceId },
+        data: {
+          authorizationNumber: command.authorization.authorizationNumber,
+          authorizedAt: command.authorization.authorizedAt,
+          fiscalNumber: command.authorization.fiscalNumber,
+          externalReference: command.externalReference,
+          ...(command.issuedAt ? { issuedAt: command.issuedAt } : {}),
+          issuer: command.issuer,
+          documentUrl: command.documentUrl,
+          authorizationClaimedUntil: null,
+          authorizationError: null,
+          authorizationAttempts: 0,
+          authorizationNextAttemptAt: null,
+          version: { increment: 1 },
+        },
+        select: { id: true, transactionId: true },
+      });
+      await appendBusinessEvents(database, { type: "invoice.authorized", invoiceId: invoice.id, transactionId: invoice.transactionId });
     });
   }
 
   /* Solo si sigue sin autorizar: un proceso rezagado no deshace una
      autorización que otro ya guardó. */
   async markSubmitted(command: Parameters<InvoiceAuthorizationPersistencePort["markSubmitted"]>[0]): Promise<void> {
-    await this.prisma.invoice.updateMany({
-      where: { id: command.invoiceId, authorizationNumber: null },
-      data: {
-        issuer: command.issuer,
-        externalReference: command.externalReference,
-        fiscalNumber: command.fiscalNumber,
-        ...(command.issuedAt ? { issuedAt: command.issuedAt } : {}),
-        authorizationClaimedUntil: null,
-        authorizationError: command.error?.slice(0, 500) ?? null,
-        /* Rechazada: cuenta como fallo y espera. Enviada y a la espera del
-           SRI: se consulta en cada ciclo. */
-        ...(command.error
-          ? { authorizationAttempts: { increment: 1 }, authorizationNextAttemptAt: command.nextAttemptAt ?? null }
-          : { authorizationAttempts: 0, authorizationNextAttemptAt: null }),
-        version: { increment: 1 },
-      },
+    await this.prisma.$transaction(async (database) => {
+      const updated = await database.invoice.updateManyAndReturn({
+        where: { id: command.invoiceId, authorizationNumber: null },
+        data: {
+          issuer: command.issuer,
+          externalReference: command.externalReference,
+          fiscalNumber: command.fiscalNumber,
+          ...(command.issuedAt ? { issuedAt: command.issuedAt } : {}),
+          authorizationClaimedUntil: null,
+          authorizationError: command.error?.slice(0, 500) ?? null,
+          /* Rechazada: cuenta como fallo y espera. Enviada y a la espera del
+             SRI: se consulta en cada ciclo. */
+          ...(command.error
+            ? { authorizationAttempts: { increment: 1 }, authorizationNextAttemptAt: command.nextAttemptAt ?? null }
+            : { authorizationAttempts: 0, authorizationNextAttemptAt: null }),
+          version: { increment: 1 },
+        },
+        select: stuckSelect,
+      });
+      await appendStuckInvoices(database, updated);
     });
   }
 
   async releaseAfterFailure(command: Parameters<InvoiceAuthorizationPersistencePort["releaseAfterFailure"]>[0]): Promise<void> {
-    await this.prisma.invoice.updateMany({
-      where: { id: command.invoiceId, authorizationNumber: null },
-      data: {
-        authorizationClaimedUntil: null,
-        authorizationError: command.reason.slice(0, 500),
-        authorizationAttempts: { increment: 1 },
-        authorizationNextAttemptAt: command.nextAttemptAt ?? null,
-      },
+    await this.prisma.$transaction(async (database) => {
+      const updated = await database.invoice.updateManyAndReturn({
+        where: { id: command.invoiceId, authorizationNumber: null },
+        data: {
+          authorizationClaimedUntil: null,
+          authorizationError: command.reason.slice(0, 500),
+          authorizationAttempts: { increment: 1 },
+          authorizationNextAttemptAt: command.nextAttemptAt ?? null,
+        },
+        select: stuckSelect,
+      });
+      await appendStuckInvoices(database, updated);
     });
   }
 
@@ -202,4 +216,14 @@ function toRequest(record: RequestRecord): InvoiceAuthorizationRequest {
       totalAmount: decimalToMonetaryAmount(record.totalAmount),
     },
   };
+}
+
+const stuckSelect = { id: true, transactionId: true, authorizationAttempts: true } as const;
+
+/* Una sola vez por racha: al llegar justo al umbral. Los fallos siguientes
+   no repiten el aviso; un reintento manual pone el contador a cero. */
+async function appendStuckInvoices(database: Prisma.TransactionClient, invoices: readonly Readonly<{ id: string; transactionId: string; authorizationAttempts: number }>[]) {
+  await appendBusinessEvents(database, ...invoices
+    .filter((invoice) => invoice.authorizationAttempts === INVOICE_STUCK_AFTER_ATTEMPTS)
+    .map((invoice) => ({ type: "invoice.stuck" as const, invoiceId: invoice.id, transactionId: invoice.transactionId, attempts: invoice.authorizationAttempts })));
 }

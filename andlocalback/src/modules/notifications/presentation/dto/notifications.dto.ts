@@ -1,0 +1,14 @@
+import { Transform, Type } from "class-transformer";
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
+
+export class ListNotificationsQueryDto {
+  @IsOptional() @IsString() @MaxLength(64) cursor?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(50) limit?: number;
+  @IsOptional() @Transform(({ value }) => value === true || value === "true") @IsBoolean() unreadOnly?: boolean;
+}
+
+/* ids o all, no los dos: lo comprueba el controlador. */
+export class MarkNotificationsReadDto {
+  @IsOptional() @IsArray() @ArrayMinSize(1) @ArrayMaxSize(100) @IsString({ each: true }) @MaxLength(64, { each: true }) ids?: string[];
+  @IsOptional() @IsBoolean() all?: boolean;
+}

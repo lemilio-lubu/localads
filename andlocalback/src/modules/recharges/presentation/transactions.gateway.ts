@@ -15,6 +15,8 @@ const accountRoom = (accountId: string) => `account:${accountId}`;
 const managerRoom = (managerId: string) => `manager:${managerId}`;
 /* Cada cuanto se vuelve a mirar si la sesion sigue en pie. */
 const revalidateMs = 60_000;
+/* Sala personal de cada usuario, sea cual sea su rol: avisos de su bandeja. */
+const userRoom = (userId: string) => `user:${userId}`;
 
 @WebSocketGateway({
   namespace: "/transactions",
@@ -86,10 +88,16 @@ export class TransactionsGateway implements VerificationRealtimePublisher, Platf
   }
 
   private joinRooms(client: Socket, user: AuthPrincipal) {
+    client.join(userRoom(user.userId));
     if (user.role === "ADMIN") client.join("transactions:admin");
     if (user.role === "GESTOR") client.join(managerRoom(user.userId));
     if (user.role === "CLIENT" && user.accountId) client.join(accountRoom(user.accountId));
     if (user.role === "CLIENT" && user.clientId) client.join(`platforms:client:${user.clientId}`);
+  }
+
+  /* Solo para el propio usuario, por su sala personal. */
+  emitToUser(userId: string, event: string, payload: object) {
+    this.server?.to(userRoom(userId)).emit(event, payload);
   }
 
   publishPlatforms(clientId: string) {

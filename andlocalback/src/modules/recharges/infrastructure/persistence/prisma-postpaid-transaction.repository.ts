@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { ApplicationError } from "../../../../common/errors/application.error";
+import { appendBusinessEvents } from "../../../../common/events/outbox";
 import { PrismaService } from "../../../../database/prisma.service";
 import { assertRechargePlatforms } from "./platform-lifecycle";
 import {
@@ -149,6 +150,7 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
         }
 
         await assertRechargePlatforms(database, transaction.clientId, transaction.accountId, transaction.details.map((detail) => detail.pautaSnapshot.pautaId));
+        await appendBusinessEvents(database, { type: "recharge.postpaid_requested", transactionId: transaction.id });
         return database.rechargeTransaction.create({
           data: {
             id: transaction.id,
@@ -214,12 +216,15 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
   }
 
   async markOverduePayments(asOf: Date) {
-    const marked = await this.prisma.payment.updateManyAndReturn({
-      where: { status: "IN_CREDIT", dueDate: { lt: asOf } },
-      data: { status: "OVERDUE", version: { increment: 1 } },
-      select: { transaction: { select: { clientId: true } } },
+    return this.prisma.$transaction(async (database) => {
+      const marked = await database.payment.updateManyAndReturn({
+        where: { status: "IN_CREDIT", dueDate: { lt: asOf } },
+        data: { status: "OVERDUE", version: { increment: 1 } },
+        select: { id: true, transactionId: true, transaction: { select: { clientId: true } } },
+      });
+      await appendBusinessEvents(database, ...marked.map((payment) => ({ type: "payment.overdue" as const, paymentId: payment.id, transactionId: payment.transactionId })));
+      return { count: marked.length, clientIds: marked.map((payment) => payment.transaction.clientId) };
     });
-    return { count: marked.length, clientIds: marked.map((payment) => payment.transaction.clientId) };
   }
 }
 

@@ -44,6 +44,7 @@ model AuthUser {
   updatedAt    DateTime         @updatedAt
   sessions     RefreshSession[]
   managedClients Client[]       @relation("ClientManager")
+  notifications  Notification[]
 
   @@index([clientId])
   @@index([role, status])
@@ -480,4 +481,44 @@ model SecurityAuditEvent {
   @@index([actorUserId, occurredAt])
   @@index([action, occurredAt])
   @@index([targetType, targetId, occurredAt])
+}
+
+/// Hechos de negocio (pago aprobado, activacion solicitada...) escritos en la
+/// misma transaccion que el cambio que los produce: no hay cambio sin su
+/// hecho ni hecho sin cambio. Un despachador los lee despues, reservando con
+/// SKIP LOCKED, y decide quien se entera. processedAt nulo = pendiente.
+model OutboxEvent {
+  id          String    @id @default(uuid())
+  type        String
+  payload     Json
+  occurredAt  DateTime  @default(now())
+  // Cuando puede volver a intentarse tras un fallo (espera creciente).
+  availableAt DateTime  @default(now())
+  attempts    Int       @default(0)
+  lockedUntil DateTime?
+  processedAt DateTime?
+  lastError   String?
+
+  @@index([processedAt, availableAt])
+}
+
+/// Bandeja de cada usuario. dedupeKey impide duplicar un aviso si el
+/// despachador reintenta el mismo hecho.
+model Notification {
+  id              String    @id @default(uuid())
+  recipientUserId String
+  recipient       AuthUser  @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+  type            String
+  title           String
+  body            String
+  // Ruta de la app a la que lleva; se vuelve a autorizar al abrirla.
+  linkPath        String?
+  entityType      String?
+  entityId        String?
+  dedupeKey       String
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([recipientUserId, dedupeKey])
+  @@index([recipientUserId, readAt, createdAt])
 }

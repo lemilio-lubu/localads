@@ -50,3 +50,4 @@
   .navFooter { right: var(--space-2); }
   .header { height: auto; min-height: var(--layout-header-height); flex-wrap: wrap; }
 }
+.headerActions { display: flex; flex: none; align-items: center; gap: var(--space-1); }
