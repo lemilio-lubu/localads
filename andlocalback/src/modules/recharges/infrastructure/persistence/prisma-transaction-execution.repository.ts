@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import { appendBusinessEvents } from "../../../../common/events/outbox";
 import { ApplicationError } from "../../../../common/errors/application.error";
 import { PrismaService } from "../../../../database/prisma.service";
 import {
@@ -253,6 +254,7 @@ implements TransactionExecutionPersistencePort {
             totalAmount: current.totalAmount,
           },
         });
+        await appendBusinessEvents(database, { type: "recharge.completed", transactionId: current.id });
         const transaction = await database.rechargeTransaction.findUniqueOrThrow({
           where: { id: current.id },
           include: executionViewInclude,

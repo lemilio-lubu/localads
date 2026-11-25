@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { ApplicationError } from "../../../../common/errors/application.error";
+import { appendBusinessEvents } from "../../../../common/events/outbox";
 import { PrismaService } from "../../../../database/prisma.service";
 import { VerificationIssue, VerificationStatus } from "../../domain/recharge.types";
 import { AccountType } from "../../domain/recharge.types";
@@ -136,6 +137,7 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
             requiresManualReview: input.evaluation.requiresManualReview,
           },
         });
+        await appendBusinessEvents(database, { type: "payment.review_required", transactionId: verification.transactionId, verificationId: verification.id, ocrFailed: false });
         return toVerificationView(verification);
       });
     } catch (error) {
@@ -170,6 +172,7 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
             requiresManualReview: true,
           },
         });
+        await appendBusinessEvents(database, { type: "payment.review_required", transactionId: verification.transactionId, verificationId: verification.id, ocrFailed: true });
         return toVerificationView(verification);
       });
     } catch (error) {
@@ -285,6 +288,7 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
           WHERE "id" = ${input.context.transaction.accountId}
         `;
       }
+      await appendBusinessEvents(database, { type: "payment.approved", transactionId: input.context.transaction.id, verificationId: verification.id, actorUserId: input.administratorId });
       return toVerificationView(verification);
     });
   }
@@ -372,6 +376,7 @@ implements TransactionVerificationPersistencePort, PaymentReceiptPersistencePort
       });
       // The recharge is deliberately not authorized. It remains auditable and
       // can continue only through the receipt-regularization flow.
+      await appendBusinessEvents(database, { type: "payment.rejected", transactionId: input.context.transaction.id, verificationId: verification.id, reason: input.reason, actorUserId: input.administratorId });
       return toVerificationView(verification);
     });
   }

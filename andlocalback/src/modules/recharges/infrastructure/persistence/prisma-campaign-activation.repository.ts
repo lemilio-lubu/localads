@@ -3,6 +3,7 @@ import { clientOwnershipWhere } from "../../../../common/access/manager-scope";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { ApplicationError } from "../../../../common/errors/application.error";
+import { appendBusinessEvents } from "../../../../common/events/outbox";
 import { PrismaService } from "../../../../database/prisma.service";
 import {
   ApproveCampaignActivationDecision,
@@ -109,6 +110,7 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
             activeRequestKey,
           },
         });
+        await appendBusinessEvents(database, { type: "activation.requested", requestId: saved.id, clientId: saved.clientId, platform: saved.platform });
         return withName(this.prisma, saved);
       });
     } catch (error: unknown) {
@@ -209,6 +211,7 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
         await database.client.update({ where: { id: request.clientId }, data: { platformsVersion: { increment: 1 } } });
         await database.platformLifecycleAudit.create({ data: { clientId: request.clientId, pautaId: pauta.id, action: existingPauta ? "REACTIVATE" : "ACTIVATE", actorId: decision.administratorId } });
         const saved = await database.campaignActivationRequest.findUniqueOrThrow({ where: { id: request.id } });
+        await appendBusinessEvents(database, { type: "activation.approved", requestId: saved.id, clientId: saved.clientId, platform: saved.platform, actorUserId: decision.administratorId ?? null });
         return withName(this.prisma, saved);
       });
     } catch (error: unknown) {
@@ -223,23 +226,27 @@ export class PrismaCampaignActivationRepository implements CampaignActivationPer
 
   async reject(decision: RejectCampaignActivationDecision): Promise<CampaignActivationRequestView> {
     try {
-      const updated = await this.prisma.campaignActivationRequest.updateMany({
-        where: {
-          id: decision.requestId,
-          version: decision.expectedVersion,
-          status: { in: [...OPEN_STATUSES] },
-          activeRequestKey: { not: null },
-        },
-        data: {
-          status: ActivationRequestStatus.REJECTED,
-          activeRequestKey: null,
-          reviewedBy: decision.administratorId,
-          reviewedAt: decision.decidedAt,
-          rejectionReason: decision.reason,
-          version: { increment: 1 },
-        },
+      await this.prisma.$transaction(async (database) => {
+        const updated = await database.campaignActivationRequest.updateMany({
+          where: {
+            id: decision.requestId,
+            version: decision.expectedVersion,
+            status: { in: [...OPEN_STATUSES] },
+            activeRequestKey: { not: null },
+          },
+          data: {
+            status: ActivationRequestStatus.REJECTED,
+            activeRequestKey: null,
+            reviewedBy: decision.administratorId,
+            reviewedAt: decision.decidedAt,
+            rejectionReason: decision.reason,
+            version: { increment: 1 },
+          },
+        });
+        if (updated.count !== 1) throw alreadyResolved();
+        const rejected = await database.campaignActivationRequest.findUniqueOrThrow({ where: { id: decision.requestId }, select: { clientId: true, platform: true } });
+        await appendBusinessEvents(database, { type: "activation.rejected", requestId: decision.requestId, clientId: rejected.clientId, platform: rejected.platform, reason: decision.reason, actorUserId: decision.administratorId ?? null });
       });
-      if (updated.count !== 1) throw alreadyResolved();
       return await this.requireById(decision.requestId);
     } catch (error: unknown) {
       throw mapConcurrentDecision(error);

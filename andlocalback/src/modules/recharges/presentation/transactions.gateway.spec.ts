@@ -51,8 +51,8 @@ describe("TransactionsGateway", () => {
 
     await gateway.handleConnection({ handshake: { auth: { accessToken: "jwt" } }, data: {}, join, disconnect } as never);
 
-    expect(join).toHaveBeenCalledOnce();
-    expect(join).toHaveBeenCalledWith("account:account-1");
+    // Su cuenta y su sala personal (bandeja de avisos); ninguna otra.
+    expect(join.mock.calls.map(([room]) => room)).toEqual(["user:user-1", "account:account-1"]);
     expect(disconnect).not.toHaveBeenCalled();
   });
 
@@ -113,7 +113,7 @@ describe("TransactionsGateway · alcance del gestor", () => {
 
     await gateway.handleConnection({ handshake: { auth: { accessToken: "jwt" } }, data: {}, join, disconnect: vi.fn() } as never);
 
-    expect(join).toHaveBeenCalledExactlyOnceWith("manager:auth-gestor");
+    expect(join.mock.calls.map(([room]) => room)).toEqual(["user:auth-gestor", "manager:auth-gestor"]);
     expect(join).not.toHaveBeenCalledWith("transactions:admin");
   });
 
@@ -188,5 +188,14 @@ describe("TransactionsGateway · alcance del gestor", () => {
     expect(() => { gateway.publishTransaction("tx-404"); gateway.publishInvoice("invoice-001"); }).not.toThrow();
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(server.emit).not.toHaveBeenCalled();
+  });
+});
+
+describe("TransactionsGateway · sala personal", () => {
+  it("emite solo a la sala del usuario indicado", () => {
+    const server = serverDouble();
+    gatewayWith(noScope, server).emitToUser("user-7", "notifications:changed", { unread: 3 });
+    expect(server.to).toHaveBeenCalledExactlyOnceWith("user:user-7");
+    expect(server.emit).toHaveBeenCalledWith("notifications:changed", { unread: 3 });
   });
 });
