@@ -1,0 +1,21 @@
+/* Misma composición que «cambiar contraseña»: las dos salen del menú de
+   perfil y son decisiones sobre la propia cuenta. */
+.page { display: grid; min-height: 100dvh; place-items: center; padding: var(--space-4) var(--space-3); }
+.card { width: min(460px, 100%); border-radius: var(--radius-card); background: var(--color-surface-raised); padding: var(--space-6) var(--space-5); box-shadow: var(--shadow-card); }
+.logo { display: grid; place-items: center; }
+.heading { margin-top: var(--space-3); text-align: center; }
+.heading p { margin: 0; color: var(--color-brand); font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); letter-spacing: .08em; text-transform: uppercase; }
+.heading h1 { margin: var(--space-1) 0; color: var(--color-text); font-size: var(--font-size-headline); line-height: 1.25; letter-spacing: -.8px; }
+.heading > span { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+/* Cada bloque, separado por un filo como el de «Doble factor». */
+.block { display: grid; justify-items: start; gap: var(--space-1); margin-top: var(--space-4); border-top: 1px solid var(--color-border); padding-top: var(--space-3); }
+.block h2 { margin: 0; color: var(--color-text); font-size: var(--font-size-card-title); line-height: 1.25; }
+.status { margin: 0; color: var(--color-text); font-size: var(--font-size-body-sm); line-height: 1.5; }
+.hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-caption); line-height: 1.5; }
+.block > button { margin-top: var(--space-1); }
+.loading { margin: var(--space-4) 0 0; color: var(--color-text-muted); font-size: var(--font-size-body-sm); text-align: center; }
+.groups { display: grid; gap: var(--space-1); margin: var(--space-1) 0 0; padding: 0; list-style: none; }
+.saving { opacity: .6; }
+.error { margin: 0; color: var(--color-danger); font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
+.back { margin: var(--space-3) 0 0; text-align: center; }
+@media (max-width: 480px) { .card { border-radius: var(--radius-control); padding: var(--space-4) var(--space-3); } }

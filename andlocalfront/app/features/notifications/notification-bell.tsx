@@ -2,6 +2,7 @@
 
 import { Bell } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { popoverExitTransition, popoverTransition } from "../../design-system/motion";
@@ -172,6 +173,7 @@ export default function NotificationBell() {
             {nextCursor && !error && (
               <button type="button" className={styles.more} onClick={() => void loadMore()} disabled={loading}>{loading ? "cargando…" : "ver anteriores"}</button>
             )}
+            <Link href="/avisos" className={styles.settings} onClick={() => setOpen(false)}>ajustes de avisos</Link>
           </motion.div>
         )}
       </AnimatePresence>

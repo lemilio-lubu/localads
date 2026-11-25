@@ -100,6 +100,7 @@ const adminList = (text: string | RegExp) => async (page: Page) => { await visib
 export const surfaces: Surface[] = [
   { id: "login", role: "public", path: "/", ready: async (page) => { await visible(page.locator('input[name="username"]')); } },
   { id: "cambiar-contrasena", role: "prepago", path: "/cambiar-contrasena", ready: async (page) => { await visible(page.locator('input[type="password"]')); } },
+  { id: "avisos", role: "gestor", path: "/avisos", ready: async (page) => { await visible(page.getByRole("heading", { name: "Qué te avisamos" })); } },
 
   ...clientSurfaces("prepago"),
   ...clientSurfaces("flex"),
