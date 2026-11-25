@@ -38,7 +38,7 @@ export class DeliverPushNotifications implements NotificationChannel {
     const pushed = new Set<string>();
     let failed = 0;
     await Promise.all(created.map(async (notification) => {
-      if (disabled.get(notification.recipientUserId)?.has(notification.type)) return;
+      if (disabled.get(notification.recipientUserId)?.push.has(notification.type)) return;
       const payload = { title: notification.title, body: notification.body, url: notification.linkPath, tag: notification.id };
       await Promise.all((byUser.get(notification.recipientUserId) ?? []).map(async (subscription) => {
         try {

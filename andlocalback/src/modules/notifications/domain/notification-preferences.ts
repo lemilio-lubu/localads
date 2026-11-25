@@ -34,6 +34,18 @@ const groupsByRole: Record<Role, readonly PreferenceGroup[]> = {
 
 export const preferenceGroupsFor = (role: Role): readonly PreferenceGroup[] => groupsByRole[role];
 
+export type NotificationChannelName = "push" | "email";
+
+/* Correo (decidido el 2026-11-25): solo lo crítico del cliente, lo que le
+   pide hacer algo o le sirve de comprobante. El resto ya llega por campana y
+   push, y el plan gratis de Brevo tiene 300 correos al día. */
+const clientEmailTypes: ReadonlySet<string> = new Set<EventType>(["payment.rejected", "payment.overdue", "invoice.authorized"]);
+
+export const sendsEmail = (role: Role, type: string): boolean => role === "CLIENT" && clientEmailTypes.has(type);
+
+/* Tipos del grupo que salen por correo para ese rol (vacío: el grupo no tiene casilla de correo). */
+export const emailTypesOf = (role: Role, group: PreferenceGroup): readonly EventType[] => group.types.filter((type) => sendsEmail(role, type));
+
 /* Servicios push de los navegadores. El backend hace un POST al endpoint que
    manda el navegador: aceptar cualquier URL dejaría a un usuario apuntarlo a
    la red interna (SSRF). */

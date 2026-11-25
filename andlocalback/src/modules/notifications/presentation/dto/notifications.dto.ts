@@ -1,5 +1,5 @@
 import { Transform, Type } from "class-transformer";
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min, ValidateNested } from "class-validator";
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min, ValidateNested, IsIn } from "class-validator";
 
 export class ListNotificationsQueryDto {
   @IsOptional() @IsString() @MaxLength(64) cursor?: string;
@@ -15,7 +15,8 @@ export class MarkNotificationsReadDto {
 
 export class UpdateNotificationPreferenceDto {
   @IsString() @MaxLength(40) key!: string;
-  @IsBoolean() push!: boolean;
+  @IsIn(["push", "email"]) channel!: "push" | "email";
+  @IsBoolean() enabled!: boolean;
 }
 
 /* Lo que da PushSubscription.toJSON() en el navegador. */

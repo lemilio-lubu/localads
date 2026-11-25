@@ -524,6 +524,8 @@ model Notification {
   createdAt       DateTime  @default(now())
   // Cuándo salió por push a algún dispositivo del usuario (null: no salió).
   pushSentAt      DateTime?
+  // Cuándo salió por correo (solo los tipos que tienen correo).
+  emailSentAt     DateTime?
 
   @@unique([recipientUserId, dedupeKey])
   @@index([recipientUserId, readAt, createdAt])
@@ -546,13 +548,15 @@ model PushSubscription {
   @@index([userId])
 }
 
-// Solo se guardan las elecciones: sin fila, el tipo llega por push. La
+// Solo se guardan las elecciones: sin fila, el tipo llega por push y por
+// correo (si tiene). Una fila con los dos canales encendidos se borra. La
 // bandeja de la campana recibe todo siempre.
 model NotificationPreference {
   userId    String
   user      AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      String
-  push      Boolean
+  push      Boolean  @default(true)
+  email     Boolean  @default(true)
   updatedAt DateTime @updatedAt
 
   @@id([userId, type])

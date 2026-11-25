@@ -18,7 +18,7 @@ export class PrismaNotificationStore implements NotificationStorePort {
     return this.prisma.notification.createManyAndReturn({
       data: notifications.map((item) => ({ ...item, type, dedupeKey, createdAt })),
       skipDuplicates: true,
-      select: { id: true, recipientUserId: true, type: true, title: true, body: true, linkPath: true },
+      select: { id: true, recipientUserId: true, type: true, title: true, body: true, linkPath: true, dedupeKey: true },
     });
   }
 
@@ -50,6 +50,11 @@ export class PrismaNotificationStore implements NotificationStorePort {
   async markPushSent(ids: readonly string[], at: Date): Promise<void> {
     if (ids.length === 0) return;
     await this.prisma.notification.updateMany({ where: { id: { in: [...ids] } }, data: { pushSentAt: at } });
+  }
+
+  async markEmailSent(ids: readonly string[], at: Date): Promise<void> {
+    if (ids.length === 0) return;
+    await this.prisma.notification.updateMany({ where: { id: { in: [...ids] } }, data: { emailSentAt: at } });
   }
 }
 
