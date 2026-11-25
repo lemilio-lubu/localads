@@ -52,6 +52,10 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS: process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true" ? "true" : "false",
   },
   poweredByHeader: false,
+  /* Avisos de `next upgrade` limitados a parches de seguridad. */
+  experimental: {
+    agentUpgrade: "security",
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
