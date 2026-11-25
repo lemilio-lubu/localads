@@ -1,12 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../../database/prisma.service";
 import { ManagerScopeQueryPort } from "../../application/ports/manager-scope.ports";
+import { RealtimeClientLookupPort } from "../../application/ports/platform-realtime.ports";
 
 /* Cuatro consultas de existencia, todas recortadas por la misma relacion:
    el registro cuelga de un cliente, y el cliente tiene un gestor. Se pide
    solo el id porque la respuesta es un si o un no. */
 @Injectable()
-export class PrismaManagerScopeRepository implements ManagerScopeQueryPort {
+export class PrismaManagerScopeRepository implements ManagerScopeQueryPort, RealtimeClientLookupPort {
   constructor(private readonly prisma: PrismaService) {}
 
   async ownsTransaction(transactionId: string, managerId: string) {
@@ -33,5 +34,15 @@ export class PrismaManagerScopeRepository implements ManagerScopeQueryPort {
   async managerOfAccount(accountId: string) {
     const account = await this.prisma.account.findUnique({ where: { id: accountId }, select: { client: { select: { managerId: true } } } });
     return account?.client.managerId ?? null;
+  }
+
+  async clientOfTransaction(transactionId: string) {
+    const transaction = await this.prisma.rechargeTransaction.findUnique({ where: { id: transactionId }, select: { clientId: true } });
+    return transaction?.clientId ?? null;
+  }
+
+  async clientOfInvoice(invoiceId: string) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id: invoiceId }, select: { transaction: { select: { clientId: true } } } });
+    return invoice?.transaction.clientId ?? null;
   }
 }

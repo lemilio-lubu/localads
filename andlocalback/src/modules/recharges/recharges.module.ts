@@ -91,6 +91,7 @@ import { TesseractOcrProcessor } from "./infrastructure/services/tesseract-ocr-p
 import { LocalTransactionReceiptOcr } from "./infrastructure/services/local-transaction-receipt-ocr";
 import { TransactionsController } from "./presentation/transactions.controller";
 import { TransactionsGateway } from "./presentation/transactions.gateway";
+import { PLATFORM_REALTIME_PUBLISHER, PlatformRealtimePublisher, REALTIME_CLIENT_LOOKUP } from "./application/ports/platform-realtime.ports";
 import { TransactionVerificationsController } from "./presentation/transaction-verifications.controller";
 import { TransactionExecutionController } from "./presentation/transaction-execution.controller";
 import {
@@ -119,6 +120,8 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
     PrismaPhase7QueryRepository,
     PrismaManagerScopeRepository,
     TransactionsGateway,
+    { provide: PLATFORM_REALTIME_PUBLISHER, useExisting: TransactionsGateway },
+    { provide: REALTIME_CLIENT_LOOKUP, useExisting: PrismaManagerScopeRepository },
     TransactionReceiptOcrDispatcher,
     OverduePaymentsRunner,
     InvoiceAuthorizationRunner,
@@ -145,8 +148,9 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
     },
     {
       provide: AuthorizeInvoice,
-      inject: [INVOICE_AUTHORIZATION_PERSISTENCE, INVOICE_ISSUER],
-      useFactory: (persistence: InvoiceAuthorizationPersistencePort, issuer: InvoiceIssuer) => new AuthorizeInvoice(persistence, issuer),
+      inject: [INVOICE_AUTHORIZATION_PERSISTENCE, INVOICE_ISSUER, PLATFORM_REALTIME_PUBLISHER],
+      useFactory: (persistence: InvoiceAuthorizationPersistencePort, issuer: InvoiceIssuer, realtime: PlatformRealtimePublisher) =>
+        new AuthorizeInvoice(persistence, issuer, undefined, realtime),
     },
     {
       provide: AuthorizePendingInvoices,
@@ -214,9 +218,9 @@ import { R2ReceiptProcessor } from "./infrastructure/services/r2-receipt-process
     },
     {
       provide: MarkOverduePayments,
-      inject: [POSTPAID_TRANSACTION_PERSISTENCE],
-      useFactory: (persistence: PostpaidTransactionPersistencePort) =>
-        new MarkOverduePayments(persistence),
+      inject: [POSTPAID_TRANSACTION_PERSISTENCE, PLATFORM_REALTIME_PUBLISHER],
+      useFactory: (persistence: PostpaidTransactionPersistencePort, realtime: PlatformRealtimePublisher) =>
+        new MarkOverduePayments(persistence, undefined, realtime),
     },
     {
       provide: ProcessTransactionReceiptOcr,

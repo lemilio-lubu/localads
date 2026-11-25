@@ -1,10 +1,11 @@
-import { Inject } from "@nestjs/common";
+import { Inject, Optional } from "@nestjs/common";
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { AccessTokenService } from "../../auth/access-token.service";
 import { AccessPayload, AuthPrincipal } from "../../auth/auth.types";
 import { SessionStateService } from "../../auth/session-state.service";
 import { MANAGER_SCOPE_QUERY, ManagerScopeQueryPort } from "../application/ports/manager-scope.ports";
+import { PlatformRealtimePublisher, REALTIME_CLIENT_LOOKUP, RealtimeClientLookupPort } from "../application/ports/platform-realtime.ports";
 import { VerificationRealtimeEvent, VerificationRealtimePublisher } from "../application/ports/transaction-verification.ports";
 
 const accountRoom = (accountId: string) => `account:${accountId}`;
@@ -19,11 +20,12 @@ const revalidateMs = 60_000;
   namespace: "/transactions",
   cors: { origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000", credentials: true },
 })
-export class TransactionsGateway implements VerificationRealtimePublisher, OnGatewayConnection, OnGatewayDisconnect {
+export class TransactionsGateway implements VerificationRealtimePublisher, PlatformRealtimePublisher, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly accessTokens: AccessTokenService,
     @Inject(MANAGER_SCOPE_QUERY) private readonly scopeQueries: ManagerScopeQueryPort,
     private readonly sessions: SessionStateService,
+    @Optional() @Inject(REALTIME_CLIENT_LOOKUP) private readonly clients?: RealtimeClientLookupPort,
   ) {}
   @WebSocketServer()
   private server!: Server;
@@ -93,6 +95,24 @@ export class TransactionsGateway implements VerificationRealtimePublisher, OnGat
   publishPlatforms(clientId: string) {
     this.fanOut("platforms:changed", { clientId }, [`platforms:client:${clientId}`], () =>
       this.scopeQueries.managerOfClient(clientId));
+  }
+
+  publishTransaction(transactionId: string) {
+    this.publishResolved(() => this.clients?.clientOfTransaction(transactionId));
+  }
+
+  publishInvoice(invoiceId: string) {
+    this.publishResolved(() => this.clients?.clientOfInvoice(invoiceId));
+  }
+
+  /* Quien publica solo conoce la transaccion o la factura. El cliente se
+     busca aparte y, si la consulta falla, el aviso se pierde sin mas: la
+     pantalla tambien se recarga sola. */
+  private publishResolved(clientOf: () => Promise<string | null> | undefined) {
+    void Promise.resolve()
+      .then(clientOf)
+      .then((clientId) => { if (clientId) this.publishPlatforms(clientId); })
+      .catch(() => undefined);
   }
 
   publishVerification(event: VerificationRealtimeEvent) {

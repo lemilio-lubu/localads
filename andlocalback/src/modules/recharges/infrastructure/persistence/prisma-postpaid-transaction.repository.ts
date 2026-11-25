@@ -213,12 +213,13 @@ export class PrismaPostpaidTransactionRepository implements PostpaidTransactionP
     }
   }
 
-  async markOverduePayments(asOf: Date): Promise<number> {
-    const result = await this.prisma.payment.updateMany({
+  async markOverduePayments(asOf: Date) {
+    const marked = await this.prisma.payment.updateManyAndReturn({
       where: { status: "IN_CREDIT", dueDate: { lt: asOf } },
       data: { status: "OVERDUE", version: { increment: 1 } },
+      select: { transaction: { select: { clientId: true } } },
     });
-    return result.count;
+    return { count: marked.length, clientIds: marked.map((payment) => payment.transaction.clientId) };
   }
 }
 

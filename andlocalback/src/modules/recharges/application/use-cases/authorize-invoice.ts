@@ -1,6 +1,7 @@
 import { ApplicationError } from "../../../../common/errors/application.error";
 import { InvoiceAuthorizationPersistencePort, InvoiceIssuer } from "../ports/invoice-issuer.ports";
 import { InvoiceRetryPolicy } from "../../domain/policies/invoice-retry.policy";
+import { PlatformRealtimePublisher, silentPlatformRealtime } from "../ports/platform-realtime.ports";
 
 export type AuthorizeInvoiceCommand = Readonly<{ invoiceId: string }>;
 export type AuthorizeInvoiceResult =
@@ -32,9 +33,20 @@ export class AuthorizeInvoice {
     private readonly persistence: InvoiceAuthorizationPersistencePort,
     private readonly issuer: InvoiceIssuer,
     private readonly now: () => Date = () => new Date(),
+    private readonly realtime: PlatformRealtimePublisher = silentPlatformRealtime,
   ) {}
 
+  /* Autorizada, enviada o fallida, la factura cambió de estado: el cliente y
+     el back-office la ven al momento. Las demás salidas no tocaron nada. */
   async execute(command: AuthorizeInvoiceCommand): Promise<AuthorizeInvoiceResult> {
+    const result = await this.authorize(command);
+    if (result.status === "AUTHORIZED" || result.status === "SUBMITTED" || result.status === "FAILED") {
+      this.realtime.publishInvoice(command.invoiceId);
+    }
+    return result;
+  }
+
+  private async authorize(command: AuthorizeInvoiceCommand): Promise<AuthorizeInvoiceResult> {
     if (typeof command.invoiceId !== "string" || command.invoiceId.trim().length === 0) {
       throw new ApplicationError("INVOICE_REQUIRED", "La factura es obligatoria");
     }
