@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import AdminTemplate from "../components/templates/admin-template";
+import NotificationBell from "../features/notifications/notification-bell";
 import { getCurrentUser, logout, refreshSession } from "../lib/auth-api";
 
 export default function AdminShell({ children }: { children: ReactNode }) {
@@ -16,5 +17,5 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   useEffect(() => { let active = true; refreshSession().then((user) => { if (!user || (user.role !== "ADMIN" && user.role !== "GESTOR")) router.replace("/"); else if (user.mustChangePassword) router.replace("/cambiar-contrasena"); else if (active) { setRole(user.role); setAuthorized(true); } }); return () => { active = false; }; }, [router]);
   async function logOut() { await logout(); router.replace("/"); }
   if (!authorized) return null;
-  return <AdminTemplate pathname={pathname} role={role} userName={getCurrentUser()?.displayName ?? getCurrentUser()?.username ?? "admin"} onLogout={logOut}>{children}</AdminTemplate>;
+  return <AdminTemplate pathname={pathname} role={role} userName={getCurrentUser()?.displayName ?? getCurrentUser()?.username ?? "admin"} onLogout={logOut} headerActions={<NotificationBell />}>{children}</AdminTemplate>;
 }

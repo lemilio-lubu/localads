@@ -53,3 +53,14 @@ export function dueLabel(dueDate: string) {
 export const NO_DATA = "—";
 export const formatAmountOr = (value: number | null | undefined) => (value == null ? NO_DATA : formatAmount(value));
 export const formatDateTimeOr = (value: string | null | undefined) => (value ? formatDateTime(value) : NO_DATA);
+
+/** «hace 5 min», «hace 3 h», «ayer» o la fecha: para avisos, donde importa
+    lo reciente que es, no la hora exacta. */
+export function formatAgo(value: string, now = Date.now()) {
+  const minutes = Math.floor((now - new Date(value).getTime()) / 60_000);
+  if (minutes < 1) return "ahora";
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  return hours < 48 ? "ayer" : formatDay(value);
+}
