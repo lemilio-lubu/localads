@@ -253,8 +253,10 @@ describe("login, bloqueo y doble factor", () => {
         const { auth, session, db } = await clientSession();
         const next = await auth.refresh(session.refreshToken);
         vi.advanceTimersByTime(31_000);
+        /* El dueño ya usó el sustituto; si no, sería una respuesta perdida. */
+        const latest = await auth.refresh(next.refreshToken);
         await expect(auth.refresh(session.refreshToken)).rejects.toThrow(/revocada/);
-        await expect(auth.refresh(next.refreshToken)).rejects.toThrow(/revocada/);
+        await expect(auth.refresh(latest.refreshToken)).rejects.toThrow(/revocada/);
         expect(db.sessions.every((row) => row.revokedAt !== null)).toBe(true);
       } finally { vi.useRealTimers(); }
     });

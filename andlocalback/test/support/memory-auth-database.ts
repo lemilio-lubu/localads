@@ -26,7 +26,7 @@ export function memoryDatabase(users: Row[]) {
       const row = rows.find((candidate) => matches(candidate, where));
       return row ? { ...row, ...(withUser ? { user: users.find((user) => user.id === row.userId) } : {}) } : null;
     }),
-    create: vi.fn(async ({ data }: { data: Row }) => { const row = { id: `s${rows.length + 1}`, revokedAt: null, replacedById: null, createdAt: new Date(), ...data }; rows.push(row); return row; }),
+    create: vi.fn(async ({ data }: { data: Row }) => { const row = { id: `s${rows.length + 1}`, revokedAt: null, replacedById: null, lastUsedAt: null, createdAt: new Date(), ...data }; rows.push(row); return row; }),
     update: vi.fn(async ({ where, data }: { where: Row; data: Row }) => { const row = rows.find((candidate) => matches(candidate, where)); if (!row) throw new Error("P2025"); apply(row, data); return row; }),
     updateMany: vi.fn(async ({ where, data }: { where: Row; data: Row }) => { const hit = rows.filter((candidate) => matches(candidate, where)); hit.forEach((row) => apply(row, data)); return { count: hit.length }; }),
   });
