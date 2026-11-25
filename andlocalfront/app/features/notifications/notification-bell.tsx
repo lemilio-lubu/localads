@@ -3,7 +3,7 @@
 import { Bell } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { popoverExitTransition, popoverTransition } from "../../design-system/motion";
 import { formatAgo } from "../../lib/format";
 import { getNotifications, markAllNotificationsRead, markNotificationRead, type AppNotification, type NotificationsChangedEvent } from "../../lib/notifications-api";
@@ -29,6 +29,7 @@ export default function NotificationBell() {
   const [error, setError] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const [panelTop, setPanelTop] = useState(0);
   const openRef = useRef(open);
   useEffect(() => { openRef.current = open; }, [open]);
 
@@ -55,6 +56,17 @@ export default function NotificationBell() {
     });
     return () => { stopConnect(); stopChanges(); };
   }, [load]);
+
+  /* En móvil el panel ocupa el ancho de la pantalla (CSS) y se ancla justo
+     bajo la campana, esté donde esté en la cabecera apilada. */
+  useEffect(() => {
+    if (!open) return;
+    const place = () => { const rect = triggerRef.current?.getBoundingClientRect(); if (rect) setPanelTop(rect.bottom); };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, { passive: true });
+    return () => { window.removeEventListener("resize", place); window.removeEventListener("scroll", place); };
+  }, [open]);
 
   /* Cerrar con Escape (devolviendo el foco) o al pulsar fuera. */
   useEffect(() => {
@@ -120,6 +132,7 @@ export default function NotificationBell() {
         {open && (
           <motion.div
             className={styles.panel}
+            style={{ "--panel-anchor": `${panelTop}px` } as CSSProperties}
             role="dialog"
             aria-label="Avisos"
             initial={reduceMotion ? false : { opacity: 0, transform: "translateY(-4px)" }}

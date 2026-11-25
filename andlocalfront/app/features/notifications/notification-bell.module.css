@@ -4,14 +4,14 @@
 .trigger:active { transform: scale(.97); }
 .trigger:focus-visible, .item:focus-visible, .textAction:focus-visible, .more:focus-visible { outline: 3px solid rgb(11 89 1 / 22%); outline-offset: 2px; }
 .badge { position: absolute; top: calc(var(--space-half) * -1); right: calc(var(--space-half) * -1); min-width: 18px; height: 18px; border: 2px solid var(--color-surface-raised); border-radius: var(--radius-pill); background: var(--color-danger); padding: 0 4px; color: var(--color-text-on-fill); font-size: var(--font-size-micro); font-weight: var(--font-weight-bold); line-height: 14px; text-align: center; }
-.panel { position: absolute; z-index: 30; top: calc(100% + var(--space-1)); right: 0; display: grid; width: min(360px, calc(100vw - 32px)); max-height: min(480px, calc(100dvh - 120px)); grid-template-rows: auto auto minmax(0, 1fr) auto; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: var(--color-surface-raised); color: var(--color-text); box-shadow: var(--shadow-popover); }
+.panel { position: absolute; z-index: 30; top: calc(100% + var(--space-1)); right: 0; display: flex; width: min(360px, calc(100vw - 32px)); max-height: min(480px, calc(100dvh - 120px)); flex-direction: column; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-menu); background: var(--color-surface-raised); color: var(--color-text); box-shadow: var(--shadow-popover); }
 .panelHeader { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); border-bottom: 1px solid var(--color-border); padding: var(--space-2) var(--space-2) var(--space-1); }
 .panelHeader h2 { margin: 0; font-size: var(--font-size-body); }
 .textAction { border: 0; background: none; padding: var(--space-half) 0; color: var(--color-brand); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); cursor: pointer; }
 .state { margin: 0; padding: var(--space-3) var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-body-sm); text-align: center; }
 .error { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); background: var(--color-danger-surface); padding: var(--space-1) var(--space-2); color: var(--color-danger); font-size: var(--font-size-caption); }
 .error p { margin: 0; }
-.list { overflow-y: auto; margin: 0; padding: 0; list-style: none; overscroll-behavior: contain; }
+.list { min-height: 0; flex: 0 1 auto; overflow-y: auto; margin: 0; padding: 0; list-style: none; overscroll-behavior: contain; }
 .list li + li { border-top: 1px solid var(--color-border); }
 .item { display: grid; width: 100%; min-height: var(--hit-target); grid-template-columns: 8px minmax(0, 1fr); align-items: start; gap: var(--space-1); border: 0; background: none; padding: var(--space-1) var(--space-2); color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; }
@@ -32,7 +32,8 @@
   .trigger:active { transform: none; }
 }
 /* En móvil la cabecera se apila y la campana puede quedar a la izquierda:
-   el panel deja de colgar del botón y ocupa el ancho, abajo, al alcance del pulgar. */
+   el panel toma el ancho de la pantalla y se ancla bajo la campana
+   (--panel-anchor = borde inferior del botón, medido al abrir). */
 @media (max-width: 480px) {
-  .panel { position: fixed; inset: auto var(--space-2) var(--space-2); width: auto; max-height: 70dvh; }
+  .panel { position: fixed; bottom: auto; top: calc(var(--panel-anchor, 0px) + var(--space-1)); right: var(--space-2); left: var(--space-2); width: auto; max-height: calc(100dvh - var(--panel-anchor, 0px) - var(--space-3)); }
 }
