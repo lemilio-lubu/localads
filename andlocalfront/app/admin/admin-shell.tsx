@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useState } from "react";
 import AdminTemplate from "../components/templates/admin-template";
 import NotificationBell from "../features/notifications/notification-bell";
 import { getCurrentUser, logout, refreshSession } from "../lib/auth-api";
+import { releasePushDevice } from "../lib/push-device";
 
 export default function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter(); const pathname = usePathname(); const [authorized, setAuthorized] = useState(false);
@@ -15,7 +16,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   /* Admin y gestor comparten el portal; el recorte de datos lo aplica el
      backend. Aquí solo se decide qué entradas de navegación tienen sentido. */
   useEffect(() => { let active = true; refreshSession().then((user) => { if (!user || (user.role !== "ADMIN" && user.role !== "GESTOR")) router.replace("/"); else if (user.mustChangePassword) router.replace("/cambiar-contrasena"); else if (active) { setRole(user.role); setAuthorized(true); } }); return () => { active = false; }; }, [router]);
-  async function logOut() { await logout(); router.replace("/"); }
+  async function logOut() { await releasePushDevice(); await logout(); router.replace("/"); }
   if (!authorized) return null;
   return <AdminTemplate pathname={pathname} role={role} userName={getCurrentUser()?.displayName ?? getCurrentUser()?.username ?? "admin"} onLogout={logOut} headerActions={<NotificationBell />}>{children}</AdminTemplate>;
 }
