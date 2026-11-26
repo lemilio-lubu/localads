@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import { popoverExitTransition, popoverTransition } from "../../design-system/motion";
 import { formatAgo } from "../../lib/format";
 import { getNotifications, markAllNotificationsRead, markNotificationRead, type AppNotification, type NotificationsChangedEvent } from "../../lib/notifications-api";
+import { claimPushDevice } from "../../lib/push-device";
 import { onRealtimeConnect, subscribeRealtime } from "../../lib/realtime-socket";
 import styles from "./notification-bell.module.css";
 
@@ -45,6 +46,10 @@ export default function NotificationBell() {
       setLoading(false);
     }
   }, []);
+
+  /* La campana solo se monta con sesión: es el sitio para que este
+     dispositivo, si tenía los avisos activados, pase al usuario actual. */
+  useEffect(() => { void claimPushDevice(); }, []);
 
   /* El contador al entrar y tras cada reconexión (cubre lo que llegó sin socket). */
   useEffect(() => {

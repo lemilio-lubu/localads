@@ -49,6 +49,26 @@ export async function enablePush(publicKey: string): Promise<PushDeviceState> {
   return "on";
 }
 
+/* Al entrar: si este navegador ya tenía los avisos activados, el dispositivo
+   pasa al usuario de la sesión. Sin esto, tras cambiar de usuario la pantalla
+   decía «activado» pero el push seguía llegando a la cuenta anterior. Es una
+   ayuda: si falla, el usuario puede volver a activarlo a mano. */
+export async function claimPushDevice(): Promise<void> {
+  if (!supported() || Notification.permission !== "granted") return;
+  try {
+    const subscription = await (await navigator.serviceWorker.getRegistration("/"))?.pushManager.getSubscription();
+    if (subscription) await savePushSubscription(subscription.toJSON());
+  } catch { /* sin efecto visible: la bandeja sigue funcionando */ }
+}
+
+/* Al cerrar sesión: el dispositivo deja de recibir los avisos de esta cuenta,
+   para que en un equipo compartido no le lleguen a quien venga después. Va
+   antes del logout, mientras la sesión aún vale para el DELETE. */
+export async function releasePushDevice(): Promise<void> {
+  if (!supported()) return;
+  try { await disablePush(); } catch { /* cerrar sesión no debe fallar por esto */ }
+}
+
 export async function disablePush(): Promise<PushDeviceState> {
   const subscription = await (await navigator.serviceWorker.getRegistration("/"))?.pushManager.getSubscription();
   if (subscription) {
